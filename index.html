@@ -115,7 +115,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 90%;
-            max-width: 600px; /* Aumentado para análise */
+            max-width: 600px; 
             margin-top: 2rem; 
             margin-bottom: 2rem; 
         }
@@ -155,18 +155,25 @@
             font-weight: 600;
             color: #1e40af; 
         }
+        .modal-body ul { 
+            list-style-position: inside;
+            padding-left: 0.5rem;
+        }
+        .modal-body ul li {
+            margin-bottom: 0.5rem;
+        }
 
 
         .modal-body input[type="text"],
         .modal-body input[type="number"],
         .modal-body input[type="date"],
-        .modal-body select {  /* Adicionado select aqui */
+        .modal-body select {  
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #e2e8f0;
             border-radius: 0.375rem;
             margin-bottom: 1rem;
-            background-color: #fff; /* Garante fundo branco para selects no modal */
+            background-color: #fff; 
         }
 
 
@@ -199,6 +206,45 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        /* Estilos para a lista de metas */
+        #financial-goals-list li {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #f9fafb; /* Fundo levemente diferente */
+        }
+        #financial-goals-list .goal-details p {
+            margin-bottom: 0.25rem;
+        }
+        #financial-goals-list .goal-actions button {
+            margin-right: 0.5rem;
+        }
+        #financial-goals-list .ai-plan-content {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background-color: #fff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 0.375rem;
+            font-size: 0.9rem;
+        }
+         #financial-goals-list .ai-plan-content h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e3a8a; /* Azul mais escuro para títulos do plano */
+            margin-bottom: 0.5rem;
+        }
+        #financial-goals-list .ai-plan-content ul {
+            list-style-position: inside;
+            padding-left: 0.5rem;
+        }
+         #financial-goals-list .ai-plan-content li {
+            border: none;
+            padding: 0;
+            margin-bottom: 0.25rem;
+            background-color: transparent;
+        }
+
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8 lg:p-10">
@@ -238,10 +284,8 @@
             </div>
         </div>
 
-
         <div class="mb-8 border-b pb-6 border-gray-200">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Gerenciar Contas</h2>
-
             <div class="p-4 bg-gray-50 rounded-lg shadow-sm mb-6">
                 <h3 class="text-xl font-semibold text-gray-700 mb-3">Adicionar Conta</h3>
                 <form id="add-account-form" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
@@ -271,7 +315,6 @@
                     </div>
                 </form>
             </div>
-
             <div>
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">Minhas Contas</h3>
                 <ul id="accounts-list" class="bg-white rounded-md shadow-sm divide-y divide-gray-200">
@@ -281,7 +324,6 @@
 
         <div class="mb-8 border-b pb-6 border-gray-200">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Gerenciar Cartões de Crédito</h2>
-
             <div class="p-4 bg-gray-50 rounded-lg shadow-sm mb-6">
                 <h3 class="text-xl font-semibold text-gray-700 mb-3">Adicionar Cartão de Crédito</h3>
                 <form id="add-credit-card-form" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
@@ -308,13 +350,53 @@
                     </div>
                 </form>
             </div>
-
             <div>
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">Meus Cartões</h3>
                 <ul id="credit-cards-list" class="bg-white rounded-md shadow-sm divide-y divide-gray-200">
                 </ul>
             </div>
         </div>
+
+        <div class="mb-8 border-b pb-6 border-gray-200">
+            <div id="financial-goals-header" class="collapsible-header">
+                 <h2 class="text-2xl font-semibold text-gray-700">✨ Minhas Metas Financeiras com IA</h2>
+                <svg id="financial-goals-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </div>
+            <div id="financial-goals-content" class="hidden">
+                <div class="p-4 bg-gray-50 rounded-lg shadow-sm mb-6">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3">Adicionar Nova Meta</h3>
+                    <form id="add-financial-goal-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                        <div>
+                            <label for="goal-name" class="block text-sm font-medium text-gray-700 mb-1">Nome da Meta</label>
+                            <input type="text" id="goal-name" placeholder="Ex: Viagem para a Europa" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="goal-target-amount" class="block text-sm font-medium text-gray-700 mb-1">Valor Total (R$)</label>
+                            <input type="number" id="goal-target-amount" step="0.01" placeholder="15000.00" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="goal-deadline" class="block text-sm font-medium text-gray-700 mb-1">Prazo (Data Alvo)</label>
+                            <input type="date" id="goal-deadline" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                        </div>
+                        <div class="sm:col-span-full flex justify-end">
+                            <button type="submit" id="add-goal-ai-plan-btn" class="w-full sm:w-auto px-6 py-2 bg-green-600 text-white font-semibold rounded-md shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out flex items-center justify-center">
+                                Adicionar Meta e Obter Plano da IA ✨
+                                <span id="add-goal-ai-plan-spinner" class="ai-btn-spinner hidden"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Metas Ativas</h3>
+                    <ul id="financial-goals-list">
+                        </ul>
+                    <p id="no-financial-goals-message" class="text-center text-gray-500 mt-4 hidden">Nenhuma meta financeira adicionada ainda.</p>
+                </div>
+            </div>
+        </div>
+
 
         <div class="mb-8 border-b pb-6 border-gray-200">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Adicionar Nova Transação Manualmente</h2>
@@ -351,7 +433,7 @@
                         <select id="category-select" required
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </select>
-                        <button type="button" id="ai-suggest-category-btn" title="Sugerir Categoria com IA" class="mt-1 p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors">
+                        <button type="button" id="ai-suggest-category-btn" title="Sugerir Categoria com IA ✨" class="mt-1 p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
                                 <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.58 5.48l-.386 1.161a.217.217 0 0 1-.412 0L3.404 5.481A1.73 1.73 0 0 0 2.306 4.384l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.404 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
                             </svg>
@@ -365,7 +447,7 @@
                     <label for="account-select" class="block text-sm font-medium text-gray-700 mb-1">Conta / Cartão (Opcional)</label>
                     <select id="account-select"
                             class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </select>
+                    </select>
                 </div>
                 <div class="col-span-1 sm:col-span-2 lg:col-span-1">
                     <label for="installments" class="block text-sm font-medium text-gray-700 mb-1">Parcelas (total)</label>
@@ -433,7 +515,7 @@
                             <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Valor</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Tipo</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Categoria</th>
-                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Vincular a</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Parcelas (Tot/Pagas)</th> <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Vincular a</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                         </tr>
                     </thead>
@@ -562,6 +644,25 @@
         </div>
     </div>
 
+     <div id="ai-goal-plan-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="ai-goal-plan-modal-title">Plano da Meta com IA</h3>
+                <button class="modal-close-btn" id="close-ai-goal-plan-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="ai-goal-plan-modal-body">
+                <p>Carregando plano...</p>
+            </div>
+            <div class="modal-footer">
+                <button id="ok-ai-goal-plan-modal-btn"
+                        class="px-4 py-2 bg-green-500 text-white font-semibold rounded-md shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400 transition duration-150 ease-in-out">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         // Arrays globais para armazenar dados
         let accounts = [];
@@ -571,13 +672,14 @@
             "Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação",
             "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros"
         ];
+        let financialGoals = []; 
+
         // Array temporário para transações importadas pendentes de revisão
         let importedTransactionsToReview = [];
         // Mês e ano atuais para o resumo mensal e filtro de transações
-        let currentMonth = new Date().getMonth(); // 0-indexed (Jan = 0)
+        let currentMonth = new Date().getMonth(); 
         let currentYear = new Date().getFullYear();
 
-        // Instância do Chart.js para o gráfico de despesas
         let expensesChart = null; 
 
         // Referências aos elementos do DOM
@@ -587,8 +689,6 @@
         const totalCardBillsEl = document.getElementById('total-card-bills');
         const noTransactionsMessage = document.getElementById('no-transactions-message');
         const feedbackMessageEl = document.getElementById('feedback-message');
-
-        // Gerenciamento de Contas e Cartões
         const addAccountForm = document.getElementById('add-account-form');
         const accountsList = document.getElementById('accounts-list');
         const addCreditCardForm = document.getElementById('add-credit-card-form');
@@ -598,8 +698,6 @@
         const initialBalanceInput = document.getElementById('initial-balance');
         const initialValueLabel = document.getElementById('initial-value-label'); 
         const cardDueDayInput = document.getElementById('card-due-day');
-
-        // Formulário de Transações
         const transactionForm = document.getElementById('transaction-form');
         const transactionList = document.getElementById('transaction-list');
         const installmentsInput = document.getElementById('installments');
@@ -609,9 +707,6 @@
         const newCategoryInput = document.getElementById('new-category-input');
         const aiSuggestCategoryBtn = document.getElementById('ai-suggest-category-btn'); 
         const aiSuggestCategorySpinner = document.getElementById('ai-suggest-category-spinner'); 
-
-
-        // Seções de Importação
         const importHeader = document.getElementById('import-header');
         const importSectionContent = document.getElementById('import-section-content');
         const importArrow = document.getElementById('import-arrow');
@@ -619,27 +714,17 @@
         const importedTransactionsTableBody = document.getElementById('imported-transactions-table-body');
         const confirmImportBtn = document.getElementById('confirm-import-btn');
         const cancelReviewBtn = document.getElementById('cancel-review-btn');
-
-        // Importação Unificada
         const fileInput = document.getElementById('file-input');
         const importFileBtn = document.getElementById('import-file-btn');
-
-        // Elementos do Resumo Mensal
         const prevMonthBtn = document.getElementById('prev-month-btn');
         const nextMonthBtn = document.getElementById('next-month-btn');
         const currentMonthDisplay = document.getElementById('current-month-display');
-       
-        // Download
         const downloadXlsxBtn = document.getElementById('download-xlsx-btn');
-
-        // Elementos para Faturas Detalhadas de Cartão
         const detailedCardBillsHeader = document.getElementById('detailed-card-bills-header');
         const detailedCardBillsContent = document.getElementById('detailed-card-bills-content');
         const detailedCardBillsArrow = document.getElementById('detailed-card-bills-arrow');
         const detailedCardBillsList = document.getElementById('detailed-card-bills-list');
         const noCardBillsMessage = document.getElementById('no-card-bills-message');
-
-        // Referências do Modal de Edição
         const editTransactionModal = document.getElementById('edit-transaction-modal');
         const closeEditModalBtn = document.getElementById('close-edit-modal');
         const saveEditTransactionBtn = document.getElementById('save-edit-transaction-btn');
@@ -652,8 +737,6 @@
         const editNewCategoryInput = document.getElementById('edit-new-category'); 
         const editInstallmentsTotalInput = document.getElementById('edit-installments-total');
         const editInstallmentsPaidInput = document.getElementById('edit-installments-paid');
-
-        // Elementos da Análise de Gastos com IA
         const aiAnalyzeExpensesBtn = document.getElementById('ai-analyze-expenses-btn');
         const aiAnalyzeExpensesSpinner = document.getElementById('ai-analyze-expenses-spinner');
         const aiAnalysisModal = document.getElementById('ai-analysis-modal');
@@ -661,6 +744,19 @@
         const aiAnalysisModalBody = document.getElementById('ai-analysis-modal-body');
         const closeAiAnalysisModalBtn = document.getElementById('close-ai-analysis-modal');
         const okAiAnalysisModalBtn = document.getElementById('ok-ai-analysis-modal-btn');
+        const financialGoalsHeader = document.getElementById('financial-goals-header');
+        const financialGoalsContent = document.getElementById('financial-goals-content');
+        const financialGoalsArrow = document.getElementById('financial-goals-arrow');
+        const addFinancialGoalForm = document.getElementById('add-financial-goal-form');
+        const financialGoalsList = document.getElementById('financial-goals-list');
+        const noFinancialGoalsMessage = document.getElementById('no-financial-goals-message');
+        const addGoalAiPlanBtn = document.getElementById('add-goal-ai-plan-btn');
+        const addGoalAiPlanSpinner = document.getElementById('add-goal-ai-plan-spinner');
+        const aiGoalPlanModal = document.getElementById('ai-goal-plan-modal');
+        const aiGoalPlanModalTitle = document.getElementById('ai-goal-plan-modal-title');
+        const aiGoalPlanModalBody = document.getElementById('ai-goal-plan-modal-body');
+        const closeAiGoalPlanModalBtn = document.getElementById('close-ai-goal-plan-modal');
+        const okAiGoalPlanModalBtn = document.getElementById('ok-ai-goal-plan-modal-btn');
 
 
         // --- Funções Utilitárias ---
@@ -728,12 +824,17 @@
             const storedCategories = localStorage.getItem('financialCategories');
             if (storedCategories) categories = JSON.parse(storedCategories);
 
+            const storedFinancialGoals = localStorage.getItem('financialGoals'); 
+            if (storedFinancialGoals) financialGoals = JSON.parse(storedFinancialGoals);
+
+
             renderAccounts();
             renderCreditCards();
             populateAccountSelects();
             populateCategorySelect(); 
             populateCategorySelect(editCategorySelect); 
             renderTransactions();
+            renderFinancialGoals(); 
             updateSummary(); 
             renderMonthlySummary();
             renderDetailedCardBills();
@@ -744,6 +845,8 @@
         const saveCreditCards = () => localStorage.setItem('financialCreditCards', JSON.stringify(creditCards));
         const saveTransactions = () => localStorage.setItem('financialFinancialTransactions', JSON.stringify(transactions));
         const saveCategories = () => localStorage.setItem('financialCategories', JSON.stringify(categories));
+        const saveFinancialGoals = () => localStorage.setItem('financialGoals', JSON.stringify(financialGoals)); 
+
 
         // --- Gerenciamento de Contas e Cartões de Crédito ---
         accountTypeSelect.addEventListener('change', () => {
@@ -869,12 +972,12 @@
             addDeleteListeners();
         };
 
-        const populateAccountSelects = (targetSelect = accountSelect) => { // Permite especificar qual select popular
+        const populateAccountSelects = (targetSelect = accountSelect) => { 
             targetSelect.innerHTML = ''; 
             
             const noLinkOption = document.createElement('option');
             noLinkOption.value = ""; 
-            noLinkOption.textContent = targetSelect === accountSelect ? "Não Vincular / Geral" : "Selecione"; // Label diferente para revisão
+            noLinkOption.textContent = targetSelect === accountSelect ? "Não Vincular / Geral" : "Selecione"; 
             targetSelect.appendChild(noLinkOption);
 
             accounts.forEach(account => {
@@ -890,12 +993,12 @@
                 option.textContent = `${card.name} (Cartão de Crédito)`;
                 targetSelect.appendChild(option);
             });
-            if (!targetSelect.value && targetSelect === accountSelect) { // Para o select principal, se nenhum valor, default para ""
+            if (!targetSelect.value && targetSelect === accountSelect) { 
                 targetSelect.value = "";
             }
         };
         
-        populateAccountSelects(); // Popula o select principal
+        populateAccountSelects(); 
 
         const populateCategorySelect = (selectElement = categorySelect) => { 
             const currentCategoryValue = selectElement.value;
@@ -948,7 +1051,7 @@
             const date = document.getElementById('date').value;
             const description = document.getElementById('description').value.trim();
             const value = parseFloat(document.getElementById('value').value);
-            let type = document.getElementById('type').value; // Tipo selecionado pelo usuário
+            let type = document.getElementById('type').value; 
             const accountId = document.getElementById('account-select').value; 
             const installments = parseInt(installmentsInput.value) || 1;
             const installmentsPaid = parseInt(installmentsPaidInput.value) || 0; 
@@ -982,14 +1085,13 @@
             let transactionsToAdd = [];
             const originalGroupId = generateUniqueId(); 
 
-            // Determina se a transação é uma receita ou despesa fundamentalmente
-            let fundamentalType = 'despesa'; // Padrão
+            let fundamentalType = 'despesa'; 
             if (type === 'receita' || type === 'pix_recebido') {
                 fundamentalType = 'receita';
             }
 
 
-            if (installments > 1 && (type === 'despesa' || type === 'pix_enviado' || type === 'saque')) { // Parcelamento só para despesas/saques
+            if (installments > 1 && (type === 'despesa' || type === 'pix_enviado' || type === 'saque')) { 
                 const installmentValue = parseFloat((value / installments).toFixed(2));
                 let sumOfInstallments = 0;
                 for (let i = 0; i < installments; i++) {
@@ -1004,8 +1106,8 @@
                     transactionsToAdd.push({
                         id: generateUniqueId(), date: transactionDate.toISOString().split('T')[0], description: `${description} (${i + 1}/${installments})`, 
                         value: currentInstallmentValue, 
-                        type: type, // Mantém o tipo original (saque, pix_enviado, despesa)
-                        fundamentalType: fundamentalType, // Adiciona tipo fundamental
+                        type: type, 
+                        fundamentalType: fundamentalType, 
                         category, accountId: accountId || null, 
                         isCreditCard: isCreditCardTransaction,
                         installments: `${i + 1}/${installments}`, isPaid: (i + 1) <= installmentsPaid,
@@ -1015,8 +1117,8 @@
             } else { 
                 transactionsToAdd.push({
                     id: generateUniqueId(), date, description, value, 
-                    type: type, // Mantém o tipo original
-                    fundamentalType: fundamentalType, // Adiciona tipo fundamental
+                    type: type, 
+                    fundamentalType: fundamentalType, 
                     category, accountId: accountId || null, 
                     isCreditCard: isCreditCardTransaction, installments: '1/1', isPaid: installmentsPaid >= 1,
                     originalGroupId
@@ -1040,7 +1142,7 @@
                         targetAccountOrCard = tempAccounts.find(a => a.id === newTransaction.accountId); 
                          if (targetAccountOrCard) {
                             if (newTransaction.isPaid) { 
-                                if (newTransaction.fundamentalType === 'despesa') { // Usa fundamentalType para saldo
+                                if (newTransaction.fundamentalType === 'despesa') { 
                                     if (targetAccountOrCard.type === 'overdraft' && (targetAccountOrCard.balance - newTransaction.value < -targetAccountOrCard.limit)) {
                                         showFeedback(`Transação de ${formatCurrency(newTransaction.value)} para ${targetAccountOrCard.name} excede limite de cheque especial.`, 'error');
                                         transactionAddedSuccessfully = false; break; 
@@ -1122,8 +1224,8 @@
                 const textStyle = transaction.isPaid ? 'text-gray-500' : (transactionDate < beginningOfCurrentMonth ? 'text-gray-900 font-semibold' : 'text-gray-900 font-semibold');
                 
                 let typeDisplay = transaction.type;
-                let valueColorClass = 'text-gray-800'; // Cor padrão para tipos não estritamente receita/despesa
-                if (transaction.fundamentalType === 'receita') { // Usa fundamentalType para cor
+                let valueColorClass = 'text-gray-800'; 
+                if (transaction.fundamentalType === 'receita') { 
                     valueColorClass = 'text-green-600';
                     if (transaction.type === 'pix_recebido') typeDisplay = 'PIX Recebido';
                     else if (transaction.type === 'receita') typeDisplay = 'Receita';
@@ -1242,12 +1344,6 @@
             editNewCategoryInput.classList.add('hidden'); 
             editNewCategoryInput.value = '';
 
-            // Preencher tipo de transação (não editável por enquanto)
-            // const typeOption = editTypeSelect.querySelector(`option[value="${transaction.type}"]`);
-            // if (typeOption) editTypeSelect.value = transaction.type; else editTypeSelect.selectedIndex = 0;
-            // editTypeSelect.disabled = true; // Tipo não é editável no modal
-
-
             const [currentPaid, totalInstallments] = transaction.installments.split('/').map(Number);
             editInstallmentsTotalInput.value = totalInstallments; 
             editInstallmentsTotalInput.readOnly = true; 
@@ -1327,10 +1423,9 @@
 
             const oldValue = transaction.value;
             const oldIsPaid = transaction.isPaid;
-            // Tipo da transação (ex: 'despesa', 'saque') não muda, mas seu 'fundamentalType' sim
-            const fundamentalType = transaction.fundamentalType; // Preserva o tipo fundamental original
+            const fundamentalType = transaction.fundamentalType; 
 
-            if (transaction.accountId) { // Só estorna/reaplica se estava vinculada
+            if (transaction.accountId) { 
                 if (!transaction.isCreditCard && oldIsPaid) {
                     const account = accounts.find(acc => acc.id === transaction.accountId);
                     if (account) {
@@ -1354,7 +1449,7 @@
             transaction.installments = `${newInstallmentsPaid}/${totalInstallments}`;
             transaction.isPaid = newInstallmentsPaid >= totalInstallments;
 
-            if (transaction.accountId) { // Só reaplica se estiver vinculada
+            if (transaction.accountId) { 
                 if (!transaction.isCreditCard && transaction.isPaid) {
                     const account = accounts.find(acc => acc.id === transaction.accountId);
                     if (account) {
@@ -1399,7 +1494,7 @@
             creditCards.forEach(card => {
                 const currentMonthBill = transactions.reduce((sum, t) => {
                     const tDate = new Date(t.date);
-                    if (t.accountId === card.id && t.fundamentalType === 'despesa' && !t.isPaid &&
+                    if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
                         tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
                         return sum + t.value;
                     }
@@ -1420,7 +1515,7 @@
 
         const renderMonthlySummary = () => {
             let monthlyExpensesTotal = 0;
-            let monthlyIncomeTotal = 0; // Adicionado para cálculo de saldo do mês, se necessário
+            let monthlyIncomeTotal = 0; 
             const beginningOfCurrentMonth = new Date(currentYear, currentMonth, 1);
             beginningOfCurrentMonth.setHours(0,0,0,0); 
 
@@ -1432,12 +1527,11 @@
                 
                 if (t.fundamentalType === 'despesa' && (isInCurrentMonthAndYear || isPendingFromPreviousMonth)) {
                     monthlyExpensesTotal += t.value;
-                } else if (t.fundamentalType === 'receita' && isInCurrentMonthAndYear) { // Receitas apenas do mês corrente
+                } else if (t.fundamentalType === 'receita' && isInCurrentMonthAndYear) { 
                     monthlyIncomeTotal += t.value;
                 }
             });
             totalDespesasEl.textContent = formatCurrency(monthlyExpensesTotal);
-            // Poderia-se ter um 'totalReceitasMesEl' se quisesse mostrar receitas específicas do mês no dashboard.
         };
 
         prevMonthBtn.addEventListener('click', () => {
@@ -1480,6 +1574,161 @@
             importFileBtn.disabled = false;
         };
         
+        const processTextWithAIForTransactions = async (textContent) => {
+            if (!textContent || textContent.trim().length < 10) { 
+                showFeedback("Texto extraído é muito curto ou inválido para análise pela IA.", "info");
+                return [];
+            }
+
+            showFeedback("IA está analisando o extrato para identificar transações...", "info");
+            
+            const accountNames = accounts.map(acc => acc.name);
+            const cardNames = creditCards.map(card => card.name);
+            const allAccountableNames = [...new Set([...accountNames, ...cardNames])]; 
+            
+            const prompt = `
+                Você é um assistente financeiro especialista em analisar extratos.
+                Analise o seguinte texto de um extrato financeiro. Identifique todas as transações individuais que você encontrar.
+                Para cada transação, extraia os seguintes campos:
+                1.  "data": A data da transação (formato AAAA-MM-DD). Se o ano não estiver presente, assuma o ano corrente (${currentYear}). Se a data não for clara, use a data de hoje (${new Date().toISOString().split('T')[0]}).
+                2.  "descricao": Uma descrição clara e concisa da transação.
+                3.  "valor": O valor numérico da transação. Use ponto como separador decimal. Se for um débito/saída, represente como um número negativo. Se for um crédito/entrada, como positivo.
+                4.  "categoriaSugerida": Sugira a categoria mais apropriada em português do Brasil. Categorias comuns são: ${categories.join(", ")}, Salário, Transferência, Pagamento de Contas. Se não tiver certeza, use "Outros".
+                5.  "contaNomeSugerido": Se o texto indicar claramente a origem ou destino da transação em uma conta ou cartão, sugira o nome mais próximo de uma das seguintes opções: ${allAccountableNames.join(", ")}. Se não for claro ou não aplicável, deixe este campo vazio.
+
+                Texto do extrato:
+                ---
+                ${textContent.substring(0, 15000)} 
+                ---
+                Retorne o resultado como um array de objetos JSON. Cada objeto deve ter as chaves "data", "descricao", "valor", "categoriaSugerida", "contaNomeSugerido".
+                Se não encontrar transações, retorne um array vazio.
+                Exemplo de objeto JSON: {"data": "${new Date().toISOString().split('T')[0]}", "descricao": "Pagamento Aluguel", "valor": -1200.00, "categoriaSugerida": "Moradia", "contaNomeSugerido": "Banco Principal"}
+            `;
+            
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = { contents: chatHistory,
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                ]
+            };
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Erro da API Gemini (processTextWithAIForTransactions):", errorData);
+                    throw new Error(`Erro da API: ${response.status} - ${errorData.error?.message || 'Erro desconhecido'}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts[0].text) {
+                    let aiResponseText = result.candidates[0].content.parts[0].text;
+                    aiResponseText = aiResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
+                    
+                    let parsedAITransactions = [];
+                    try {
+                        parsedAITransactions = JSON.parse(aiResponseText);
+                        if (!Array.isArray(parsedAITransactions)) { 
+                           try {
+                                const wrappedAttempt = JSON.parse(`[${aiResponseText}]`);
+                                if (Array.isArray(wrappedAttempt) && typeof wrappedAttempt[0] === 'object') {
+                                    parsedAITransactions = wrappedAttempt;
+                                } else { throw new Error("Not an array after wrap."); }
+                           } catch (wrapError) {
+                               console.warn("IA response not array, wrap failed:", aiResponseText, wrapError); parsedAITransactions = [];
+                           }
+                        }
+                    } catch (e) {
+                        console.error("Error parsing AI JSON:", e, "\nAI Text:", aiResponseText);
+                        showFeedback("IA retornou dados em formato inesperado.", "error"); return [];
+                    }
+
+                    const finalTransactions = parsedAITransactions.map(aiTx => {
+                        const valorOriginal = parseFloat(aiTx.valor) || 0;
+                        const valorAbsoluto = Math.abs(valorOriginal);
+                        const tipoFundamental = valorOriginal >= 0 ? 'receita' : 'despesa';
+                        
+                        let tipoTransacao = tipoFundamental; 
+                        const descLower = (aiTx.descricao || "").toLowerCase();
+                        if (descLower.includes('pix') && descLower.includes('env')) tipoTransacao = 'pix_enviado';
+                        else if (descLower.includes('pix') && descLower.includes('rec')) tipoTransacao = 'pix_recebido';
+                        else if (descLower.includes('saque') || descLower.includes('retirada')) tipoTransacao = 'saque';
+
+                        let accountIdToLink = null;
+                        let isCreditCardLinked = false;
+                        if (aiTx.contaNomeSugerido) {
+                            const suggestionLower = aiTx.contaNomeSugerido.toLowerCase();
+                            const foundAccount = accounts.find(acc => acc.name.toLowerCase().includes(suggestionLower) || suggestionLower.includes(acc.name.toLowerCase()));
+                            if (foundAccount) {
+                                accountIdToLink = foundAccount.id;
+                            } else {
+                                const foundCard = creditCards.find(card => card.name.toLowerCase().includes(suggestionLower) || suggestionLower.includes(card.name.toLowerCase()));
+                                if (foundCard) {
+                                    accountIdToLink = foundCard.id;
+                                    isCreditCardLinked = true;
+                                }
+                            }
+                        }
+                        
+                        let dataValida = new Date().toISOString().split('T')[0]; 
+                        if (aiTx.data) {
+                            const parsedDate = new Date(aiTx.data);
+                            if (!isNaN(parsedDate.getTime())) { 
+                                if (parsedDate.getFullYear() < 1900 || parsedDate.getFullYear() > 2100) { 
+                                     const parts = aiTx.data.split('-'); 
+                                     if (parts.length === 2) { 
+                                         const month = parseInt(parts[0]) -1;
+                                         const day = parseInt(parts[1]);
+                                         if (!isNaN(month) && !isNaN(day)) {
+                                             const tempDate = new Date(currentYear, month, day);
+                                             if(!isNaN(tempDate.getTime())) dataValida = tempDate.toISOString().split('T')[0];
+                                         }
+                                     } else if (parts.length === 3 && aiTx.data.length === 8 && !aiTx.data.includes('-')) { 
+                                         dataValida = `${aiTx.data.substring(0,4)}-${aiTx.data.substring(4,6)}-${aiTx.data.substring(6,8)}`;
+                                     }
+                                } else {
+                                   dataValida = parsedDate.toISOString().split('T')[0];
+                                }
+                            }
+                        }
+
+                        return {
+                            id: generateUniqueId(), date: dataValida,
+                            description: aiTx.descricao || "Descrição não identificada",
+                            value: valorAbsoluto, type: tipoTransacao, fundamentalType: tipoFundamental,
+                            category: categories.includes(aiTx.categoriaSugerida) ? aiTx.categoriaSugerida : "Outros",
+                            accountId: accountIdToLink, isCreditCard: isCreditCardLinked,
+                            installments: '1/1', isPaid: true,
+                            fundamentalTypeOriginalSignal: valorOriginal >= 0 ? 1 : -1 
+                        };
+                    }).filter(tx => tx.value > 0); 
+
+                    showFeedback(`IA processou o extrato. ${finalTransactions.length} transações prontas para revisão.`, "success");
+                    return finalTransactions;
+                } else {
+                     console.warn("Resposta da API Gemini (processTextWithAIForTransactions) não continha dados válidos:", result);
+                    showFeedback("IA não conseguiu extrair transações do texto.", "info");
+                    return [];
+                }
+
+            } catch (error) {
+                console.error("Erro ao chamar API Gemini (processTextWithAIForTransactions):", error);
+                showFeedback(`Erro ao processar texto com IA: ${error.message}`, "error");
+                return [];
+            }
+        };
+        
         const parseOFX = (ofxContent) => {
             const parsedTransactions = [];
             const transactionRegex = /<STMTTRN>([\s\S]*?)<\/STMTTRN>/g;
@@ -1500,13 +1749,12 @@
                     if (typeMatch) { 
                         transactionType = typeMatch[1].toUpperCase() === 'CREDIT' ? 'receita' : 'despesa';
                     }
+                    let fundamentalType = transactionType; 
 
                     if (!isNaN(value)) {
                          parsedTransactions.push({
                             id: generateUniqueId(), date: formattedDate, description, 
-                            value: Math.abs(value), 
-                            type: transactionType, // Mantém o tipo original detectado
-                            fundamentalType: transactionType, // Para OFX, tipo e fundamentalType são os mesmos
+                            value: Math.abs(value), type: transactionType, fundamentalType,
                             category: 'Importado OFX', 
                             accountId: '', isCreditCard: false, installments: '1/1', isPaid: true 
                         });
@@ -1626,7 +1874,7 @@
                     } else if (isDebit && !isCredit) {
                         transactionType = 'despesa';
                         fundamentalType = 'despesa';
-                    } else if (!isNaN(value)) { // Infere pelo sinal se tipo for ambíguo/ausente
+                    } else if (!isNaN(value)) { 
                         transactionType = value >= 0 ? 'receita' : 'despesa';
                         fundamentalType = transactionType;
                     }
@@ -1655,28 +1903,20 @@
                 showFeedback('Biblioteca de importação de Word (mammoth.js) não carregada.', 'error');
                 finalizeImportProcessing([]); return []; 
             }
-            showFeedback("Processando arquivo Word...", 'info');
+            showFeedback("Extraindo texto do arquivo Word...", 'info');
             try {
                 const arrayBuffer = await file.arrayBuffer();
                 const result = await mammoth.extractRawText({ arrayBuffer });
                 const text = result.value;
-                const parsedTransactions = [];
-
                 if (text.trim()) {
-                    parsedTransactions.push({
-                        id: generateUniqueId(), date: new Date().toISOString().split('T')[0], 
-                        description: `Texto Word (revisar): ${text.substring(0, 150)}${text.length > 150 ? '...' : ''}`, 
-                        value: 0, type: 'despesa', fundamentalType: 'despesa', category: 'Importado Word', 
-                        accountId: '', isCreditCard: false, installments: '1/1', isPaid: false 
-                    });
-                    showFeedback("Texto extraído do Word. Revise e complete os dados da transação.", 'success');
+                    return await processTextWithAIForTransactions(text); 
                 } else {
                     showFeedback("Nenhum texto encontrado no arquivo Word.", 'info');
+                    return [];
                 }
-                return parsedTransactions;
             } catch (err) {
                 console.error("Erro ao processar arquivo Word:", err);
-                showFeedback("Erro ao processar arquivo Word. Formatos .doc antigos podem não ser suportados. Tente .docx.", 'error');
+                showFeedback("Erro ao extrair texto do Word. Formatos .doc antigos podem não ser suportados. Tente .docx.", 'error');
                 return [];
             }
         };
@@ -1686,31 +1926,23 @@
                 showFeedback('Biblioteca de OCR (Tesseract.js) não carregada ou inválida. Aguarde ou verifique a conexão.', 'error');
                  finalizeImportProcessing([]); return []; 
             }
-            showFeedback("Processando imagem com OCR... Isso pode levar alguns segundos.", 'info');
+            showFeedback("Processando imagem com OCR (pode levar alguns segundos)...", 'info');
             try {
                 const worker = await Tesseract.createWorker('por', 1, { 
                     logger: m => { 
                         if (m.status === 'recognizing text') {
-                            showFeedback(`Processando imagem: ${Math.round(m.progress * 100)}%`, 'info');
+                            showFeedback(`OCR: ${m.status} ${Math.round(m.progress * 100)}%`, 'info');
                         }
                      } 
                 });
                 const { data: { text } } = await worker.recognize(file);
                 await worker.terminate();
-                const parsedTransactions = [];
-
                 if (text.trim()) {
-                    parsedTransactions.push({
-                        id: generateUniqueId(), date: new Date().toISOString().split('T')[0],
-                        description: `Texto Imagem OCR (revisar): ${text.substring(0, 150)}${text.length > 150 ? '...' : ''}`,
-                        value: 0, type: 'despesa', fundamentalType: 'despesa', category: 'Importado Imagem',
-                        accountId: '', isCreditCard: false, installments: '1/1', isPaid: false
-                    });
-                     showFeedback("Texto extraído da imagem via OCR. Revise e complete os dados da transação.", 'success');
+                    return await processTextWithAIForTransactions(text); 
                 } else {
                     showFeedback("Nenhum texto detectado na imagem via OCR.", 'info');
+                    return [];
                 }
-                return parsedTransactions;
             } catch (err) {
                 console.error("Erro no OCR da imagem:", err);
                 showFeedback("Erro ao processar imagem com OCR.", 'error');
@@ -1790,10 +2022,19 @@
             importedTransactionsToReview.forEach((transaction, index) => {
                 const tr = document.createElement('tr');
                 tr.className = 'bg-white hover:bg-gray-50';
-                const accountSelectOptionsHTML = accounts.map(acc => `<option value="${acc.id}" ${transaction.accountId === acc.id ? 'selected' : ''}>${acc.name} (${acc.type === 'overdraft' ? 'Cheque Especial' : 'Dinheiro'})</option>`).join('') +
-                                            creditCards.map(card => `<option value="${card.id}" ${transaction.accountId === card.id ? 'selected' : ''}>${card.name} (Cartão de Crédito)</option>`).join('');
+                
+                let accountOptionsHTML = accounts.map(acc => 
+                    `<option value="${acc.id}" ${transaction.accountId === acc.id ? 'selected' : ''}>${acc.name} (${acc.type === 'overdraft' ? 'C.Especial' : 'Dinheiro'})</option>`
+                ).join('');
+                let cardOptionsHTML = creditCards.map(card => 
+                    `<option value="${card.id}" ${transaction.accountId === card.id ? 'selected' : ''}>${card.name} (Cartão)</option>`
+                ).join('');
 
                 const formattedValue = typeof transaction.value === 'number' ? transaction.value.toFixed(2) : '0.00';
+                // Inicializa parcelas para importação
+                const initialTotalInstallments = transaction.installments ? parseInt(transaction.installments.split('/')[1]) || 1 : 1;
+                const initialPaidInstallments = transaction.installments ? parseInt(transaction.installments.split('/')[0]) || 0 : (transaction.isPaid ? 1 : 0) ;
+
 
                 tr.innerHTML = `
                     <td class="px-2 py-2 whitespace-nowrap text-sm"><input type="date" class="date-input w-full border rounded px-1 py-0.5 text-xs" value="${transaction.date || new Date().toISOString().split('T')[0]}" data-index="${index}"></td>
@@ -1801,8 +2042,8 @@
                     <td class="px-2 py-2 whitespace-nowrap text-sm"><input type="number" step="0.01" class="value-input w-24 border rounded px-1 py-0.5 text-xs" value="${formattedValue}" data-index="${index}"></td>
                     <td class="px-2 py-2 whitespace-nowrap text-sm">
                         <select class="type-input w-full border rounded px-1 py-0.5 text-xs" data-index="${index}">
-                            <option value="despesa" ${transaction.type === 'despesa' ? 'selected' : ''}>Despesa</option>
                             <option value="receita" ${transaction.type === 'receita' ? 'selected' : ''}>Receita</option>
+                            <option value="despesa" ${transaction.type === 'despesa' ? 'selected' : ''}>Despesa</option>
                             <option value="saque" ${transaction.type === 'saque' ? 'selected' : ''}>Saque</option>
                             <option value="pix_enviado" ${transaction.type === 'pix_enviado' ? 'selected' : ''}>PIX Enviado</option>
                             <option value="pix_recebido" ${transaction.type === 'pix_recebido' ? 'selected' : ''}>PIX Recebido</option>
@@ -1813,12 +2054,19 @@
                             ${categories.sort((a,b)=> a.localeCompare(b)).map(cat => `<option value="${cat}" ${transaction.category === cat ? 'selected' : ''}>${cat}</option>`).join('')}
                             <option value="nova-categoria-review">Adicionar Nova...</option>
                         </select>
-                         <input type="text" class="new-category-input-review hidden w-full border rounded px-1 py-0.5 text-xs mt-1" placeholder="Nova Cat." data-index="${index}">
+                         <input type="text" class="new-category-input-review hidden w-full border rounded px-1 py-0.5 text-xs mt-1" placeholder="Nova Cat." data-index="${index}" value="${!categories.includes(transaction.category) && transaction.category !== 'Outros' && !transaction.category?.startsWith('Importado') ? transaction.category : ''}">
+                    </td>
+                    <td class="px-2 py-2 whitespace-nowrap text-sm">
+                        <div class="flex space-x-1">
+                           <input type="number" min="1" value="${initialTotalInstallments}" class="installments-total-review w-16 border rounded px-1 py-0.5 text-xs" data-index="${index}" title="Total de Parcelas">
+                           <input type="number" min="0" value="${initialPaidInstallments}" class="installments-paid-review w-16 border rounded px-1 py-0.5 text-xs" data-index="${index}" title="Parcelas Pagas">
+                        </div>
                     </td>
                     <td class="px-2 py-2 whitespace-nowrap text-sm">
                         <select class="account-select-review w-full border rounded px-1 py-0.5 text-xs" data-index="${index}">
                             <option value="">Não Vincular</option>
-                            ${accountSelectOptionsHTML}
+                            ${accountOptionsHTML}
+                            ${cardOptionsHTML}
                         </select>
                     </td>
                     <td class="px-2 py-2 whitespace-nowrap text-sm">
@@ -1829,13 +2077,39 @@
                     </td>`;
                 importedTransactionsTableBody.appendChild(tr);
 
+                const accountSelectReviewEl = tr.querySelector('.account-select-review');
+                if(transaction.accountId) {
+                    accountSelectReviewEl.value = transaction.accountId;
+                }
+                const categoryInputReview = tr.querySelector('.category-input');
+                const newCategoryInputReview = tr.querySelector('.new-category-input-review');
+                if (!categories.includes(transaction.category) && transaction.category && transaction.category !== 'Outros' && !transaction.category?.startsWith('Importado')) {
+                    categoryInputReview.value = 'nova-categoria-review';
+                    newCategoryInputReview.classList.remove('hidden');
+                }
+                const installmentsTotalReviewEl = tr.querySelector('.installments-total-review');
+                const installmentsPaidReviewEl = tr.querySelector('.installments-paid-review');
+
+                // Event listeners para campos editáveis na tabela de revisão
                 tr.querySelector('.date-input').addEventListener('change', (e) => importedTransactionsToReview[index].date = e.target.value);
                 tr.querySelector('.description-input').addEventListener('input', (e) => importedTransactionsToReview[index].description = e.target.value);
-                tr.querySelector('.value-input').addEventListener('change', (e) => importedTransactionsToReview[index].value = parseFloat(e.target.value) || 0);
+                tr.querySelector('.value-input').addEventListener('change', (e) => {
+                     const val = parseFloat(e.target.value) || 0;
+                     const originalSignal = importedTransactionsToReview[index].fundamentalTypeOriginalSignal || (val >= 0 ? 1 : -1);
+                     importedTransactionsToReview[index].value = Math.abs(val); 
+                     
+                     if (val !== 0) { 
+                        importedTransactionsToReview[index].fundamentalType = val * originalSignal >= 0 ? 'receita' : 'despesa';
+                     }
+                     
+                     if (['receita', 'despesa'].includes(importedTransactionsToReview[index].type)) {
+                         importedTransactionsToReview[index].type = importedTransactionsToReview[index].fundamentalType;
+                         tr.querySelector('.type-input').value = importedTransactionsToReview[index].type; 
+                     }
+                });
                 tr.querySelector('.type-input').addEventListener('change', (e) => {
-                    importedTransactionsToReview[index].type = e.target.value;
-                     // Atualiza fundamentalType baseado no novo tipo
                     const newType = e.target.value;
+                    importedTransactionsToReview[index].type = newType;
                     if (newType === 'receita' || newType === 'pix_recebido') {
                         importedTransactionsToReview[index].fundamentalType = 'receita';
                     } else {
@@ -1843,8 +2117,6 @@
                     }
                 });
                 
-                const categoryInputReview = tr.querySelector('.category-input');
-                const newCategoryInputReview = tr.querySelector('.new-category-input-review');
                 categoryInputReview.addEventListener('change', (e) => {
                     if(e.target.value === 'nova-categoria-review'){
                         newCategoryInputReview.classList.remove('hidden');
@@ -1861,12 +2133,33 @@
                      }
                 });
 
-
-                tr.querySelector('.account-select-review').addEventListener('change', (e) => {
+                accountSelectReviewEl.addEventListener('change', (e) => {
                     importedTransactionsToReview[index].accountId = e.target.value;
                     importedTransactionsToReview[index].isCreditCard = e.target.value ? creditCards.some(card => card.id === e.target.value) : false;
                 });
                  tr.querySelector('.paid-status-input').addEventListener('change', (e) => importedTransactionsToReview[index].isPaid = e.target.value === 'true');
+                 
+                 installmentsTotalReviewEl.addEventListener('change', (e) => {
+                    let total = parseInt(e.target.value) || 1;
+                    if (total < 1) total = 1;
+                    e.target.value = total;
+                    importedTransactionsToReview[index].installmentsTotal = total;
+                    // Garante que parcelas pagas não exceda o total
+                    const paidEl = tr.querySelector('.installments-paid-review');
+                    if (parseInt(paidEl.value) > total) {
+                        paidEl.value = total;
+                        importedTransactionsToReview[index].installmentsPaid = total;
+                    }
+                });
+                installmentsPaidReviewEl.addEventListener('change', (e) => {
+                    const total = parseInt(tr.querySelector('.installments-total-review').value) || 1;
+                    let paid = parseInt(e.target.value) || 0;
+                    if (paid < 0) paid = 0;
+                    if (paid > total) paid = total;
+                    e.target.value = paid;
+                    importedTransactionsToReview[index].installmentsPaid = paid;
+                });
+
             });
         };
         
@@ -1880,6 +2173,12 @@
             importedTransactionsToReview.forEach((reviewedTx, index) => {
                 const categoryInputEl = document.querySelector(`.category-input[data-index="${index}"]`);
                 const newCategoryInputEl = document.querySelector(`.new-category-input-review[data-index="${index}"]`);
+                const installmentsTotalEl = document.querySelector(`.installments-total-review[data-index="${index}"]`);
+                const installmentsPaidEl = document.querySelector(`.installments-paid-review[data-index="${index}"]`);
+
+                reviewedTx.installmentsTotal = parseInt(installmentsTotalEl.value) || 1;
+                reviewedTx.installmentsPaid = parseInt(installmentsPaidEl.value) || 0;
+
 
                 if (categoryInputEl && categoryInputEl.value === 'nova-categoria-review' && newCategoryInputEl && newCategoryInputEl.value.trim()) {
                     const newCatName = newCategoryInputEl.value.trim();
@@ -1891,7 +2190,6 @@
                     reviewedTx.category = categoryInputEl.value || 'Outros';
                 }
 
-                // Atualiza fundamentalType baseado no tipo selecionado na revisão, se não foi setado no parse
                  if (!reviewedTx.fundamentalType) {
                     if (reviewedTx.type === 'receita' || reviewedTx.type === 'pix_recebido') {
                         reviewedTx.fundamentalType = 'receita';
@@ -1900,45 +2198,104 @@
                     }
                 }
 
-
                 if (!reviewedTx.description || isNaN(reviewedTx.value) || reviewedTx.value <= 0) { 
                     skippedCount++; return;
                 }
 
-                let transactionValid = true;
-                if (reviewedTx.accountId){ // Se houver conta vinculada
-                    const account = tempAccounts.find(acc => acc.id === reviewedTx.accountId);
-                    const creditCard = tempCreditCards.find(card => card.id === reviewedTx.accountId);
+                // Lógica de parcelamento para transações importadas
+                if (reviewedTx.installmentsTotal > 1 && (reviewedTx.fundamentalType === 'despesa')) {
+                    const originalValue = reviewedTx.value;
+                    const installmentValue = parseFloat((originalValue / reviewedTx.installmentsTotal).toFixed(2));
+                    let sumOfInstallments = 0;
 
-                    if (reviewedTx.isCreditCard && creditCard) {
-                        if (reviewedTx.fundamentalType === 'despesa') creditCard.availableLimit -= reviewedTx.value;
-                        else creditCard.availableLimit += reviewedTx.value;
-                    } else if (account) { 
-                        if (reviewedTx.isPaid) {
-                            if (reviewedTx.fundamentalType === 'despesa') {
-                                if (account.type === 'overdraft' && (account.balance - reviewedTx.value < -account.limit)) {
-                                    importErrors.push(`Importada de ${formatCurrency(reviewedTx.value)} para ${account.name} excede limite.`);
-                                    transactionValid = false;
-                                } else if(transactionValid) { 
-                                    account.balance -= reviewedTx.value;
+                    for (let i = 0; i < reviewedTx.installmentsTotal; i++) {
+                        let currentInstallmentValue = installmentValue;
+                        if (i === reviewedTx.installmentsTotal - 1) {
+                            currentInstallmentValue = parseFloat((originalValue - sumOfInstallments).toFixed(2));
+                        }
+                        sumOfInstallments += currentInstallmentValue;
+
+                        const transactionDate = new Date(reviewedTx.date);
+                        transactionDate.setMonth(transactionDate.getMonth() + i);
+
+                        const installmentTransaction = {
+                            ...reviewedTx, // Copia a maioria dos dados
+                            id: generateUniqueId(),
+                            date: transactionDate.toISOString().split('T')[0],
+                            description: `${reviewedTx.description} (${i + 1}/${reviewedTx.installmentsTotal})`,
+                            value: currentInstallmentValue,
+                            installments: `${i + 1}/${reviewedTx.installmentsTotal}`,
+                            isPaid: (i + 1) <= reviewedTx.installmentsPaid,
+                            originalGroupId: reviewedTx.id // Usa o ID da transação importada como group ID
+                        };
+                        
+                        // Validação e aplicação de saldo/limite para esta parcela
+                        let installmentValid = true;
+                        if (installmentTransaction.accountId) {
+                            const account = tempAccounts.find(acc => acc.id === installmentTransaction.accountId);
+                            const creditCard = tempCreditCards.find(card => card.id === installmentTransaction.accountId);
+
+                            if (installmentTransaction.isCreditCard && creditCard) {
+                                if (installmentTransaction.fundamentalType === 'despesa') creditCard.availableLimit -= installmentTransaction.value;
+                                else creditCard.availableLimit += installmentTransaction.value;
+                            } else if (account) {
+                                if (installmentTransaction.isPaid) {
+                                    if (installmentTransaction.fundamentalType === 'despesa') {
+                                        if (account.type === 'overdraft' && (account.balance - installmentTransaction.value < -account.limit)) {
+                                            importErrors.push(`Parcela de ${formatCurrency(installmentTransaction.value)} para ${account.name} excede limite.`);
+                                            installmentValid = false;
+                                        } else if (installmentValid) {
+                                            account.balance -= installmentTransaction.value;
+                                        }
+                                    } else if (installmentValid) {
+                                        account.balance += installmentTransaction.value;
+                                    }
                                 }
-                            } else if(transactionValid) { 
-                                account.balance += reviewedTx.value;
+                            } else {
+                                importErrors.push(`Conta/Cartão ID ${installmentTransaction.accountId} não encontrado para parcela.`);
+                                installmentValid = false;
                             }
                         }
-                    } else { 
-                        importErrors.push(`Conta/Cartão ID ${reviewedTx.accountId} não encontrado.`);
-                        transactionValid = false;
+                        if (installmentValid) {
+                            transactionsToCommit.push(installmentTransaction);
+                        } else {
+                            skippedCount++; // Se uma parcela falhar, as outras do grupo também podem ser afetadas
+                        }
                     }
-                }
-                // Se não houver accountId (Não Vincular), a transação é válida por padrão para ser adicionada sem afetar saldos.
+                    importedCount++; // Conta a transação original como importada, mesmo que dividida
+                } else { // Transação única
+                    let transactionValid = true;
+                    if (reviewedTx.accountId){ 
+                        const account = tempAccounts.find(acc => acc.id === reviewedTx.accountId);
+                        const creditCard = tempCreditCards.find(card => card.id === reviewedTx.accountId);
 
-
-                if (transactionValid) {
-                    transactionsToCommit.push({ ...reviewedTx, id: generateUniqueId() }); 
-                    importedCount++;
-                } else {
-                    skippedCount++; 
+                        if (reviewedTx.isCreditCard && creditCard) {
+                            if (reviewedTx.fundamentalType === 'despesa') creditCard.availableLimit -= reviewedTx.value;
+                            else creditCard.availableLimit += reviewedTx.value;
+                        } else if (account) { 
+                            if (reviewedTx.isPaid) {
+                                if (reviewedTx.fundamentalType === 'despesa') {
+                                    if (account.type === 'overdraft' && (account.balance - reviewedTx.value < -account.limit)) {
+                                        importErrors.push(`Importada de ${formatCurrency(reviewedTx.value)} para ${account.name} excede limite.`);
+                                        transactionValid = false;
+                                    } else if(transactionValid) { 
+                                        account.balance -= reviewedTx.value;
+                                    }
+                                } else if(transactionValid) { 
+                                    account.balance += reviewedTx.value;
+                                }
+                            }
+                        } else { 
+                            importErrors.push(`Conta/Cartão ID ${reviewedTx.accountId} não encontrado.`);
+                            transactionValid = false;
+                        }
+                    }
+                    if (transactionValid) {
+                        transactionsToCommit.push({ ...reviewedTx, id: generateUniqueId(), installments: '1/1' }); 
+                        importedCount++;
+                    } else {
+                        skippedCount++; 
+                    }
                 }
             });
             
@@ -1969,7 +2326,7 @@
             importedTransactionsTableBody.innerHTML = ''; 
             importReviewSection.classList.add('hidden'); 
             
-            let feedbackMsg = `Importação concluída. ${importedCount} transação(ões) adicionada(s).`;
+            let feedbackMsg = `Importação concluída. ${importedCount} transação(ões) originais processada(s) (podem ter gerado múltiplas parcelas).`;
             if (skippedCount > 0 && importErrors.length === 0) feedbackMsg += ` ${skippedCount} ignorada(s) por falta de vínculo ou dados.`;
             else if (skippedCount > 0 && importErrors.length > 0 && importedCount > 0) feedbackMsg += ` ${skippedCount} adicional(is) ignorada(s).`;
 
@@ -2036,7 +2393,7 @@
             creditCards.forEach(card => {
                 const currentMonthBill = transactions.reduce((sum, t) => {
                     const tDate = new Date(t.date);
-                    if (t.accountId === card.id && t.fundamentalType === 'despesa' && !t.isPaid &&
+                    if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
                         tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
                         return sum + t.value;
                     }
@@ -2069,7 +2426,7 @@
                          let cycleStartApprox = new Date(billClosingDate); 
                          cycleStartApprox.setDate(cycleStartApprox.getDate() - (card.dueDay > 10 ? 30 : 28)); 
                          
-                         if (t.accountId === card.id && t.fundamentalType === 'despesa' && tDate >= cycleStartApprox && tDate < billClosingDate ) {
+                         if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && tDate >= cycleStartApprox && tDate < billClosingDate ) {
                             return sum + t.value;
                          }
                          return sum;
@@ -2084,7 +2441,7 @@
                 
                 const currentMonthBillForNotification = transactions.reduce((sum, t) => { 
                     const tDate = new Date(t.date);
-                    if (t.accountId === card.id && t.fundamentalType === 'despesa' && !t.isPaid && 
+                    if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid && 
                         tDate >= billClosingDate && tDate < billDueDate ) { 
                         return sum + t.value;
                     }
@@ -2114,7 +2471,14 @@
             const prompt = `Com base na descrição de transação financeira "${description}", sugira a categoria mais apropriada em português do Brasil. As categorias existentes são: ${existingCategoriesString}. Se nenhuma existente se encaixar perfeitamente, sugira uma nova categoria concisa ou a mais próxima. Retorne apenas o nome da categoria sugerida. Se a descrição for muito vaga, retorne "Outros".`;
             
             let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-            const payload = { contents: chatHistory };
+            const payload = { contents: chatHistory,
+                 safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                ]
+            };
             const apiKey = ""; 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
@@ -2203,7 +2567,7 @@
             const simplifiedTransactions = transactionsToAnalyze.map(t => ({
                 descricao: t.description,
                 valor: t.value,
-                tipo: t.fundamentalType, // Usar fundamentalType para a IA
+                tipo: t.fundamentalType, 
                 categoria: t.category,
                 data: t.date.substring(5) 
             }));
@@ -2216,13 +2580,20 @@
 
                 Forneça um resumo conciso em português do Brasil, com as seguintes seções:
                 1.  **Visão Geral do Mês:** Total de receitas, total de despesas e o saldo do mês (receitas - despesas).
-                2.  **Principais Categorias de Despesa:** Liste as 3 categorias onde mais se gastou e seus totais. Se houver menos de 3, liste as que existirem.
+                2.  **Principais Categorias de Despesa:** Liste as 3 principais categorias onde mais se gastou e seus totais. Se houver menos de 3, liste as que existirem.
                 3.  **Observações e Dicas (opcional):** Com base nos dados, forneça 1 ou 2 observações breves e acionáveis ou dicas gerais de economia. Foque em padrões de gastos. Se não houver insights claros, omita esta seção ou diga que os gastos foram diversificados.
                 Formate a resposta de forma clara, usando markdown simples para títulos (ex: ## Título), listas com marcadores (*) e negrito (**palavra**). Não use HTML.
             `;
             
             let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-            const payload = { contents: chatHistory };
+            const payload = { contents: chatHistory,
+                 safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                ]
+            };
             const apiKey = ""; 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
@@ -2251,8 +2622,8 @@
                         .replace(/^\* (.*$)/gm, '<li class="ml-5 list-disc text-gray-700">$1</li>')
                         .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
                         .replace(/\n/g, '<br>');
-                    // Envolve listas em <ul>
-                    analysisText = analysisText.replace(/<li/g, '<ul><li').replace(/<\/li>(?!<li)/g, '</li></ul>').replace(/<\/ul><ul>/g, '');
+                    
+                    analysisText = analysisText.replace(/<br>\s*<ul>/g, '<ul>').replace(/<\/ul>\s*<br>/g, '</ul>'); 
 
                     aiAnalysisModalBody.innerHTML = analysisText;
                     showFeedback("Análise de gastos concluída!", "success");
@@ -2277,6 +2648,226 @@
         closeAiAnalysisModalBtn.addEventListener('click', () => aiAnalysisModal.classList.add('hidden'));
         okAiAnalysisModalBtn.addEventListener('click', () => aiAnalysisModal.classList.add('hidden'));
 
+        // --- Metas Financeiras com IA ---
+        financialGoalsHeader.addEventListener('click', () => {
+            financialGoalsContent.classList.toggle('hidden');
+            financialGoalsArrow.classList.toggle('rotated');
+        });
+
+        addFinancialGoalForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('goal-name').value.trim();
+            const targetAmount = parseFloat(document.getElementById('goal-target-amount').value);
+            const deadline = document.getElementById('goal-deadline').value;
+
+            if (!name || isNaN(targetAmount) || targetAmount <= 0 || !deadline) {
+                showFeedback("Por favor, preencha todos os campos da meta corretamente.", "error");
+                return;
+            }
+            if (new Date(deadline) <= new Date()) {
+                showFeedback("O prazo da meta deve ser uma data futura.", "error");
+                return;
+            }
+
+            const newGoal = {
+                id: generateUniqueId(),
+                name,
+                targetAmount,
+                deadline,
+                currentAmountSaved: 0, 
+                aiPlan: "",
+                status: 'active' 
+            };
+
+            addGoalAiPlanBtn.disabled = true;
+            addGoalAiPlanSpinner.classList.remove('hidden');
+            const aiPlanText = await getAIGoalPlan(newGoal);
+            addGoalAiPlanBtn.disabled = false;
+            addGoalAiPlanSpinner.classList.add('hidden');
+            
+            if (aiPlanText) { 
+                newGoal.aiPlan = aiPlanText;
+                financialGoals.push(newGoal);
+                saveFinancialGoals();
+                renderFinancialGoals();
+                addFinancialGoalForm.reset();
+                showFeedback(`Meta "${name}" adicionada e plano gerado pela IA!`, "success");
+                aiGoalPlanModalTitle.textContent = `Plano para: ${newGoal.name}`;
+                aiGoalPlanModalBody.innerHTML = newGoal.aiPlan.replace(/\n/g, '<br>').replace(/## (.*$)/gm, '<h4 class="text-lg font-semibold text-gray-700 mt-3 mb-1">$1</h4>').replace(/^\* (.*$)/gm, '<li class="ml-5 list-disc text-gray-700">$1</li>');
+                aiGoalPlanModal.classList.remove('hidden');
+            } else {
+                showFeedback(`Não foi possível gerar o plano da IA para a meta "${name}". Tente novamente.`, "error");
+            }
+        });
+
+        const getAIGoalPlan = async (goal) => {
+            showFeedback(`Gerando plano com IA para "${goal.name}"...`, "info");
+
+            let totalExpensesLastMonth = 0;
+            let totalIncomeLastMonth = 0;
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+            transactions.forEach(t => {
+                const transactionDate = new Date(t.date);
+                if (transactionDate >= oneMonthAgo) {
+                    if (t.fundamentalType === 'despesa') totalExpensesLastMonth += t.value;
+                    else if (t.fundamentalType === 'receita') totalIncomeLastMonth += t.value;
+                }
+            });
+            
+            const categoriesLastMonth = transactions.reduce((acc, t) => {
+                const transactionDate = new Date(t.date);
+                 if (transactionDate >= oneMonthAgo && t.fundamentalType === 'despesa') {
+                    acc[t.category] = (acc[t.category] || 0) + t.value;
+                }
+                return acc;
+            }, {});
+            const categoriesString = Object.entries(categoriesLastMonth)
+                                     .map(([cat, val]) => `${cat}: ${formatCurrency(val)}`)
+                                     .join(', ') || "Nenhuma despesa registrada no último mês.";
+
+
+            const prompt = `
+                Eu quero atingir a meta financeira: "${goal.name}" de ${formatCurrency(goal.targetAmount)} até ${new Date(goal.deadline).toLocaleDateString('pt-BR')}.
+                Minha renda mensal aproximada no último mês foi de ${formatCurrency(totalIncomeLastMonth)} e meus gastos totais foram de ${formatCurrency(totalExpensesLastMonth)}.
+                Minhas principais categorias de despesa no último mês foram: ${categoriesString}.
+                
+                Crie um plano de economia realista em português do Brasil para me ajudar a atingir esta meta.
+                O plano deve incluir:
+                1.  **Economia Mensal Necessária:** Calcule quanto preciso economizar por mês.
+                2.  **Dicas Práticas (2-3):** Sugira ajustes específicos nos meus gastos (baseado nas categorias fornecidas, se possível) ou hábitos de economia para alcançar a economia mensal.
+                3.  **Observação Motivacional:** Uma frase curta de encorajamento.
+
+                Formate a resposta usando markdown simples (## para títulos, * para listas). Não use HTML.
+                Se a meta parecer irrealista dado o prazo e a renda/gastos, mencione isso de forma construtiva e sugira ajustar o prazo ou o valor da meta, ou aumentar a economia mensal drasticamente.
+            `;
+
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = { contents: chatHistory,
+                 safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                ]
+            };
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error(`Erro da API Gemini: ${response.status}`);
+                const result = await response.json();
+                if (result.candidates && result.candidates[0].content.parts[0].text) {
+                    return result.candidates[0].content.parts[0].text;
+                }
+                return "Não foi possível gerar um plano da IA.";
+            } catch (error) {
+                console.error("Erro ao gerar plano da meta com IA:", error);
+                showFeedback("Erro ao contatar IA para plano da meta.", "error");
+                return null; 
+            }
+        };
+
+        const renderFinancialGoals = () => {
+            financialGoalsList.innerHTML = '';
+            const activeGoals = financialGoals.filter(g => g.status === 'active');
+
+            if (activeGoals.length === 0) {
+                noFinancialGoalsMessage.classList.remove('hidden');
+                return;
+            }
+            noFinancialGoalsMessage.classList.add('hidden');
+
+            activeGoals.forEach(goal => {
+                const li = document.createElement('li');
+                const deadlineDate = new Date(goal.deadline);
+                const today = new Date();
+                const timeDiff = deadlineDate.getTime() - today.getTime();
+                const daysRemaining = Math.max(0, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
+                const monthsRemaining = Math.max(0, Math.ceil(daysRemaining / 30.44)); 
+
+
+                li.innerHTML = `
+                    <div class="goal-details">
+                        <h4 class="text-lg font-semibold text-green-700">${goal.name}</h4>
+                        <p><strong>Meta:</strong> ${formatCurrency(goal.targetAmount)}</p>
+                        <p><strong>Prazo:</strong> ${deadlineDate.toLocaleDateString('pt-BR')} (${daysRemaining} dias / ${monthsRemaining} meses restantes)</p>
+                        <p><strong>Status:</strong> ${goal.status === 'active' ? 'Ativa' : 'Concluída'}</p>
+                    </div>
+                    <div class="ai-plan-content mt-2 ${goal.aiPlan ? '' : 'hidden'}">
+                        <h5 class="text-md font-semibold text-gray-600 mb-1">Plano da IA:</h5>
+                        <div class="text-sm text-gray-700">${goal.aiPlan ? goal.aiPlan.replace(/\n/g, '<br>').replace(/## (.*$)/gm, '<strong class="block mt-2 mb-1 text-md">$1</strong>').replace(/^\* (.*$)/gm, '<li class="ml-4 list-disc">$1</li>') : 'Nenhum plano gerado ainda.'}</div>
+                    </div>
+                    <div class="goal-actions mt-3">
+                        <button data-goal-id="${goal.id}" class="toggle-ai-plan-btn px-3 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                            ${goal.aiPlan ? 'Ver/Ocultar Plano da IA' : 'Obter Plano da IA ✨'}
+                        </button>
+                        <button data-goal-id="${goal.id}" class="complete-goal-btn px-3 py-1.5 text-sm bg-green-500 text-white rounded-md hover:bg-green-600">Marcar Concluída</button>
+                        <button data-goal-id="${goal.id}" class="delete-goal-btn px-3 py-1.5 text-sm bg-red-500 text-white rounded-md hover:bg-red-600">Excluir</button>
+                    </div>
+                `;
+                financialGoalsList.appendChild(li);
+
+                li.querySelector('.toggle-ai-plan-btn').addEventListener('click', async (e) => {
+                    const goalId = e.currentTarget.dataset.goalId;
+                    const goalIndex = financialGoals.findIndex(g => g.id === goalId);
+                    if (goalIndex > -1) {
+                        const planContentDiv = e.currentTarget.closest('li').querySelector('.ai-plan-content');
+                        if (financialGoals[goalIndex].aiPlan && !planContentDiv.classList.contains('hidden') && e.currentTarget.textContent.includes('Ocultar')) {
+                            planContentDiv.classList.add('hidden');
+                            e.currentTarget.textContent = 'Ver Plano da IA';
+                        } else {
+                            if (!financialGoals[goalIndex].aiPlan) {
+                                e.currentTarget.disabled = true;
+                                e.currentTarget.innerHTML = 'Gerando... <span class="ai-btn-spinner"></span>';
+                                const plan = await getAIGoalPlan(financialGoals[goalIndex]);
+                                if (plan) {
+                                    financialGoals[goalIndex].aiPlan = plan;
+                                    saveFinancialGoals();
+                                    planContentDiv.querySelector('div').innerHTML = plan.replace(/\n/g, '<br>').replace(/## (.*$)/gm, '<strong class="block mt-2 mb-1 text-md">$1</strong>').replace(/^\* (.*$)/gm, '<li class="ml-4 list-disc">$1</li>');
+                                }
+                                e.currentTarget.disabled = false;
+                            }
+                            planContentDiv.classList.remove('hidden');
+                            e.currentTarget.innerHTML = 'Ocultar Plano da IA';
+                            if(!financialGoals[goalIndex].aiPlan) e.currentTarget.textContent = 'Obter Plano da IA ✨'; 
+                        }
+                    }
+                });
+
+                li.querySelector('.complete-goal-btn').addEventListener('click', (e) => {
+                    const goalId = e.currentTarget.dataset.goalId;
+                    const goalIndex = financialGoals.findIndex(g => g.id === goalId);
+                    if (goalIndex > -1) {
+                        financialGoals[goalIndex].status = 'completed';
+                        saveFinancialGoals();
+                        renderFinancialGoals(); 
+                        showFeedback(`Meta "${financialGoals[goalIndex].name}" marcada como concluída!`, 'success');
+                    }
+                });
+                li.querySelector('.delete-goal-btn').addEventListener('click', (e) => {
+                    const goalId = e.currentTarget.dataset.goalId;
+                    financialGoals = financialGoals.filter(g => g.id !== goalId);
+                    saveFinancialGoals();
+                    renderFinancialGoals();
+                    showFeedback("Meta excluída.", "info");
+                });
+            });
+        };
+
+        financialGoalsHeader.addEventListener('click', () => {
+            financialGoalsContent.classList.toggle('hidden');
+            financialGoalsArrow.classList.toggle('rotated');
+        });
+        closeAiGoalPlanModalBtn.addEventListener('click', () => aiGoalPlanModal.classList.add('hidden'));
+        okAiGoalPlanModalBtn.addEventListener('click', () => aiGoalPlanModal.classList.add('hidden'));
+
 
         // Carregamento inicial
         window.onload = () => {
@@ -2288,26 +2879,38 @@
 </html>
 ```
 
-**Principais Alterações Relacionadas aos Novos Tipos de Transação:**
+**Resumo das Novas Adições (Metas Financeiras com IA):**
 
 * **HTML:**
-    * O `<select id="type">` no formulário de transação agora inclui as opções: "Saque (da conta)", "PIX Enviado (Pagamento)", e "PIX Recebido".
+    * Uma nova seção colapsável "✨ Minhas Metas Financeiras com IA" foi adicionada.
+    * Dentro dela, um formulário para o usuário inserir o nome da meta, o valor total desejado e o prazo.
+    * Um botão "Adicionar Meta e Obter Plano da IA ✨" para submeter o formulário e acionar a IA.
+    * Uma lista `<ul>` (`id="financial-goals-list"`) para exibir as metas ativas.
+    * Um novo modal (`id="ai-goal-plan-modal"`) para exibir o plano de economia gerado pela IA.
 * **JavaScript:**
-    * **`transactionForm.addEventListener('submit', ...)`:**
-        * Foi adicionada uma propriedade `fundamentalType` a cada nova transação.
-            * Para "Receita" e "PIX Recebido", `fundamentalType` é "receita".
-            * Para "Despesa", "Saque", e "PIX Enviado", `fundamentalType` é "despesa".
-        * A lógica de atualização de saldo da conta e limite de cartão agora usa `fundamentalType` para decidir se adiciona ou subtrai o valor. Isso garante que "Saque" e "PIX Enviado" funcionem como despesas e "PIX Recebido" como receita em termos de impacto no saldo/limite.
-    * **`renderTransactions()`:**
-        * A exibição do "Tipo" na tabela agora mostra os nomes completos ("Saque", "PIX Enviado", "PIX Recebido").
-        * A cor do valor (vermelho/verde) é baseada no `fundamentalType`.
-    * **`performDelete()` e `markTransactionAsPaid()`:**
-        * A lógica de estorno/aplicação de saldo também foi ajustada para usar `fundamentalType`.
-    * **`updateSummary()` e `renderMonthlySummary()`:**
-        * Continuam a usar `fundamentalType` para calcular totais de despesas e receitas, garantindo que os novos tipos sejam contabilizados corretamente.
-    * **`downloadXlsxBtn`:**
-        * A coluna "Tipo" na planilha exportada agora refletirá os novos nomes dos tipos.
-    * **`getAIExpenseAnalysis()`:**
-        * Ao enviar dados para a IA, o `fundamentalType` é usado para classificar a transação como receita ou despesa para a análise.
+    * **`financialGoals` Array:** Para armazenar os objetos das metas.
+    * **`saveFinancialGoals()` e `loadFinancialGoals()`:** Para persistência no localStorage.
+    * **`renderFinancialGoals()`:**
+        * Exibe cada meta ativa com seus detalhes (nome, valor, prazo, dias/meses restantes).
+        * Mostra o plano da IA (se já gerado) em uma área expansível.
+        * Inclui botões para:
+            * "Ver/Ocultar Plano da IA" (ou "Obter Plano da IA ✨" se ainda não houver plano).
+            * "Marcar como Concluída".
+            * "Excluir Meta".
+    * **Event Listener para `addFinancialGoalForm`:**
+        * Valida os dados da meta.
+        * Cria um novo objeto de meta.
+        * Chama `getAIGoalPlan()` para obter o plano da IA.
+        * Se o plano for gerado com sucesso, adiciona a meta à lista, salva e renderiza.
+        * Mostra o plano no modal.
+    * **`getAIGoalPlan(goal)`:**
+        * Coleta informações contextuais (renda/despesas médias do último mês, principais categorias de gastos).
+        * Cria um prompt detalhado para o Gemini, pedindo um plano de economia, incluindo economia mensal necessária e dicas práticas.
+        * Faz a chamada à API Gemini.
+        * Retorna o texto do plano gerado pela IA.
+    * **Event Listeners nos botões de cada meta:** Para ver/atualizar plano, marcar como concluída e excluir.
+    * **Event Listeners para o modal de plano de meta:** Para fechar.
 
-Testa essas novas funcionalidades e veja se atende às suas necessidad
+Agora você tem uma nova seção para definir suas metas financeiras e receber um plano personalizado da IA para te ajudar a alcançá-las!
+
+Experimente adicionar algumas metas e veja o que a IA sugere. Se tiver mais ideias ou precisar de ajustes, é só fal
