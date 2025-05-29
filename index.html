@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle Financeiro Pessoal Completo</title>
+    <title>Controle Financeiro Pessoal Completo com IA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js' defer></script>
     <style>
         /* Define a fonte Inter para toda a página */
         body {
@@ -21,6 +23,14 @@
             margin-top: 16px;
             border-radius: 8px;
             font-weight: 500;
+            position: fixed; /* Para sobrepor outros elementos */
+            bottom: 20px; /* Distância do fundo */
+            left: 50%; /* Centraliza horizontalmente */
+            transform: translateX(-50%); /* Ajuste fino para centralização */
+            z-index: 2000; /* Garante que fique acima de outros modais/elementos */
+            min-width: 300px; /* Largura mínima */
+            text-align: center; /* Centraliza o texto */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Sombra suave */
         }
 
         .feedback-success {
@@ -71,10 +81,18 @@
         }
 
         /* Estilo para transações pagas */
-        .paid-transaction {
+        .paid-transaction td { /* Aplicar a toda a linha */
             text-decoration: line-through;
-            color: #6b7280; /* gray-500 */
+            color: #9ca3af; /* gray-400, um pouco mais claro para melhor leitura */
         }
+         /* Estilo para transações pendentes de meses anteriores */
+        .pending-previous-month td {
+            font-style: italic;
+        }
+        .pending-previous-month:not(.paid-transaction) td {
+             font-weight: 600; /* Negrito para pendentes */
+        }
+
 
         /* Estilos para o modal */
         .modal {
@@ -88,6 +106,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow-y: auto; 
         }
 
         .modal-content {
@@ -96,7 +115,9 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 90%;
-            max-width: 500px;
+            max-width: 600px; /* Aumentado para análise */
+            margin-top: 2rem; 
+            margin-bottom: 2rem; 
         }
 
         .modal-header {
@@ -126,15 +147,28 @@
             font-weight: 500;
             color: #4a5568;
         }
+        .modal-body p { 
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+        .modal-body strong { 
+            font-weight: 600;
+            color: #1e40af; 
+        }
+
 
         .modal-body input[type="text"],
-        .modal-body input[type="number"] {
+        .modal-body input[type="number"],
+        .modal-body input[type="date"],
+        .modal-body select {  /* Adicionado select aqui */
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #e2e8f0;
             border-radius: 0.375rem;
             margin-bottom: 1rem;
+            background-color: #fff; /* Garante fundo branco para selects no modal */
         }
+
 
         .modal-footer {
             display: flex;
@@ -142,11 +176,34 @@
             gap: 1rem;
             margin-top: 1.5rem;
         }
+        
+        #imported-transactions-table-body input, 
+        #imported-transactions-table-body select,
+        #imported-transactions-table-body textarea {
+            font-size: 0.875rem; 
+            padding: 0.25rem 0.5rem; 
+        }
+        #imported-transactions-table-body textarea {
+            min-height: 40px; 
+        }
+        .ai-btn-spinner { 
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            margin-left: 0.5em;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8 lg:p-10">
     <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8">
-        <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-8">Controle Financeiro Pessoal Completo</h1>
+        <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-8">Controle Financeiro Pessoal Completo com IA</h1>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div class="bg-blue-100 p-4 rounded-lg shadow-md">
@@ -176,7 +233,7 @@
             </div>
             <div id="detailed-card-bills-content" class="hidden">
                 <ul id="detailed-card-bills-list" class="bg-white rounded-md shadow-sm divide-y divide-gray-200">
-                    </ul>
+                </ul>
                 <p id="no-card-bills-message" class="text-center text-gray-500 mt-4 hidden">Nenhuma fatura de cartão para exibir.</p>
             </div>
         </div>
@@ -218,7 +275,7 @@
             <div>
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">Minhas Contas</h3>
                 <ul id="accounts-list" class="bg-white rounded-md shadow-sm divide-y divide-gray-200">
-                    </ul>
+                </ul>
             </div>
         </div>
 
@@ -255,7 +312,7 @@
             <div>
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">Meus Cartões</h3>
                 <ul id="credit-cards-list" class="bg-white rounded-md shadow-sm divide-y divide-gray-200">
-                    </ul>
+                </ul>
             </div>
         </div>
 
@@ -283,21 +340,31 @@
                             class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         <option value="receita">Receita</option>
                         <option value="despesa">Despesa</option>
+                        <option value="saque">Saque (da conta)</option>
+                        <option value="pix_enviado">PIX Enviado (Pagamento)</option>
+                        <option value="pix_recebido">PIX Recebido</option>
                     </select>
                 </div>
                 <div>
                     <label for="category-select" class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-                    <select id="category-select" required
-                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <div class="flex items-center space-x-2">
+                        <select id="category-select" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </select>
+                        <button type="button" id="ai-suggest-category-btn" title="Sugerir Categoria com IA" class="mt-1 p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                                <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.58 5.48l-.386 1.161a.217.217 0 0 1-.412 0L3.404 5.481A1.73 1.73 0 0 0 2.306 4.384l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.404 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                            </svg>
+                            <span id="ai-suggest-category-spinner" class="ai-btn-spinner hidden"></span>
+                        </button>
+                    </div>
                     <input type="text" id="new-category-input" placeholder="Nova Categoria"
                            class="mt-2 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hidden">
                 </div>
                 <div>
-                    <label for="account-select" class="block text-sm font-medium text-gray-700 mb-1">Conta / Cartão</label>
-                    <select id="account-select" required
+                    <label for="account-select" class="block text-sm font-medium text-gray-700 mb-1">Conta / Cartão (Opcional)</label>
+                    <select id="account-select"
                             class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        <option value="">Selecione uma conta</option>
                         </select>
                 </div>
                 <div class="col-span-1 sm:col-span-2 lg:col-span-1">
@@ -328,17 +395,17 @@
             
             <div id="import-section-content" class="hidden">
                 <p class="text-sm text-gray-600 mb-4">
-                    Seu arquivo deve ser OFX, CSV ou Excel e conter informações de transação com Data, Descrição, Valor e Tipo.
+                    Seu arquivo deve ser OFX, CSV, Excel, Word (.docx) ou Imagem (.png, .jpg) e conter informações de transação com Data, Descrição, Valor e Tipo.
                     <span class="font-bold text-red-600">Atenção: Integração direta com bancos (Open Finance) não é possível em uma aplicação web no navegador por motivos de segurança e privacidade.</span>
-                    <span class="font-bold text-red-600">Importação por imagem não é suportada (requer OCR e processamento de servidor).</span>
+                    <span class="font-bold text-orange-600">Importação de Word e Imagem é experimental: a extração automática é limitada e exigirá revisão cuidadosa dos dados.</span>
                 </p>
 
                 <div class="p-4 bg-gray-50 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold text-gray-700 mb-3">Carregar Arquivo de Extrato</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                         <div>
-                            <label for="file-input" class="block text-sm font-medium text-gray-700 mb-1">Selecione o Arquero</label>
-                            <input type="file" id="file-input" accept=".ofx, .csv, .xls, .xlsx"
+                            <label for="file-input" class="block text-sm font-medium text-gray-700 mb-1">Selecione o Arquivo</label>
+                            <input type="file" id="file-input" accept=".ofx, .csv, .xls, .xlsx, .doc, .docx, .png, .jpg, .jpeg, .gif, .bmp, .tiff, .webp"
                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer">
                         </div>
                         <div class="flex justify-end col-span-full sm:col-span-1">
@@ -350,29 +417,28 @@
                     </div>
                 </div>
             </div>
-            <div id="feedback-message" class="hidden"></div>
-        </div>
-
-        <div id="import-review-section" class="mb-8 border-b pb-6 border-gray-200 hidden">
+            </div>
+         <div id="feedback-message"></div> <div id="import-review-section" class="mb-8 border-b pb-6 border-gray-200 hidden">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Revisar Transações Importadas</h2>
             <p class="text-sm text-gray-600 mb-4">
-                Vincule cada transação importada a uma de suas contas ou cartões.
+                Vincule cada transação importada a uma de suas contas ou cartões e ajuste os dados conforme necessário.
+                 <span class="font-bold text-orange-600">Para Word/Imagem, a descrição pode conter o texto extraído; ajuste os campos.</span>
             </p>
             <div class="overflow-x-auto rounded-lg shadow-md mb-4">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-yellow-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Data</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Descrição</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Valor</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Tipo</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Categoria</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Vincular a</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Data</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Descrição</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Valor</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Tipo</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Categoria</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Vincular a</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                         </tr>
                     </thead>
                     <tbody id="imported-transactions-table-body" class="bg-white divide-y divide-gray-200">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
             <div class="flex justify-end gap-4">
@@ -391,12 +457,23 @@
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Baixar Planilha</h2>
             <button id="download-xlsx-btn"
                     class="w-full sm:w-auto px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">
-                Baixar Transações do Mês como Excel (.xlsx)
+                Baixar Transações (com pendências) como Excel (.xlsx)
             </button>
         </div>
 
         <div>
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Minhas Transações</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-gray-700">Minhas Transações</h2>
+                <button id="ai-analyze-expenses-btn" class="px-4 py-2 bg-teal-500 text-white font-semibold rounded-md shadow-md hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400 transition duration-150 ease-in-out flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard2-data mr-2" viewBox="0 0 16 16">
+                        <path d="M9.5 0a.5.5 0 0 1 .5.5.5.5 0 0 0 .5.5.5.5 0 0 1 .5.5V2a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 5 2V1.5a.5.5 0 0 1 .5-.5.5.5 0 0 0 .5-.5.5.5 0 0 1 .5-.5z"/>
+                        <path d="M3 2.5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 0 0-1h-.5A1.5 1.5 0 0 0 2 2.5v12A1.5 1.5 0 0 0 3.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 12.5 1H12a.5.5 0 0 0 0 1h.5a.5.5 0 0 1 .5.5v12a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5z"/>
+                        <path d="M10 7a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0zm-6 4a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0zm4-3a1 1 0 0 1 1 1v3a1 1 0 1 1-2 0V9a1 1 0 0 1 1-1"/>
+                    </svg>
+                    Analisar Gastos do Mês com IA
+                    <span id="ai-analyze-expenses-spinner" class="ai-btn-spinner hidden"></span>
+                </button>
+            </div>
             <div class="flex items-center space-x-4 mb-4">
                 <button id="prev-month-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Anterior</button>
                 <span id="current-month-display" class="text-lg font-semibold text-gray-800"></span>
@@ -418,7 +495,7 @@
                         </tr>
                     </thead>
                     <tbody id="transaction-list" class="bg-white divide-y divide-gray-200">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
             <p id="no-transactions-message" class="text-center text-gray-500 mt-4 hidden">Nenhuma transação registrada ainda.</p>
@@ -434,11 +511,19 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="edit-transaction-id">
+                
+                <label for="edit-date">Data:</label>
+                <input type="date" id="edit-date">
+
                 <label for="edit-description">Descrição:</label>
-                <input type="text" id="edit-description" readonly class="bg-gray-100 cursor-not-allowed">
+                <input type="text" id="edit-description">
 
                 <label for="edit-value">Valor:</label>
-                <input type="text" id="edit-value" readonly class="bg-gray-100 cursor-not-allowed">
+                <input type="number" id="edit-value" step="0.01">
+                
+                <label for="edit-category">Categoria:</label>
+                <select id="edit-category" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm mb-4"></select>
+                <input type="text" id="edit-new-category" placeholder="Nova Categoria (se 'Adicionar Nova...' selecionada)" class="hidden w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm mb-4">
 
                 <label for="edit-installments-total">Parcelas (Total):</label>
                 <input type="text" id="edit-installments-total" readonly class="bg-gray-100 cursor-not-allowed">
@@ -454,6 +539,24 @@
                 <button id="cancel-edit-transaction-btn"
                         class="px-4 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition duration-150 ease-in-out">
                     Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ai-analysis-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="ai-analysis-modal-title">Análise de Gastos com IA</h3>
+                <button class="modal-close-btn" id="close-ai-analysis-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="ai-analysis-modal-body">
+                <p>Carregando análise...</p>
+            </div>
+            <div class="modal-footer">
+                <button id="ok-ai-analysis-modal-btn"
+                        class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 transition duration-150 ease-in-out">
+                    OK
                 </button>
             </div>
         </div>
@@ -475,7 +578,7 @@
         let currentYear = new Date().getFullYear();
 
         // Instância do Chart.js para o gráfico de despesas
-        let expensesChart = null; // Chart.js instance is no longer needed as the dashboard is removed.
+        let expensesChart = null; 
 
         // Referências aos elementos do DOM
         const totalReceitasEl = document.getElementById('total-receitas');
@@ -490,20 +593,23 @@
         const accountsList = document.getElementById('accounts-list');
         const addCreditCardForm = document.getElementById('add-credit-card-form');
         const creditCardsList = document.getElementById('credit-cards-list');
-        const accountSelect = document.getElementById('account-select'); // Para transações manuais
-        const accountTypeSelect = document.getElementById('account-type'); // Para mostrar/ocultar limite de cheque especial
+        const accountSelect = document.getElementById('account-select'); 
+        const accountTypeSelect = document.getElementById('account-type'); 
         const initialBalanceInput = document.getElementById('initial-balance');
-        const initialValueLabel = document.getElementById('initial-value-label'); // Get the label element
+        const initialValueLabel = document.getElementById('initial-value-label'); 
         const cardDueDayInput = document.getElementById('card-due-day');
 
         // Formulário de Transações
         const transactionForm = document.getElementById('transaction-form');
         const transactionList = document.getElementById('transaction-list');
         const installmentsInput = document.getElementById('installments');
-        const installmentsPaidInput = document.getElementById('installments-paid'); // Reintroduzido
+        const installmentsPaidInput = document.getElementById('installments-paid'); 
         const transactionTypeSelect = document.getElementById('type');
         const categorySelect = document.getElementById('category-select');
         const newCategoryInput = document.getElementById('new-category-input');
+        const aiSuggestCategoryBtn = document.getElementById('ai-suggest-category-btn'); 
+        const aiSuggestCategorySpinner = document.getElementById('ai-suggest-category-spinner'); 
+
 
         // Seções de Importação
         const importHeader = document.getElementById('import-header');
@@ -522,9 +628,7 @@
         const prevMonthBtn = document.getElementById('prev-month-btn');
         const nextMonthBtn = document.getElementById('next-month-btn');
         const currentMonthDisplay = document.getElementById('current-month-display');
-        // monthlyIncomeEl and monthlyBalanceEl are removed from HTML, so no need to reference them here.
-
-
+       
         // Download
         const downloadXlsxBtn = document.getElementById('download-xlsx-btn');
 
@@ -541,35 +645,37 @@
         const saveEditTransactionBtn = document.getElementById('save-edit-transaction-btn');
         const cancelEditTransactionBtn = document.getElementById('cancel-edit-transaction-btn');
         const editTransactionIdInput = document.getElementById('edit-transaction-id');
+        const editDateInput = document.getElementById('edit-date'); 
         const editDescriptionInput = document.getElementById('edit-description');
         const editValueInput = document.getElementById('edit-value');
+        const editCategorySelect = document.getElementById('edit-category'); 
+        const editNewCategoryInput = document.getElementById('edit-new-category'); 
         const editInstallmentsTotalInput = document.getElementById('edit-installments-total');
         const editInstallmentsPaidInput = document.getElementById('edit-installments-paid');
 
+        // Elementos da Análise de Gastos com IA
+        const aiAnalyzeExpensesBtn = document.getElementById('ai-analyze-expenses-btn');
+        const aiAnalyzeExpensesSpinner = document.getElementById('ai-analyze-expenses-spinner');
+        const aiAnalysisModal = document.getElementById('ai-analysis-modal');
+        const aiAnalysisModalTitle = document.getElementById('ai-analysis-modal-title');
+        const aiAnalysisModalBody = document.getElementById('ai-analysis-modal-body');
+        const closeAiAnalysisModalBtn = document.getElementById('close-ai-analysis-modal');
+        const okAiAnalysisModalBtn = document.getElementById('ok-ai-analysis-modal-btn');
+
 
         // --- Funções Utilitárias ---
-
-        /**
-         * Exibe uma mensagem de feedback para o usuário.
-         * @param {string} message - A mensagem a ser exibida.
-         * @param {'success'|'error'|'info'} type - O tipo de mensagem (afeta a cor).
-         */
         const showFeedback = (message, type) => {
             feedbackMessageEl.textContent = message;
             feedbackMessageEl.classList.remove('hidden', 'feedback-success', 'feedback-error', 'feedback-info');
             feedbackMessageEl.classList.add(`feedback-${type}`);
-            feedbackMessageEl.style.display = 'block'; // Garante que esteja visível
-
+            feedbackMessageEl.style.display = 'block'; 
             setTimeout(() => {
-                feedbackMessageEl.style.display = 'none'; // Oculta após 5 segundos
-            }, 5000);
+                if (feedbackMessageEl.textContent === message) { 
+                   feedbackMessageEl.style.display = 'none'; 
+                }
+            }, 7000); 
         };
 
-        /**
-         * Formata um valor numérico para o formato de moeda BRL.
-         * @param {number} value - O valor a ser formatado.
-         * @returns {string} O valor formatado como moeda.
-         */
         const formatCurrency = (value) => {
             return new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
@@ -577,26 +683,19 @@
             }).format(value);
         };
 
-        /**
-         * Gera um ID único simples.
-         * @returns {string} Um ID único.
-         */
         const generateUniqueId = () => '_' + Math.random().toString(36).substr(2, 9);
 
         // --- Funções para adicionar Event Listeners ---
-
-        /** Adiciona event listeners para os botões de exclusão. */
         const addDeleteListeners = () => {
             document.querySelectorAll('.delete-btn').forEach(button => {
                 button.onclick = (e) => {
                     const id = e.currentTarget.dataset.id;
                     const type = e.currentTarget.dataset.type;
-                    performDelete(id, type); // Chama a função de exclusão diretamente
+                    performDelete(id, type); 
                 };
             });
         };
 
-        /** Adiciona event listeners para os botões de "Marcar como Pago". */
         const addPayTransactionListeners = () => {
             document.querySelectorAll('.pay-transaction-btn').forEach(button => {
                 button.onclick = (e) => {
@@ -606,7 +705,6 @@
             });
         };
 
-        /** Adiciona event listeners para os botões de "Editar Transação". */
         const addEditTransactionListeners = () => {
             document.querySelectorAll('.edit-transaction-btn').forEach(button => {
                 button.onclick = (e) => {
@@ -617,97 +715,58 @@
         };
 
         // --- Persistência de Dados (localStorage) ---
-
-        /**
-         * Carrega todos os dados do localStorage ao iniciar a aplicação.
-         */
         const loadData = () => {
             const storedAccounts = localStorage.getItem('financialAccounts');
-            if (storedAccounts) {
-                accounts = JSON.parse(storedAccounts);
-            }
+            if (storedAccounts) accounts = JSON.parse(storedAccounts);
+            
             const storedCreditCards = localStorage.getItem('financialCreditCards');
-            if (storedCreditCards) {
-                creditCards = JSON.parse(storedCreditCards);
-            }
+            if (storedCreditCards) creditCards = JSON.parse(storedCreditCards);
+            
             const storedTransactions = localStorage.getItem('financialFinancialTransactions');
-            if (storedTransactions) {
-                transactions = JSON.parse(storedTransactions);
-            }
+            if (storedTransactions) transactions = JSON.parse(storedTransactions);
+            
             const storedCategories = localStorage.getItem('financialCategories');
-            if (storedCategories) {
-                categories = JSON.parse(storedCategories);
-            }
+            if (storedCategories) categories = JSON.parse(storedCategories);
 
-            // Renderiza e atualiza a UI com os dados carregados
             renderAccounts();
             renderCreditCards();
             populateAccountSelects();
-            populateCategorySelect();
+            populateCategorySelect(); 
+            populateCategorySelect(editCategorySelect); 
             renderTransactions();
-            updateSummary(); // This will now correctly calculate totalReceitas based on available funds
+            updateSummary(); 
             renderMonthlySummary();
             renderDetailedCardBills();
-            checkCreditCardDueDates(); // Verifica datas de vencimento ao carregar
+            checkCreditCardDueDates(); 
         };
 
-        /** Salva as contas no localStorage. */
-        const saveAccounts = () => {
-            localStorage.setItem('financialAccounts', JSON.stringify(accounts));
-        };
-
-        /** Salva os cartões de crédito no localStorage. */
-        const saveCreditCards = () => {
-            localStorage.setItem('financialCreditCards', JSON.stringify(creditCards));
-        };
-
-        /** Salva as transações no localStorage. */
-        const saveTransactions = () => {
-            localStorage.setItem('financialFinancialTransactions', JSON.stringify(transactions));
-        };
-
-        /** Salva as categorias no localStorage. */
-        const saveCategories = () => {
-            localStorage.setItem('financialCategories', JSON.stringify(categories));
-        };
+        const saveAccounts = () => localStorage.setItem('financialAccounts', JSON.stringify(accounts));
+        const saveCreditCards = () => localStorage.setItem('financialCreditCards', JSON.stringify(creditCards));
+        const saveTransactions = () => localStorage.setItem('financialFinancialTransactions', JSON.stringify(transactions));
+        const saveCategories = () => localStorage.setItem('financialCategories', JSON.stringify(categories));
 
         // --- Gerenciamento de Contas e Cartões de Crédito ---
-
-        // Event listener para mudança no tipo de conta (muda o rótulo e placeholder)
         accountTypeSelect.addEventListener('change', () => {
             if (accountTypeSelect.value === 'overdraft') {
                 initialValueLabel.textContent = 'Limite (R$)';
                 initialBalanceInput.placeholder = 'Limite (R$)';
-            } else { // 'cash'
+            } else { 
                 initialValueLabel.textContent = 'Saldo Inicial (R$)';
                 initialBalanceInput.placeholder = 'Saldo Inicial (R$)';
             }
         });
 
-        // Adiciona uma nova conta
         addAccountForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('account-name').value.trim();
             const type = document.getElementById('account-type').value;
-            const initialValue = parseFloat(initialBalanceInput.value) || 0; // Renamed to initialValue for clarity
+            const initialValue = parseFloat(initialBalanceInput.value) || 0; 
 
             let newAccount;
             if (type === 'overdraft') {
-                newAccount = {
-                    id: generateUniqueId(),
-                    name,
-                    type,
-                    balance: 0, // Current amount used, starts at 0
-                    limit: initialValue // Max overdraft limit
-                };
-            } else { // type === 'cash'
-                newAccount = {
-                    id: generateUniqueId(),
-                    name,
-                    type,
-                    balance: initialValue, // Current cash balance
-                    limit: 0 // No limit for cash accounts
-                };
+                newAccount = { id: generateUniqueId(), name, type, balance: 0, limit: initialValue };
+            } else { 
+                newAccount = { id: generateUniqueId(), name, type, balance: initialValue, limit: 0 };
             }
 
             if (name) {
@@ -717,7 +776,6 @@
                 populateAccountSelects();
                 updateSummary();
                 addAccountForm.reset();
-                // Reset label and placeholder after form submission
                 initialValueLabel.textContent = 'Saldo Inicial (R$)';
                 initialBalanceInput.placeholder = 'Saldo Inicial (R$)';
                 showFeedback('Conta adicionada com sucesso!', 'success');
@@ -726,7 +784,6 @@
             }
         });
 
-        // Adiciona um novo cartão de crédito
         addCreditCardForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('card-name').value.trim();
@@ -734,14 +791,7 @@
             const dueDay = parseInt(cardDueDayInput.value);
 
             if (name && limit > 0 && dueDay >= 1 && dueDay <= 31) {
-                const newCard = {
-                    id: generateUniqueId(),
-                    name,
-                    limit,
-                    availableLimit: limit, // Limite disponível inicial é o limite total
-                    currentBillAmount: 0, // Fatura atual começa em 0
-                    dueDay // Dia do mês em que a fatura vence
-                };
+                const newCard = { id: generateUniqueId(), name, limit, availableLimit: limit, currentBillAmount: 0, dueDay };
                 creditCards.push(newCard);
                 saveCreditCards();
                 renderCreditCards();
@@ -753,7 +803,6 @@
             }
         });
 
-        /** Renderiza a lista de contas na UI. */
         const renderAccounts = () => {
             accountsList.innerHTML = '';
             if (accounts.length === 0) {
@@ -763,7 +812,6 @@
             accounts.forEach(account => {
                 const li = document.createElement('li');
                 li.className = 'p-4 flex justify-between items-center bg-white hover:bg-gray-50';
-                
                 let accountDetailsHtml = '';
                 if (account.type === 'overdraft') {
                     accountDetailsHtml = `
@@ -771,30 +819,22 @@
                         <span class="text-sm text-gray-500 ml-2">(Cheque Especial)</span>
                         <p class="text-gray-600 text-sm">Limite: <span class="font-bold">${formatCurrency(account.limit)}</span></p>
                         <p class="text-gray-600 text-sm">Utilizado: <span class="font-bold">${formatCurrency(Math.abs(account.balance))}</span></p>
-                        <p class="text-gray-600 text-sm">Disponível: <span class="font-bold">${formatCurrency(account.limit + account.balance)}</span></p>
-                    `;
-                } else { // type === 'cash'
+                        <p class="text-gray-600 text-sm">Disponível: <span class="font-bold">${formatCurrency(account.limit + account.balance)}</span></p>`;
+                } else { 
                     accountDetailsHtml = `
                         <span class="font-semibold text-gray-800">${account.name}</span>
                         <span class="text-sm text-gray-500 ml-2">(Dinheiro)</span>
-                        <p class="text-gray-600 text-sm">Saldo: <span class="font-bold">${formatCurrency(account.balance)}</span></p>
-                    `;
+                        <p class="text-gray-600 text-sm">Saldo: <span class="font-bold">${formatCurrency(account.balance)}</span></p>`;
                 }
-
-                li.innerHTML = `
-                    <div>
-                        ${accountDetailsHtml}
-                    </div>
+                li.innerHTML = `<div>${accountDetailsHtml}</div>
                     <button data-id="${account.id}" data-type="account" class="delete-btn text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition duration-150 ease-in-out">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
-                `;
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>`;
                 accountsList.appendChild(li);
             });
             addDeleteListeners();
         };
 
-        /** Renderiza a lista de cartões de crédito na UI. */
         const renderCreditCards = () => {
             creditCardsList.innerHTML = '';
             if (creditCards.length === 0) {
@@ -802,7 +842,6 @@
                 return;
             }
             creditCards.forEach(card => {
-                // Calculate currentBillAmount for the current month's unpaid expenses
                 let currentMonthBill = transactions.reduce((sum, t) => {
                     const transactionDate = new Date(t.date);
                     if (t.accountId === card.id && t.type === 'despesa' && !t.isPaid &&
@@ -811,7 +850,6 @@
                     }
                     return sum;
                 }, 0);
-
                 const li = document.createElement('li');
                 li.className = 'p-4 flex justify-between items-center bg-white hover:bg-gray-50';
                 li.innerHTML = `
@@ -824,466 +862,545 @@
                         <p class="text-gray-600 text-sm">Vencimento: Dia ${card.dueDay}</p>
                     </div>
                     <button data-id="${card.id}" data-type="creditCard" class="delete-btn text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition duration-150 ease-in-out">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
-                `;
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>`;
                 creditCardsList.appendChild(li);
             });
             addDeleteListeners();
         };
 
-        /** Popula os dropdowns de seleção de conta/cartão. */
-        const populateAccountSelects = () => {
-            accountSelect.innerHTML = '<option value="">Selecione uma conta</option>'; // Limpa opções existentes
-            // Adiciona contas de cheque especial/dinheiro
+        const populateAccountSelects = (targetSelect = accountSelect) => { // Permite especificar qual select popular
+            targetSelect.innerHTML = ''; 
+            
+            const noLinkOption = document.createElement('option');
+            noLinkOption.value = ""; 
+            noLinkOption.textContent = targetSelect === accountSelect ? "Não Vincular / Geral" : "Selecione"; // Label diferente para revisão
+            targetSelect.appendChild(noLinkOption);
+
             accounts.forEach(account => {
                 const option = document.createElement('option');
                 option.value = account.id;
                 const accountTypeText = account.type === 'overdraft' ? 'Cheque Especial' : 'Dinheiro';
                 option.textContent = `${account.name} (${accountTypeText})`;
-                accountSelect.appendChild(option);
+                targetSelect.appendChild(option);
             });
-            // Adiciona cartões de crédito
             creditCards.forEach(card => {
                 const option = document.createElement('option');
                 option.value = card.id;
                 option.textContent = `${card.name} (Cartão de Crédito)`;
-                accountSelect.appendChild(option);
+                targetSelect.appendChild(option);
             });
+            if (!targetSelect.value && targetSelect === accountSelect) { // Para o select principal, se nenhum valor, default para ""
+                targetSelect.value = "";
+            }
         };
+        
+        populateAccountSelects(); // Popula o select principal
 
-        /** Popula o select de categorias. */
-        const populateCategorySelect = () => {
-            categorySelect.innerHTML = '';
-            categories.forEach(cat => {
+        const populateCategorySelect = (selectElement = categorySelect) => { 
+            const currentCategoryValue = selectElement.value;
+            selectElement.innerHTML = ''; 
+            
+            if (selectElement === categorySelect) {
+                 const placeholderOption = document.createElement('option');
+                 placeholderOption.value = "";
+                 placeholderOption.textContent = "Selecione uma categoria";
+                 placeholderOption.disabled = true;
+                 placeholderOption.selected = !currentCategoryValue; 
+                 selectElement.appendChild(placeholderOption);
+            }
+
+            categories.sort((a,b) => a.localeCompare(b)).forEach(cat => { 
                 const option = document.createElement('option');
-                option.value = cat;
-                option.textContent = cat;
-                categorySelect.appendChild(option);
+                option.value = cat; option.textContent = cat;
+                selectElement.appendChild(option);
             });
             const newOption = document.createElement('option');
-            newOption.value = 'nova-categoria';
+            newOption.value = 'nova-categoria'; 
             newOption.textContent = 'Adicionar Nova Categoria...';
-            categorySelect.appendChild(newOption);
-        };
+            selectElement.appendChild(newOption);
 
-        // Event listener para o select de categorias (mostra/oculta input para nova categoria)
+            if (categories.includes(currentCategoryValue)) {
+                selectElement.value = currentCategoryValue;
+            } else if (currentCategoryValue === 'nova-categoria' && selectElement === categorySelect) { 
+                 selectElement.value = 'nova-categoria'; 
+            } else if (!currentCategoryValue && selectElement !== categorySelect) { 
+                if(categories.length > 0 && selectElement.options.length > (selectElement === categorySelect ? 1:0) ) { 
+                    selectElement.value = categories[0];
+                }
+            }
+        };
+        
+        populateCategorySelect(); 
+
         categorySelect.addEventListener('change', () => {
             if (categorySelect.value === 'nova-categoria') {
                 newCategoryInput.classList.remove('hidden');
-                newCategoryInput.focus();
-                newCategoryInput.value = ''; // Limpa o input anterior
+                newCategoryInput.focus(); newCategoryInput.value = ''; 
             } else {
-                newCategoryInput.classList.add('hidden');
-                newCategoryInput.value = ''; // Limpa e oculta
+                newCategoryInput.classList.add('hidden'); newCategoryInput.value = ''; 
             }
         });
 
         // --- Gerenciamento de Transações ---
-
-        // Event listener para o envio do formulário de transação
         transactionForm.addEventListener('submit', (e) => {
             e.preventDefault();
-
             const date = document.getElementById('date').value;
             const description = document.getElementById('description').value.trim();
             const value = parseFloat(document.getElementById('value').value);
-            const type = document.getElementById('type').value;
-            const accountId = document.getElementById('account-select').value;
+            let type = document.getElementById('type').value; // Tipo selecionado pelo usuário
+            const accountId = document.getElementById('account-select').value; 
             const installments = parseInt(installmentsInput.value) || 1;
-            const installmentsPaid = parseInt(installmentsPaidInput.value) || 0; // Reintroduzido
+            const installmentsPaid = parseInt(installmentsPaidInput.value) || 0; 
 
             let category;
             if (categorySelect.value === 'nova-categoria') {
                 category = newCategoryInput.value.trim();
                 if (category && !categories.includes(category)) {
-                    categories.push(category); // Adiciona nova categoria à lista
-                    saveCategories(); // Salva categorias atualizadas
-                    populateCategorySelect(); // Repopula o select com a nova categoria
-                    categorySelect.value = category; // Seleciona a categoria recém-adicionada
-                } else if (!category) {
-                    showFeedback('Por favor, insira um nome para a nova categoria.', 'error');
-                    return;
+                    categories.push(category); saveCategories(); 
+                    populateCategorySelect(); 
+                    populateCategorySelect(editCategorySelect); 
+                    categorySelect.value = category; 
+                } else if (categories.includes(category)) { 
+                     categorySelect.value = category; 
+                     newCategoryInput.classList.add('hidden'); newCategoryInput.value = '';
+                } else if (!category) { 
+                    showFeedback('Por favor, insira um nome para a nova categoria ou selecione uma existente.', 'error'); return;
                 }
-            } else {
-                category = categorySelect.value;
+            } else { category = categorySelect.value; }
+
+            if (!date || !description || isNaN(value) || value <= 0 || !type || !category ) {
+                showFeedback('Por favor, preencha todos os campos da transação (exceto Conta/Cartão que é opcional) com valores válidos (valor > 0).', 'error'); return;
+            }
+            if (installmentsPaid > installments || installmentsPaid < 0) { 
+                showFeedback('O número de parcelas pagas é inválido ou excede o total.', 'error'); return;
             }
 
-            if (!date || !description || isNaN(value) || !type || !category || !accountId) {
-                showFeedback('Por favor, preencha todos os campos da transação.', 'error');
-                return;
-            }
-
-            if (installmentsPaid > installments) {
-                showFeedback('O número de parcelas pagas não pode ser maior que o total de parcelas.', 'error');
-                return;
-            }
-
-            const account = accounts.find(acc => acc.id === accountId);
-            const creditCard = creditCards.find(card => card.id === accountId);
+            const account = accountId ? accounts.find(acc => acc.id === accountId) : null;
+            const creditCard = accountId ? creditCards.find(card => card.id === accountId) : null;
             const isCreditCardTransaction = !!creditCard;
-
             let transactionsToAdd = [];
-            // Lógica para transações parceladas
-            if (installments > 1) {
-                const installmentValue = value / installments;
-                for (let i = 0; i < installments; i++) {
-                    const transactionDate = new Date(date);
-                    transactionDate.setMonth(transactionDate.getMonth() + i); // Ajusta o mês para cada parcela
+            const originalGroupId = generateUniqueId(); 
 
-                    const newTransaction = {
-                        id: generateUniqueId(),
-                        date: transactionDate.toISOString().split('T')[0], // Formato ISOYYYY-MM-DD
-                        description,
-                        value: installmentValue,
-                        type,
-                        category,
-                        accountId,
-                        isCreditCard: isCreditCardTransaction,
-                        installments: `${i + 1}/${installments}`,
-                        isPaid: (i + 1) <= installmentsPaid // Mark as paid if current installment number is less than or equal to installmentsPaid
-                    };
-                    transactionsToAdd.push(newTransaction);
-                }
-            } else { // Lógica para transações de parcela única
-                const newTransaction = {
-                    id: generateUniqueId(),
-                    date,
-                    description,
-                    value,
-                    type,
-                    category,
-                    accountId,
-                    isCreditCard: isCreditCardTransaction,
-                    installments: '1/1',
-                    isPaid: installmentsPaid >= 1 // Mark as paid if installmentsPaid is 1 or more for single transaction
-                };
-                transactionsToAdd.push(newTransaction);
+            // Determina se a transação é uma receita ou despesa fundamentalmente
+            let fundamentalType = 'despesa'; // Padrão
+            if (type === 'receita' || type === 'pix_recebido') {
+                fundamentalType = 'receita';
             }
 
-            // Process transactionsToAdd and apply balance changes
-            let transactionAddedSuccessfully = true;
-            for (const newTransaction of transactionsToAdd) {
-                if (newTransaction.isCreditCard) {
-                    if (newTransaction.type === 'despesa') {
-                        creditCard.availableLimit -= newTransaction.value; // Only update available limit here
-                    } else { // receita
-                        creditCard.availableLimit += newTransaction.value; // Only update available limit here
+
+            if (installments > 1 && (type === 'despesa' || type === 'pix_enviado' || type === 'saque')) { // Parcelamento só para despesas/saques
+                const installmentValue = parseFloat((value / installments).toFixed(2));
+                let sumOfInstallments = 0;
+                for (let i = 0; i < installments; i++) {
+                    let currentInstallmentValue = installmentValue;
+                    if (i === installments - 1) { 
+                        currentInstallmentValue = parseFloat((value - sumOfInstallments).toFixed(2));
                     }
-                } else if (account) { // Cash or Overdraft account
-                    if (newTransaction.type === 'despesa') {
-                        if (account.type === 'overdraft') {
-                            if (account.balance - newTransaction.value < -account.limit) {
-                                showFeedback(`Transação de ${formatCurrency(newTransaction.value)} excede o limite do cheque especial ${account.name}. Limite: ${formatCurrency(account.limit)}, Utilizado: ${formatCurrency(Math.abs(account.balance))}`, 'error');
-                                transactionAddedSuccessfully = false; // Mark as failed
-                                break; // Stop processing further installments
-                            }
-                            account.balance -= newTransaction.value;
-                        } else { // cash
-                            account.balance -= newTransaction.value;
+                    sumOfInstallments += currentInstallmentValue;
+
+                    const transactionDate = new Date(date);
+                    transactionDate.setMonth(transactionDate.getMonth() + i); 
+                    transactionsToAdd.push({
+                        id: generateUniqueId(), date: transactionDate.toISOString().split('T')[0], description: `${description} (${i + 1}/${installments})`, 
+                        value: currentInstallmentValue, 
+                        type: type, // Mantém o tipo original (saque, pix_enviado, despesa)
+                        fundamentalType: fundamentalType, // Adiciona tipo fundamental
+                        category, accountId: accountId || null, 
+                        isCreditCard: isCreditCardTransaction,
+                        installments: `${i + 1}/${installments}`, isPaid: (i + 1) <= installmentsPaid,
+                        originalGroupId 
+                    });
+                }
+            } else { 
+                transactionsToAdd.push({
+                    id: generateUniqueId(), date, description, value, 
+                    type: type, // Mantém o tipo original
+                    fundamentalType: fundamentalType, // Adiciona tipo fundamental
+                    category, accountId: accountId || null, 
+                    isCreditCard: isCreditCardTransaction, installments: '1/1', isPaid: installmentsPaid >= 1,
+                    originalGroupId
+                });
+            }
+
+            let transactionAddedSuccessfully = true;
+            const tempAccounts = JSON.parse(JSON.stringify(accounts)); 
+            const tempCreditCards = JSON.parse(JSON.stringify(creditCards));
+
+            for (const newTransaction of transactionsToAdd) {
+                if (newTransaction.accountId) { 
+                    let targetAccountOrCard;
+                    if (newTransaction.isCreditCard) {
+                        targetAccountOrCard = tempCreditCards.find(c => c.id === newTransaction.accountId);
+                        if (targetAccountOrCard) {
+                             if (newTransaction.fundamentalType === 'despesa') targetAccountOrCard.availableLimit -= newTransaction.value;
+                             else targetAccountOrCard.availableLimit += newTransaction.value; 
                         }
-                    } else { // receita
-                        account.balance += newTransaction.value;
+                    } else { 
+                        targetAccountOrCard = tempAccounts.find(a => a.id === newTransaction.accountId); 
+                         if (targetAccountOrCard) {
+                            if (newTransaction.isPaid) { 
+                                if (newTransaction.fundamentalType === 'despesa') { // Usa fundamentalType para saldo
+                                    if (targetAccountOrCard.type === 'overdraft' && (targetAccountOrCard.balance - newTransaction.value < -targetAccountOrCard.limit)) {
+                                        showFeedback(`Transação de ${formatCurrency(newTransaction.value)} para ${targetAccountOrCard.name} excede limite de cheque especial.`, 'error');
+                                        transactionAddedSuccessfully = false; break; 
+                                    }
+                                    targetAccountOrCard.balance -= newTransaction.value;
+                                } else { 
+                                    targetAccountOrCard.balance += newTransaction.value;
+                                }
+                            }
+                        }
+                    }
+                    if (!targetAccountOrCard) { 
+                        showFeedback('Conta/Cartão vinculado não encontrado. A transação será salva como não vinculada.', 'info');
+                        newTransaction.accountId = null; 
+                        newTransaction.isCreditCard = false;
                     }
                 }
-                transactions.push(newTransaction); // Add to global transactions array only if valid
             }
 
             if (!transactionAddedSuccessfully) {
-                // If any installment failed, revert all transactions added in this batch
-                // This is a simplistic rollback. A more complex solution might store transactions
-                // in a temporary array and only commit if all are valid.
-                transactions = transactions.filter(t => !transactionsToAdd.some(tt => tt.id === t.id));
-                // Also need to revert account balances if they were partially updated
-                // This is a limitation of the current simple rollback.
-                // For now, the error message is the primary indicator.
-                return;
+                return; 
             }
 
-            // Salva os dados atualizados e renderiza a UI
-            saveTransactions();
-            saveAccounts();
-            saveCreditCards();
-            renderTransactions();
-            updateSummary(); // Update overall income
-            renderDetailedCardBills(); // Recalcula a fatura do cartão
-            checkCreditCardDueDates(); // Verifica datas de vencimento após nova transação
-            transactionForm.reset();
-            installmentsInput.value = 1; // Reseta parcelas para 1
-            installmentsPaidInput.value = 0; // Reseta parcelas pagas para 0
-            newCategoryInput.classList.add('hidden'); // Oculta input de nova categoria
-            populateCategorySelect(); // Repopula o select para resetá-lo
-            showFeedback('Transação adicionada com sucesso!', 'success');
+            if (accountId) { 
+                accounts = tempAccounts;
+                creditCards = tempCreditCards;
+            }
+            transactions.push(...transactionsToAdd); 
+
+            saveTransactions(); saveAccounts(); saveCreditCards();
+            renderTransactions(); updateSummary(); renderDetailedCardBills(); checkCreditCardDueDates(); 
+            transactionForm.reset(); 
+            installmentsInput.value = 1; 
+            installmentsPaidInput.value = 0; 
+            accountSelect.value = ""; 
+            newCategoryInput.classList.add('hidden'); 
+            populateCategorySelect(); 
+            showFeedback('Transação(ões) adicionada(s) com sucesso!', 'success');
         });
 
-        /** Renderiza a tabela de transações na UI para o mês e ano atuais. */
         const renderTransactions = () => {
             transactionList.innerHTML = '';
-            // Filtra e ordena transações pelo mês e ano atuais
+            const beginningOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+            beginningOfCurrentMonth.setHours(0,0,0,0); 
+
             const filteredTransactions = transactions.filter(t => {
                 const transactionDate = new Date(t.date);
-                return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
-            }).sort((a, b) => new Date(a.date) - new Date(b.date)); // Ordena por data
+                transactionDate.setHours(0,0,0,0); 
+                const isInCurrentMonthAndYear = transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+                const isPendingFromPreviousMonth = transactionDate < beginningOfCurrentMonth && !t.isPaid;
+                return isInCurrentMonthAndYear || isPendingFromPreviousMonth;
+            }).sort((a, b) => new Date(a.date) - new Date(b.date)); 
 
             if (filteredTransactions.length === 0) {
-                noTransactionsMessage.classList.remove('hidden');
-                return;
+                noTransactionsMessage.classList.remove('hidden'); return;
             } else {
                 noTransactionsMessage.classList.add('hidden');
             }
 
             filteredTransactions.forEach(transaction => {
                 const tr = document.createElement('tr');
-                // Aplica estilo de "pago" se a transação estiver marcada como tal
-                tr.className = `bg-white hover:bg-gray-50 ${transaction.isPaid ? 'paid-transaction' : ''}`;
+                let rowClass = 'bg-white hover:bg-gray-50';
+                const transactionDate = new Date(transaction.date);
+                transactionDate.setHours(0,0,0,0);
 
-                // Obtém o nome da conta ou cartão associado à transação
-                const accountOrCardName = transaction.isCreditCard
-                    ? creditCards.find(card => card.id === transaction.accountId)?.name || 'Cartão Desconhecido'
-                    : accounts.find(acc => acc.id === transaction.accountId)?.name || 'Conta Desconhecida';
+                if (transaction.isPaid) {
+                    rowClass += ' paid-transaction';
+                } else if (transactionDate < beginningOfCurrentMonth) {
+                    rowClass += ' pending-previous-month'; 
+                }
+                tr.className = rowClass;
+
+                const accountOrCardName = transaction.accountId 
+                    ? (transaction.isCreditCard
+                        ? creditCards.find(card => card.id === transaction.accountId)?.name || 'Cartão Desconhecido'
+                        : accounts.find(acc => acc.id === transaction.accountId)?.name || 'Conta Desconhecida')
+                    : 'Não Vinculada'; 
+
+                const textStyle = transaction.isPaid ? 'text-gray-500' : (transactionDate < beginningOfCurrentMonth ? 'text-gray-900 font-semibold' : 'text-gray-900 font-semibold');
+                
+                let typeDisplay = transaction.type;
+                let valueColorClass = 'text-gray-800'; // Cor padrão para tipos não estritamente receita/despesa
+                if (transaction.fundamentalType === 'receita') { // Usa fundamentalType para cor
+                    valueColorClass = 'text-green-600';
+                    if (transaction.type === 'pix_recebido') typeDisplay = 'PIX Recebido';
+                    else if (transaction.type === 'receita') typeDisplay = 'Receita';
+                } else if (transaction.fundamentalType === 'despesa') {
+                    valueColorClass = transaction.isPaid ? 'text-red-500' : 'text-red-700 font-bold';
+                    if (transaction.type === 'saque') typeDisplay = 'Saque';
+                    else if (transaction.type === 'pix_enviado') typeDisplay = 'PIX Enviado';
+                    else if (transaction.type === 'despesa') typeDisplay = 'Despesa';
+                }
+
+
+                const statusStyle = transaction.isPaid ? 'text-green-600' : 'text-red-700 font-bold';
 
                 tr.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${transaction.description}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${transaction.type === 'receita' ? 'text-green-600' : 'text-red-600'}">
-                        ${formatCurrency(transaction.value)}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${transaction.type === 'receita' ? 'Receita' : 'Despesa'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${transaction.category}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${accountOrCardName}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${transaction.installments}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${transaction.isPaid ? 'Pago' : 'Não Pago'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${transaction.description}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${valueColorClass}">${formatCurrency(transaction.value)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${typeDisplay}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${transaction.category}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${accountOrCardName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${transaction.installments}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${statusStyle}">${transaction.isPaid ? 'Pago' : 'Não Pago'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        ${!transaction.isPaid ? `<button data-id="${transaction.id}" data-type="transaction" class="pay-transaction-btn text-blue-600 hover:text-blue-900 mr-2 p-2 rounded-full hover:bg-blue-100 transition duration-150 ease-in-out" title="Marcar como Pago">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        </button>` : ''}
-                        <button data-id="${transaction.id}" data-type="transaction" class="edit-transaction-btn text-yellow-600 hover:text-yellow-900 mr-2 p-2 rounded-full hover:bg-yellow-100 transition duration-150 ease-in-out" title="Editar Transação">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                        </button>
-                        <button data-id="${transaction.id}" data-type="transaction" class="delete-btn text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition duration-150 ease-in-out" title="Excluir Transação">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </td>
-                `;
+                        ${!transaction.isPaid ? `<button data-id="${transaction.id}" class="pay-transaction-btn text-blue-600 hover:text-blue-900 mr-2 p-2 rounded-full hover:bg-blue-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>` : ''}
+                        <button data-id="${transaction.id}" class="edit-transaction-btn text-yellow-600 hover:text-yellow-900 mr-2 p-2 rounded-full hover:bg-yellow-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                        <button data-id="${transaction.id}" data-type="transaction" class="delete-btn text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </td>`;
                 transactionList.appendChild(tr);
             });
-            addDeleteListeners();
-            addPayTransactionListeners(); // Adiciona listeners para o botão "Pagar"
-            addEditTransactionListeners(); // Adiciona listeners para o botão "Editar"
+            addDeleteListeners(); addPayTransactionListeners(); addEditTransactionListeners();
         };
 
-        /**
-         * Executa a exclusão de uma conta, cartão ou transação.
-         * @param {string} id - O ID do item a ser excluído.
-         * @param {'account'|'creditCard'|'transaction'} type - O tipo do item.
-         */
         const performDelete = (id, type) => {
             if (type === 'account') {
-                // Verifica se a conta possui transações associadas
-                const hasTransactions = transactions.some(t => t.accountId === id);
-                if (hasTransactions) {
-                    showFeedback('Não é possível excluir uma conta que possui transações associadas. Exclua as transações primeiro.', 'error');
-                } else {
-                    accounts = accounts.filter(acc => acc.id !== id);
-                    saveAccounts();
-                    renderAccounts();
-                    populateAccountSelects();
-                    updateSummary();
-                    showFeedback('Conta excluída com sucesso!', 'success');
+                if (transactions.some(t => t.accountId === id)) {
+                    showFeedback('Não é possível excluir conta com transações. Exclua as transações primeiro.', 'error'); return;
                 }
+                accounts = accounts.filter(acc => acc.id !== id); saveAccounts();
+                renderAccounts(); populateAccountSelects(); updateSummary();
+                showFeedback('Conta excluída!', 'success');
             } else if (type === 'creditCard') {
-                // Verifica se o cartão de crédito possui transações associadas
-                const hasTransactions = transactions.some(t => t.accountId === id);
-                if (hasTransactions) {
-                    showFeedback('Não é possível excluir um cartão de crédito que possui transações associadas. Exclua as transações primeiro.', 'error');
-                } else {
-                    creditCards = creditCards.filter(card => card.id !== id);
-                    saveCreditCards();
-                    renderCreditCards();
-                    populateAccountSelects();
-                    updateSummary();
-                    showFeedback('Cartão de crédito excluído com sucesso!', 'success');
+                if (transactions.some(t => t.accountId === id)) {
+                    showFeedback('Não é possível excluir cartão com transações. Exclua as transações primeiro.', 'error'); return;
                 }
+                creditCards = creditCards.filter(card => card.id !== id); saveCreditCards();
+                renderCreditCards(); populateAccountSelects(); updateSummary();
+                showFeedback('Cartão excluído!', 'success');
             } else if (type === 'transaction') {
-                const deletedTransaction = transactions.find(t => t.id === id);
-                if (deletedTransaction) {
-                    // Reverte o impacto da transação no saldo da conta/cartão ao ser excluída
-                    if (deletedTransaction.isCreditCard) {
-                        const card = creditCards.find(c => c.id === deletedTransaction.accountId);
-                        if (card) {
-                            // Reverte o impacto na fatura e no limite disponível
-                            card.currentBillAmount -= (deletedTransaction.type === 'receita' ? -deletedTransaction.value : deletedTransaction.value);
-                            card.availableLimit += (deletedTransaction.type === 'receita' ? -deletedTransaction.value : deletedTransaction.value);
-                            saveCreditCards();
-                        }
-                    } else { // Cash or Overdraft account
-                        const account = accounts.find(acc => acc.id === deletedTransaction.accountId);
-                        if (account) {
-                            // Sempre reverte a alteração de saldo, pois ela foi aplicada na criação
-                            account.balance -= (deletedTransaction.type === 'receita' ? deletedTransaction.value : -deletedTransaction.value);
-                            saveAccounts();
+                const deletedTransactionIndex = transactions.findIndex(t => t.id === id);
+                if (deletedTransactionIndex > -1) {
+                    const deletedTransaction = transactions[deletedTransactionIndex];
+                    if (deletedTransaction.accountId) { 
+                        if (deletedTransaction.isCreditCard) {
+                            const card = creditCards.find(c => c.id === deletedTransaction.accountId);
+                            if (card) {
+                                if (deletedTransaction.fundamentalType === 'despesa') card.availableLimit += deletedTransaction.value;
+                                else card.availableLimit -= deletedTransaction.value;
+                            }
+                        } else { 
+                            const account = accounts.find(acc => acc.id === deletedTransaction.accountId);
+                            if (account && deletedTransaction.isPaid) { 
+                                if (deletedTransaction.fundamentalType === 'despesa') account.balance += deletedTransaction.value;
+                                else account.balance -= deletedTransaction.value;
+                            }
                         }
                     }
-                    transactions = transactions.filter(t => t.id !== id);
-                    saveTransactions();
-                    // Re-renderiza e atualiza a UI após a exclusão
-                    renderTransactions();
-                    updateSummary();
-                    renderMonthlySummary();
-                    renderDetailedCardBills();
-                    checkCreditCardDueDates();
-                    showFeedback('Transação excluída com sucesso!', 'success');
+                    transactions.splice(deletedTransactionIndex, 1); 
+                    saveTransactions(); saveAccounts(); saveCreditCards();
+                    renderTransactions(); updateSummary(); renderMonthlySummary(); renderDetailedCardBills(); checkCreditCardDueDates();
+                    showFeedback('Transação excluída!', 'success');
                 }
             }
         };
 
-        /**
-         * Marca uma transação como paga e atualiza os saldos.
-         * @param {string} transactionId - O ID da transação a ser marcada.
-         */
         const markTransactionAsPaid = (transactionId) => {
-            const transactionIndex = transactions.findIndex(t => t.id === transactionId);
-            if (transactionIndex > -1) {
-                const transaction = transactions[transactionIndex];
-                if (!transaction.isPaid) {
-                    transaction.isPaid = true;
-
-                    // O saldo da conta/cartão já é atualizado na adição da transação.
-                    // Esta função apenas marca a transação como 'paga' visualmente e para rastreamento.
-
-                    saveTransactions();
-                    // Re-renderiza e atualiza a UI para refletir o status de pago
-                    renderTransactions();
-                    updateSummary();
-                    renderMonthlySummary();
-                    renderDetailedCardBills();
-                    checkCreditCardDueDates();
-                    showFeedback('Transação marcada como paga!', 'success');
-                } else {
-                    showFeedback('Esta transação já está marcada como paga.', 'info');
+            const transaction = transactions.find(t => t.id === transactionId);
+            if (transaction && !transaction.isPaid) {
+                const previouslyPaid = transaction.isPaid; 
+                transaction.isPaid = true; 
+                
+                if (!previouslyPaid && transaction.accountId && !transaction.isCreditCard) { 
+                    const account = accounts.find(acc => acc.id === transaction.accountId);
+                    if (account) {
+                        if (transaction.fundamentalType === 'despesa') {
+                             if (account.type === 'overdraft' && (account.balance - transaction.value < -account.limit)) {
+                                showFeedback(`Pagamento de ${formatCurrency(transaction.value)} para ${account.name} excede limite. Marcada como paga, mas ajuste o saldo se necessário.`, 'error');
+                            } else {
+                                account.balance -= transaction.value;
+                            }
+                        } else { 
+                            account.balance += transaction.value;
+                        }
+                        saveAccounts();
+                    }
                 }
+                saveTransactions();
+                renderTransactions(); updateSummary(); renderMonthlySummary(); renderDetailedCardBills(); checkCreditCardDueDates();
+                showFeedback('Transação marcada como paga!', 'success');
+            } else if (transaction && transaction.isPaid) {
+                showFeedback('Esta transação já está paga.', 'info');
             }
         };
 
         // --- Funções do Modal de Edição ---
-
-        /**
-         * Abre o modal de edição de transação e preenche com os dados.
-         * @param {string} transactionId - O ID da transação a ser editada.
-         */
         const openEditModal = (transactionId) => {
             const transaction = transactions.find(t => t.id === transactionId);
-            if (!transaction) {
-                showFeedback('Transação não encontrada para edição.', 'error');
-                return;
-            }
-
-            editTransactionIdInput.value = transaction.id;
-            editDescriptionInput.value = transaction.description;
-            editValueInput.value = formatCurrency(transaction.value);
+            if (!transaction) { showFeedback('Transação não encontrada.', 'error'); return; }
             
+            editTransactionIdInput.value = transaction.id;
+            editDateInput.value = transaction.date; 
+            editDescriptionInput.value = transaction.description; 
+            editValueInput.value = transaction.value.toFixed(2); 
+            
+            populateCategorySelect(editCategorySelect); 
+            editCategorySelect.value = transaction.category; 
+            editNewCategoryInput.classList.add('hidden'); 
+            editNewCategoryInput.value = '';
+
+            // Preencher tipo de transação (não editável por enquanto)
+            // const typeOption = editTypeSelect.querySelector(`option[value="${transaction.type}"]`);
+            // if (typeOption) editTypeSelect.value = transaction.type; else editTypeSelect.selectedIndex = 0;
+            // editTypeSelect.disabled = true; // Tipo não é editável no modal
+
+
             const [currentPaid, totalInstallments] = transaction.installments.split('/').map(Number);
-            editInstallmentsTotalInput.value = totalInstallments;
-            editInstallmentsPaidInput.value = currentPaid; // Pre-fill with the current paid installment count
+            editInstallmentsTotalInput.value = totalInstallments; 
+            editInstallmentsTotalInput.readOnly = true; 
+            editInstallmentsTotalInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            editInstallmentsPaidInput.value = currentPaid; 
+            editInstallmentsPaidInput.max = totalInstallments; 
+
+            editDateInput.readOnly = false; 
+            editDescriptionInput.readOnly = false;
+            editDescriptionInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+            editValueInput.readOnly = false;
+            editValueInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
 
             editTransactionModal.classList.remove('hidden');
         };
+        
+        editCategorySelect.addEventListener('change', () => {
+            if (editCategorySelect.value === 'nova-categoria') {
+                editNewCategoryInput.classList.remove('hidden');
+                editNewCategoryInput.focus();
+            } else {
+                editNewCategoryInput.classList.add('hidden');
+                editNewCategoryInput.value = '';
+            }
+        });
 
-        /** Fecha o modal de edição de transação. */
         const closeEditModal = () => {
             editTransactionModal.classList.add('hidden');
-            // Clear fields (optional, but good practice)
-            editTransactionIdInput.value = '';
-            editDescriptionInput.value = '';
-            editValueInput.value = '';
-            editInstallmentsTotalInput.value = '';
-            editInstallmentsPaidInput.value = '';
+            editDescriptionInput.readOnly = true;
+            editDescriptionInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            editValueInput.readOnly = true;
+            editValueInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            editInstallmentsTotalInput.readOnly = true;
+            editInstallmentsTotalInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            editDateInput.readOnly = true; 
+            editNewCategoryInput.classList.add('hidden'); 
         };
-
-        // Event listeners para o modal de edição
         closeEditModalBtn.addEventListener('click', closeEditModal);
         cancelEditTransactionBtn.addEventListener('click', closeEditModal);
 
         saveEditTransactionBtn.addEventListener('click', () => {
             const transactionId = editTransactionIdInput.value;
+            const newDate = editDateInput.value;
+            const newDescription = editDescriptionInput.value.trim();
+            const newValue = parseFloat(editValueInput.value);
             const newInstallmentsPaid = parseInt(editInstallmentsPaidInput.value);
-            const totalInstallments = parseInt(editInstallmentsTotalInput.value);
-
-            if (isNaN(newInstallmentsPaid) || newInstallmentsPaid < 0) {
-                showFeedback('Por favor, insira um número válido para parcelas já pagas.', 'error');
-                return;
+            
+            let newCategory = editCategorySelect.value;
+            if (newCategory === 'nova-categoria') {
+                const typedNewCategory = editNewCategoryInput.value.trim();
+                if (typedNewCategory) {
+                    if (!categories.includes(typedNewCategory)) {
+                        categories.push(typedNewCategory);
+                        saveCategories();
+                        populateCategorySelect(); 
+                        populateCategorySelect(editCategorySelect); 
+                    }
+                    newCategory = typedNewCategory;
+                } else {
+                    showFeedback('Nome da nova categoria não pode ser vazio.', 'error'); return;
+                }
             }
-            if (newInstallmentsPaid > totalInstallments) {
-                showFeedback('O número de parcelas pagas não pode ser maior que o total de parcelas.', 'error');
-                return;
+
+
+            const transaction = transactions.find(t => t.id === transactionId);
+            if (!transaction) {
+                showFeedback('Erro: Transação não encontrada.', 'error'); closeEditModal(); return;
+            }
+            const totalInstallments = parseInt(transaction.installments.split('/')[1]); 
+
+            if (!newDate) { showFeedback('Data não pode ser vazia.', 'error'); return; }
+            if (!newDescription) { showFeedback('Descrição não pode ser vazia.', 'error'); return; }
+            if (isNaN(newValue) || newValue <= 0) { showFeedback('Valor inválido. Deve ser maior que zero.', 'error'); return; }
+            if (isNaN(newInstallmentsPaid) || newInstallmentsPaid < 0 || newInstallmentsPaid > totalInstallments) {
+                showFeedback('Número de parcelas pagas inválido.', 'error'); return;
             }
 
-            const transactionIndex = transactions.findIndex(t => t.id === transactionId);
-            if (transactionIndex > -1) {
-                const transaction = transactions[transactionIndex];
-                
-                // Update installments string and recalculate isPaid status
-                transaction.installments = `${newInstallmentsPaid}/${totalInstallments}`;
-                transaction.isPaid = newInstallmentsPaid >= totalInstallments;
+            const oldValue = transaction.value;
+            const oldIsPaid = transaction.isPaid;
+            // Tipo da transação (ex: 'despesa', 'saque') não muda, mas seu 'fundamentalType' sim
+            const fundamentalType = transaction.fundamentalType; // Preserva o tipo fundamental original
 
-                saveTransactions();
-                renderTransactions();
-                updateSummary();
-                renderMonthlySummary();
-                renderDetailedCardBills();
-                checkCreditCardDueDates();
-                showFeedback('Transação atualizada com sucesso!', 'success');
-                closeEditModal();
-            } else {
-                showFeedback('Erro: Transação não encontrada.', 'error');
+            if (transaction.accountId) { // Só estorna/reaplica se estava vinculada
+                if (!transaction.isCreditCard && oldIsPaid) {
+                    const account = accounts.find(acc => acc.id === transaction.accountId);
+                    if (account) {
+                        if (fundamentalType === 'despesa') account.balance += oldValue;
+                        else account.balance -= oldValue;
+                    }
+                }
+                if (transaction.isCreditCard) {
+                     const card = creditCards.find(c => c.id === transaction.accountId);
+                     if (card) {
+                        if (fundamentalType === 'despesa') card.availableLimit += oldValue;
+                        else card.availableLimit -= oldValue; 
+                     }
+                }
             }
+
+            transaction.date = newDate;
+            transaction.description = newDescription;
+            transaction.value = newValue;
+            transaction.category = newCategory;
+            transaction.installments = `${newInstallmentsPaid}/${totalInstallments}`;
+            transaction.isPaid = newInstallmentsPaid >= totalInstallments;
+
+            if (transaction.accountId) { // Só reaplica se estiver vinculada
+                if (!transaction.isCreditCard && transaction.isPaid) {
+                    const account = accounts.find(acc => acc.id === transaction.accountId);
+                    if (account) {
+                        if (fundamentalType === 'despesa') account.balance -= transaction.value;
+                        else account.balance += transaction.value;
+                    }
+                }
+                if (transaction.isCreditCard) {
+                    const card = creditCards.find(c => c.id === transaction.accountId);
+                    if (card) {
+                        if (fundamentalType === 'despesa') card.availableLimit -= transaction.value;
+                        else card.availableLimit += transaction.value; 
+                    }
+                }
+            }
+            
+            saveTransactions(); saveAccounts(); saveCreditCards();
+            renderTransactions(); updateSummary(); renderMonthlySummary(); 
+            renderDetailedCardBills(); checkCreditCardDueDates();
+            showFeedback('Transação atualizada com sucesso!', 'success'); 
+            closeEditModal();
         });
 
-
         // --- Resumo e Cálculos ---
-
-        /** Atualiza os valores do resumo principal (Poder de Compra Total, Despesas do Mês, Saldo Consolidado). */
         const updateSummary = () => {
-            let totalPoderDeCompra = 0; // Represents total spending power
-
-            // Soma saldos de contas (dinheiro)
+            let totalPoderDeCompra = 0; 
             accounts.forEach(account => {
-                if (account.type === 'cash') {
-                    totalPoderDeCompra += account.balance;
-                }
+                if (account.type === 'cash') totalPoderDeCompra += account.balance;
+                else if (account.type === 'overdraft') totalPoderDeCompra += (account.limit + account.balance); 
             });
+            creditCards.forEach(card => totalPoderDeCompra += card.availableLimit); 
 
-            // Soma limites TOTAIS de cheque especial
-            accounts.forEach(account => {
-                if (account.type === 'overdraft') {
-                    totalPoderDeCompra += account.limit; // Usa o limite total do cheque especial
-                }
-            });
-
-            // Soma limites TOTAIS de cartões de crédito
-            creditCards.forEach(card => {
-                totalPoderDeCompra += card.limit; // Usa o limite total do cartão
-            });
-
-            // "Poder de Compra Total" agora é a soma dos saldos em dinheiro e limites totais
             totalReceitasEl.textContent = formatCurrency(totalPoderDeCompra);
 
-            // Obtém o total de despesas para o mês atual (atualizado por renderMonthlySummary)
-            const totalDespesasMesAtual = parseFloat(totalDespesasEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')) || 0;
-
-            // Saldo Consolidado = Poder de Compra Total - Despesas do Mês
-            const saldoConsolidado = totalPoderDeCompra - totalDespesasMesAtual;
-
+            const totalDespesasMesAtualText = totalDespesasEl.textContent || "R$ 0,00";
+            const totalDespesasMesAtual = parseFloat(totalDespesasMesAtualText.replace('R$', '').replace(/\./g, '').replace(',', '.')) || 0;
+            
+            const saldoConsolidado = totalPoderDeCompra - totalDespesasMesAtual; 
             saldoAtualEl.textContent = formatCurrency(saldoConsolidado);
 
-            // Calcula o total das faturas de cartão de crédito para o mês atual
             let totalFaturasCartaoMesAtual = 0;
             creditCards.forEach(card => {
-                // Recalcula a fatura atual para o cartão com base nas despesas não pagas do mês atual
                 const currentMonthBill = transactions.reduce((sum, t) => {
-                    const transactionDate = new Date(t.date);
-                    if (t.accountId === card.id && t.type === 'despesa' && !t.isPaid &&
-                        transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear) {
+                    const tDate = new Date(t.date);
+                    if (t.accountId === card.id && t.fundamentalType === 'despesa' && !t.isPaid &&
+                        tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
                         return sum + t.value;
                     }
                     return sum;
@@ -1292,663 +1409,905 @@
             });
             totalCardBillsEl.textContent = formatCurrency(totalFaturasCartaoMesAtual);
 
-            // Altera a cor do saldoAtual com base no valor
-            if (saldoConsolidado >= 0) {
-                saldoAtualEl.classList.remove('text-red-700');
-                saldoAtualEl.classList.add('text-green-700');
-            } else {
-                saldoAtualEl.classList.remove('text-green-700');
-                saldoAtualEl.classList.add('text-red-700');
-            }
+            saldoAtualEl.className = `text-2xl font-bold ${saldoConsolidado >= 0 ? 'text-green-700' : 'text-red-700'}`;
         };
-
-        // --- Navegação e Resumo por Mês (Apenas para Despesas do Mês) ---
-
-        /** Atualiza a exibição do mês e ano atuais. */
+        
+        // --- Navegação e Resumo por Mês ---
         const updateMonthlyDisplay = () => {
             const date = new Date(currentYear, currentMonth);
             currentMonthDisplay.textContent = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
         };
 
-        /** Renderiza o resumo mensal (apenas despesas do mês). */
         const renderMonthlySummary = () => {
-            let monthlyExpenses = 0;
-            // monthlyIncomeForBalance is no longer used as monthlyIncomeEl and monthlyBalanceEl are removed.
+            let monthlyExpensesTotal = 0;
+            let monthlyIncomeTotal = 0; // Adicionado para cálculo de saldo do mês, se necessário
+            const beginningOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+            beginningOfCurrentMonth.setHours(0,0,0,0); 
 
             transactions.forEach(t => {
                 const transactionDate = new Date(t.date);
-                if (transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear) {
-                    if (t.type === 'despesa') {
-                        monthlyExpenses += t.value;
-                    }
+                transactionDate.setHours(0,0,0,0); 
+                const isInCurrentMonthAndYear = transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+                const isPendingFromPreviousMonth = transactionDate < beginningOfCurrentMonth && !t.isPaid;
+                
+                if (t.fundamentalType === 'despesa' && (isInCurrentMonthAndYear || isPendingFromPreviousMonth)) {
+                    monthlyExpensesTotal += t.value;
+                } else if (t.fundamentalType === 'receita' && isInCurrentMonthAndYear) { // Receitas apenas do mês corrente
+                    monthlyIncomeTotal += t.value;
                 }
             });
-
-            // Atualiza o "Despesas do Mês" no painel superior
-            totalDespesasEl.textContent = formatCurrency(monthlyExpenses);
+            totalDespesasEl.textContent = formatCurrency(monthlyExpensesTotal);
+            // Poderia-se ter um 'totalReceitasMesEl' se quisesse mostrar receitas específicas do mês no dashboard.
         };
 
-        // Botão para navegar para o mês anterior
         prevMonthBtn.addEventListener('click', () => {
-            currentMonth--;
-            if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            }
-            updateMonthlyDisplay();
-            renderTransactions();
-            renderMonthlySummary(); // Recalcula despesas do mês
-            updateSummary(); // Recalcula o resumo principal
+            currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            updateMonthlyDisplay(); renderTransactions(); renderMonthlySummary(); updateSummary();
         });
-
-        // Botão para navegar para o próximo mês
         nextMonthBtn.addEventListener('click', () => {
-            currentMonth++;
-            if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
-            }
-            updateMonthlyDisplay();
-            renderTransactions();
-            renderMonthlySummary(); // Recalcula despesas do mês
-            updateSummary(); // Recalcula o resumo principal
+            currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            updateMonthlyDisplay(); renderTransactions(); renderMonthlySummary(); updateSummary();
         });
 
         // --- Funções de Importação ---
+        const finalizeImportProcessing = (parsedTransactions) => {
+            fileInput.value = ''; 
+            fileInput.disabled = false;
+            importFileBtn.disabled = false;
 
-        // Alterna a visibilidade da seção de importação
+            if (parsedTransactions && parsedTransactions.length > 0) {
+                importedTransactionsToReview = parsedTransactions; 
+                renderImportedTransactionsForReview();
+                importReviewSection.classList.remove('hidden');
+            } else {
+                 if (!feedbackMessageEl.textContent.includes("Processando") && 
+                     !feedbackMessageEl.textContent.includes("Erro") && 
+                     (!parsedTransactions || parsedTransactions.length === 0) &&
+                     !feedbackMessageEl.textContent.includes("Nenhuma transação encontrada") && 
+                     !feedbackMessageEl.textContent.includes("Nenhum texto encontrado") 
+                    ) {
+                 }
+                importReviewSection.classList.add('hidden'); 
+            }
+        };
+
+        const handleImportError = (error, fileTypeDescription) => {
+            console.error(`Erro ao processar arquivo ${fileTypeDescription}:`, error);
+            showFeedback(`Erro ao processar arquivo ${fileTypeDescription}. Verifique o console.`, 'error');
+            importReviewSection.classList.add('hidden');
+            fileInput.value = '';
+            fileInput.disabled = false;
+            importFileBtn.disabled = false;
+        };
+        
+        const parseOFX = (ofxContent) => {
+            const parsedTransactions = [];
+            const transactionRegex = /<STMTTRN>([\s\S]*?)<\/STMTTRN>/g;
+            let match;
+            while ((match = transactionRegex.exec(ofxContent)) !== null) {
+                const transactionBlock = match[1];
+                const dateMatch = /<DTPOSTED>(\d{8})/.exec(transactionBlock);
+                const descriptionMatch = /<MEMO>([\s\S]*?)<\/(MEMO|NAME)>/.exec(transactionBlock);
+                const valueMatch = /<TRNAMT>([+\-]?[\d,.]+)/.exec(transactionBlock);
+                const typeMatch = /<TRNTYPE>(DEBIT|CREDIT)/i.exec(transactionBlock);
+
+                if (dateMatch && descriptionMatch && valueMatch) {
+                    const dateStr = dateMatch[1];
+                    const formattedDate = `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
+                    const description = descriptionMatch[1].trim();
+                    const value = parseFloat(valueMatch[1].replace(',', '.')); 
+                    let transactionType = value < 0 ? 'despesa' : 'receita'; 
+                    if (typeMatch) { 
+                        transactionType = typeMatch[1].toUpperCase() === 'CREDIT' ? 'receita' : 'despesa';
+                    }
+
+                    if (!isNaN(value)) {
+                         parsedTransactions.push({
+                            id: generateUniqueId(), date: formattedDate, description, 
+                            value: Math.abs(value), 
+                            type: transactionType, // Mantém o tipo original detectado
+                            fundamentalType: transactionType, // Para OFX, tipo e fundamentalType são os mesmos
+                            category: 'Importado OFX', 
+                            accountId: '', isCreditCard: false, installments: '1/1', isPaid: true 
+                        });
+                    }
+                }
+            }
+            if (parsedTransactions.length === 0 && ofxContent.length > 100) showFeedback("Nenhuma transação encontrada no arquivo OFX ou formato inválido.", 'info');
+            else if (parsedTransactions.length > 0) showFeedback(`${parsedTransactions.length} transações OFX carregadas para revisão.`, 'success');
+            return parsedTransactions;
+        };
+
+        const parseExcelCsv = (data, fileExtension, isTextData = false) => {
+            const parsedTransactions = [];
+            try {
+                const workbook = XLSX.read(data, { type: isTextData ? 'string' : 'binary', cellDates: true }); 
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, defval: "" }); 
+
+                if (json.length === 0) {
+                    showFeedback(`Arquivo ${fileExtension} vazio ou não pôde ser lido.`, 'info');
+                    return parsedTransactions;
+                }
+
+                let headerRowIndex = -1;
+                let dateCol = -1, descCol = -1, valueCol = -1, typeCol = -1;
+                const headerKeywords = {
+                    date: ['data', 'date', 'dt.'],
+                    desc: ['descricao', 'descrição', 'description', 'histórico', 'historico', 'memo', 'lançamento', 'lancamento'],
+                    value: ['valor', 'value', 'montante', 'amount', 'crédito', 'credito', 'débito', 'debito'], 
+                    type: ['tipo', 'type', 'natureza', 't'] 
+                };
+
+                for (let i = 0; i < Math.min(json.length, 15); i++) { 
+                    const row = json[i];
+                    if (Array.isArray(row) && row.some(cell => String(cell || '').trim() !== '')) { 
+                        const lowerCaseRow = row.map(cell => String(cell || '').toLowerCase().trim());
+                        if (dateCol === -1) dateCol = lowerCaseRow.findIndex(header => headerKeywords.date.some(kw => header.includes(kw)));
+                        if (descCol === -1) descCol = lowerCaseRow.findIndex(header => headerKeywords.desc.some(kw => header.includes(kw)));
+                        if (valueCol === -1) valueCol = lowerCaseRow.findIndex(header => headerKeywords.value.some(kw => header.includes(kw)));
+                        if (typeCol === -1) typeCol = lowerCaseRow.findIndex(header => headerKeywords.type.some(kw => header.includes(kw)));
+                        
+                        if (dateCol !== -1 && descCol !== -1 && valueCol !== -1) { 
+                            headerRowIndex = i;
+                            break;
+                        }
+                    }
+                }
+                
+                if (dateCol === -1 || descCol === -1 || valueCol === -1) { 
+                    showFeedback(`Colunas essenciais (Data, Descrição, Valor) não encontradas no arquivo ${fileExtension}.`, 'error');
+                    return parsedTransactions;
+                }
+                
+                const dataStartIndex = headerRowIndex === -1 ? 0 : headerRowIndex + 1;
+
+                for (let i = dataStartIndex; i < json.length; i++) {
+                    const row = json[i];
+                    if (!Array.isArray(row) || row.every(cell => String(cell || '').trim() === '')) {
+                        continue; 
+                    }
+
+                    const dateRaw = row[dateCol];
+                    const description = String(row[descCol] || '').trim();
+                    const valueRaw = String(row[valueCol] || '0').trim();
+                    const typeRaw = typeCol !== -1 ? String(row[typeCol] || '').toLowerCase().trim() : '';
+
+                    if (!description && !valueRaw) continue; 
+
+                    let date;
+                    if (dateRaw instanceof Date && !isNaN(dateRaw)) {
+                        date = dateRaw;
+                    } else if (typeof dateRaw === 'string' && dateRaw.trim()) {
+                        const partsSlash = dateRaw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); 
+                        const partsDash = dateRaw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); 
+                        if (partsSlash) {
+                            let day = parseInt(partsSlash[1]);
+                            let month = parseInt(partsSlash[2]) - 1;
+                            let year = parseInt(partsSlash[3]);
+                            if (year < 100) year += (year > 50 ? 1900 : 2000); 
+                            date = new Date(year, month, day);
+                        } else if (partsDash) {
+                            date = new Date(partsDash[1], parseInt(partsDash[2]) - 1, partsDash[3]);
+                        } else {
+                            const parsedAttempt = Date.parse(dateRaw); 
+                            if (!isNaN(parsedAttempt)) date = new Date(parsedAttempt);
+                            else date = new Date(); 
+                        }
+                    } else {
+                         date = new Date(); 
+                    }
+                    const formattedDate = date instanceof Date && !isNaN(date) ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                    
+                    let valueString = valueRaw.replace(/[^\d,.\-]/g, '');
+                    const lastComma = valueString.lastIndexOf(',');
+                    const lastDot = valueString.lastIndexOf('.');
+
+                    if (lastComma > -1 && lastDot > -1) { 
+                        if (lastComma > lastDot) { 
+                            valueString = valueString.replace(/\./g, '').replace(',', '.');
+                        } else { 
+                            valueString = valueString.replace(/,/g, '');
+                        }
+                    } else if (lastComma > -1) { 
+                        valueString = valueString.replace(',', '.');
+                    }
+                    const value = parseFloat(valueString);
+                    
+                    let transactionType = 'despesa'; 
+                    let fundamentalType = 'despesa';
+                    const isCredit = typeRaw.includes('receita') || typeRaw.includes('credit') || typeRaw.includes('crédito') || typeRaw.includes('c') || typeRaw.startsWith('r');
+                    const isDebit = typeRaw.includes('despesa') || typeRaw.includes('debit') || typeRaw.includes('débito') || typeRaw.includes('d') || typeRaw.startsWith('d');
+
+                    if (isCredit && !isDebit) {
+                        transactionType = 'receita';
+                        fundamentalType = 'receita';
+                    } else if (isDebit && !isCredit) {
+                        transactionType = 'despesa';
+                        fundamentalType = 'despesa';
+                    } else if (!isNaN(value)) { // Infere pelo sinal se tipo for ambíguo/ausente
+                        transactionType = value >= 0 ? 'receita' : 'despesa';
+                        fundamentalType = transactionType;
+                    }
+                    
+                    if (!isNaN(value) && description) {
+                        parsedTransactions.push({
+                            id: generateUniqueId(), date: formattedDate, description, 
+                            value: Math.abs(value), type: transactionType, fundamentalType,
+                            category: `Importado ${fileExtension.toUpperCase()}`, 
+                            accountId: '', isCreditCard: false, installments: '1/1', isPaid: true 
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error(`Erro no parseExcelCsv (${fileExtension}):`, e);
+                showFeedback(`Erro ao ler o arquivo ${fileExtension}.`, 'error');
+                 return []; 
+            }
+            if (parsedTransactions.length === 0 && data.length > 10) showFeedback(`Nenhuma transação encontrada no ${fileExtension} ou formato não reconhecido.`, 'info');
+            else if (parsedTransactions.length > 0) showFeedback(`${parsedTransactions.length} transações do ${fileExtension} carregadas para revisão.`, 'success');
+            return parsedTransactions;
+        };
+
+        const parseWord = async (file) => {
+            if (typeof mammoth === 'undefined') {
+                showFeedback('Biblioteca de importação de Word (mammoth.js) não carregada.', 'error');
+                finalizeImportProcessing([]); return []; 
+            }
+            showFeedback("Processando arquivo Word...", 'info');
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({ arrayBuffer });
+                const text = result.value;
+                const parsedTransactions = [];
+
+                if (text.trim()) {
+                    parsedTransactions.push({
+                        id: generateUniqueId(), date: new Date().toISOString().split('T')[0], 
+                        description: `Texto Word (revisar): ${text.substring(0, 150)}${text.length > 150 ? '...' : ''}`, 
+                        value: 0, type: 'despesa', fundamentalType: 'despesa', category: 'Importado Word', 
+                        accountId: '', isCreditCard: false, installments: '1/1', isPaid: false 
+                    });
+                    showFeedback("Texto extraído do Word. Revise e complete os dados da transação.", 'success');
+                } else {
+                    showFeedback("Nenhum texto encontrado no arquivo Word.", 'info');
+                }
+                return parsedTransactions;
+            } catch (err) {
+                console.error("Erro ao processar arquivo Word:", err);
+                showFeedback("Erro ao processar arquivo Word. Formatos .doc antigos podem não ser suportados. Tente .docx.", 'error');
+                return [];
+            }
+        };
+
+        const parseImage = async (file) => {
+            if (typeof Tesseract === 'undefined' || typeof Tesseract.createWorker !== 'function') {
+                showFeedback('Biblioteca de OCR (Tesseract.js) não carregada ou inválida. Aguarde ou verifique a conexão.', 'error');
+                 finalizeImportProcessing([]); return []; 
+            }
+            showFeedback("Processando imagem com OCR... Isso pode levar alguns segundos.", 'info');
+            try {
+                const worker = await Tesseract.createWorker('por', 1, { 
+                    logger: m => { 
+                        if (m.status === 'recognizing text') {
+                            showFeedback(`Processando imagem: ${Math.round(m.progress * 100)}%`, 'info');
+                        }
+                     } 
+                });
+                const { data: { text } } = await worker.recognize(file);
+                await worker.terminate();
+                const parsedTransactions = [];
+
+                if (text.trim()) {
+                    parsedTransactions.push({
+                        id: generateUniqueId(), date: new Date().toISOString().split('T')[0],
+                        description: `Texto Imagem OCR (revisar): ${text.substring(0, 150)}${text.length > 150 ? '...' : ''}`,
+                        value: 0, type: 'despesa', fundamentalType: 'despesa', category: 'Importado Imagem',
+                        accountId: '', isCreditCard: false, installments: '1/1', isPaid: false
+                    });
+                     showFeedback("Texto extraído da imagem via OCR. Revise e complete os dados da transação.", 'success');
+                } else {
+                    showFeedback("Nenhum texto detectado na imagem via OCR.", 'info');
+                }
+                return parsedTransactions;
+            } catch (err) {
+                console.error("Erro no OCR da imagem:", err);
+                showFeedback("Erro ao processar imagem com OCR.", 'error');
+                return [];
+            }
+        };
+        
         importHeader.addEventListener('click', () => {
             importSectionContent.classList.toggle('hidden');
             importArrow.classList.toggle('rotated');
         });
 
-        // Event listener para o botão de importar arquivo
         importFileBtn.addEventListener('click', async () => {
             const file = fileInput.files[0];
-            console.log('Botão "Carregar para Revisão" clicado.'); // Log 1
             if (!file) {
-                showFeedback('Por favor, selecione um arquivo para importar.', 'error');
-                console.log('Nenhum arquivo selecionado.'); // Log 2
-                return;
+                showFeedback('Por favor, selecione um arquivo.', 'error'); return;
             }
-            console.log('Arquivo selecionado:', file.name, 'Tamanho:', file.size, 'Tipo:', file.type); // Log 3
 
-            importedTransactionsToReview = []; // Limpa dados de revisão anteriores
-            importedTransactionsTableBody.innerHTML = ''; // Limpa a tabela
+            importedTransactionsToReview = []; 
+            importedTransactionsTableBody.innerHTML = ''; 
+            importReviewSection.classList.add('hidden'); 
 
-            const reader = new FileReader();
-            // Determine file extension here, before calling readAsText/readAsBinaryString
+            fileInput.disabled = true;
+            importFileBtn.disabled = true;
+            
+            const reader = new FileReader(); 
             const fileExtension = file.name.split('.').pop().toLowerCase();
-            console.log('Extensão do arquivo determinada:', fileExtension); // Log 3.5
+            let parsedData = [];
 
-            reader.onload = async (e) => {
-                const data = e.target.result;
-                console.log('FileReader onload disparado. Extensão do arquivo (dentro do onload):', fileExtension); // Log 4
-
-                try {
-                    if (fileExtension === 'ofx') {
-                        importedTransactionsToReview = parseOFX(data);
-                        console.log('Parsing OFX. Transações encontradas:', importedTransactionsToReview.length); // Log 5.1
-                    } else if (['csv', 'xls', 'xlsx'].includes(fileExtension)) {
-                        importedTransactionsToReview = parseExcelCsv(data, fileExtension);
-                        console.log('Parsing Excel/CSV. Transações encontradas:', importedTransactionsToReview.length); // Log 5.2
-                    } else {
-                        showFeedback('Formato de arquivo não suportado. Por favor, use OFX, CSV ou Excel.', 'error');
-                        console.log('Formato de arquivo não suportado:', fileExtension); // Log 6
-                        return;
+            try {
+                if (fileExtension === 'ofx') {
+                    reader.onload = (e) => { 
+                        try { parsedData = parseOFX(e.target.result); finalizeImportProcessing(parsedData); } 
+                        catch (error) { handleImportError(error, "OFX"); }
+                    };
+                    reader.onerror = (e) => { console.error("FileReader OFX Error:", e); handleImportError(new Error("Erro ao ler arquivo OFX."), "OFX");};
+                    reader.readAsText(file);
+                } else if (fileExtension === 'csv') {
+                    reader.onload = (e) => {
+                        try { parsedData = parseExcelCsv(e.target.result, fileExtension, true); finalizeImportProcessing(parsedData); }
+                        catch (error) { handleImportError(error, "CSV"); }
+                    };
+                    reader.onerror = (e) => { console.error("FileReader CSV Error:", e); handleImportError(new Error("Erro ao ler arquivo CSV."), "CSV");};
+                    reader.readAsText(file, 'ISO-8859-1'); 
+                } else if (['xls', 'xlsx'].includes(fileExtension)) {
+                    reader.onload = (e) => {
+                        try { parsedData = parseExcelCsv(e.target.result, fileExtension, false); finalizeImportProcessing(parsedData); }
+                        catch (error) { handleImportError(error, "Excel"); }
+                    };
+                    reader.onerror = (e) => { console.error("FileReader Excel Error:", e); handleImportError(new Error("Erro ao ler arquivo Excel."), "Excel");};
+                    reader.readAsBinaryString(file);
+                } else if (['doc', 'docx'].includes(fileExtension)) {
+                    if (fileExtension === 'doc' && (typeof mammoth === 'undefined' || !mammoth.extractRawText)) { 
+                         showFeedback('Arquivos .doc podem não ser suportados. Tente .docx ou converta para texto.', 'info');
+                         finalizeImportProcessing([]); return;
                     }
-
-                    if (importedTransactionsToReview.length > 0) {
-                        renderImportedTransactionsForReview();
-                        importReviewSection.classList.remove('hidden');
-                        showFeedback('Arquivo carregado com sucesso! Revise as transações.', 'success');
-                        console.log('Seção de revisão exibida com sucesso.'); // Log 7
-                    } else {
-                        showFeedback('Nenhuma transação válida encontrada no arquivo.', 'info');
-                        importReviewSection.classList.add('hidden');
-                        console.log('Nenhuma transação válida encontrada no arquivo.'); // Log 8
-                    }
-                } catch (error) {
-                    console.error('Erro ao processar o arquivo:', error); // Log 9
-                    showFeedback('Erro ao processar o arquivo. Verifique o formato.', 'error');
-                    importReviewSection.classList.add('hidden');
+                    parsedData = await parseWord(file); 
+                    finalizeImportProcessing(parsedData);
+                } else if (['png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'webp'].includes(fileExtension)) {
+                    parsedData = await parseImage(file); 
+                    finalizeImportProcessing(parsedData);
+                } else {
+                    showFeedback('Formato de arquivo não suportado: .' + fileExtension, 'error');
+                    finalizeImportProcessing([]); 
                 }
-            };
-
-            // Now, call the appropriate read method based on the determined fileExtension
-            if (fileExtension === 'ofx') {
-                reader.readAsText(file); // OFX é baseado em texto (XML)
-            } else {
-                reader.readAsBinaryString(file); // Excel/CSV precisam de string binária
+            } catch (error) { 
+                handleImportError(error, `tipo de arquivo ${fileExtension}`);
             }
         });
 
-        /**
-         * Analisa o conteúdo de um arquivo OFX (simplificado).
-         * @param {string} ofxContent - O conteúdo do arquivo OFX.
-         * @returns {Array<Object>} Um array de objetos de transação.
-         */
-        const parseOFX = (ofxContent) => {
-            const parsedTransactions = [];
-            const transactionRegex = /<STMTTRN>([\s\S]*?)<\/STMTTRN>/g;
-            let match;
-
-            while ((match = transactionRegex.exec(ofxContent)) !== null) {
-                const transactionBlock = match[1];
-                const dateMatch = /<DTPOSTED>(\d{8})/.exec(transactionBlock);
-                const descriptionMatch = /<MEMO>([\s\S]*?)<\/(MEMO|NAME)>/.exec(transactionBlock);
-                const valueMatch = /<TRNAMT>([\d.-]+)/.exec(transactionBlock);
-                const typeMatch = /<TRNTYPE>(DEBIT|CREDIT)/.exec(transactionBlock);
-
-                if (dateMatch && descriptionMatch && valueMatch && typeMatch) {
-                    const date = dateMatch[1];
-                    const year = date.substring(0, 4);
-                    const month = date.substring(4, 6);
-                    const day = date.substring(6, 8);
-                    const formattedDate = `${year}-${month}-${day}`;
-
-                    const description = descriptionMatch[1].trim();
-                    const value = parseFloat(valueMatch[1]);
-                    const type = typeMatch[1] === 'CREDIT' ? 'receita' : 'despesa';
-
-                    parsedTransactions.push({
-                        id: generateUniqueId(),
-                        date: formattedDate,
-                        description,
-                        value: Math.abs(value), // Garante valor positivo
-                        type,
-                        category: 'Importado', // Categoria padrão para importados
-                        accountId: '', // Será definido durante a revisão
-                        isCreditCard: false, // Padrão, usuário pode mudar se necessário
-                        installments: '1/1',
-                        isPaid: true // Transações importadas geralmente já estão pagas/processadas
-                    });
-                }
-            }
-            return parsedTransactions;
-        };
-
-        /**
-         * Analisa o conteúdo de um arquivo Excel/CSV usando SheetJS.
-         * @param {string} data - O conteúdo binário do arquivo.
-         * @param {string} fileExtension - A extensão do arquivo ('csv', 'xls', 'xlsx').
-         * @returns {Array<Object>} Um array de objetos de transação.
-         */
-        const parseExcelCsv = (data, fileExtension) => {
-            const parsedTransactions = [];
-            try {
-                const workbook = XLSX.read(data, { type: 'binary' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-                if (json.length === 0) {
-                    console.log('CSV/Excel: JSON vazio após parsing.'); // Log for empty data
-                    return parsedTransactions;
-                }
-
-                // Tenta encontrar a linha do cabeçalho
-                let headerRowIndex = -1;
-                let dateCol = -1, descCol = -1, valueCol = -1, typeCol = -1;
-
-                for (let i = 0; i < json.length; i++) {
-                    const row = json[i];
-                    if (Array.isArray(row)) {
-                        const lowerCaseRow = row.map(cell => typeof cell === 'string' ? cell.toLowerCase().trim() : '');
-                        dateCol = lowerCaseRow.indexOf('data');
-                        if (dateCol === -1) dateCol = lowerCaseRow.indexOf('date');
-                        
-                        descCol = lowerCaseRow.indexOf('descricao');
-                        if (descCol === -1) descCol = lowerCaseRow.indexOf('description');
-
-                        valueCol = lowerCaseRow.indexOf('valor');
-                        if (valueCol === -1) valueCol = lowerCaseRow.indexOf('value');
-
-                        typeCol = lowerCaseRow.indexOf('tipo');
-                        if (typeCol === -1) typeCol = lowerCaseRow.indexOf('type');
-
-                        if (dateCol !== -1 && descCol !== -1 && valueCol !== -1 && typeCol !== -1) {
-                            headerRowIndex = i;
-                            console.log('CSV/Excel: Cabeçalho encontrado na linha', headerRowIndex); // Log header row
-                            break;
-                        }
-                    }
-                }
-
-                if (headerRowIndex === -1) {
-                    console.log('CSV/Excel: Não foi possível identificar as colunas de cabeçalho.'); // Log missing header
-                    showFeedback('Não foi possível identificar as colunas "Data", "Descrição", "Valor" e "Tipo" no seu arquivo.', 'error');
-                    return parsedTransactions;
-                }
-
-                for (let i = headerRowIndex + 1; i < json.length; i++) {
-                    const row = json[i];
-                    if (!Array.isArray(row)) {
-                        console.log('CSV/Excel: Pulando linha não-array:', row); // Log non-array rows
-                        continue;
-                    }
-
-                    const dateRaw = row[dateCol];
-                    const description = row[descCol];
-                    const valueRaw = row[valueCol];
-                    const typeRaw = row[typeCol];
-
-                    if (dateRaw && description && valueRaw !== undefined && typeRaw) {
-                        let date;
-                        // Lida com diferentes formatos de data (número Excel, string)
-                        if (typeof dateRaw === 'number') {
-                            date = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
-                        } else {
-                            date = new Date(dateRaw);
-                        }
-                        
-                        const formattedDate = date.toISOString().split('T')[0]; // ISOYYYY-MM-DD
-
-                        const value = parseFloat(String(valueRaw).replace(',', '.')); // Lida com vírgula como separador decimal
-                        const type = String(typeRaw).toLowerCase().includes('receita') || String(typeRaw).toLowerCase().includes('credit') ? 'receita' : 'despesa';
-
-                        if (!isNaN(value) && formattedDate !== 'Invalid Date') {
-                            parsedTransactions.push({
-                                id: generateUniqueId(),
-                                date: formattedDate,
-                                description: String(description).trim(),
-                                value: Math.abs(value),
-                                type,
-                                category: 'Importado',
-                                accountId: '', // Será selecionado pelo usuário
-                                isCreditCard: false,
-                                installments: '1/1',
-                                isPaid: true
-                            });
-                        } else {
-                            console.log('CSV/Excel: Pulando transação inválida (valor ou data):', row); // Log invalid transaction data
-                        }
-                    } else {
-                        console.log('CSV/Excel: Pulando linha com dados incompletos:', row); // Log incomplete row
-                    }
-                }
-            } catch (e) {
-                console.error('Erro no parseExcelCsv:', e); // Log parsing errors
-                showFeedback('Erro ao ler o arquivo Excel/CSV. Verifique se o formato está correto.', 'error');
-            }
-            return parsedTransactions;
-        };
-
-
-        /** Renderiza as transações importadas na tabela de revisão. */
-        const renderImportedTransactionsForReview = () => {
+        renderImportedTransactionsForReview = () => { 
             importedTransactionsTableBody.innerHTML = '';
+             if (!importedTransactionsToReview || importedTransactionsToReview.length === 0) {
+                importReviewSection.classList.add('hidden');
+                return;
+            }
             importedTransactionsToReview.forEach((transaction, index) => {
                 const tr = document.createElement('tr');
                 tr.className = 'bg-white hover:bg-gray-50';
+                const accountSelectOptionsHTML = accounts.map(acc => `<option value="${acc.id}" ${transaction.accountId === acc.id ? 'selected' : ''}>${acc.name} (${acc.type === 'overdraft' ? 'Cheque Especial' : 'Dinheiro'})</option>`).join('') +
+                                            creditCards.map(card => `<option value="${card.id}" ${transaction.accountId === card.id ? 'selected' : ''}>${card.name} (Cartão de Crédito)</option>`).join('');
 
-                // Cria opções para os selects de conta/cartão
-                const accountSelectOptions = accounts.map(acc => {
-                    const accountTypeText = acc.type === 'overdraft' ? 'Cheque Especial' : 'Dinheiro';
-                    return `<option value="${acc.id}">${acc.name} (${accountTypeText})</option>`;
-                }).join('');
-                const creditCardSelectOptions = creditCards.map(card => `<option value="${card.id}">${card.name} (Cartão de Crédito)</option>`).join('');
+                const formattedValue = typeof transaction.value === 'number' ? transaction.value.toFixed(2) : '0.00';
 
                 tr.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${transaction.description}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${transaction.type === 'receita' ? 'text-green-600' : 'text-red-600'}">
-                        ${formatCurrency(transaction.value)}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${transaction.type === 'receita' ? 'Receita' : 'Despesa'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <input type="text" class="category-input w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm text-sm" value="${transaction.category}" data-index="${index}">
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <select class="account-select-review w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm text-sm" data-index="${index}">
-                            <option value="">Selecione</option>
-                            ${accountSelectOptions}
-                            ${creditCardSelectOptions}
+                    <td class="px-2 py-2 whitespace-nowrap text-sm"><input type="date" class="date-input w-full border rounded px-1 py-0.5 text-xs" value="${transaction.date || new Date().toISOString().split('T')[0]}" data-index="${index}"></td>
+                    <td class="px-2 py-2 text-sm"><textarea class="description-input w-full border rounded px-1 py-0.5 text-xs" data-index="${index}" rows="2">${transaction.description || ''}</textarea></td>
+                    <td class="px-2 py-2 whitespace-nowrap text-sm"><input type="number" step="0.01" class="value-input w-24 border rounded px-1 py-0.5 text-xs" value="${formattedValue}" data-index="${index}"></td>
+                    <td class="px-2 py-2 whitespace-nowrap text-sm">
+                        <select class="type-input w-full border rounded px-1 py-0.5 text-xs" data-index="${index}">
+                            <option value="despesa" ${transaction.type === 'despesa' ? 'selected' : ''}>Despesa</option>
+                            <option value="receita" ${transaction.type === 'receita' ? 'selected' : ''}>Receita</option>
+                            <option value="saque" ${transaction.type === 'saque' ? 'selected' : ''}>Saque</option>
+                            <option value="pix_enviado" ${transaction.type === 'pix_enviado' ? 'selected' : ''}>PIX Enviado</option>
+                            <option value="pix_recebido" ${transaction.type === 'pix_recebido' ? 'selected' : ''}>PIX Recebido</option>
                         </select>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${transaction.isPaid ? 'Pago' : 'Não Pago'}</td>
-                `;
+                    <td class="px-2 py-2 whitespace-nowrap text-sm">
+                        <select class="category-input w-full border rounded px-1 py-0.5 text-xs" data-index="${index}">
+                            ${categories.sort((a,b)=> a.localeCompare(b)).map(cat => `<option value="${cat}" ${transaction.category === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+                            <option value="nova-categoria-review">Adicionar Nova...</option>
+                        </select>
+                         <input type="text" class="new-category-input-review hidden w-full border rounded px-1 py-0.5 text-xs mt-1" placeholder="Nova Cat." data-index="${index}">
+                    </td>
+                    <td class="px-2 py-2 whitespace-nowrap text-sm">
+                        <select class="account-select-review w-full border rounded px-1 py-0.5 text-xs" data-index="${index}">
+                            <option value="">Não Vincular</option>
+                            ${accountSelectOptionsHTML}
+                        </select>
+                    </td>
+                    <td class="px-2 py-2 whitespace-nowrap text-sm">
+                        <select class="paid-status-input w-full border rounded px-1 py-0.5 text-xs" data-index="${index}">
+                            <option value="false" ${!transaction.isPaid ? 'selected' : ''}>Não Pago</option>
+                            <option value="true" ${transaction.isPaid ? 'selected' : ''}>Pago</option>
+                        </select>
+                    </td>`;
                 importedTransactionsTableBody.appendChild(tr);
-            });
 
-            // Adiciona event listeners para os inputs de categoria e selects de conta na tabela de revisão
-            document.querySelectorAll('.category-input').forEach(input => {
-                input.addEventListener('change', (e) => {
-                    const index = parseInt(e.target.dataset.index);
-                    importedTransactionsToReview[index].category = e.target.value.trim();
+                tr.querySelector('.date-input').addEventListener('change', (e) => importedTransactionsToReview[index].date = e.target.value);
+                tr.querySelector('.description-input').addEventListener('input', (e) => importedTransactionsToReview[index].description = e.target.value);
+                tr.querySelector('.value-input').addEventListener('change', (e) => importedTransactionsToReview[index].value = parseFloat(e.target.value) || 0);
+                tr.querySelector('.type-input').addEventListener('change', (e) => {
+                    importedTransactionsToReview[index].type = e.target.value;
+                     // Atualiza fundamentalType baseado no novo tipo
+                    const newType = e.target.value;
+                    if (newType === 'receita' || newType === 'pix_recebido') {
+                        importedTransactionsToReview[index].fundamentalType = 'receita';
+                    } else {
+                        importedTransactionsToReview[index].fundamentalType = 'despesa';
+                    }
                 });
-            });
+                
+                const categoryInputReview = tr.querySelector('.category-input');
+                const newCategoryInputReview = tr.querySelector('.new-category-input-review');
+                categoryInputReview.addEventListener('change', (e) => {
+                    if(e.target.value === 'nova-categoria-review'){
+                        newCategoryInputReview.classList.remove('hidden');
+                        newCategoryInputReview.focus();
+                        importedTransactionsToReview[index].category = ''; 
+                    } else {
+                        newCategoryInputReview.classList.add('hidden'); newCategoryInputReview.value = '';
+                        importedTransactionsToReview[index].category = e.target.value;
+                    }
+                });
+                newCategoryInputReview.addEventListener('blur', (e) => { 
+                     if(e.target.value.trim() && categoryInputReview.value === 'nova-categoria-review'){
+                        importedTransactionsToReview[index].category = e.target.value.trim();
+                     }
+                });
 
-            document.querySelectorAll('.account-select-review').forEach(select => {
-                select.addEventListener('change', (e) => {
-                    const index = parseInt(e.target.dataset.index);
-                    const selectedAccountId = e.target.value;
-                    importedTransactionsToReview[index].accountId = selectedAccountId;
-                    // Determina se é uma transação de cartão de crédito com base na conta selecionada
-                    importedTransactionsToReview[index].isCreditCard = creditCards.some(card => card.id === selectedAccountId);
+
+                tr.querySelector('.account-select-review').addEventListener('change', (e) => {
+                    importedTransactionsToReview[index].accountId = e.target.value;
+                    importedTransactionsToReview[index].isCreditCard = e.target.value ? creditCards.some(card => card.id === e.target.value) : false;
                 });
+                 tr.querySelector('.paid-status-input').addEventListener('change', (e) => importedTransactionsToReview[index].isPaid = e.target.value === 'true');
             });
         };
-
-        // Confirma a importação das transações revisadas
+        
         confirmImportBtn.addEventListener('click', () => {
-            let importedCount = 0;
-            let skippedCount = 0;
-            let importErrors = [];
-
-            // Create a temporary array for transactions that will actually be added
+            let importedCount = 0; let skippedCount = 0; let importErrors = [];
             const transactionsToCommit = [];
-
-            // Deep copy of accounts and creditCards to simulate changes and revert if needed
             const tempAccounts = JSON.parse(JSON.stringify(accounts));
             const tempCreditCards = JSON.parse(JSON.stringify(creditCards));
+            let newCategoriesAddedInReview = [];
 
-            for (const newTransaction of importedTransactionsToReview) {
-                if (!newTransaction.accountId) {
-                    skippedCount++;
-                    console.log(`Transação ignorada (sem conta vinculada): ${newTransaction.description}`);
-                    continue; // Skip unlinked transactions
+            importedTransactionsToReview.forEach((reviewedTx, index) => {
+                const categoryInputEl = document.querySelector(`.category-input[data-index="${index}"]`);
+                const newCategoryInputEl = document.querySelector(`.new-category-input-review[data-index="${index}"]`);
+
+                if (categoryInputEl && categoryInputEl.value === 'nova-categoria-review' && newCategoryInputEl && newCategoryInputEl.value.trim()) {
+                    const newCatName = newCategoryInputEl.value.trim();
+                    if (newCatName && !categories.includes(newCatName) && !newCategoriesAddedInReview.includes(newCatName)) {
+                        newCategoriesAddedInReview.push(newCatName);
+                    }
+                    reviewedTx.category = newCatName || 'Outros'; 
+                } else if (categoryInputEl) {
+                    reviewedTx.category = categoryInputEl.value || 'Outros';
                 }
 
-                const account = tempAccounts.find(acc => acc.id === newTransaction.accountId);
-                const creditCard = tempCreditCards.find(card => card.id === newTransaction.accountId);
+                // Atualiza fundamentalType baseado no tipo selecionado na revisão, se não foi setado no parse
+                 if (!reviewedTx.fundamentalType) {
+                    if (reviewedTx.type === 'receita' || reviewedTx.type === 'pix_recebido') {
+                        reviewedTx.fundamentalType = 'receita';
+                    } else {
+                        reviewedTx.fundamentalType = 'despesa';
+                    }
+                }
+
+
+                if (!reviewedTx.description || isNaN(reviewedTx.value) || reviewedTx.value <= 0) { 
+                    skippedCount++; return;
+                }
 
                 let transactionValid = true;
-                if (newTransaction.isCreditCard) {
-                    if (newTransaction.type === 'despesa') {
-                        creditCard.currentBillAmount += newTransaction.value;
-                        creditCard.availableLimit -= newTransaction.value;
-                    } else { // receita
-                        creditCard.currentBillAmount -= newTransaction.value;
-                        creditCard.availableLimit += newTransaction.value;
-                    }
-                } else if (account) { // Cash or Overdraft account
-                    if (newTransaction.type === 'despesa') {
-                        if (account.type === 'overdraft') {
-                            if (account.balance - newTransaction.value < -account.limit) {
-                                importErrors.push(`Transação importada de ${formatCurrency(newTransaction.value)} excede o limite do cheque especial ${account.name}. Limite: ${formatCurrency(account.limit)}, Utilizado: ${formatCurrency(Math.abs(account.balance))}.`);
-                                transactionValid = false;
-                            } else {
-                                account.balance -= newTransaction.value;
+                if (reviewedTx.accountId){ // Se houver conta vinculada
+                    const account = tempAccounts.find(acc => acc.id === reviewedTx.accountId);
+                    const creditCard = tempCreditCards.find(card => card.id === reviewedTx.accountId);
+
+                    if (reviewedTx.isCreditCard && creditCard) {
+                        if (reviewedTx.fundamentalType === 'despesa') creditCard.availableLimit -= reviewedTx.value;
+                        else creditCard.availableLimit += reviewedTx.value;
+                    } else if (account) { 
+                        if (reviewedTx.isPaid) {
+                            if (reviewedTx.fundamentalType === 'despesa') {
+                                if (account.type === 'overdraft' && (account.balance - reviewedTx.value < -account.limit)) {
+                                    importErrors.push(`Importada de ${formatCurrency(reviewedTx.value)} para ${account.name} excede limite.`);
+                                    transactionValid = false;
+                                } else if(transactionValid) { 
+                                    account.balance -= reviewedTx.value;
+                                }
+                            } else if(transactionValid) { 
+                                account.balance += reviewedTx.value;
                             }
-                        } else { // cash
-                            account.balance -= newTransaction.value;
                         }
-                    } else { // receita
-                        account.balance += newTransaction.value;
+                    } else { 
+                        importErrors.push(`Conta/Cartão ID ${reviewedTx.accountId} não encontrado.`);
+                        transactionValid = false;
                     }
                 }
+                // Se não houver accountId (Não Vincular), a transação é válida por padrão para ser adicionada sem afetar saldos.
+
 
                 if (transactionValid) {
-                    transactionsToCommit.push(newTransaction);
+                    transactionsToCommit.push({ ...reviewedTx, id: generateUniqueId() }); 
                     importedCount++;
                 } else {
-                    skippedCount++; // Increment skipped if validation failed
+                    skippedCount++; 
+                }
+            });
+            
+            if (newCategoriesAddedInReview.length > 0) {
+                categories.push(...newCategoriesAddedInReview);
+                saveCategories();
+                populateCategorySelect(); 
+                populateCategorySelect(editCategorySelect);
+                if (!importReviewSection.classList.contains('hidden')) {
+                     renderImportedTransactionsForReview(); 
                 }
             }
 
             if (importErrors.length > 0) {
-                showFeedback(`Erro(s) na importação: ${importErrors.join(' ')}`, 'error');
-                console.error('Erros de importação:', importErrors);
-                // Do not commit changes if there were errors that prevented transactions from being added
-                // The tempAccounts and tempCreditCards are discarded automatically.
-                return;
+                showFeedback(`Erro(s) na importação: ${importErrors.join(' ')} ${skippedCount > 0 ? (importedCount > 0 ? 'Outras ' : '') + skippedCount + ' transações ignoradas.' : ''}`, 'error');
+                if (importedCount === 0) return; 
             }
 
-            // If all transactions processed without validation errors, commit changes
             transactions.push(...transactionsToCommit);
-            accounts = tempAccounts; // Update global accounts with changes
-            creditCards = tempCreditCards; // Update global creditCards with changes
+            accounts = tempAccounts; 
+            creditCards = tempCreditCards; 
 
-            saveTransactions();
-            saveAccounts();
-            saveCreditCards();
+            saveTransactions(); saveAccounts(); saveCreditCards();
+            renderTransactions(); updateSummary(); renderMonthlySummary(); 
+            renderDetailedCardBills(); checkCreditCardDueDates();
             
-            renderTransactions();
-            updateSummary(); // Update overall income
-            renderMonthlySummary();
-            renderDetailedCardBills();
-            checkCreditCardDueDates();
+            importedTransactionsToReview = []; 
+            importedTransactionsTableBody.innerHTML = ''; 
+            importReviewSection.classList.add('hidden'); 
             
-            importedTransactionsToReview = []; // Limpa o array de revisão
-            importedTransactionsTableBody.innerHTML = ''; // Limpa a tabela
-            importReviewSection.classList.add('hidden'); // Oculta a seção de revisão
-            fileInput.value = ''; // Limpa o input de arquivo
+            let feedbackMsg = `Importação concluída. ${importedCount} transação(ões) adicionada(s).`;
+            if (skippedCount > 0 && importErrors.length === 0) feedbackMsg += ` ${skippedCount} ignorada(s) por falta de vínculo ou dados.`;
+            else if (skippedCount > 0 && importErrors.length > 0 && importedCount > 0) feedbackMsg += ` ${skippedCount} adicional(is) ignorada(s).`;
 
-            let feedbackMessage = `Importação concluída. ${importedCount} transação(ões) adicionada(s).`;
-            if (skippedCount > 0) {
-                feedbackMessage += ` ${skippedCount} transação(ões) ignorada(s) (não vinculada(s) ou com erro de limite).`;
-            }
-            showFeedback(feedbackMessage, 'success');
-            console.log('Importação finalizada. Adicionadas:', importedCount, 'Ignoradas:', skippedCount);
+            showFeedback(feedbackMsg, importedCount > 0 ? 'success' : (importErrors.length > 0 ? 'error' : 'info') );
         });
 
-        // Cancela a revisão da importação
         cancelReviewBtn.addEventListener('click', () => {
-            importedTransactionsToReview = [];
-            importedTransactionsTableBody.innerHTML = '';
-            importReviewSection.classList.add('hidden');
-            fileInput.value = '';
+            importedTransactionsToReview = []; importedTransactionsTableBody.innerHTML = '';
+            importReviewSection.classList.add('hidden'); fileInput.value = '';
             showFeedback('Importação cancelada.', 'info');
+             fileInput.disabled = false; 
+            importFileBtn.disabled = false; 
         });
-
-
-        // --- Integração Chart.js (Gráfico de Despesas por Categoria) ---
-        // This function is no longer called as the dashboard section has been removed.
-        /** Renderiza/atualiza o gráfico de despesas por categoria. */
-        const renderExpensesChart = () => {
-            const ctx = document.getElementById('expenses-chart').getContext('2d');
-
-            // Filtra transações para o mês e ano atuais, incluindo TODAS as despesas
-            const monthlyExpensesForChart = transactions.filter(t => {
-                const transactionDate = new Date(t.date);
-                return t.type === 'despesa' &&
-                       transactionDate.getMonth() === currentMonth &&
-                       transactionDate.getFullYear() === currentYear;
-            });
-
-            // Agrega despesas por categoria
-            const expensesByCategory = monthlyExpensesForChart.reduce((acc, transaction) => {
-                const category = transaction.category || 'Outros';
-                acc[category] = (acc[category] || 0) + transaction.value;
-                return acc;
-            }, {});
-
-            const labels = Object.keys(expensesByCategory);
-            const data = Object.values(expensesByCategory);
-
-            // Cores discretas predefinidas para o gráfico
-            const discreetColors = [
-                '#AEC6CF', // Azul Acinzentado Claro
-                '#B3E0FF', // Azul Muito Claro
-                '#ADD8E6', // Azul Claro
-                '#87CEEB', // Azul Céu
-                '#6495ED', // Azul Centáurea
-                '#4682B4', // Azul Aço
-                '#5F9EA0', // Azul Cadete
-                '#778899', // Cinza Ardósia Claro
-                '#B0C4DE', // Azul Aço Claro
-                '#C6E2FF'  // Azul Mais Claro
-            ];
-
-            // Atribui cores ciclicamente
-            const backgroundColors = labels.map((_, index) => discreetColors[index % discreetColors.length]);
-            // Escurece ligeiramente as cores de fundo para as bordas
-            const borderColors = backgroundColors.map(color => {
-                const hex = color.replace('#', '');
-                const r = parseInt(hex.substring(0, 2), 16);
-                const g = parseInt(hex.substring(2, 4), 16);
-                const b = parseInt(hex.substring(4, 6), 16);
-                return `rgb(${r * 0.8}, ${g * 0.8}, ${b * 0.8})`;
-            });
-
-            if (expensesChart) {
-                expensesChart.data.labels = labels;
-                expensesChart.data.datasets[0].data = data;
-                expensesChart.data.datasets[0].backgroundColor = backgroundColors;
-                expensesChart.data.datasets[0].borderColor = borderColors;
-                expensesChart.update();
-            } else {
-                expensesChart = new Chart(ctx, {
-                    type: 'pie', // Tipo de gráfico: pizza
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Despesas por Categoria',
-                            data: data,
-                            backgroundColor: backgroundColors,
-                            borderColor: borderColors,
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            },
-                            title: {
-                                display: true,
-                                text: 'Despesas por Categoria no Mês Atual' // Título do gráfico
-                            }
-                        }
-                    }
-                });
-            }
-        };
-
+        
         // --- Funções de Download ---
-
-        // Event listener para o botão de baixar planilha
         downloadXlsxBtn.addEventListener('click', () => {
-            // Filtra transações do mês e ano atuais para exportação
+            const beginningOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+            beginningOfCurrentMonth.setHours(0,0,0,0);
             const dataToExport = transactions.filter(t => {
-                const transactionDate = new Date(t.date);
-                return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
-            }).map(t => ({
-                Data: new Date(t.date).toLocaleDateString('pt-BR'),
-                Descrição: t.description,
-                Valor: t.value,
-                Tipo: t.type === 'receita' ? 'Receita' : 'Despesa',
-                Categoria: t.category,
-                'Conta / Cartão': t.isCreditCard
-                    ? creditCards.find(card => card.id === t.accountId)?.name || 'Cartão Desconhecido'
-                    : accounts.find(acc => acc.id === t.accountId)?.name || 'Conta Desconhecida',
-                Parcela: t.installments,
-                Pago: t.isPaid ? 'Sim' : 'Não'
-            }));
+                const tDate = new Date(t.date); tDate.setHours(0,0,0,0);
+                const isInCurrentMonthAndYear = tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
+                const isPendingFromPreviousMonth = tDate < beginningOfCurrentMonth && !t.isPaid;
+                return isInCurrentMonthAndYear || isPendingFromPreviousMonth;
+            }).sort((a, b) => new Date(a.date) - new Date(b.date))
+            .map(t => {
+                let typeDisplay = t.type;
+                if (t.type === 'pix_enviado') typeDisplay = 'PIX Enviado';
+                else if (t.type === 'pix_recebido') typeDisplay = 'PIX Recebido';
+                else if (t.type === 'saque') typeDisplay = 'Saque';
+                else if (t.type === 'receita') typeDisplay = 'Receita';
+                else if (t.type === 'despesa') typeDisplay = 'Despesa';
+
+                return {
+                    Data: new Date(t.date).toLocaleDateString('pt-BR'), Descrição: t.description, Valor: t.value,
+                    Tipo: typeDisplay, Categoria: t.category,
+                    'Conta / Cartão': t.accountId ? (t.isCreditCard ? (creditCards.find(c => c.id === t.accountId)?.name || 'N/A') : (accounts.find(a => a.id === t.accountId)?.name || 'N/A')) : "Não Vinculada",
+                    Parcela: t.installments, Pago: t.isPaid ? 'Sim' : 'Não'
+                }
+            });
 
             if (dataToExport.length === 0) {
-                showFeedback('Não há transações para baixar no mês atual.', 'info');
-                return;
+                showFeedback('Não há transações para baixar.', 'info'); return;
             }
-
-            // Cria a planilha e o arquivo XLSX
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Transacoes");
-
             const monthName = new Date(currentYear, currentMonth).toLocaleDateString('pt-BR', { month: 'long' });
-            const fileName = `transacoes_${monthName}_${currentYear}.xlsx`;
-            XLSX.writeFile(workbook, fileName);
-
-            showFeedback('Planilha baixada com sucesso!', 'success');
+            XLSX.writeFile(workbook, `transacoes_${monthName}_${currentYear}.xlsx`);
+            showFeedback('Planilha baixada!', 'success');
         });
 
         // --- Faturas Detalhadas de Cartão ---
-        // Alterna a visibilidade da seção de faturas detalhadas
         detailedCardBillsHeader.addEventListener('click', () => {
             detailedCardBillsContent.classList.toggle('hidden');
             detailedCardBillsArrow.classList.toggle('rotated');
         });
-
-        /** Renderiza a lista de faturas detalhadas de cartão. */
         const renderDetailedCardBills = () => {
             detailedCardBillsList.innerHTML = '';
             if (creditCards.length === 0) {
-                noCardBillsMessage.classList.remove('hidden');
-                return;
+                noCardBillsMessage.classList.remove('hidden'); return;
             } else {
                 noCardBillsMessage.classList.add('hidden');
             }
-
             creditCards.forEach(card => {
-                // Recalcula a fatura atual para o cartão com base nas despesas não pagas do mês atual
                 const currentMonthBill = transactions.reduce((sum, t) => {
-                    const transactionDate = new Date(t.date);
-                    if (t.accountId === card.id && t.type === 'despesa' && !t.isPaid &&
-                        transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear) {
+                    const tDate = new Date(t.date);
+                    if (t.accountId === card.id && t.fundamentalType === 'despesa' && !t.isPaid &&
+                        tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
                         return sum + t.value;
                     }
                     return sum;
                 }, 0);
-
                 const li = document.createElement('li');
                 li.className = 'p-4 flex justify-between items-center bg-white hover:bg-gray-50';
-                li.innerHTML = `
-                    <div class="font-semibold text-gray-800">${card.name}: <span class="text-purple-700">${formatCurrency(currentMonthBill)}</span></div>
-                    <div class="text-sm text-gray-600">Vencimento: Dia ${card.dueDay}</div>
-                `;
+                li.innerHTML = `<div class="font-semibold text-gray-800">${card.name}: <span class="text-purple-700">${formatCurrency(currentMonthBill)}</span></div>
+                                <div class="text-sm text-gray-600">Vencimento: Dia ${card.dueDay}</div>`;
                 detailedCardBillsList.appendChild(li);
             });
         };
 
-        // --- Função para verificar datas de vencimento de cartão e fechamento de fatura ---
-        /**
-         * Verifica as datas de vencimento e fechamento de fatura dos cartões de crédito
-         * e dispara notificações se as condições forem atendidas.
-         */
+        // --- Função para verificar datas de vencimento de cartão ---
         const checkCreditCardDueDates = () => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0); // Normaliza para o início do dia para comparação de datas
-
+            const today = new Date(); today.setHours(0, 0, 0, 0); 
             creditCards.forEach(card => {
                 const dueDay = card.dueDay;
-
-                // Calcula a data de vencimento para o ciclo atual da fatura
                 let billDueDate = new Date(today.getFullYear(), today.getMonth(), dueDay);
                 billDueDate.setHours(0, 0, 0, 0);
-
-                // Se o dia atual já passou o dia de vencimento para este mês,
-                // a data de vencimento da fatura atual deve ser para o próximo ciclo.
-                if (today.getDate() > dueDay) {
-                    billDueDate.setMonth(today.getMonth() + 1);
-                }
-
-                // Calcula a data de fechamento da fatura (10 dias antes do vencimento)
+                if (today.getDate() > dueDay) billDueDate.setMonth(today.getMonth() + 1);
+                
                 let billClosingDate = new Date(billDueDate.getTime());
-                billClosingDate.setDate(billDueDate.getDate() - 10);
+                billClosingDate.setDate(billDueDate.getDate() - 10); 
                 billClosingDate.setHours(0, 0, 0, 0);
 
-                // Verifica e dispara notificação de fechamento de fatura
-                // A notificação ocorre APENAS no dia exato do fechamento.
                 if (today.getTime() === billClosingDate.getTime()) {
-                    showFeedback(`A fatura do cartão ${card.name} fechou hoje! Valor: ${formatCurrency(card.currentBillAmount)}. Vencimento: ${billDueDate.toLocaleDateString('pt-BR')}`, 'info');
+                    const closingBillAmount = transactions.reduce((sum, t) => { 
+                         const tDate = new Date(t.date);
+                         let cycleStartApprox = new Date(billClosingDate); 
+                         cycleStartApprox.setDate(cycleStartApprox.getDate() - (card.dueDay > 10 ? 30 : 28)); 
+                         
+                         if (t.accountId === card.id && t.fundamentalType === 'despesa' && tDate >= cycleStartApprox && tDate < billClosingDate ) {
+                            return sum + t.value;
+                         }
+                         return sum;
+                    },0);
+                    if (closingBillAmount > 0) {
+                         showFeedback(`FATURA FECHADA: ${card.name} fechou hoje! Valor (aprox.): ${formatCurrency(closingBillAmount)}. Venc.: ${billDueDate.toLocaleDateString('pt-BR')}`, 'info');
+                    }
                 }
 
-                // Verifica e dispara notificação de vencimento (lógica existente)
-                // Calcula a diferença em dias entre hoje e a próxima data de vencimento
                 const diffTimeDue = billDueDate.getTime() - today.getTime();
                 const diffDaysDue = Math.ceil(diffTimeDue / (1000 * 60 * 60 * 24));
-
-                // Dispara notificação se a data de vencimento está dentro dos próximos 7 dias (inclusive hoje)
-                // e a data de vencimento ainda não passou.
-                if (diffDaysDue <= 7 && diffDaysDue >= 0) {
-                    if (diffDaysDue === 0) {
-                        showFeedback(`A fatura do cartão ${card.name} vence hoje! Valor: ${formatCurrency(card.currentBillAmount)}`, 'info');
-                    } else {
-                        showFeedback(`A fatura do cartão ${card.name} vence em ${diffDaysDue} dia(s)! Valor: ${formatCurrency(card.currentBillAmount)}`, 'info');
+                
+                const currentMonthBillForNotification = transactions.reduce((sum, t) => { 
+                    const tDate = new Date(t.date);
+                    if (t.accountId === card.id && t.fundamentalType === 'despesa' && !t.isPaid && 
+                        tDate >= billClosingDate && tDate < billDueDate ) { 
+                        return sum + t.value;
                     }
+                    return sum;
+                },0);
+
+                if (diffDaysDue <= 7 && diffDaysDue >= 0 && currentMonthBillForNotification > 0) {
+                    const msgBase = `VENCIMENTO PRÓXIMO: ${card.name} vence ${diffDaysDue === 0 ? 'HOJE' : 'em ' + diffDaysDue + ' dia(s)'}!`;
+                    showFeedback(`${msgBase} Valor (aprox.): ${formatCurrency(currentMonthBillForNotification)}`, 'info');
                 }
             });
         };
 
+        // --- Integração com IA do Google (Gemini) ---
+        const getAICategorySuggestion = async (description) => {
+            if (!description || description.trim() === "") {
+                showFeedback("Por favor, insira uma descrição para obter uma sugestão de categoria.", "info");
+                return;
+            }
 
-        // Carregamento inicial dos dados quando a página é carregada
+            aiSuggestCategoryBtn.disabled = true;
+            aiSuggestCategorySpinner.classList.remove('hidden');
+            aiSuggestCategoryBtn.querySelector('.bi-stars').classList.add('hidden'); 
+            showFeedback("Consultando IA para sugestão de categoria...", "info");
+
+            const existingCategoriesString = categories.join(", ");
+            const prompt = `Com base na descrição de transação financeira "${description}", sugira a categoria mais apropriada em português do Brasil. As categorias existentes são: ${existingCategoriesString}. Se nenhuma existente se encaixar perfeitamente, sugira uma nova categoria concisa ou a mais próxima. Retorne apenas o nome da categoria sugerida. Se a descrição for muito vaga, retorne "Outros".`;
+            
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = { contents: chatHistory };
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Erro da API Gemini:", errorData);
+                    throw new Error(`Erro da API: ${response.status} - ${errorData.error?.message || 'Erro desconhecido'}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    
+                    let suggestedCategory = result.candidates[0].content.parts[0].text.trim();
+                    suggestedCategory = suggestedCategory.replace(/^["']|["']$/g, '').replace(/\.$/, '').trim();
+
+                    showFeedback(`Sugestão da IA: ${suggestedCategory}`, "success");
+                    const existingCategoryMatch = categories.find(cat => cat.toLowerCase() === suggestedCategory.toLowerCase());
+
+                    if (existingCategoryMatch) {
+                        categorySelect.value = existingCategoryMatch;
+                        newCategoryInput.classList.add('hidden');
+                        newCategoryInput.value = '';
+                    } else if (suggestedCategory && suggestedCategory.toLowerCase() !== "outros" && suggestedCategory.length < 30) { 
+                        categorySelect.value = 'nova-categoria';
+                        newCategoryInput.classList.remove('hidden');
+                        newCategoryInput.value = suggestedCategory; 
+                        showFeedback(`Sugestão da IA: "${suggestedCategory}". Adicione como nova ou escolha uma existente.`, "info");
+                    } else { 
+                         const outrosOption = Array.from(categorySelect.options).find(opt => opt.value.toLowerCase() === 'outros');
+                         if (outrosOption) categorySelect.value = outrosOption.value;
+                         else if (categorySelect.options.length > 1 && categorySelect.options[1].value !== "") categorySelect.selectedIndex = 1; 
+                         newCategoryInput.classList.add('hidden');
+                         newCategoryInput.value = '';
+                    }
+                    categorySelect.dispatchEvent(new Event('change'));
+                } else {
+                    console.warn("Resposta da API Gemini não continha sugestão válida:", result);
+                    showFeedback("IA não conseguiu sugerir uma categoria desta vez.", "info");
+                }
+            } catch (error) {
+                console.error("Erro ao chamar API Gemini:", error);
+                showFeedback(`Erro ao obter sugestão da IA: ${error.message}`, "error");
+            } finally {
+                aiSuggestCategoryBtn.disabled = false;
+                aiSuggestCategorySpinner.classList.add('hidden');
+                aiSuggestCategoryBtn.querySelector('.bi-stars').classList.remove('hidden'); 
+            }
+        };
+
+        aiSuggestCategoryBtn.addEventListener('click', () => {
+            const description = document.getElementById('description').value.trim();
+            getAICategorySuggestion(description);
+        });
+
+        const getAIExpenseAnalysis = async () => {
+            aiAnalyzeExpensesBtn.disabled = true;
+            aiAnalyzeExpensesSpinner.classList.remove('hidden');
+            aiAnalyzeExpensesBtn.querySelector('.bi-clipboard2-data').classList.add('hidden');
+            showFeedback("Analisando seus gastos com IA...", "info");
+            aiAnalysisModalBody.innerHTML = '<p class="text-center">Analisando seus gastos... Isso pode levar alguns instantes.</p>';
+            aiAnalysisModal.classList.remove('hidden');
+
+            const transactionsToAnalyze = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+            });
+
+            if (transactionsToAnalyze.length === 0) {
+                aiAnalysisModalBody.innerHTML = '<p>Não há transações neste mês para analisar.</p>';
+                aiAnalyzeExpensesBtn.disabled = false;
+                aiAnalyzeExpensesSpinner.classList.add('hidden');
+                aiAnalyzeExpensesBtn.querySelector('.bi-clipboard2-data').classList.remove('hidden');
+                return;
+            }
+
+            const simplifiedTransactions = transactionsToAnalyze.map(t => ({
+                descricao: t.description,
+                valor: t.value,
+                tipo: t.fundamentalType, // Usar fundamentalType para a IA
+                categoria: t.category,
+                data: t.date.substring(5) 
+            }));
+
+            const monthName = new Date(currentYear, currentMonth).toLocaleDateString('pt-BR', { month: 'long' });
+            const prompt = `
+                Analise as seguintes transações financeiras do mês de ${monthName} de ${currentYear}.
+                Dados das transações (descrição, valor, tipo (receita/despesa), categoria, data parcial MM-DD):
+                ${JSON.stringify(simplifiedTransactions)}
+
+                Forneça um resumo conciso em português do Brasil, com as seguintes seções:
+                1.  **Visão Geral do Mês:** Total de receitas, total de despesas e o saldo do mês (receitas - despesas).
+                2.  **Principais Categorias de Despesa:** Liste as 3 categorias onde mais se gastou e seus totais. Se houver menos de 3, liste as que existirem.
+                3.  **Observações e Dicas (opcional):** Com base nos dados, forneça 1 ou 2 observações breves e acionáveis ou dicas gerais de economia. Foque em padrões de gastos. Se não houver insights claros, omita esta seção ou diga que os gastos foram diversificados.
+                Formate a resposta de forma clara, usando markdown simples para títulos (ex: ## Título), listas com marcadores (*) e negrito (**palavra**). Não use HTML.
+            `;
+            
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = { contents: chatHistory };
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Erro da API Gemini (Análise):", errorData);
+                    throw new Error(`Erro da API: ${response.status} - ${errorData.error?.message || 'Erro desconhecido'}`);
+                }
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    
+                    let analysisText = result.candidates[0].content.parts[0].text;
+                    analysisText = analysisText
+                        .replace(/^## (.*$)/gm, '<h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">$1</h4>')
+                        .replace(/^### (.*$)/gm, '<h5 class="text-lg font-semibold text-gray-700 mt-3 mb-1">$1</h5>')
+                        .replace(/^\* (.*$)/gm, '<li class="ml-5 list-disc text-gray-700">$1</li>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+                        .replace(/\n/g, '<br>');
+                    // Envolve listas em <ul>
+                    analysisText = analysisText.replace(/<li/g, '<ul><li').replace(/<\/li>(?!<li)/g, '</li></ul>').replace(/<\/ul><ul>/g, '');
+
+                    aiAnalysisModalBody.innerHTML = analysisText;
+                    showFeedback("Análise de gastos concluída!", "success");
+                } else {
+                    console.warn("Resposta da API Gemini (Análise) não continha dados válidos:", result);
+                    aiAnalysisModalBody.innerHTML = '<p>A IA não conseguiu gerar uma análise desta vez. Tente novamente mais tarde.</p>';
+                    showFeedback("Não foi possível gerar a análise.", "info");
+                }
+
+            } catch (error) {
+                console.error("Erro ao chamar API Gemini (Análise):", error);
+                aiAnalysisModalBody.innerHTML = `<p class="text-red-600">Erro ao obter análise da IA: ${error.message}</p>`;
+                showFeedback(`Erro na análise com IA: ${error.message}`, "error");
+            } finally {
+                aiAnalyzeExpensesBtn.disabled = false;
+                aiAnalyzeExpensesSpinner.classList.add('hidden');
+                aiAnalyzeExpensesBtn.querySelector('.bi-clipboard2-data').classList.remove('hidden');
+            }
+        };
+
+        aiAnalyzeExpensesBtn.addEventListener('click', getAIExpenseAnalysis);
+        closeAiAnalysisModalBtn.addEventListener('click', () => aiAnalysisModal.classList.add('hidden'));
+        okAiAnalysisModalBtn.addEventListener('click', () => aiAnalysisModal.classList.add('hidden'));
+
+
+        // Carregamento inicial
         window.onload = () => {
             loadData();
-            updateMonthlyDisplay(); // Define a exibição inicial do mês
+            updateMonthlyDisplay(); 
         };
     </script>
 </body>
 </html>
+```
+
+**Principais Alterações Relacionadas aos Novos Tipos de Transação:**
+
+* **HTML:**
+    * O `<select id="type">` no formulário de transação agora inclui as opções: "Saque (da conta)", "PIX Enviado (Pagamento)", e "PIX Recebido".
+* **JavaScript:**
+    * **`transactionForm.addEventListener('submit', ...)`:**
+        * Foi adicionada uma propriedade `fundamentalType` a cada nova transação.
+            * Para "Receita" e "PIX Recebido", `fundamentalType` é "receita".
+            * Para "Despesa", "Saque", e "PIX Enviado", `fundamentalType` é "despesa".
+        * A lógica de atualização de saldo da conta e limite de cartão agora usa `fundamentalType` para decidir se adiciona ou subtrai o valor. Isso garante que "Saque" e "PIX Enviado" funcionem como despesas e "PIX Recebido" como receita em termos de impacto no saldo/limite.
+    * **`renderTransactions()`:**
+        * A exibição do "Tipo" na tabela agora mostra os nomes completos ("Saque", "PIX Enviado", "PIX Recebido").
+        * A cor do valor (vermelho/verde) é baseada no `fundamentalType`.
+    * **`performDelete()` e `markTransactionAsPaid()`:**
+        * A lógica de estorno/aplicação de saldo também foi ajustada para usar `fundamentalType`.
+    * **`updateSummary()` e `renderMonthlySummary()`:**
+        * Continuam a usar `fundamentalType` para calcular totais de despesas e receitas, garantindo que os novos tipos sejam contabilizados corretamente.
+    * **`downloadXlsxBtn`:**
+        * A coluna "Tipo" na planilha exportada agora refletirá os novos nomes dos tipos.
+    * **`getAIExpenseAnalysis()`:**
+        * Ao enviar dados para a IA, o `fundamentalType` é usado para classificar a transação como receita ou despesa para a análise.
+
+Testa essas novas funcionalidades e veja se atende às suas necessidad
