@@ -2877,40 +2877,6 @@
     </script>
 </body>
 </html>
-```
 
-**Resumo das Novas Adições (Metas Financeiras com IA):**
 
-* **HTML:**
-    * Uma nova seção colapsável "✨ Minhas Metas Financeiras com IA" foi adicionada.
-    * Dentro dela, um formulário para o usuário inserir o nome da meta, o valor total desejado e o prazo.
-    * Um botão "Adicionar Meta e Obter Plano da IA ✨" para submeter o formulário e acionar a IA.
-    * Uma lista `<ul>` (`id="financial-goals-list"`) para exibir as metas ativas.
-    * Um novo modal (`id="ai-goal-plan-modal"`) para exibir o plano de economia gerado pela IA.
-* **JavaScript:**
-    * **`financialGoals` Array:** Para armazenar os objetos das metas.
-    * **`saveFinancialGoals()` e `loadFinancialGoals()`:** Para persistência no localStorage.
-    * **`renderFinancialGoals()`:**
-        * Exibe cada meta ativa com seus detalhes (nome, valor, prazo, dias/meses restantes).
-        * Mostra o plano da IA (se já gerado) em uma área expansível.
-        * Inclui botões para:
-            * "Ver/Ocultar Plano da IA" (ou "Obter Plano da IA ✨" se ainda não houver plano).
-            * "Marcar como Concluída".
-            * "Excluir Meta".
-    * **Event Listener para `addFinancialGoalForm`:**
-        * Valida os dados da meta.
-        * Cria um novo objeto de meta.
-        * Chama `getAIGoalPlan()` para obter o plano da IA.
-        * Se o plano for gerado com sucesso, adiciona a meta à lista, salva e renderiza.
-        * Mostra o plano no modal.
-    * **`getAIGoalPlan(goal)`:**
-        * Coleta informações contextuais (renda/despesas médias do último mês, principais categorias de gastos).
-        * Cria um prompt detalhado para o Gemini, pedindo um plano de economia, incluindo economia mensal necessária e dicas práticas.
-        * Faz a chamada à API Gemini.
-        * Retorna o texto do plano gerado pela IA.
-    * **Event Listeners nos botões de cada meta:** Para ver/atualizar plano, marcar como concluída e excluir.
-    * **Event Listeners para o modal de plano de meta:** Para fechar.
 
-Agora você tem uma nova seção para definir suas metas financeiras e receber um plano personalizado da IA para te ajudar a alcançá-las!
-
-Experimente adicionar algumas metas e veja o que a IA sugere. Se tiver mais ideias ou precisar de ajustes, é só fal
