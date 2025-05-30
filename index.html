@@ -264,9 +264,12 @@
         .account-item-header .arrow-icon, .card-item-header .arrow-icon {
             margin-left: 0.5rem;
         }
-        .account-details-content, .card-details-content {
+        .account-details-content, .card-details-content, .bill-details-content ul {
             padding-left: 1.5rem; /* Indentação para detalhes */
             margin-top: 0.5rem;
+        }
+        .bill-details-content li {
+            margin-bottom: 0.25rem;
         }
 
 
@@ -1050,7 +1053,25 @@
                 });
             }
             if(addCreditCardForm) {
-                addCreditCardForm.addEventListener('submit', (e) => { e.preventDefault(); const name = document.getElementById('card-name').value.trim(); const limit = parseFloat(document.getElementById('card-limit').value) || 0; const dueDay = parseInt(cardDueDayInput.value); if (name && limit > 0 && dueDay >= 1 && dueDay <= 31) { const newCard = { id:generateUniqueId(), name, limit, availableLimit:limit, currentBillAmount:0, dueDay }; creditCards.push(newCard); saveCreditCards(); renderCreditCards(); populateAccountSelects(); addCreditCardForm.reset(); showFeedback('Cartão adicionado!', 'success'); populateLinkSelectedAccountSelect(); } else showFeedback('Preencha os campos do cartão.', 'error'); });
+                addCreditCardForm.addEventListener('submit', (e) => { 
+                    e.preventDefault(); 
+                    const name = document.getElementById('card-name').value.trim(); 
+                    const limit = parseFloat(document.getElementById('card-limit').value) || 0; 
+                    const dueDay = parseInt(cardDueDayInput.value); 
+                    const closingDay = dueDay > 10 ? dueDay - 10 : (dueDay === 1 ? 21 : 1); // Ajuste para fechamento
+                    if (name && limit > 0 && dueDay >= 1 && dueDay <= 31) { 
+                        const newCard = { id:generateUniqueId(), name, limit, availableLimit:limit, currentBillAmount:0, dueDay, closingDay }; 
+                        creditCards.push(newCard); 
+                        saveCreditCards(); 
+                        renderCreditCards(); 
+                        populateAccountSelects(); 
+                        addCreditCardForm.reset(); 
+                        showFeedback('Cartão adicionado!', 'success'); 
+                        populateLinkSelectedAccountSelect(); 
+                    } else {
+                        showFeedback('Preencha os campos do cartão.', 'error'); 
+                    }
+                });
             }
             
             const renderAccounts = () => {
@@ -1062,7 +1083,7 @@
                 }
                 accounts.forEach(account => {
                     const li = document.createElement('li');
-                    li.className = 'p-3 border-b border-gray-200'; // Ajustado padding e borda
+                    li.className = 'p-3 border-b border-gray-200'; 
 
                     let typeText = "";
                     if (account.type === 'corrente') typeText = "Conta Corrente";
@@ -1090,8 +1111,8 @@
                     }
                     accountDetailsHtml += `</div>`;
                     
-                    li.innerHTML = `<div>${accountDetailsHtml}</div>
-                        <button data-id="${account.id}" data-type="account" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 ml-auto self-start">
+                    li.innerHTML = `<div class="flex-grow">${accountDetailsHtml}</div>
+                        <button data-id="${account.id}" data-type="account" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 ml-2 self-start">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
                         </button>`;
                     
@@ -1114,7 +1135,7 @@
                 creditCardsList.innerHTML = ''; 
                 if (creditCards.length === 0) { creditCardsList.innerHTML = '<li class="p-4 text-gray-500 text-center">Nenhum cartão.</li>'; return; } 
                 creditCards.forEach(card => { 
-                    let bill = transactions.reduce((s,t)=>(t.accountId===card.id&&t.type==='despesa'&&!t.isPaid&&new Date(t.date).getMonth()===currentMonth&&new Date(t.date).getFullYear()===currentYear)?s+t.value:s,0); 
+                    let bill = transactions.reduce((s,t)=>(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&!t.isPaid&&new Date(t.date + "T00:00:00").getMonth()===currentMonth&&new Date(t.date + "T00:00:00").getFullYear()===currentYear)?s+t.value:s,0); 
                     const li=document.createElement('li');
                     li.className='p-3 border-b border-gray-200'; 
                     
@@ -1124,12 +1145,13 @@
                                 <span class="font-semibold">${card.name}</span>
                                 <span class="text-sm text-gray-500 ml-2">(Crédito)</span>
                             </div>
-                            <svg class="arrow-icon w-5 h-5 text-gray-500 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                             <svg class="arrow-icon w-5 h-5 text-gray-500 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </div>
                         <div class="card-details-content hidden mt-2 pl-4 text-sm text-gray-600">
                             <p>Limite: <span class="font-bold">${formatCurrency(card.limit)}</span></p>
                             <p>Disponível: <span class="font-bold">${formatCurrency(card.availableLimit)}</span></p>
-                            <p>Fatura Atual: <span class="font-bold">${formatCurrency(bill)}</span> (Venc. dia ${card.dueDay})</p>
+                            <p>Fatura Atual: <span class="font-bold">${formatCurrency(bill)}</span></p>
+                            <p>Vencimento: Dia ${card.dueDay} (Fechamento aprox. dia ${card.closingDay || 'N/A'})</p>
                         </div>
                         <button data-id="${card.id}" data-type="creditCard" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 ml-auto self-start relative -top-6">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
@@ -1239,12 +1261,18 @@
                 const beginningOfCurrentMonth = new Date(currentYear, currentMonth, 1);
                 beginningOfCurrentMonth.setHours(0, 0, 0, 0);
                 const lowerSearchTerm = searchTerm.toLowerCase().trim();
+                let overdueAlerts = new Set(); 
 
                 const filteredTransactions = transactions.filter(t => {
                     const transactionDate = new Date(t.date + "T00:00:00"); 
                     const isInCurrentMonthAndYear = transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth;
                     const isPendingFromPreviousMonth = transactionDate < beginningOfCurrentMonth && !t.isPaid;
                     
+                    if (!t.isCreditCard && !t.isPaid && transactionDate < beginningOfCurrentMonth && !overdueAlerts.has(t.id)) {
+                        showFeedback(`Atenção: A despesa "${t.description}" de ${transactionDate.toLocaleDateString('pt-BR')} está em atraso!`, 'error');
+                        overdueAlerts.add(t.id);
+                    }
+
                     const matchesSearch = lowerSearchTerm === "" ||
                         t.description.toLowerCase().includes(lowerSearchTerm) ||
                         t.category.toLowerCase().includes(lowerSearchTerm) ||
@@ -1388,7 +1416,7 @@
                 if(totalCardBillsEl) totalCardBillsEl.textContent = formatCurrency(totalFaturasCartaoMesAtual);
             };
             const updateMonthlyDisplay = () => { if(currentMonthDisplay) currentMonthDisplay.textContent = new Date(currentYear,currentMonth).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});};
-            const renderMonthlySummary = () => { let monthExp=0;const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);transactions.forEach(t=>{const tD=new Date(t.date + "T00:00:00");if(t.fundamentalType==='despesa'&&((tD.getMonth()===currentMonth&&tD.getFullYear()===currentYear)||(tD<bom&&!t.isPaid)))monthExp+=t.value;});if(totalDespesasEl)totalDespesasEl.textContent=formatCurrency(monthExp);}; // Esta função já é chamada por updateSummary
+            const renderMonthlySummary = () => { let monthExp=0;const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);transactions.forEach(t=>{const tD=new Date(t.date + "T00:00:00");if(t.fundamentalType==='despesa'&&((tD.getMonth()===currentMonth&&tD.getFullYear()===currentYear)||(tD<bom&&!t.isPaid)))monthExp+=t.value;});if(totalDespesasEl)totalDespesasEl.textContent=formatCurrency(monthExp);}; 
             if(prevMonthBtn) prevMonthBtn.addEventListener('click',()=>{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();});
             if(nextMonthBtn) nextMonthBtn.addEventListener('click',()=>{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();});
 
@@ -1550,7 +1578,7 @@
                     });
                     const currentMonthBillAmount = currentMonthBillTransactions.reduce((sum, t) => sum + t.value, 0);
 
-                    if (currentMonthBillAmount > 0 || currentMonthBillTransactions.length > 0) { // Mostra mesmo se fatura for 0 mas tiver itens
+                    if (currentMonthBillAmount > 0 || currentMonthBillTransactions.length > 0) { 
                         hasBills = true;
                         const li = document.createElement('li');
                         li.className = 'p-4 bg-white hover:bg-gray-50';
@@ -1559,7 +1587,7 @@
                                                 <div>
                                                     <span class="font-semibold text-gray-800">${card.name}:</span>
                                                     <span class="text-purple-700 ml-2">${formatCurrency(currentMonthBillAmount)}</span>
-                                                    <span class="text-xs text-gray-500 ml-2">(Venc. dia ${card.dueDay})</span>
+                                                    <span class="text-xs text-gray-500 ml-2">(Venc. dia ${card.dueDay} / Fech. dia ${card.closingDay || 'N/A'})</span>
                                                 </div>
                                                 <button class="view-bill-details-btn text-xs text-blue-600 hover:text-blue-800">Ver Despesas</button>
                                             </div>
@@ -1578,7 +1606,7 @@
                         li.innerHTML = detailsHTML;
 
                         li.querySelector('.view-bill-details-btn').addEventListener('click', (e) => {
-                            e.stopPropagation(); // Impede que o clique no botão feche o acordeão principal
+                            e.stopPropagation(); 
                             const content = li.querySelector('.bill-details-content');
                             content.classList.toggle('hidden');
                             e.target.textContent = content.classList.contains('hidden') ? 'Ver Despesas' : 'Ocultar Despesas';
@@ -1586,9 +1614,9 @@
                         detailedCardBillsList.appendChild(li);
                     }
                 });
-                noCardBillsMessage.classList.toggle('hidden', hasBills);
+                noCardBillsMessage.classList.toggle('hidden', !hasBills);
             };
-            const checkCreditCardDueDates = () => { const today=new Date();today.setHours(0,0,0,0);creditCards.forEach(card=>{const dueDay=card.dueDay;let billDueDate=new Date(today.getFullYear(),today.getMonth(),dueDay);billDueDate.setHours(0,0,0,0);if(today.getDate()>dueDay)billDueDate.setMonth(today.getMonth()+1);let billClosingDate=new Date(billDueDate.getTime());billClosingDate.setDate(billDueDate.getDate()-10);billClosingDate.setHours(0,0,0,0);if(today.getTime()===billClosingDate.getTime()){const closingBill=transactions.reduce((s,t)=>{const tD=new Date(t.date);let cSA=new Date(billClosingDate);cSA.setDate(cSA.getDate()-(card.dueDay>10?30:28));if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&tD>=cSA&&tD<billClosingDate)return s+t.value;return s;},0);if(closingBill>0)showFeedback(`FATURA FECHADA: ${card.name} fechou! Valor: ${formatCurrency(closingBill)}. Venc.: ${billDueDate.toLocaleDateString('pt-BR')}`,'info');}const diffT=billDueDate.getTime()-today.getTime();const diffD=Math.ceil(diffT/(1000*60*60*24));const billNotify=transactions.reduce((s,t)=>{const tD=new Date(t.date);if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&!t.isPaid&&tD>=billClosingDate&&tD<billDueDate)return s+t.value;return s;},0);if(diffD<=7&&diffD>=0&&billNotify>0)showFeedback(`VENC. PRÓXIMO: ${card.name} vence ${diffD===0?'HOJE':'em '+diffD+' dia(s)'}! Valor: ${formatCurrency(billNotify)}`,'info');});};
+            const checkCreditCardDueDates = () => { const today=new Date();today.setHours(0,0,0,0);creditCards.forEach(card=>{const dueDay=card.dueDay;let billDueDate=new Date(today.getFullYear(),today.getMonth(),dueDay);billDueDate.setHours(0,0,0,0);if(today.getDate()>dueDay)billDueDate.setMonth(today.getMonth()+1);let billClosingDate=new Date(billDueDate.getTime());billClosingDate.setDate(billDueDate.getDate()-10);if(billClosingDate.getDate() > dueDay) billClosingDate.setMonth(billClosingDate.getMonth()-1);billClosingDate.setHours(0,0,0,0);if(today.getTime()===billClosingDate.getTime()){const closingBill=transactions.reduce((s,t)=>{const tD=new Date(t.date);let cSA=new Date(billClosingDate);cSA.setDate(cSA.getDate()-(card.dueDay>10?30:28));if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&tD>=cSA&&tD<billClosingDate)return s+t.value;return s;},0);if(closingBill>0)showFeedback(`FATURA FECHADA: ${card.name} fechou! Valor: ${formatCurrency(closingBill)}. Venc.: ${billDueDate.toLocaleDateString('pt-BR')}`,'info');}const diffT=billDueDate.getTime()-today.getTime();const diffD=Math.ceil(diffT/(1000*60*60*24));const billNotify=transactions.reduce((s,t)=>{const tD=new Date(t.date);if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&!t.isPaid&&tD>=billClosingDate&&tD<billDueDate)return s+t.value;return s;},0);if(diffD<=7&&diffD>=0&&billNotify>0)showFeedback(`VENC. PRÓXIMO: ${card.name} vence ${diffD===0?'HOJE':'em '+diffD+' dia(s)'}! Valor: ${formatCurrency(billNotify)}`,'info');});};
             if(financialGoalsHeader) financialGoalsHeader.addEventListener('click',()=>{financialGoalsContent.classList.toggle('hidden');financialGoalsArrow.classList.toggle('rotated');});
             if(addFinancialGoalForm) addFinancialGoalForm.addEventListener('submit',(e)=>{e.preventDefault();const name=document.getElementById('goal-name').value.trim();const targetAmount=parseFloat(document.getElementById('goal-target-amount').value);const deadline=document.getElementById('goal-deadline').value;if(!name||isNaN(targetAmount)||targetAmount<=0||!deadline){showFeedback("Preencha campos da meta.","error");return;}if(new Date(deadline)<=new Date()){showFeedback("Prazo da meta deve ser futuro.","error");return;}const newGoal={id:generateUniqueId(),name,targetAmount,deadline,currentAmountSaved:0,aiPlan:"",status:'active'};financialGoals.push(newGoal);saveFinancialGoals();renderFinancialGoals();addFinancialGoalForm.reset();showFeedback(`Meta "${name}" adicionada!`,"success");});
             const renderFinancialGoals = () => { if(!financialGoalsList||!noFinancialGoalsMessage)return;financialGoalsList.innerHTML='';const activeGoals=financialGoals.filter(g=>g.status==='active');if(activeGoals.length===0){noFinancialGoalsMessage.classList.remove('hidden');return;}noFinancialGoalsMessage.classList.add('hidden');activeGoals.forEach(goal=>{const li=document.createElement('li');const deadlineDate=new Date(goal.deadline);const today=new Date();const timeDiff=deadlineDate.getTime()-today.getTime();const daysRem=Math.max(0,Math.ceil(timeDiff/(1000*60*60*24)));const monthsRem=Math.max(0,Math.ceil(daysRem/30.44));li.innerHTML=`<div class="goal-details"><h4 class="text-lg font-semibold text-green-700">${goal.name}</h4><p><strong>Meta:</strong> ${formatCurrency(goal.targetAmount)}</p><p><strong>Prazo:</strong> ${deadlineDate.toLocaleDateString('pt-BR')} (${daysRem} dias / ${monthsRem} meses restantes)</p><p><strong>Status:</strong> ${goal.status==='active'?'Ativa':'Concluída'}</p></div><div class="goal-actions mt-3"><button data-goal-id="${goal.id}" class="complete-goal-btn px-3 py-1.5 text-sm bg-green-500 text-white rounded-md hover:bg-green-600">Marcar Concluída</button><button data-goal-id="${goal.id}" class="delete-goal-btn px-3 py-1.5 text-sm bg-red-500 text-white rounded-md hover:bg-red-600">Excluir</button></div>`;financialGoalsList.appendChild(li);li.querySelector('.complete-goal-btn').addEventListener('click',(e)=>{const gId=e.currentTarget.dataset.goalId;const gIdx=financialGoals.findIndex(g=>g.id===gId);if(gIdx>-1){financialGoals[gIdx].status='completed';saveFinancialGoals();renderFinancialGoals();showFeedback(`Meta "${financialGoals[gIdx].name}" concluída!`,'success');}});li.querySelector('.delete-goal-btn').addEventListener('click',(e)=>{const gId=e.currentTarget.dataset.goalId;financialGoals=financialGoals.filter(g=>g.id!==gId);saveFinancialGoals();renderFinancialGoals();showFeedback("Meta excluída.","info");});});};
