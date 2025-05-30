@@ -244,6 +244,14 @@
             margin-bottom: 0.25rem;
             background-color: transparent;
         }
+        #reports-section-content .report-table th, #reports-section-content .report-table td {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #e2e8f0;
+        }
+        #reports-section-content .report-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
 
     </style>
 </head>
@@ -411,7 +419,7 @@
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 </div>
                 <div>
-                    <label for="value" class="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
+                    <label for="value" class="block text-sm font-medium text-gray-700 mb-1">Valor da Parcela (R$)</label> 
                     <input type="number" id="value" step="0.01" placeholder="0.00" required
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 </div>
@@ -496,16 +504,19 @@
         <div id="feedback-message"></div> <div id="import-review-section" class="mb-8 border-b pb-6 border-gray-200 hidden">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Revisar Transações Importadas</h2>
             <p class="text-sm text-gray-600 mb-4">
-                Vincule cada transação importada a uma de suas contas ou cartões e ajuste os dados conforme necessário.
+                Selecione as transações que deseja importar. Vincule-as a uma conta ou cartão e ajuste os dados conforme necessário.
                  <span class="font-bold text-orange-600">Para Word/Imagem, revise a descrição e complete os demais campos, especialmente data, valor e parcelas.</span>
             </p>
             <div class="overflow-x-auto rounded-lg shadow-md mb-4">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-yellow-50">
                         <tr>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                <input type="checkbox" id="select-all-imported-transactions" class="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out">
+                            </th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Data</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Descrição</th>
-                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Valor</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Valor da Parcela</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Tipo</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Categoria</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Parcelas (Tot/Pagas)</th> <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Vincular a</th>
@@ -523,10 +534,54 @@
                 </button>
                 <button id="confirm-import-btn"
                         class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                    Confirmar Importação
+                    Confirmar Selecionadas
                 </button>
             </div>
         </div>
+
+        <div class="mb-8 border-b pb-6 border-gray-200"> {/* Nova Secção de Relatórios */}
+            <div id="reports-header" class="collapsible-header">
+                <h2 class="text-2xl font-semibold text-gray-700">Relatórios de Gastos</h2>
+                <svg id="reports-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </div>
+            <div id="reports-section-content" class="hidden">
+                <div class="p-4 bg-gray-50 rounded-lg shadow-sm mb-6">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3">Gerar Relatório</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-4">
+                        <div>
+                            <label for="report-type" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Relatório</label>
+                            <select id="report-type" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                                <option value="monthly">Mensal</option>
+                                <option value="annual">Anual</option>
+                            </select>
+                        </div>
+                        <div id="report-month-selector-div">
+                            <label for="report-month" class="block text-sm font-medium text-gray-700 mb-1">Mês</label>
+                            <select id="report-month" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                                {/* Options preenchidas por JS */}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="report-year" class="block text-sm font-medium text-gray-700 mb-1">Ano</label>
+                            <select id="report-year" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                                {/* Options preenchidas por JS */}
+                            </select>
+                        </div>
+                        <div class="sm:col-start-4 flex justify-end">
+                            <button id="generate-report-btn" class="w-full sm:w-auto px-6 py-2 bg-teal-500 text-white font-semibold rounded-md shadow-md hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400 transition duration-150 ease-in-out">
+                                Gerar Relatório
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="report-output-area" class="mt-6">
+                    {/* O relatório será exibido aqui */}
+                </div>
+            </div>
+        </div>
+
 
         <div class="mb-8 border-b pb-6 border-gray-200">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Baixar Planilha</h2>
@@ -537,8 +592,26 @@
         </div>
 
         <div>
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                 <h2 class="text-2xl font-semibold text-gray-700">Minhas Transações</h2>
+                <div class="flex flex-wrap items-center gap-2">
+                     <input type="text" id="search-transactions-input" placeholder="Buscar transações..." class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm w-full sm:w-auto">
+                    <button id="pay-selected-transactions-btn" class="hidden px-3 py-2 bg-green-500 text-white font-semibold rounded-md shadow-md hover:bg-green-600 text-xs sm:text-sm">
+                        Pagar Selecionadas
+                    </button>
+                    <button id="unpay-selected-transactions-btn" class="hidden px-3 py-2 bg-yellow-500 text-white font-semibold rounded-md shadow-md hover:bg-yellow-600 text-xs sm:text-sm">
+                        Desmarcar Pagamento
+                    </button>
+                    <select id="link-selected-account-select" class="hidden mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-xs">
+                        {/* Options will be populated by JavaScript */}
+                    </select>
+                    <button id="link-selected-transactions-btn" class="hidden px-3 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 text-xs sm:text-sm">
+                        Vincular Selecionadas
+                    </button>
+                    <button id="delete-selected-transactions-btn" class="hidden px-3 py-2 bg-red-500 text-white font-semibold rounded-md shadow-md hover:bg-red-600 text-xs sm:text-sm">
+                        Excluir Selecionadas
+                    </button>
+                </div>
             </div>
             <div class="flex items-center space-x-4 mb-4">
                 <button id="prev-month-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Anterior</button>
@@ -549,6 +622,9 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th scope="col" class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="select-all-transactions" class="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out">
+                            </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
@@ -584,7 +660,7 @@
                 <label for="edit-description">Descrição:</label>
                 <input type="text" id="edit-description">
 
-                <label for="edit-value">Valor:</label>
+                <label for="edit-value">Valor da Parcela:</label> 
                 <input type="number" id="edit-value" step="0.01">
                 
                 <label for="edit-category">Categoria:</label>
@@ -683,6 +759,24 @@
         const addFinancialGoalForm = document.getElementById('add-financial-goal-form');
         const financialGoalsList = document.getElementById('financial-goals-list');
         const noFinancialGoalsMessage = document.getElementById('no-financial-goals-message');
+        const searchTransactionsInput = document.getElementById('search-transactions-input');
+        const selectAllTransactionsCheckbox = document.getElementById('select-all-transactions');
+        const paySelectedTransactionsBtn = document.getElementById('pay-selected-transactions-btn');
+        const unpaySelectedTransactionsBtn = document.getElementById('unpay-selected-transactions-btn');
+        const linkSelectedAccountSelect = document.getElementById('link-selected-account-select');
+        const linkSelectedTransactionsBtn = document.getElementById('link-selected-transactions-btn');
+        const deleteSelectedTransactionsBtn = document.getElementById('delete-selected-transactions-btn');
+        const selectAllImportedCheckbox = document.getElementById('select-all-imported-transactions');
+        const reportsHeader = document.getElementById('reports-header');
+        const reportsSectionContent = document.getElementById('reports-section-content');
+        const reportsArrow = document.getElementById('reports-arrow');
+        const reportTypeSelect = document.getElementById('report-type');
+        const reportMonthSelectorDiv = document.getElementById('report-month-selector-div');
+        const reportMonthSelect = document.getElementById('report-month');
+        const reportYearSelect = document.getElementById('report-year');
+        const generateReportBtn = document.getElementById('generate-report-btn');
+        const reportOutputArea = document.getElementById('report-output-area');
+
 
         // --- Funções Utilitárias ---
         const showFeedback = (message, type) => {
@@ -840,7 +934,7 @@
 
         // --- Event Listeners ---
         const addDeleteListeners = () => { document.querySelectorAll('.delete-btn').forEach(b => { b.onclick = (e) => { performDelete(e.currentTarget.dataset.id, e.currentTarget.dataset.type); }; }); };
-        const addPayTransactionListeners = () => { document.querySelectorAll('.pay-transaction-btn').forEach(b => { b.onclick = (e) => { markTransactionAsPaid(e.currentTarget.dataset.id); }; }); };
+        const addPayTransactionListeners = () => { document.querySelectorAll('.pay-transaction-btn').forEach(b => { b.onclick = (e) => { markTransactionAsPaid(e.currentTarget.dataset.id, true); }; }); }; 
         const addEditTransactionListeners = () => { document.querySelectorAll('.edit-transaction-btn').forEach(b => { b.onclick = (e) => { openEditModal(e.currentTarget.dataset.id); }; }); };
 
         // --- Persistência de Dados ---
@@ -851,6 +945,8 @@
             const storedCategories = localStorage.getItem('financialCategories'); if (storedCategories) { categories = JSON.parse(storedCategories); if (!categories.includes("Revisar Importação")) categories.push("Revisar Importação"); } else { if (!categories.includes("Revisar Importação")) categories.push("Revisar Importação");}
             const storedFinancialGoals = localStorage.getItem('financialGoals'); if (storedFinancialGoals) financialGoals = JSON.parse(storedFinancialGoals);
             renderAccounts(); renderCreditCards(); populateAccountSelects(); populateCategorySelect(); populateCategorySelect(editCategorySelect); 
+            populateLinkSelectedAccountSelect(); 
+            populateReportSelectors(); // Popula seletores de relatório
             renderTransactions(); renderFinancialGoals(); updateSummary(); renderMonthlySummary(); renderDetailedCardBills(); checkCreditCardDueDates(); 
         };
         const saveAccounts = () => localStorage.setItem('financialAccounts', JSON.stringify(accounts));
@@ -861,8 +957,8 @@
 
         // --- Gerenciamento de Contas e Cartões ---
         accountTypeSelect.addEventListener('change', () => { initialValueLabel.textContent = accountTypeSelect.value === 'overdraft' ? 'Limite (R$)' : 'Saldo Inicial (R$)'; initialBalanceInput.placeholder = accountTypeSelect.value === 'overdraft' ? 'Limite (R$)' : 'Saldo Inicial (R$)'; });
-        addAccountForm.addEventListener('submit', (e) => { e.preventDefault(); const name = document.getElementById('account-name').value.trim(); const type = document.getElementById('account-type').value; const initialValue = parseFloat(initialBalanceInput.value) || 0; let newAccount = type === 'overdraft' ? { id:generateUniqueId(), name, type, balance:0, limit:initialValue } : { id:generateUniqueId(), name, type, balance:initialValue, limit:0 }; if (name) { accounts.push(newAccount); saveAccounts(); renderAccounts(); populateAccountSelects(); updateSummary(); addAccountForm.reset(); initialValueLabel.textContent = 'Saldo Inicial (R$)'; initialBalanceInput.placeholder = 'Saldo Inicial (R$)'; showFeedback('Conta adicionada!', 'success'); } else showFeedback('Insira um nome para a conta.', 'error'); });
-        addCreditCardForm.addEventListener('submit', (e) => { e.preventDefault(); const name = document.getElementById('card-name').value.trim(); const limit = parseFloat(document.getElementById('card-limit').value) || 0; const dueDay = parseInt(cardDueDayInput.value); if (name && limit > 0 && dueDay >= 1 && dueDay <= 31) { const newCard = { id:generateUniqueId(), name, limit, availableLimit:limit, currentBillAmount:0, dueDay }; creditCards.push(newCard); saveCreditCards(); renderCreditCards(); populateAccountSelects(); addCreditCardForm.reset(); showFeedback('Cartão adicionado!', 'success'); } else showFeedback('Preencha os campos do cartão.', 'error'); });
+        addAccountForm.addEventListener('submit', (e) => { e.preventDefault(); const name = document.getElementById('account-name').value.trim(); const type = document.getElementById('account-type').value; const initialValue = parseFloat(initialBalanceInput.value) || 0; let newAccount = type === 'overdraft' ? { id:generateUniqueId(), name, type, balance:0, limit:initialValue } : { id:generateUniqueId(), name, type, balance:initialValue, limit:0 }; if (name) { accounts.push(newAccount); saveAccounts(); renderAccounts(); populateAccountSelects(); updateSummary(); addAccountForm.reset(); initialValueLabel.textContent = 'Saldo Inicial (R$)'; initialBalanceInput.placeholder = 'Saldo Inicial (R$)'; showFeedback('Conta adicionada!', 'success'); populateLinkSelectedAccountSelect(); } else showFeedback('Insira um nome para a conta.', 'error'); });
+        addCreditCardForm.addEventListener('submit', (e) => { e.preventDefault(); const name = document.getElementById('card-name').value.trim(); const limit = parseFloat(document.getElementById('card-limit').value) || 0; const dueDay = parseInt(cardDueDayInput.value); if (name && limit > 0 && dueDay >= 1 && dueDay <= 31) { const newCard = { id:generateUniqueId(), name, limit, availableLimit:limit, currentBillAmount:0, dueDay }; creditCards.push(newCard); saveCreditCards(); renderCreditCards(); populateAccountSelects(); addCreditCardForm.reset(); showFeedback('Cartão adicionado!', 'success'); populateLinkSelectedAccountSelect(); } else showFeedback('Preencha os campos do cartão.', 'error'); });
         const renderAccounts = () => { accountsList.innerHTML = ''; if (accounts.length === 0) { accountsList.innerHTML = '<li class="p-4 text-gray-500 text-center">Nenhuma conta.</li>'; return; } accounts.forEach(acc => { const li = document.createElement('li'); li.className = 'p-4 flex justify-between items-center'; let html = `<span class="font-semibold">${acc.name}</span><span class="text-sm text-gray-500 ml-2">(${acc.type==='overdraft'?'C. Especial':'Dinheiro'})</span>`; if (acc.type === 'overdraft') html += `<p class="text-xs">Limite: ${formatCurrency(acc.limit)} | Disp: ${formatCurrency(acc.limit+acc.balance)}</p>`; else html += `<p class="text-xs">Saldo: ${formatCurrency(acc.balance)}</p>`; li.innerHTML = `<div>${html}</div><button data-id="${acc.id}" data-type="account" class="delete-btn text-red-500 hover:text-red-700 p-1"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg></button>`; accountsList.appendChild(li); }); addDeleteListeners(); };
         const renderCreditCards = () => { creditCardsList.innerHTML = ''; if (creditCards.length === 0) { creditCardsList.innerHTML = '<li class="p-4 text-gray-500 text-center">Nenhum cartão.</li>'; return; } creditCards.forEach(card => { let bill = transactions.reduce((s,t)=>(t.accountId===card.id&&t.type==='despesa'&&!t.isPaid&&new Date(t.date).getMonth()===currentMonth&&new Date(t.date).getFullYear()===currentYear)?s+t.value:s,0); const li=document.createElement('li');li.className='p-4 flex justify-between items-center'; li.innerHTML = `<div><span class="font-semibold">${card.name}</span><p class="text-xs">Limite: ${formatCurrency(card.limit)} | Disp: ${formatCurrency(card.availableLimit)} | Fatura: ${formatCurrency(bill)} (Venc. dia ${card.dueDay})</p></div><button data-id="${card.id}" data-type="creditCard" class="delete-btn text-red-500 hover:text-red-700 p-1"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg></button>`; creditCardsList.appendChild(li); }); addDeleteListeners(); };
         const populateAccountSelects = (targetSelect = accountSelect) => { targetSelect.innerHTML = ''; const noLinkOpt = document.createElement('option'); noLinkOpt.value = ""; noLinkOpt.textContent = targetSelect === accountSelect ? "Não Vincular / Geral" : "Selecione"; targetSelect.appendChild(noLinkOpt); accounts.forEach(acc => { const opt = document.createElement('option'); opt.value = acc.id; opt.textContent = `${acc.name} (${acc.type === 'overdraft' ? 'C. Especial' : 'Dinheiro'})`; targetSelect.appendChild(opt); }); creditCards.forEach(card => { const opt = document.createElement('option'); opt.value = card.id; opt.textContent = `${card.name} (Cartão)`; targetSelect.appendChild(opt); }); if (!targetSelect.value && targetSelect === accountSelect) targetSelect.value = ""; };
@@ -872,24 +968,454 @@
         categorySelect.addEventListener('change', () => { if (categorySelect.value === 'nova-categoria') { newCategoryInput.classList.remove('hidden'); newCategoryInput.focus(); newCategoryInput.value = ''; } else { newCategoryInput.classList.add('hidden'); newCategoryInput.value = ''; }});
 
         // --- Gerenciamento de Transações ---
-        transactionForm.addEventListener('submit', (e) => { e.preventDefault(); const date=document.getElementById('date').value; const description=document.getElementById('description').value.trim(); const value=parseFloat(document.getElementById('value').value); let type=document.getElementById('type').value; const accountId=document.getElementById('account-select').value; const installments=parseInt(installmentsInput.value)||1; const installmentsPaid=parseInt(installmentsPaidInput.value)||0; let category; if(categorySelect.value==='nova-categoria'){category=newCategoryInput.value.trim(); if(category&&!categories.includes(category)){categories.push(category);saveCategories();populateCategorySelect();populateCategorySelect(editCategorySelect);categorySelect.value=category;}else if(categories.includes(category)){categorySelect.value=category;newCategoryInput.classList.add('hidden');newCategoryInput.value='';}else if(!category){showFeedback('Insira nome para nova categoria.','error');return;}}else{category=categorySelect.value;} if(!date||!description||isNaN(value)||value<=0||!type||!category){showFeedback('Preencha todos os campos obrigatórios.','error');return;} if(installmentsPaid>installments||installmentsPaid<0){showFeedback('Parcelas pagas inválido.','error');return;} const account=accountId?accounts.find(acc=>acc.id===accountId):null; const creditCard=accountId?creditCards.find(card=>card.id===accountId):null; const isCreditCardTransaction=!!creditCard; let transactionsToAdd=[]; const originalGroupId=generateUniqueId(); let fundamentalType=(type==='receita'||type==='pix_recebido')?'receita':'despesa'; if(installments>1&&(type==='despesa'||type==='pix_enviado'||type==='saque')){const instVal=parseFloat((value/installments).toFixed(2));let sumInst=0;for(let i=0;i<installments;i++){let currInstVal=(i===installments-1)?parseFloat((value-sumInst).toFixed(2)):instVal;sumInst+=currInstVal;const txDate=new Date(date);txDate.setMonth(txDate.getMonth()+i);transactionsToAdd.push({id:generateUniqueId(),date:txDate.toISOString().split('T')[0],description:`${description} (${i+1}/${installments})`,value:currInstVal,type,fundamentalType,category,accountId:accountId||null,isCreditCard:isCreditCardTransaction,installments:`${i+1}/${installments}`,isPaid:(i+1)<=installmentsPaid,originalGroupId});}}else{transactionsToAdd.push({id:generateUniqueId(),date,description,value,type,fundamentalType,category,accountId:accountId||null,isCreditCard:isCreditCardTransaction,installments:'1/1',isPaid:installmentsPaid>=1,originalGroupId});} let txAddedOk=true;const tempAccs=JSON.parse(JSON.stringify(accounts));const tempCards=JSON.parse(JSON.stringify(creditCards));for(const newTx of transactionsToAdd){if(newTx.accountId){let target=newTx.isCreditCard?tempCards.find(c=>c.id===newTx.accountId):tempAccs.find(a=>a.id===newTx.accountId);if(target){if(newTx.isCreditCard){if(newTx.fundamentalType==='despesa')target.availableLimit-=newTx.value;else target.availableLimit+=newTx.value;}else if(newTx.isPaid){if(newTx.fundamentalType==='despesa'){if(target.type==='overdraft'&&(target.balance-newTx.value<-target.limit)){showFeedback(`Transação ${formatCurrency(newTx.value)} para ${target.name} excede limite.`,'error');txAddedOk=false;break;}target.balance-=newTx.value;}else target.balance+=newTx.value;}}else{showFeedback('Conta/Cartão não encontrado.','info');newTx.accountId=null;newTx.isCreditCard=false;}}}if(!txAddedOk)return;if(accountId){accounts=tempAccs;creditCards=tempCards;}transactions.push(...transactionsToAdd);saveTransactions();saveAccounts();saveCreditCards();renderTransactions();updateSummary();renderDetailedCardBills();checkCreditCardDueDates();transactionForm.reset();installmentsInput.value=1;installmentsPaidInput.value=0;accountSelect.value="";newCategoryInput.classList.add('hidden');populateCategorySelect();showFeedback('Transação(ões) adicionada(s)!','success');});
+        transactionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const baseDateString = document.getElementById('date').value;
+            const description = document.getElementById('description').value.trim();
+            const valuePerInstallment = parseFloat(document.getElementById('value').value); 
+            let type = document.getElementById('type').value; 
+            const accountId = document.getElementById('account-select').value; 
+            const totalInstallments = parseInt(installmentsInput.value) || 1;
+            const installmentsPaidCount = parseInt(installmentsPaidInput.value) || 0; 
+
+            let category;
+            if (categorySelect.value === 'nova-categoria') {
+                category = newCategoryInput.value.trim();
+                if (category && !categories.includes(category)) { categories.push(category); saveCategories(); populateCategorySelect(); populateCategorySelect(editCategorySelect); categorySelect.value = category; } 
+                else if (categories.includes(category)) { categorySelect.value = category; newCategoryInput.classList.add('hidden'); newCategoryInput.value = ''; } 
+                else if (!category) { showFeedback('Insira nome para nova categoria.','error'); return; }
+            } else { category = categorySelect.value; }
+
+            if (!baseDateString || !description || isNaN(valuePerInstallment) || valuePerInstallment <= 0 || !type || !category ) { showFeedback('Preencha todos os campos obrigatórios.','error'); return; }
+            if (installmentsPaidCount > totalInstallments || installmentsPaidCount < 0) { showFeedback('Parcelas pagas inválido.','error'); return; }
+
+            const account = accountId ? accounts.find(acc => acc.id === accountId) : null;
+            const creditCard = accountId ? creditCards.find(card => card.id === accountId) : null;
+            const isCreditCardTransaction = !!creditCard;
+            let transactionsToAdd = [];
+            const originalGroupId = generateUniqueId(); 
+            let fundamentalType = (type === 'receita' || type === 'pix_recebido') ? 'receita' : 'despesa'; 
+            
+            for (let k = 1; k <= totalInstallments; k++) {
+                const transactionDateObject = new Date(baseDateString + "T00:00:00"); 
+                const monthOffset = k - (installmentsPaidCount + 1);
+                transactionDateObject.setMonth(transactionDateObject.getMonth() + monthOffset);
+                const originalDay = new Date(baseDateString + "T00:00:00").getDate();
+                if (transactionDateObject.getDate() !== originalDay) {
+                    transactionDateObject.setDate(0); 
+                }
+                transactionsToAdd.push({
+                    id: generateUniqueId(), 
+                    date: transactionDateObject.toISOString().split('T')[0], 
+                    description: `${description} (${k}/${totalInstallments})`, 
+                    value: valuePerInstallment, 
+                    type: type, 
+                    fundamentalType: fundamentalType, 
+                    category, 
+                    accountId: accountId || null, 
+                    isCreditCard: isCreditCardTransaction,
+                    installments: `${k}/${totalInstallments}`, 
+                    isPaid: k <= installmentsPaidCount,
+                    originalGroupId 
+                });
+            }
+            
+            let transactionAddedSuccessfully = true;
+            const tempAccounts = JSON.parse(JSON.stringify(accounts)); 
+            const tempCreditCards = JSON.parse(JSON.stringify(creditCards));
+            for (const newTx of transactionsToAdd) {
+                if (newTx.accountId) { 
+                    let target = newTx.isCreditCard ? tempCreditCards.find(c => c.id === newTx.accountId) : tempAccounts.find(a => a.id === newTx.accountId);
+                    if (target) {
+                        if (newTx.isCreditCard) { if (newTx.fundamentalType === 'despesa') target.availableLimit -= newTx.value; else target.availableLimit += newTx.value; } 
+                        else if (newTx.isPaid) { if (newTx.fundamentalType === 'despesa') { if (target.type === 'overdraft' && (target.balance - newTx.value < -target.limit)) { showFeedback(`Transação ${formatCurrency(newTx.value)} para ${target.name} excede limite.`, 'error'); transactionAddedSuccessfully = false; break; } target.balance -= newTx.value; } else target.balance += newTx.value; }
+                    } else { showFeedback('Conta/Cartão não encontrado.', 'info'); newTx.accountId = null; newTx.isCreditCard = false; }
+                }
+            }
+            if (!transactionAddedSuccessfully) return; 
+            if (accountId) { accounts = tempAccounts; creditCards = tempCreditCards; }
+            transactions.push(...transactionsToAdd); 
+            saveTransactions(); saveAccounts(); saveCreditCards();
+            renderTransactions(); updateSummary(); renderDetailedCardBills(); checkCreditCardDueDates(); 
+            transactionForm.reset(); installmentsInput.value = 1; installmentsPaidInput.value = 0; accountSelect.value = ""; newCategoryInput.classList.add('hidden'); populateCategorySelect(); 
+            showFeedback('Transação(ões) adicionada(s)!', 'success');
+        });
 
         // --- Renderização e Lógica de Exclusão/Pagamento/Edição de Transações ---
-        const renderTransactions = () => { transactionList.innerHTML = ''; const bom = new Date(currentYear, currentMonth, 1); bom.setHours(0,0,0,0); const filtered = transactions.filter(t => { const td = new Date(t.date); td.setHours(0,0,0,0); return (td.getMonth() === currentMonth && td.getFullYear() === currentYear) || (td < bom && !t.isPaid); }).sort((a, b) => new Date(a.date) - new Date(b.date)); if (filtered.length === 0) { noTransactionsMessage.classList.remove('hidden'); return; } else noTransactionsMessage.classList.add('hidden'); filtered.forEach(tx => { const tr = document.createElement('tr'); let rClass = 'bg-white hover:bg-gray-50'; const tDate = new Date(tx.date); tDate.setHours(0,0,0,0); if (tx.isPaid) rClass += ' paid-transaction'; else if (tDate < bom) rClass += ' pending-previous-month'; tr.className = rClass; const accCardName = tx.accountId ? (tx.isCreditCard ? (creditCards.find(c=>c.id===tx.accountId)?.name||'Cartão Desc.') : (accounts.find(a=>a.id===tx.accountId)?.name||'Conta Desc.')) : 'Não Vinculada'; const txtStyle = tx.isPaid ? 'text-gray-500' : (tDate < bom ? 'text-gray-900 font-semibold' : 'text-gray-900 font-semibold'); let typeDisp = tx.type, valColor = 'text-gray-800'; if(tx.fundamentalType==='receita'){valColor='text-green-600';if(tx.type==='pix_recebido')typeDisp='PIX Recebido';else if(tx.type==='receita')typeDisp='Receita';}else if(tx.fundamentalType==='despesa'){valColor=tx.isPaid?'text-red-500':'text-red-700 font-bold';if(tx.type==='saque')typeDisp='Saque';else if(tx.type==='pix_enviado')typeDisp='PIX Enviado';else if(tx.type==='despesa')typeDisp='Despesa';} const statStyle = tx.isPaid ? 'text-green-600' : 'text-red-700 font-bold'; tr.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-sm ${txtStyle}">${new Date(tx.date).toLocaleDateString('pt-BR')}</td><td class="px-6 py-4 whitespace-nowrap text-sm ${txtStyle}">${tx.description}</td><td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${valColor}">${formatCurrency(tx.value)}</td><td class="px-6 py-4 whitespace-nowrap text-sm ${txtStyle}">${typeDisp}</td><td class="px-6 py-4 whitespace-nowrap text-sm ${txtStyle}">${tx.category}</td><td class="px-6 py-4 whitespace-nowrap text-sm ${txtStyle}">${accCardName}</td><td class="px-6 py-4 whitespace-nowrap text-sm ${txtStyle}">${tx.installments}</td><td class="px-6 py-4 whitespace-nowrap text-sm ${statStyle}">${tx.isPaid?'Pago':'Não Pago'}</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">${!tx.isPaid?`<button data-id="${tx.id}" class="pay-transaction-btn text-blue-600 hover:text-blue-900 mr-2 p-2 rounded-full hover:bg-blue-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>`:''} <button data-id="${tx.id}" class="edit-transaction-btn text-yellow-600 hover:text-yellow-900 mr-2 p-2 rounded-full hover:bg-yellow-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button><button data-id="${tx.id}" data-type="transaction" class="delete-btn text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></td>`; transactionList.appendChild(tr); }); addDeleteListeners();addPayTransactionListeners();addEditTransactionListeners();};
-        const performDelete = (id, type) => { if(type==='account'){if(transactions.some(t=>t.accountId===id)){showFeedback('Exclua transações da conta primeiro.','error');return;}accounts=accounts.filter(acc=>acc.id!==id);saveAccounts();renderAccounts();populateAccountSelects();updateSummary();showFeedback('Conta excluída.','success');}else if(type==='creditCard'){if(transactions.some(t=>t.accountId===id)){showFeedback('Exclua transações do cartão primeiro.','error');return;}creditCards=creditCards.filter(card=>card.id!==id);saveCreditCards();renderCreditCards();populateAccountSelects();updateSummary();showFeedback('Cartão excluído.','success');}else if(type==='transaction'){const idx=transactions.findIndex(t=>t.id===id);if(idx>-1){const delTx=transactions[idx];if(delTx.accountId){if(delTx.isCreditCard){const card=creditCards.find(c=>c.id===delTx.accountId);if(card){if(delTx.fundamentalType==='despesa')card.availableLimit+=delTx.value;else card.availableLimit-=delTx.value;}}else{const acc=accounts.find(a=>a.id===delTx.accountId);if(acc&&delTx.isPaid){if(delTx.fundamentalType==='despesa')acc.balance+=delTx.value;else acc.balance-=delTx.value;}}}transactions.splice(idx,1);saveTransactions();saveAccounts();saveCreditCards();renderTransactions();updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();showFeedback('Transação excluída.','success');}}};
-        const markTransactionAsPaid = (id) => { const tx = transactions.find(t=>t.id===id); if(tx&&!tx.isPaid){const prevPaid=tx.isPaid;tx.isPaid=true;if(!prevPaid&&tx.accountId&&!tx.isCreditCard){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa'){if(acc.type==='overdraft'&&(acc.balance-tx.value<-acc.limit)){showFeedback(`Pagamento ${formatCurrency(tx.value)} p/ ${acc.name} excede limite.`,'error');}else acc.balance-=tx.value;}else acc.balance+=tx.value;saveAccounts();}}saveTransactions();renderTransactions();updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();showFeedback('Transação paga!','success');}else if(tx&&tx.isPaid)showFeedback('Transação já está paga.','info');};
+        const renderTransactions = (searchTerm = "") => {
+            transactionList.innerHTML = '';
+            const beginningOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+            beginningOfCurrentMonth.setHours(0, 0, 0, 0);
+            const lowerSearchTerm = searchTerm.toLowerCase().trim();
+
+            const filteredTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                transactionDate.setHours(0, 0, 0, 0);
+                const isInCurrentMonthAndYear = transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+                const isPendingFromPreviousMonth = transactionDate < beginningOfCurrentMonth && !t.isPaid;
+                
+                const matchesSearch = lowerSearchTerm === "" ||
+                    t.description.toLowerCase().includes(lowerSearchTerm) ||
+                    t.category.toLowerCase().includes(lowerSearchTerm) ||
+                    formatCurrency(t.value).toLowerCase().includes(lowerSearchTerm) ||
+                    (t.accountId && (accounts.find(a=>a.id === t.accountId)?.name.toLowerCase().includes(lowerSearchTerm) || creditCards.find(c=>c.id === t.accountId)?.name.toLowerCase().includes(lowerSearchTerm)));
+
+                return (isInCurrentMonthAndYear || isPendingFromPreviousMonth) && matchesSearch;
+            }).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (filteredTransactions.length === 0) {
+                noTransactionsMessage.classList.remove('hidden');
+                selectAllTransactionsCheckbox.checked = false; 
+                updateSelectedTransactionsActions(); 
+                return;
+            } else {
+                noTransactionsMessage.classList.add('hidden');
+            }
+
+            filteredTransactions.forEach(transaction => {
+                const tr = document.createElement('tr');
+                let rowClass = 'bg-white hover:bg-gray-50';
+                const transactionDate = new Date(transaction.date);
+                transactionDate.setHours(0,0,0,0);
+                if (transaction.isPaid) rowClass += ' paid-transaction';
+                else if (transactionDate < beginningOfCurrentMonth) rowClass += ' pending-previous-month'; 
+                tr.className = rowClass;
+
+                const accountOrCardName = transaction.accountId 
+                    ? (transaction.isCreditCard
+                        ? creditCards.find(card => card.id === transaction.accountId)?.name || 'Cartão Desc.'
+                        : accounts.find(acc => acc.id === transaction.accountId)?.name || 'Conta Desc.')
+                    : 'Não Vinculada'; 
+                const textStyle = transaction.isPaid ? 'text-gray-500' : (transactionDate < beginningOfCurrentMonth ? 'text-gray-900 font-semibold' : 'text-gray-900 font-semibold');
+                let typeDisplay = transaction.type, valueColorClass = 'text-gray-800'; 
+                if (transaction.fundamentalType === 'receita') { valueColorClass = 'text-green-600'; if (transaction.type === 'pix_recebido') typeDisplay = 'PIX Recebido'; else if (transaction.type === 'receita') typeDisplay = 'Receita'; } 
+                else if (transaction.fundamentalType === 'despesa') { valueColorClass = transaction.isPaid ? 'text-red-500' : 'text-red-700 font-bold'; if (transaction.type === 'saque') typeDisplay = 'Saque'; else if (transaction.type === 'pix_enviado') typeDisplay = 'PIX Enviado'; else if (transaction.type === 'despesa') typeDisplay = 'Despesa'; }
+                const statusStyle = transaction.isPaid ? 'text-green-600' : 'text-red-700 font-bold';
+                
+                tr.innerHTML = `
+                    <td class="px-2 py-4 text-center">
+                        <input type="checkbox" class="transaction-checkbox form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out" data-id="${transaction.id}" data-group-id="${transaction.originalGroupId || ''}">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${transaction.description}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${valueColorClass}">${formatCurrency(transaction.value)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${typeDisplay}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${transaction.category}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${accountOrCardName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${transaction.installments}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${statusStyle}">${transaction.isPaid ? 'Pago' : 'Não Pago'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        ${!transaction.isPaid ? `<button data-id="${transaction.id}" class="pay-transaction-btn text-blue-600 hover:text-blue-900 mr-2 p-2 rounded-full hover:bg-blue-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>` : ''}
+                        <button data-id="${transaction.id}" class="edit-transaction-btn text-yellow-600 hover:text-yellow-900 mr-2 p-2 rounded-full hover:bg-yellow-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                        <button data-id="${transaction.id}" data-type="transaction" class="delete-btn text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </td>`;
+                transactionList.appendChild(tr);
+            });
+            addDeleteListeners(); addPayTransactionListeners(); addEditTransactionListeners();
+            updateSelectedTransactionsActions(); 
+        };
+
+        searchTransactionsInput.addEventListener('input', (e) => {
+            renderTransactions(e.target.value);
+        });
+
+        selectAllTransactionsCheckbox.addEventListener('change', (e) => {
+            document.querySelectorAll('.transaction-checkbox').forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+            });
+            updateSelectedTransactionsActions();
+        });
+
+        transactionList.addEventListener('change', (e) => {
+            if (e.target.classList.contains('transaction-checkbox')) {
+                updateSelectedTransactionsActions();
+            }
+        });
+        
+        function updateSelectedTransactionsActions() {
+            const selectedCheckboxes = document.querySelectorAll('.transaction-checkbox:checked');
+            const hasSelected = selectedCheckboxes.length > 0;
+
+            paySelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
+            unpaySelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
+            linkSelectedAccountSelect.classList.toggle('hidden', !hasSelected);
+            linkSelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
+            deleteSelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
+            
+            const allVisibleCheckboxes = document.querySelectorAll('.transaction-checkbox');
+            selectAllTransactionsCheckbox.checked = allVisibleCheckboxes.length > 0 && selectedCheckboxes.length === allVisibleCheckboxes.length;
+        }
+
+        paySelectedTransactionsBtn.addEventListener('click', () => {
+            const selectedIds = Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb => cb.dataset.id);
+            if (selectedIds.length === 0) { showFeedback("Nenhuma transação selecionada.", "info"); return; }
+            let paidCount = 0;
+            selectedIds.forEach(id => { if (markTransactionAsPaid(id, false)) paidCount++; }); 
+            if (paidCount > 0) showFeedback(`${paidCount} transação(ões) marcada(s) como paga(s).`, "success");
+            else showFeedback("Nenhuma transação pendente foi alterada.", "info");
+            renderTransactions(searchTransactionsInput.value); 
+            updateSelectedTransactionsActions(); 
+        });
+
+        unpaySelectedTransactionsBtn.addEventListener('click', () => {
+            const selectedIds = Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb => cb.dataset.id);
+            if (selectedIds.length === 0) { showFeedback("Nenhuma transação selecionada.", "info"); return; }
+            let unpaidCount = 0;
+            selectedIds.forEach(id => {
+                const transaction = transactions.find(t => t.id === id);
+                if (transaction && transaction.isPaid) {
+                    const wasPaid = transaction.isPaid;
+                    transaction.isPaid = false;
+                    if (wasPaid && transaction.accountId && !transaction.isCreditCard) {
+                        const account = accounts.find(acc => acc.id === transaction.accountId);
+                        if (account) {
+                            if (transaction.fundamentalType === 'despesa') account.balance += transaction.value;
+                            else account.balance -= transaction.value;
+                            saveAccounts();
+                        }
+                    }
+                    unpaidCount++;
+                }
+            });
+            if (unpaidCount > 0) {
+                saveTransactions();
+                renderTransactions(searchTransactionsInput.value);
+                updateSummary();
+                renderMonthlySummary();
+                renderDetailedCardBills();
+                checkCreditCardDueDates();
+                showFeedback(`${unpaidCount} transação(ões) marcada(s) como não paga(s).`, "success");
+            } else {
+                showFeedback("Nenhuma transação paga foi alterada.", "info");
+            }
+            updateSelectedTransactionsActions();
+        });
+
+        linkSelectedTransactionsBtn.addEventListener('click', () => {
+            const selectedIds = Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb => cb.dataset.id);
+            const targetAccountId = linkSelectedAccountSelect.value;
+
+            if (selectedIds.length === 0) { showFeedback("Nenhuma transação selecionada.", "info"); return; }
+            if (!targetAccountId) { showFeedback("Selecione uma conta ou cartão para vincular.", "error"); return; }
+
+            let linkedCount = 0;
+            const targetIsCreditCard = creditCards.some(c => c.id === targetAccountId);
+
+            selectedIds.forEach(id => {
+                const transaction = transactions.find(t => t.id === id);
+                if (transaction) {
+                    if (transaction.accountId && transaction.isPaid) {
+                        if (transaction.isCreditCard) {
+                            const oldCard = creditCards.find(c => c.id === transaction.accountId);
+                            if (oldCard) {
+                                if (transaction.fundamentalType === 'despesa') oldCard.availableLimit += transaction.value;
+                                else oldCard.availableLimit -= transaction.value;
+                            }
+                        } else {
+                            const oldAccount = accounts.find(a => a.id === transaction.accountId);
+                            if (oldAccount) {
+                                if (transaction.fundamentalType === 'despesa') oldAccount.balance += transaction.value;
+                                else oldAccount.balance -= transaction.value;
+                            }
+                        }
+                    }
+                    
+                    transaction.accountId = targetAccountId;
+                    transaction.isCreditCard = targetIsCreditCard;
+
+                    if (transaction.isPaid) {
+                        if (targetIsCreditCard) {
+                            const newCard = creditCards.find(c => c.id === targetAccountId);
+                            if (newCard) {
+                                if (transaction.fundamentalType === 'despesa') newCard.availableLimit -= transaction.value;
+                                else newCard.availableLimit += transaction.value;
+                            }
+                        } else {
+                            const newAccount = accounts.find(a => a.id === targetAccountId);
+                            if (newAccount) {
+                                if (newAccount.type === 'overdraft' && transaction.fundamentalType === 'despesa' && (newAccount.balance - transaction.value < -newAccount.limit)) {
+                                    showFeedback(`Vincular ${transaction.description} a ${newAccount.name} excede limite. Transação não vinculada.`, 'error');
+                                    transaction.accountId = null; 
+                                    transaction.isCreditCard = false;
+                                } else {
+                                    if (transaction.fundamentalType === 'despesa') newAccount.balance -= transaction.value;
+                                    else newAccount.balance += transaction.value;
+                                }
+                            }
+                        }
+                    }
+                    linkedCount++;
+                }
+            });
+
+            if (linkedCount > 0) {
+                saveTransactions(); saveAccounts(); saveCreditCards();
+                renderTransactions(searchTransactionsInput.value);
+                updateSummary(); renderMonthlySummary(); renderDetailedCardBills();
+                showFeedback(`${linkedCount} transação(ões) vinculada(s).`, "success");
+            } else {
+                showFeedback("Nenhuma transação foi vinculada.", "info");
+            }
+            updateSelectedTransactionsActions();
+        });
+
+        deleteSelectedTransactionsBtn.addEventListener('click', () => {
+            const selectedCheckboxes = document.querySelectorAll('.transaction-checkbox:checked');
+            if (selectedCheckboxes.length === 0) {
+                showFeedback("Nenhuma transação selecionada para excluir.", "info");
+                return;
+            }
+
+            let deletedGroupsCount = 0;
+            let deletedSingleCount = 0;
+            const groupIdsToDelete = new Set(); 
+
+            selectedCheckboxes.forEach(checkbox => {
+                const transactionId = checkbox.dataset.id;
+                const groupId = checkbox.dataset.groupId;
+
+                if (groupId && groupId !== "null" && groupId !== "") { 
+                    groupIdsToDelete.add(groupId);
+                } else {
+                    if(performDelete(transactionId, 'transaction', false)){ 
+                        deletedSingleCount++;
+                    }
+                }
+            });
+
+            groupIdsToDelete.forEach(groupId => {
+                const representativeTransaction = transactions.find(t => t.originalGroupId === groupId);
+                if (representativeTransaction) {
+                   if(performDelete(representativeTransaction.id, 'transaction', false)) { 
+                        deletedGroupsCount++;
+                   }
+                }
+            });
+            
+            let feedbackMessage = "";
+            if (deletedGroupsCount > 0) feedbackMessage += `${deletedGroupsCount} grupo(s) de parcelas excluído(s). `;
+            if (deletedSingleCount > 0) feedbackMessage += `${deletedSingleCount} transação(ões) única(s) excluída(s).`;
+
+            if (deletedGroupsCount > 0 || deletedSingleCount > 0) {
+                saveTransactions(); saveAccounts(); saveCreditCards();
+                renderTransactions(searchTransactionsInput.value);
+                updateSummary(); renderMonthlySummary(); renderDetailedCardBills(); checkCreditCardDueDates();
+                showFeedback(feedbackMessage.trim() || "Transações selecionadas excluídas.", "success");
+            } else {
+                showFeedback("Nenhuma transação foi excluída (possivelmente já removidas ou erro).", "info");
+            }
+            updateSelectedTransactionsActions();
+        });
+
+
+        function populateLinkSelectedAccountSelect() {
+            linkSelectedAccountSelect.innerHTML = '<option value="">Vincular a...</option>';
+            accounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = `${account.name} (${account.type === 'overdraft' ? 'C.Especial' : 'Dinheiro'})`;
+                linkSelectedAccountSelect.appendChild(option);
+            });
+            creditCards.forEach(card => {
+                const option = document.createElement('option');
+                option.value = card.id;
+                option.textContent = `${card.name} (Cartão)`;
+                linkSelectedAccountSelect.appendChild(option);
+            });
+        }
+
+
+        const performDelete = (id, type, showIndividualFeedback = true) => {
+            let itemDeleted = false;
+            if (type === 'account') {
+                if (transactions.some(t => t.accountId === id)) {
+                    if (showIndividualFeedback) showFeedback('Exclua transações da conta primeiro.', 'error');
+                    return false;
+                }
+                accounts = accounts.filter(acc => acc.id !== id);
+                saveAccounts(); renderAccounts(); populateAccountSelects(); updateSummary(); populateLinkSelectedAccountSelect();
+                if (showIndividualFeedback) showFeedback('Conta excluída.', 'success');
+                itemDeleted = true;
+            } else if (type === 'creditCard') {
+                if (transactions.some(t => t.accountId === id)) {
+                    if (showIndividualFeedback) showFeedback('Exclua transações do cartão primeiro.', 'error');
+                    return false;
+                }
+                creditCards = creditCards.filter(card => card.id !== id);
+                saveCreditCards(); renderCreditCards(); populateAccountSelects(); updateSummary(); populateLinkSelectedAccountSelect();
+                if (showIndividualFeedback) showFeedback('Cartão excluído.', 'success');
+                itemDeleted = true;
+            } else if (type === 'transaction') {
+                const initialTransaction = transactions.find(t => t.id === id);
+                if (!initialTransaction) return false;
+
+                const groupId = initialTransaction.originalGroupId;
+                let transactionsToDelete = [];
+
+                if (groupId && groupId !== "null" && groupId !== "") {
+                    transactionsToDelete = transactions.filter(t => t.originalGroupId === groupId);
+                } else {
+                    transactionsToDelete.push(initialTransaction);
+                }
+                
+                if (transactionsToDelete.length === 0 && initialTransaction) { 
+                    transactionsToDelete.push(initialTransaction);
+                }
+
+
+                if (transactionsToDelete.length > 0) {
+                    transactionsToDelete.forEach(delTx => {
+                        if (delTx.accountId) {
+                            if (delTx.isCreditCard) {
+                                const card = creditCards.find(c => c.id === delTx.accountId);
+                                if (card) {
+                                    if (delTx.fundamentalType === 'despesa') card.availableLimit += delTx.value;
+                                    else card.availableLimit -= delTx.value;
+                                }
+                            } else {
+                                const acc = accounts.find(a => a.id === delTx.accountId);
+                                if (acc && delTx.isPaid) {
+                                    if (delTx.fundamentalType === 'despesa') acc.balance += delTx.value;
+                                    else acc.balance -= delTx.value;
+                                }
+                            }
+                        }
+                    });
+
+                    transactions = transactions.filter(t => !transactionsToDelete.some(del => del.id === t.id));
+                    itemDeleted = true;
+                }
+                
+                if (itemDeleted) {
+                    if (showIndividualFeedback) { 
+                         if (groupId && groupId !== "null" && groupId !== "") {
+                            showFeedback(`Grupo de parcelas (${transactionsToDelete.length}) excluído.`, 'success');
+                        } else {
+                            showFeedback('Transação excluída.', 'success');
+                        }
+                    }
+                    if (showIndividualFeedback) {
+                        saveTransactions(); saveAccounts(); saveCreditCards();
+                        renderTransactions(searchTransactionsInput.value);
+                        updateSummary(); renderMonthlySummary(); renderDetailedCardBills(); checkCreditCardDueDates();
+                    }
+                }
+            }
+            return itemDeleted;
+        };
+        const markTransactionAsPaid = (id, showIndividualFeedback = true) => { const tx = transactions.find(t=>t.id===id); if(tx&&!tx.isPaid){const prevPaid=tx.isPaid;tx.isPaid=true;if(!prevPaid&&tx.accountId&&!tx.isCreditCard){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa'){if(acc.type==='overdraft'&&(acc.balance-tx.value<-acc.limit)){showFeedback(`Pagamento ${formatCurrency(tx.value)} p/ ${acc.name} excede limite.`,'error');tx.isPaid = false; return false;}else acc.balance-=tx.value;}else acc.balance+=tx.value;saveAccounts();}}saveTransactions();if(showIndividualFeedback) showFeedback('Transação paga!','success');renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates(); return true;}else if(tx&&tx.isPaid){if(showIndividualFeedback)showFeedback('Transação já está paga.','info'); return false;} return false;};
         const openEditModal = (id) => { const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');return;}editTransactionIdInput.value=tx.id;editDateInput.value=tx.date;editDescriptionInput.value=tx.description;editValueInput.value=tx.value.toFixed(2);populateCategorySelect(editCategorySelect);editCategorySelect.value=tx.category;editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';const[paid,total]=tx.installments.split('/').map(Number);editInstallmentsTotalInput.value=total;editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsPaidInput.value=paid;editInstallmentsPaidInput.max=total;editDateInput.readOnly=false;editDescriptionInput.readOnly=false;editDescriptionInput.classList.remove('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=false;editValueInput.classList.remove('bg-gray-100','cursor-not-allowed');editTransactionModal.classList.remove('hidden');};
         editCategorySelect.addEventListener('change', () => { if(editCategorySelect.value==='nova-categoria'){editNewCategoryInput.classList.remove('hidden');editNewCategoryInput.focus();}else{editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';}});
         const closeEditModal = () => {editTransactionModal.classList.add('hidden');editDescriptionInput.readOnly=true;editDescriptionInput.classList.add('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=true;editValueInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editDateInput.readOnly=true;editNewCategoryInput.classList.add('hidden');};
         closeEditModalBtn.addEventListener('click',closeEditModal);cancelEditTransactionBtn.addEventListener('click',closeEditModal);
-        saveEditTransactionBtn.addEventListener('click',()=>{const id=editTransactionIdInput.value;const newDate=editDateInput.value;const newDesc=editDescriptionInput.value.trim();const newVal=parseFloat(editValueInput.value);const newPaidInst=parseInt(editInstallmentsPaidInput.value);let newCat=editCategorySelect.value;if(newCat==='nova-categoria'){const typedNewCat=editNewCategoryInput.value.trim();if(typedNewCat){if(!categories.includes(typedNewCat)){categories.push(typedNewCat);saveCategories();populateCategorySelect();populateCategorySelect(editCategorySelect);}newCat=typedNewCat;}else{showFeedback('Nova categoria vazia.','error');return;}}const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');closeEditModal();return;}const totalInst=parseInt(tx.installments.split('/')[1]);if(!newDate||!newDesc||isNaN(newVal)||newVal<=0||isNaN(newPaidInst)||newPaidInst<0||newPaidInst>totalInst){showFeedback('Dados inválidos.','error');return;}const oldVal=tx.value;const oldPaid=tx.isPaid;const fundType=tx.fundamentalType;if(tx.accountId){if(!tx.isCreditCard&&oldPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance+=oldVal;else acc.balance-=oldVal;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit+=oldVal;else card.availableLimit-=oldVal;}}}tx.date=newDate;tx.description=newDesc;tx.value=newVal;tx.category=newCat;tx.installments=`${newPaidInst}/${totalInst}`;tx.isPaid=newPaidInst>=totalInst;if(tx.accountId){if(!tx.isCreditCard&&tx.isPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance-=tx.value;else acc.balance+=tx.value;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit-=tx.value;else card.availableLimit+=tx.value;}}}saveTransactions();saveAccounts();saveCreditCards();renderTransactions();updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();showFeedback('Transação atualizada!','success');closeEditModal();});
+        saveEditTransactionBtn.addEventListener('click',()=>{const id=editTransactionIdInput.value;const newDate=editDateInput.value;const newDesc=editDescriptionInput.value.trim();const newVal=parseFloat(editValueInput.value);const newPaidInst=parseInt(editInstallmentsPaidInput.value);let newCat=editCategorySelect.value;if(newCat==='nova-categoria'){const typedNewCat=editNewCategoryInput.value.trim();if(typedNewCat){if(!categories.includes(typedNewCat)){categories.push(typedNewCat);saveCategories();populateCategorySelect();populateCategorySelect(editCategorySelect);}newCat=typedNewCat;}else{showFeedback('Nova categoria vazia.','error');return;}}const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');closeEditModal();return;}const totalInst=parseInt(tx.installments.split('/')[1]);if(!newDate||!newDesc||isNaN(newVal)||newVal<=0||isNaN(newPaidInst)||newPaidInst<0||newPaidInst>totalInst){showFeedback('Dados inválidos.','error');return;}const oldVal=tx.value;const oldPaid=tx.isPaid;const fundType=tx.fundamentalType;if(tx.accountId){if(!tx.isCreditCard&&oldPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance+=oldVal;else acc.balance-=oldVal;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit+=oldVal;else card.availableLimit-=oldVal;}}}tx.date=newDate;tx.description=newDesc;tx.value=newVal;tx.category=newCat;tx.installments=`${newPaidInst}/${totalInst}`;tx.isPaid=newPaidInst>=totalInst;if(tx.accountId){if(!tx.isCreditCard&&tx.isPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance-=tx.value;else acc.balance+=tx.value;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit-=tx.value;else card.availableLimit+=tx.value;}}}saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();showFeedback('Transação atualizada!','success');closeEditModal();});
 
         // --- Resumo e Cálculos ---
         const updateSummary = () => { let totalPoder=0;accounts.forEach(acc=>totalPoder+=(acc.type==='cash'?acc.balance:(acc.limit+acc.balance)));creditCards.forEach(card=>totalPoder+=card.availableLimit);totalReceitasEl.textContent=formatCurrency(totalPoder);const totalDespTxt=totalDespesasEl.textContent||"R$ 0,00";const totalDesp=parseFloat(totalDespTxt.replace('R$','').replace(/\./g,'').replace(',','.'))||0;const saldoCons=totalPoder-totalDesp;saldoAtualEl.textContent=formatCurrency(saldoCons);let totalFaturas=0;creditCards.forEach(card=>{totalFaturas+=transactions.reduce((s,t)=>(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&!t.isPaid&&new Date(t.date).getMonth()===currentMonth&&new Date(t.date).getFullYear()===currentYear)?s+t.value:s,0);});totalCardBillsEl.textContent=formatCurrency(totalFaturas);saldoAtualEl.className=`text-2xl font-bold ${saldoCons>=0?'text-green-700':'text-red-700'}`;};
         const updateMonthlyDisplay = () => { currentMonthDisplay.textContent = new Date(currentYear,currentMonth).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});};
         const renderMonthlySummary = () => { let monthExp=0;const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);transactions.forEach(t=>{const tD=new Date(t.date);tD.setHours(0,0,0,0);if(t.fundamentalType==='despesa'&&((tD.getMonth()===currentMonth&&tD.getFullYear()===currentYear)||(tD<bom&&!t.isPaid)))monthExp+=t.value;});totalDespesasEl.textContent=formatCurrency(monthExp);};
-        prevMonthBtn.addEventListener('click',()=>{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}updateMonthlyDisplay();renderTransactions();renderMonthlySummary();updateSummary();});
-        nextMonthBtn.addEventListener('click',()=>{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}updateMonthlyDisplay();renderTransactions();renderMonthlySummary();updateSummary();});
+        prevMonthBtn.addEventListener('click',()=>{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);renderMonthlySummary();updateSummary();});
+        nextMonthBtn.addEventListener('click',()=>{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);renderMonthlySummary();updateSummary();});
 
         // --- Funções de Importação Modificadas ---
         const finalizeImportProcessing = (parsedTxs) => { fileInput.value='';fileInput.disabled=false;importFileBtn.disabled=false;if(parsedTxs&&parsedTxs.length>0){importedTransactionsToReview=parsedTxs;renderImportedTransactionsForReview();importReviewSection.classList.remove('hidden');}else importReviewSection.classList.add('hidden');};
@@ -901,13 +1427,143 @@
         const parseImage = async (file) => { if (typeof Tesseract === 'undefined' || typeof Tesseract.createWorker !== 'function') { showFeedback('Biblioteca OCR não carregada.', 'error'); finalizeImportProcessing([]); return []; } showFeedback("Processando imagem OCR...", 'info'); try { const worker = await Tesseract.createWorker('por', 1, { logger: m => { if (m.status === 'recognizing text') showFeedback(`OCR: ${m.status} ${Math.round(m.progress * 100)}%`, 'info'); } }); const { data: { text } } = await worker.recognize(file); await worker.terminate(); if (text && text.trim()) { const parsed = processAndStructureTextLines(text, file.name); showFeedback(`${parsed.length} linhas da Imagem (OCR) para revisão.`, "info"); return parsed; } else { showFeedback("Nenhum texto OCR na imagem.", 'info'); return []; } } catch (err) { console.error("Erro OCR:", err); showFeedback("Erro OCR imagem.", 'error'); return []; } };
         importHeader.addEventListener('click', () => { importSectionContent.classList.toggle('hidden'); importArrow.classList.toggle('rotated'); });
         importFileBtn.addEventListener('click', async () => { const file = fileInput.files[0]; if (!file) { showFeedback('Selecione um arquivo.', 'error'); return; } importedTransactionsToReview = []; importedTransactionsTableBody.innerHTML = ''; importReviewSection.classList.add('hidden'); fileInput.disabled = true; importFileBtn.disabled = true; const reader = new FileReader(); const fileExt = file.name.split('.').pop().toLowerCase(); let parsedData = []; try { if (fileExt==='ofx'){reader.onload=(e)=>{try{parsedData=parseOFX(e.target.result);finalizeImportProcessing(parsedData);}catch(err){handleImportError(err,"OFX");}};reader.onerror=()=>handleImportError(new Error("Erro OFX."),"OFX");reader.readAsText(file);} else if(fileExt==='csv'){reader.onload=(e)=>{try{parsedData=parseExcelCsv(e.target.result,fileExt,true);finalizeImportProcessing(parsedData);}catch(err){handleImportError(err,"CSV");}};reader.onerror=()=>handleImportError(new Error("Erro CSV."),"CSV");reader.readAsText(file,'ISO-8859-1');} else if(['xls','xlsx'].includes(fileExt)){reader.onload=(e)=>{try{parsedData=parseExcelCsv(e.target.result,fileExt,false);finalizeImportProcessing(parsedData);}catch(err){handleImportError(err,"Excel");}};reader.onerror=()=>handleImportError(new Error("Erro Excel."),"Excel");reader.readAsBinaryString(file);} else if(['doc','docx'].includes(fileExt)){if(fileExt==='doc'&&(typeof mammoth==='undefined'||!mammoth.extractRawText)){showFeedback('.doc não suportado. Tente .docx.','info');finalizeImportProcessing([]);return;}parsedData=await parseWord(file);finalizeImportProcessing(parsedData);} else if(['png','jpg','jpeg','gif','bmp','tiff','webp'].includes(fileExt)){parsedData=await parseImage(file);finalizeImportProcessing(parsedData);} else{showFeedback(`Formato .${fileExt} não suportado.`,'error');finalizeImportProcessing([]);}} catch (error) { handleImportError(error, `arquivo ${fileExt}`); }});
-        renderImportedTransactionsForReview = () => { importedTransactionsTableBody.innerHTML = ''; if (!importedTransactionsToReview || importedTransactionsToReview.length === 0) { importReviewSection.classList.add('hidden'); return; } importedTransactionsToReview.forEach((tx, idx) => { const tr = document.createElement('tr'); tr.className = 'bg-white hover:bg-gray-50'; let accOpts = accounts.map(a=>`<option value="${a.id}" ${tx.accountId===a.id?'selected':''}>${a.name} (${a.type==='overdraft'?'C.Especial':'Dinheiro'})</option>`).join(''); let cardOpts = creditCards.map(c=>`<option value="${c.id}" ${tx.accountId===c.id?'selected':''}>${c.name} (Cartão)</option>`).join(''); const valFmt = typeof tx.value==='number'?tx.value.toFixed(2):'0.00'; const instTotal=tx.installmentsTotal||(tx.installments?parseInt(tx.installments.split('/')[1]):1)||1; const instPaid=tx.installmentsPaid||(tx.installments?parseInt(tx.installments.split('/')[0]):(tx.isPaid?1:0))||0; tr.innerHTML = `<td class="px-2 py-2"><input type="date" class="date-input w-full border rdd px-1 py-0.5 text-xs" value="${tx.date||new Date().toISOString().split('T')[0]}" data-index="${idx}"></td> <td class="px-2 py-2"><textarea class="description-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}" rows="2">${tx.description||''}</textarea></td> <td class="px-2 py-2"><input type="number" step="0.01" class="value-input w-24 border rdd px-1 py-0.5 text-xs" value="${valFmt}" data-index="${idx}"></td> <td class="px-2 py-2"><select class="type-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}"><option value="receita" ${tx.type==='receita'?'selected':''}>Receita</option><option value="despesa" ${tx.type==='despesa'?'selected':''}>Despesa</option><option value="saque" ${tx.type==='saque'?'selected':''}>Saque</option><option value="pix_enviado" ${tx.type==='pix_enviado'?'selected':''}>PIX Enviado</option><option value="pix_recebido" ${tx.type==='pix_recebido'?'selected':''}>PIX Recebido</option></select></td> <td class="px-2 py-2"><select class="category-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}">${categories.sort((a,b)=>a.localeCompare(b)).map(c=>`<option value="${c}" ${tx.category===c?'selected':''}>${c}</option>`).join('')}<option value="nova-categoria-review">Adicionar Nova...</option></select><input type="text" class="new-category-input-review hidden w-full border rdd px-1 py-0.5 text-xs mt-1" placeholder="Nova Cat." data-index="${idx}" value="${!categories.includes(tx.category)&&tx.category!=='Outros'&&!tx.category?.startsWith('Importado')?tx.category:''}"></td> <td class="px-2 py-2"><div class="flex space-x-1"><input type="number" min="1" value="${instTotal}" class="installments-total-review w-16 border rdd px-1 py-0.5 text-xs" data-index="${idx}" title="Total Parcelas"><input type="number" min="0" value="${instPaid}" class="installments-paid-review w-16 border rdd px-1 py-0.5 text-xs" data-index="${idx}" title="Parcelas Pagas"></div></td> <td class="px-2 py-2"><select class="account-select-review w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}"><option value="">Não Vincular</option>${accOpts}${cardOpts}</select></td> <td class="px-2 py-2"><select class="paid-status-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}"><option value="false" ${!tx.isPaid?'selected':''}>Não Pago</option><option value="true" ${tx.isPaid?'selected':''}>Pago</option></select></td>`; importedTransactionsTableBody.appendChild(tr); const accSelEl=tr.querySelector('.account-select-review');if(tx.accountId)accSelEl.value=tx.accountId;const catInEl=tr.querySelector('.category-input');const newCatInEl=tr.querySelector('.new-category-input-review');if(!categories.includes(tx.category)&&tx.category&&tx.category!=='Outros'&&!tx.category?.startsWith('Importado')){catInEl.value='nova-categoria-review';newCatInEl.classList.remove('hidden');}tr.querySelector('.date-input').addEventListener('change',(e)=>importedTransactionsToReview[idx].date=e.target.value);tr.querySelector('.description-input').addEventListener('input',(e)=>importedTransactionsToReview[idx].description=e.target.value);tr.querySelector('.value-input').addEventListener('change',(e)=>{const v=parseFloat(e.target.value)||0;const s=importedTransactionsToReview[idx].fundamentalTypeOriginalSignal||(v>=0?1:-1);importedTransactionsToReview[idx].value=Math.abs(v);if(v!==0)importedTransactionsToReview[idx].fundamentalType=v*s>=0?'receita':'despesa';else importedTransactionsToReview[idx].fundamentalType=s>0?'receita':'despesa';if(['receita','despesa'].includes(importedTransactionsToReview[idx].type)||!importedTransactionsToReview[idx].type){importedTransactionsToReview[idx].type=importedTransactionsToReview[idx].fundamentalType;tr.querySelector('.type-input').value=importedTransactionsToReview[idx].type;}});tr.querySelector('.type-input').addEventListener('change',(e)=>{const nT=e.target.value;importedTransactionsToReview[idx].type=nT;if(nT==='receita'||nT==='pix_recebido'){importedTransactionsToReview[idx].fundamentalType='receita';importedTransactionsToReview[idx].fundamentalTypeOriginalSignal=1;}else{importedTransactionsToReview[idx].fundamentalType='despesa';importedTransactionsToReview[idx].fundamentalTypeOriginalSignal=-1;}});catInEl.addEventListener('change',(e)=>{if(e.target.value==='nova-categoria-review'){newCatInEl.classList.remove('hidden');newCatInEl.focus();importedTransactionsToReview[idx].category='';}else{newCatInEl.classList.add('hidden');newCatInEl.value='';importedTransactionsToReview[idx].category=e.target.value;}});newCatInEl.addEventListener('blur',(e)=>{if(e.target.value.trim()&&catInEl.value==='nova-categoria-review')importedTransactionsToReview[idx].category=e.target.value.trim();});accSelEl.addEventListener('change',(e)=>{importedTransactionsToReview[idx].accountId=e.target.value;importedTransactionsToReview[idx].isCreditCard=e.target.value?creditCards.some(c=>c.id===e.target.value):false;});tr.querySelector('.paid-status-input').addEventListener('change',(e)=>importedTransactionsToReview[idx].isPaid=e.target.value==='true');const instTotEl=tr.querySelector('.installments-total-review');const instPaidEl=tr.querySelector('.installments-paid-review');instTotEl.addEventListener('change',(e)=>{let t=parseInt(e.target.value)||1;if(t<1)t=1;e.target.value=t;importedTransactionsToReview[idx].installmentsTotal=t;if(parseInt(instPaidEl.value)>t){instPaidEl.value=t;importedTransactionsToReview[idx].installmentsPaid=t;}});instPaidEl.addEventListener('change',(e)=>{const t=parseInt(instTotEl.value)||1;let p=parseInt(e.target.value)||0;if(p<0)p=0;if(p>t)p=t;e.target.value=p;importedTransactionsToReview[idx].installmentsPaid=p;});});};
+        renderImportedTransactionsForReview = () => { 
+            importedTransactionsTableBody.innerHTML = ''; 
+            if (!importedTransactionsToReview || importedTransactionsToReview.length === 0) { 
+                importReviewSection.classList.add('hidden'); 
+                selectAllImportedCheckbox.checked = false; 
+                return; 
+            }
+            importedTransactionsToReview.forEach((tx, idx) => { 
+                const tr = document.createElement('tr'); tr.className = 'bg-white hover:bg-gray-50'; 
+                let accOpts = accounts.map(a=>`<option value="${a.id}" ${tx.accountId===a.id?'selected':''}>${a.name} (${a.type==='overdraft'?'C.Especial':'Dinheiro'})</option>`).join(''); 
+                let cardOpts = creditCards.map(c=>`<option value="${c.id}" ${tx.accountId===c.id?'selected':''}>${c.name} (Cartão)</option>`).join(''); 
+                const valFmt = typeof tx.value==='number'?tx.value.toFixed(2):'0.00'; 
+                const instTotal=tx.installmentsTotal||(tx.installments?parseInt(tx.installments.split('/')[1]):1)||1; 
+                const instPaid=tx.installmentsPaid||(tx.installments?parseInt(tx.installments.split('/')[0]):(tx.isPaid?1:0))||0; 
+                tr.innerHTML = `
+                    <td class="px-2 py-2 text-center"><input type="checkbox" class="imported-transaction-checkbox form-checkbox h-4 w-4 text-blue-600" data-index="${idx}" checked></td>
+                    <td class="px-2 py-2"><input type="date" class="date-input w-full border rdd px-1 py-0.5 text-xs" value="${tx.date||new Date().toISOString().split('T')[0]}" data-index="${idx}"></td> 
+                    <td class="px-2 py-2"><textarea class="description-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}" rows="2">${tx.description||''}</textarea></td> 
+                    <td class="px-2 py-2"><input type="number" step="0.01" class="value-input w-24 border rdd px-1 py-0.5 text-xs" value="${valFmt}" data-index="${idx}"></td> 
+                    <td class="px-2 py-2"><select class="type-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}"><option value="receita" ${tx.type==='receita'?'selected':''}>Receita</option><option value="despesa" ${tx.type==='despesa'?'selected':''}>Despesa</option><option value="saque" ${tx.type==='saque'?'selected':''}>Saque</option><option value="pix_enviado" ${tx.type==='pix_enviado'?'selected':''}>PIX Enviado</option><option value="pix_recebido" ${tx.type==='pix_recebido'?'selected':''}>PIX Recebido</option></select></td> 
+                    <td class="px-2 py-2"><select class="category-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}">${categories.sort((a,b)=>a.localeCompare(b)).map(c=>`<option value="${c}" ${tx.category===c?'selected':''}>${c}</option>`).join('')}<option value="nova-categoria-review">Adicionar Nova...</option></select><input type="text" class="new-category-input-review hidden w-full border rdd px-1 py-0.5 text-xs mt-1" placeholder="Nova Cat." data-index="${idx}" value="${!categories.includes(tx.category)&&tx.category!=='Outros'&&!tx.category?.startsWith('Importado')?tx.category:''}"></td> 
+                    <td class="px-2 py-2"><div class="flex space-x-1"><input type="number" min="1" value="${instTotal}" class="installments-total-review w-16 border rdd px-1 py-0.5 text-xs" data-index="${idx}" title="Total Parcelas"><input type="number" min="0" value="${instPaid}" class="installments-paid-review w-16 border rdd px-1 py-0.5 text-xs" data-index="${idx}" title="Parcelas Pagas"></div></td> 
+                    <td class="px-2 py-2"><select class="account-select-review w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}"><option value="">Não Vincular</option>${accOpts}${cardOpts}</select></td> 
+                    <td class="px-2 py-2"><select class="paid-status-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}"><option value="false" ${!tx.isPaid?'selected':''}>Não Pago</option><option value="true" ${tx.isPaid?'selected':''}>Pago</option></select></td>`; 
+                importedTransactionsTableBody.appendChild(tr); 
+                const accSelEl=tr.querySelector('.account-select-review');if(tx.accountId)accSelEl.value=tx.accountId;
+                const catInEl=tr.querySelector('.category-input');const newCatInEl=tr.querySelector('.new-category-input-review');if(!categories.includes(tx.category)&&tx.category&&tx.category!=='Outros'&&!tx.category?.startsWith('Importado')){catInEl.value='nova-categoria-review';newCatInEl.classList.remove('hidden');}
+                tr.querySelector('.date-input').addEventListener('change',(e)=>importedTransactionsToReview[idx].date=e.target.value);
+                tr.querySelector('.description-input').addEventListener('input',(e)=>importedTransactionsToReview[idx].description=e.target.value);
+                tr.querySelector('.value-input').addEventListener('change',(e)=>{const v=parseFloat(e.target.value)||0;const s=importedTransactionsToReview[idx].fundamentalTypeOriginalSignal||(v>=0?1:-1);importedTransactionsToReview[idx].value=Math.abs(v);if(v!==0)importedTransactionsToReview[idx].fundamentalType=v*s>=0?'receita':'despesa';else importedTransactionsToReview[idx].fundamentalType=s>0?'receita':'despesa';if(['receita','despesa'].includes(importedTransactionsToReview[idx].type)||!importedTransactionsToReview[idx].type){importedTransactionsToReview[idx].type=importedTransactionsToReview[idx].fundamentalType;tr.querySelector('.type-input').value=importedTransactionsToReview[idx].type;}});
+                tr.querySelector('.type-input').addEventListener('change',(e)=>{const nT=e.target.value;importedTransactionsToReview[idx].type=nT;if(nT==='receita'||nT==='pix_recebido'){importedTransactionsToReview[idx].fundamentalType='receita';importedTransactionsToReview[idx].fundamentalTypeOriginalSignal=1;}else{importedTransactionsToReview[idx].fundamentalType='despesa';importedTransactionsToReview[idx].fundamentalTypeOriginalSignal=-1;}});
+                catInEl.addEventListener('change',(e)=>{if(e.target.value==='nova-categoria-review'){newCatInEl.classList.remove('hidden');newCatInEl.focus();importedTransactionsToReview[idx].category='';}else{newCatInEl.classList.add('hidden');newCatInEl.value='';importedTransactionsToReview[idx].category=e.target.value;}});
+                newCatInEl.addEventListener('blur',(e)=>{if(e.target.value.trim()&&catInEl.value==='nova-categoria-review')importedTransactionsToReview[idx].category=e.target.value.trim();});
+                accSelEl.addEventListener('change',(e)=>{importedTransactionsToReview[idx].accountId=e.target.value;importedTransactionsToReview[idx].isCreditCard=e.target.value?creditCards.some(c=>c.id===e.target.value):false;});
+                tr.querySelector('.paid-status-input').addEventListener('change',(e)=>importedTransactionsToReview[idx].isPaid=e.target.value==='true');
+                const instTotEl=tr.querySelector('.installments-total-review');const instPaidEl=tr.querySelector('.installments-paid-review');
+                instTotEl.addEventListener('change',(e)=>{let t=parseInt(e.target.value)||1;if(t<1)t=1;e.target.value=t;importedTransactionsToReview[idx].installmentsTotal=t;if(parseInt(instPaidEl.value)>t){instPaidEl.value=t;importedTransactionsToReview[idx].installmentsPaid=t;}});
+                instPaidEl.addEventListener('change',(e)=>{const t=parseInt(instTotEl.value)||1;let p=parseInt(e.target.value)||0;if(p<0)p=0;if(p>t)p=t;e.target.value=p;importedTransactionsToReview[idx].installmentsPaid=p;});
+                tr.querySelector('.imported-transaction-checkbox').addEventListener('change', () => {
+                    const allCheckboxes = document.querySelectorAll('.imported-transaction-checkbox');
+                    const checkedCheckboxes = document.querySelectorAll('.imported-transaction-checkbox:checked');
+                    selectAllImportedCheckbox.checked = allCheckboxes.length > 0 && allCheckboxes.length === checkedCheckboxes.length;
+                });
+            });
+            selectAllImportedCheckbox.checked = true; 
+        };
+        if (selectAllImportedCheckbox) {
+            selectAllImportedCheckbox.addEventListener('change', (e) => {
+                document.querySelectorAll('.imported-transaction-checkbox').forEach(checkbox => {
+                    checkbox.checked = e.target.checked;
+                });
+            });
+        }
         
         // --- Confirmação de Importação ---
-        confirmImportBtn.addEventListener('click', () => { let impCount=0,skipCount=0,impErrs=[];const txsToCommit=[];const tmpAccs=JSON.parse(JSON.stringify(accounts));const tmpCards=JSON.parse(JSON.stringify(creditCards));let newCatsAdded=[];importedTransactionsToReview.forEach((revTx,idx)=>{const catInEl=document.querySelector(`.category-input[data-index="${idx}"]`);const newCatInEl=document.querySelector(`.new-category-input-review[data-index="${idx}"]`);const instTotEl=document.querySelector(`.installments-total-review[data-index="${idx}"]`);const instPaidEl=document.querySelector(`.installments-paid-review[data-index="${idx}"]`);revTx.installmentsTotal=parseInt(instTotEl.value)||1;revTx.installmentsPaid=parseInt(instPaidEl.value)||0;if(catInEl&&catInEl.value==='nova-categoria-review'&&newCatInEl&&newCatInEl.value.trim()){const ncName=newCatInEl.value.trim();if(ncName&&!categories.includes(ncName)&&!newCatsAdded.includes(ncName))newCatsAdded.push(ncName);revTx.category=ncName||'Outros';}else if(catInEl)revTx.category=catInEl.value||'Outros';if(!revTx.fundamentalType)revTx.fundamentalType=(revTx.type==='receita'||revTx.type==='pix_recebido')?'receita':'despesa';if(!revTx.description||isNaN(revTx.value)||revTx.value<0){skipCount++;return;}if(revTx.installmentsTotal>1&&(revTx.fundamentalType==='despesa')){const oVal=revTx.value;const iVal=parseFloat((oVal/revTx.installmentsTotal).toFixed(2));let sInst=0;for(let i=0;i<revTx.installmentsTotal;i++){let cInstVal=(i===revTx.installmentsTotal-1)?parseFloat((oVal-sInst).toFixed(2)):iVal;sInst+=cInstVal;const txDate=new Date(revTx.date);txDate.setMonth(txDate.getMonth()+i);const instTx={...revTx,id:generateUniqueId(),date:txDate.toISOString().split('T')[0],description:`${revTx.description} (${i+1}/${revTx.installmentsTotal})`,value:cInstVal,installments:`${i+1}/${revTx.installmentsTotal}`,isPaid:(i+1)<=revTx.installmentsPaid,originalGroupId:revTx.id};let instValid=true;if(instTx.accountId){const acc=tmpAccs.find(a=>a.id===instTx.accountId);const card=tmpCards.find(c=>c.id===instTx.accountId);if(instTx.isCreditCard&&card){if(instTx.fundamentalType==='despesa')card.availableLimit-=instTx.value;else card.availableLimit+=instTx.value;}else if(acc){if(instTx.isPaid){if(instTx.fundamentalType==='despesa'){if(acc.type==='overdraft'&&(acc.balance-instTx.value<-acc.limit)){impErrs.push(`Parcela ${formatCurrency(instTx.value)} p/ ${acc.name} excede limite.`);instValid=false;}else if(instValid)acc.balance-=instTx.value;}else if(instValid)acc.balance+=instTx.value;}}else{impErrs.push(`Conta/Cartão ID ${instTx.accountId} não encontrado.`);instValid=false;}}if(instValid)txsToCommit.push(instTx);else skipCount++;}impCount++;}else{let txValid=true;if(revTx.accountId){const acc=tmpAccs.find(a=>a.id===revTx.accountId);const card=tmpCards.find(c=>c.id===revTx.accountId);if(revTx.isCreditCard&&card){if(revTx.fundamentalType==='despesa')card.availableLimit-=revTx.value;else card.availableLimit+=revTx.value;}else if(acc){if(revTx.isPaid){if(revTx.fundamentalType==='despesa'){if(acc.type==='overdraft'&&(acc.balance-revTx.value<-acc.limit)){impErrs.push(`Importada de ${formatCurrency(revTx.value)} p/ ${acc.name} excede limite.`);txValid=false;}else if(txValid)acc.balance-=revTx.value;}else if(txValid)acc.balance+=revTx.value;}}else{impErrs.push(`Conta/Cartão ID ${revTx.accountId} não encontrado.`);txValid=false;}}if(txValid){txsToCommit.push({...revTx,id:generateUniqueId(),installments:'1/1'});impCount++;}else skipCount++;}});if(newCatsAdded.length>0){categories.push(...newCatsAdded);saveCategories();populateCategorySelect();populateCategorySelect(editCategorySelect);if(!importReviewSection.classList.contains('hidden'))renderImportedTransactionsForReview();}if(impErrs.length>0){showFeedback(`Erro(s) importação: ${impErrs.join(' ')} ${skipCount>0?(impCount>0?'Outras ':'')+skipCount+' ignoradas.':''}`,'error');if(impCount===0)return;}transactions.push(...txsToCommit);accounts=tmpAccs;creditCards=tmpCards;saveTransactions();saveAccounts();saveCreditCards();renderTransactions();updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();importedTransactionsToReview=[];importedTransactionsTableBody.innerHTML='';importReviewSection.classList.add('hidden');let fbMsg=`Importação: ${impCount} transação(ões) processada(s).`;if(skipCount>0&&impErrs.length===0)fbMsg+=` ${skipCount} ignorada(s).`;else if(skipCount>0&&impErrs.length>0&&impCount>0)fbMsg+=` ${skipCount} adicional(is) ignorada(s).`;showFeedback(fbMsg,impCount>0?'success':(impErrs.length>0?'error':'info'));});
+        confirmImportBtn.addEventListener('click', () => {
+            let importedCount = 0; let skippedCount = 0; let importErrors = [];
+            const transactionsToCommit = []; const tempAccounts = JSON.parse(JSON.stringify(accounts)); const tempCreditCards = JSON.parse(JSON.stringify(creditCards)); let newCategoriesAddedInReview = [];
+            
+            document.querySelectorAll('#imported-transactions-table-body tr').forEach((row, index) => {
+                const checkbox = row.querySelector('.imported-transaction-checkbox');
+                if (!checkbox || !checkbox.checked) {
+                    skippedCount++;
+                    return; 
+                }
+
+                const reviewedTx = importedTransactionsToReview[index]; 
+                if (!reviewedTx) return; 
+
+                reviewedTx.date = row.querySelector('.date-input').value;
+                reviewedTx.description = row.querySelector('.description-input').value;
+                reviewedTx.value = parseFloat(row.querySelector('.value-input').value) || 0; // Este é o valor da parcela
+                reviewedTx.type = row.querySelector('.type-input').value;
+                const categoryInputEl = row.querySelector('.category-input');
+                const newCategoryInputEl = row.querySelector('.new-category-input-review');
+                if (categoryInputEl.value === 'nova-categoria-review' && newCategoryInputEl && newCategoryInputEl.value.trim()) {
+                    const newCatName = newCategoryInputEl.value.trim();
+                    if (newCatName && !categories.includes(newCatName) && !newCategoriesAddedInReview.includes(newCatName)) newCategoriesAddedInReview.push(newCatName);
+                    reviewedTx.category = newCatName || 'Outros';
+                } else {
+                    reviewedTx.category = categoryInputEl.value || 'Outros';
+                }
+                reviewedTx.installmentsTotal = parseInt(row.querySelector('.installments-total-review').value) || 1;
+                reviewedTx.installmentsPaid = parseInt(row.querySelector('.installments-paid-review').value) || 0;
+                reviewedTx.accountId = row.querySelector('.account-select-review').value || null;
+                reviewedTx.isCreditCard = reviewedTx.accountId ? creditCards.some(c => c.id === reviewedTx.accountId) : false;
+                reviewedTx.isPaid = row.querySelector('.paid-status-input').value === 'true';
+                
+                if (!reviewedTx.fundamentalType) reviewedTx.fundamentalType = (reviewedTx.type === 'receita' || reviewedTx.type === 'pix_recebido') ? 'receita' : 'despesa';
+                if (!reviewedTx.description || isNaN(reviewedTx.value) || reviewedTx.value <= 0) { skippedCount++; return; }
+
+                const baseDateForInstallment = reviewedTx.date; 
+                const totalInstallmentsFromReview = reviewedTx.installmentsTotal;
+                const installmentsPaidCountFromReview = reviewedTx.installmentsPaid;
+                const valuePerInstallment = reviewedTx.value; // Valor da parcela já é o correto
+
+                for (let k = 1; k <= totalInstallmentsFromReview; k++) {
+                    const transactionDateObject = new Date(baseDateForInstallment + "T00:00:00");
+                    const monthOffset = k - (installmentsPaidCountFromReview + 1);
+                    transactionDateObject.setMonth(transactionDateObject.getMonth() + monthOffset);
+                    const originalDay = new Date(baseDateForInstallment + "T00:00:00").getDate();
+                    if (transactionDateObject.getDate() !== originalDay) transactionDateObject.setDate(0); 
+
+                    const installmentTransaction = {
+                        ...reviewedTx, id: generateUniqueId(),
+                        date: transactionDateObject.toISOString().split('T')[0],
+                        description: `${reviewedTx.description.replace(/\s*\(Venc\..*\)/i, '')} (${k}/${totalInstallmentsFromReview})`,
+                        value: valuePerInstallment, 
+                        installments: `${k}/${totalInstallmentsFromReview}`,
+                        isPaid: k <= installmentsPaidCountFromReview,
+                        originalGroupId: reviewedTx.id 
+                    };
+                    
+                    let installmentValid = true;
+                    if (installmentTransaction.accountId) { 
+                        const acc = tempAccounts.find(a => a.id === installmentTransaction.accountId); 
+                        const card = tempCreditCards.find(c => c.id === installmentTransaction.accountId); 
+                        if (installmentTransaction.isCreditCard && card) { if (installmentTransaction.fundamentalType === 'despesa') card.availableLimit -= installmentTransaction.value; else card.availableLimit += installmentTransaction.value; } 
+                        else if (acc) { if (installmentTransaction.isPaid) { if (installmentTransaction.fundamentalType === 'despesa') { if (acc.type === 'overdraft' && (acc.balance - installmentTransaction.value < -acc.limit)) { importErrors.push(`Parcela ${formatCurrency(installmentTransaction.value)} p/ ${acc.name} excede limite.`); installmentValid = false; } else if (installmentValid) acc.balance -= installmentTransaction.value; } else if (installmentValid) acc.balance += installmentTransaction.value; }} 
+                        else { importErrors.push(`Conta/Cartão ID ${installmentTransaction.accountId} não encontrado.`); installmentValid = false; }
+                    }
+                    if (installmentValid) transactionsToCommit.push(installmentTransaction); else skippedCount++;
+                }
+                if (totalInstallmentsFromReview > 0) importedCount++; 
+            });
+            if (newCategoriesAddedInReview.length > 0) { categories.push(...newCategoriesAddedInReview); saveCategories(); populateCategorySelect(); populateCategorySelect(editCategorySelect); if (!importReviewSection.classList.contains('hidden')) renderImportedTransactionsForReview(); }
+            if (importErrors.length > 0) { showFeedback(`Erro(s) importação: ${importErrors.join(' ')} ${skippedCount>0?(importedCount>0?'Outras ':'')+skippedCount+' ignoradas.':''}`, 'error'); if (importedCount===0) return; }
+            transactions.push(...transactionsToCommit); accounts = tempAccounts; creditCards = tempCreditCards; 
+            saveTransactions(); saveAccounts(); saveCreditCards(); renderTransactions(); updateSummary(); renderMonthlySummary(); renderDetailedCardBills(); checkCreditCardDueDates();
+            importedTransactionsToReview=[]; importedTransactionsTableBody.innerHTML=''; importReviewSection.classList.add('hidden'); 
+            let fbMsg = `Importação: ${importedCount} transação(ões) originais processada(s).`;
+            if (skippedCount > 0 && importErrors.length === 0) fbMsg += ` ${skippedCount} ignorada(s).`; else if (skippedCount > 0 && importErrors.length > 0 && importedCount > 0) fbMsg += ` ${skippedCount} adicional(is) ignorada(s).`;
+            showFeedback(fbMsg,importedCount > 0 ? 'success' : (importErrors.length > 0 ? 'error' : 'info') );
+        });
         cancelReviewBtn.addEventListener('click', () => { importedTransactionsToReview = []; importedTransactionsTableBody.innerHTML = ''; importReviewSection.classList.add('hidden'); fileInput.value = ''; showFeedback('Importação cancelada.', 'info'); fileInput.disabled = false; importFileBtn.disabled = false; });
         
-        // --- Funções de Download, Faturas, Notificações, Metas (sem alterações significativas na lógica central) ---
+        // --- Funções de Download, Faturas, Notificações, Metas ---
         downloadXlsxBtn.addEventListener('click', () => { const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);const dataExp=transactions.filter(t=>{const td=new Date(t.date);td.setHours(0,0,0,0);return(td.getMonth()===currentMonth&&td.getFullYear()===currentYear)||(td<bom&&!t.isPaid);}).sort((a,b)=>new Date(a.date)-new Date(b.date)).map(t=>{let typeD=t.type;if(t.type==='pix_enviado')typeD='PIX Enviado';else if(t.type==='pix_recebido')typeD='PIX Recebido';else if(t.type==='saque')typeD='Saque';else if(t.type==='receita')typeD='Receita';else if(t.type==='despesa')typeD='Despesa';return{Data:new Date(t.date).toLocaleDateString('pt-BR'),Descrição:t.description,Valor:t.value,Tipo:typeD,Categoria:t.category,'Conta / Cartão':t.accountId?(t.isCreditCard?(creditCards.find(c=>c.id===t.accountId)?.name||'N/A'):(accounts.find(a=>a.id===t.accountId)?.name||'N/A')):"Não Vinculada",Parcela:t.installments,Pago:t.isPaid?'Sim':'Não'}});if(dataExp.length===0){showFeedback('Não há transações para baixar.','info');return;}const ws=XLSX.utils.json_to_sheet(dataExp);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Transacoes");const mName=new Date(currentYear,currentMonth).toLocaleDateString('pt-BR',{month:'long'});XLSX.writeFile(wb,`transacoes_${mName}_${currentYear}.xlsx`);showFeedback('Planilha baixada!','success');});
         detailedCardBillsHeader.addEventListener('click',()=>{detailedCardBillsContent.classList.toggle('hidden');detailedCardBillsArrow.classList.toggle('rotated');});
         const renderDetailedCardBills=()=>{detailedCardBillsList.innerHTML='';if(creditCards.length===0){noCardBillsMessage.classList.remove('hidden');return;}else noCardBillsMessage.classList.add('hidden');creditCards.forEach(card=>{const bill=transactions.reduce((s,t)=>(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&!t.isPaid&&new Date(t.date).getMonth()===currentMonth&&new Date(t.date).getFullYear()===currentYear)?s+t.value:s,0);const li=document.createElement('li');li.className='p-4 flex justify-between items-center';li.innerHTML=`<div class="font-semibold">${card.name}: <span class="text-purple-700">${formatCurrency(bill)}</span></div><div class="text-sm text-gray-600">Venc. dia ${card.dueDay}</div>`;detailedCardBillsList.appendChild(li);});};
@@ -916,6 +1572,94 @@
         addFinancialGoalForm.addEventListener('submit',(e)=>{e.preventDefault();const name=document.getElementById('goal-name').value.trim();const targetAmount=parseFloat(document.getElementById('goal-target-amount').value);const deadline=document.getElementById('goal-deadline').value;if(!name||isNaN(targetAmount)||targetAmount<=0||!deadline){showFeedback("Preencha campos da meta.","error");return;}if(new Date(deadline)<=new Date()){showFeedback("Prazo da meta deve ser futuro.","error");return;}const newGoal={id:generateUniqueId(),name,targetAmount,deadline,currentAmountSaved:0,aiPlan:"",status:'active'};financialGoals.push(newGoal);saveFinancialGoals();renderFinancialGoals();addFinancialGoalForm.reset();showFeedback(`Meta "${name}" adicionada!`,"success");});
         const renderFinancialGoals = () => { financialGoalsList.innerHTML='';const activeGoals=financialGoals.filter(g=>g.status==='active');if(activeGoals.length===0){noFinancialGoalsMessage.classList.remove('hidden');return;}noFinancialGoalsMessage.classList.add('hidden');activeGoals.forEach(goal=>{const li=document.createElement('li');const deadlineDate=new Date(goal.deadline);const today=new Date();const timeDiff=deadlineDate.getTime()-today.getTime();const daysRem=Math.max(0,Math.ceil(timeDiff/(1000*60*60*24)));const monthsRem=Math.max(0,Math.ceil(daysRem/30.44));li.innerHTML=`<div class="goal-details"><h4 class="text-lg font-semibold text-green-700">${goal.name}</h4><p><strong>Meta:</strong> ${formatCurrency(goal.targetAmount)}</p><p><strong>Prazo:</strong> ${deadlineDate.toLocaleDateString('pt-BR')} (${daysRem} dias / ${monthsRem} meses restantes)</p><p><strong>Status:</strong> ${goal.status==='active'?'Ativa':'Concluída'}</p></div><div class="goal-actions mt-3"><button data-goal-id="${goal.id}" class="complete-goal-btn px-3 py-1.5 text-sm bg-green-500 text-white rounded-md hover:bg-green-600">Marcar Concluída</button><button data-goal-id="${goal.id}" class="delete-goal-btn px-3 py-1.5 text-sm bg-red-500 text-white rounded-md hover:bg-red-600">Excluir</button></div>`;financialGoalsList.appendChild(li);li.querySelector('.complete-goal-btn').addEventListener('click',(e)=>{const gId=e.currentTarget.dataset.goalId;const gIdx=financialGoals.findIndex(g=>g.id===gId);if(gIdx>-1){financialGoals[gIdx].status='completed';saveFinancialGoals();renderFinancialGoals();showFeedback(`Meta "${financialGoals[gIdx].name}" concluída!`,'success');}});li.querySelector('.delete-goal-btn').addEventListener('click',(e)=>{const gId=e.currentTarget.dataset.goalId;financialGoals=financialGoals.filter(g=>g.id!==gId);saveFinancialGoals();renderFinancialGoals();showFeedback("Meta excluída.","info");});});};
         financialGoalsHeader.addEventListener('click',()=>{financialGoalsContent.classList.toggle('hidden');financialGoalsArrow.classList.toggle('rotated');});
+
+        // --- Relatórios ---
+        reportsHeader.addEventListener('click', () => {
+            reportsSectionContent.classList.toggle('hidden');
+            reportsArrow.classList.toggle('rotated');
+        });
+
+        reportTypeSelect.addEventListener('change', () => {
+            reportMonthSelectorDiv.classList.toggle('hidden', reportTypeSelect.value === 'annual');
+        });
+
+        function populateReportSelectors() {
+            const currentYr = new Date().getFullYear();
+            const currentMth = new Date().getMonth();
+            reportYearSelect.innerHTML = '';
+            for (let y = currentYr + 1; y >= currentYr - 10; y--) { // 10 anos para trás e 1 para frente
+                const option = document.createElement('option');
+                option.value = y;
+                option.textContent = y;
+                if (y === currentYr) option.selected = true;
+                reportYearSelect.appendChild(option);
+            }
+
+            reportMonthSelect.innerHTML = '';
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            monthNames.forEach((name, index) => {
+                const option = document.createElement('option');
+                option.value = index; // 0-11
+                option.textContent = name;
+                if (index === currentMth) option.selected = true;
+                reportMonthSelect.appendChild(option);
+            });
+        }
+
+        generateReportBtn.addEventListener('click', () => {
+            const type = reportTypeSelect.value;
+            const year = parseInt(reportYearSelect.value);
+            const month = parseInt(reportMonthSelect.value); // 0-11
+            reportOutputArea.innerHTML = ''; // Limpa área anterior
+
+            let reportTransactions = [];
+            let reportTitle = "";
+
+            if (type === 'monthly') {
+                reportTransactions = transactions.filter(t => {
+                    const tDate = new Date(t.date + "T00:00:00"); // Adiciona T00:00:00 para evitar problemas de fuso
+                    return t.fundamentalType === 'despesa' && tDate.getFullYear() === year && tDate.getMonth() === month;
+                });
+                reportTitle = `Relatório de Gastos Mensal - ${reportMonthSelect.options[reportMonthSelect.selectedIndex].text} de ${year}`;
+            } else { // annual
+                reportTransactions = transactions.filter(t => {
+                    const tDate = new Date(t.date + "T00:00:00");
+                    return t.fundamentalType === 'despesa' && tDate.getFullYear() === year;
+                });
+                reportTitle = `Relatório de Gastos Anual - ${year}`;
+            }
+
+            if (reportTransactions.length === 0) {
+                reportOutputArea.innerHTML = `<p class="text-gray-600 text-center">Nenhuma despesa encontrada para o período selecionado.</p>`;
+                return;
+            }
+
+            const expensesByCategory = reportTransactions.reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + t.value;
+                return acc;
+            }, {});
+
+            const sortedCategories = Object.entries(expensesByCategory)
+                .sort(([, a], [, b]) => b - a); // Ordena do maior para o menor gasto
+
+            let tableHTML = `<h3 class="text-xl font-semibold text-gray-700 mb-3">${reportTitle}</h3>
+                             <table class="min-w-full divide-y divide-gray-200 report-table mb-6">
+                                <thead class="bg-gray-100">
+                                    <tr><th>Categoria</th><th>Total Gasto</th></tr>
+                                </thead><tbody>`;
+            
+            let totalReportExpenses = 0;
+            sortedCategories.forEach(([category, total]) => {
+                tableHTML += `<tr><td>${category}</td><td>${formatCurrency(total)}</td></tr>`;
+                totalReportExpenses += total;
+            });
+            tableHTML += `<tr class="font-bold bg-gray-50"><td>TOTAL GERAL</td><td>${formatCurrency(totalReportExpenses)}</td></tr>`;
+            tableHTML += `</tbody></table>`;
+            
+            reportOutputArea.innerHTML = tableHTML;
+            showFeedback("Relatório gerado!", "success");
+        });
+
 
         // Carregamento inicial
         window.onload = () => {
