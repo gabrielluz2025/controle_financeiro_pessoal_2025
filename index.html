@@ -274,6 +274,9 @@
         #account-entries-modal .modal-content {
             max-height: 80vh; /* Limitar altura do modal */
         }
+        #confirmation-modal .modal-content {
+             max-width: 400px;
+        }
 
 
     </style>
@@ -796,6 +799,27 @@
             </div>
         </div>
     </div>
+    <div id="confirmation-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="confirmation-modal-title">Confirmar Exclusão</h3>
+                <button class="modal-close-btn" id="close-confirmation-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmation-modal-message">Tem a certeza que deseja excluir este item?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-delete-btn"
+                        class="px-4 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out">
+                    Confirmar Exclusão
+                </button>
+                <button id="cancel-delete-btn"
+                        class="px-4 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition duration-150 ease-in-out">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
 
 
     <script>
@@ -812,6 +836,8 @@
         let importedTransactionsToReview = [];
         let currentMonth = new Date().getMonth(); 
         let currentYear = new Date().getFullYear();
+        let itemToDelete = { id: null, type: null, showFeedback: true, isBulk: false, ids: [] }; // Para confirmação de exclusão
+
 
         document.addEventListener('DOMContentLoaded', () => {
             const totalReceitasEl = document.getElementById('total-receitas');
@@ -908,6 +934,12 @@
             const accountEntriesList = document.getElementById('account-entries-list');
             const accountEntriesTitle = document.getElementById('account-entries-title');
             const noAccountEntriesMessage = document.getElementById('no-account-entries-message');
+            const confirmationModal = document.getElementById('confirmation-modal');
+            const confirmationModalTitle = document.getElementById('confirmation-modal-title');
+            const confirmationModalMessage = document.getElementById('confirmation-modal-message');
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+            const closeConfirmationModalBtn = document.getElementById('close-confirmation-modal');
 
 
             // --- Funções Utilitárias ---
@@ -1065,7 +1097,7 @@
             }
 
             // --- Event Listeners ---
-            const addDeleteListeners = () => { document.querySelectorAll('.delete-btn').forEach(b => { b.onclick = (e) => { performDelete(e.currentTarget.dataset.id, e.currentTarget.dataset.type); }; }); };
+            const addDeleteListeners = () => { document.querySelectorAll('.delete-btn').forEach(b => { b.onclick = (e) => { requestDeleteConfirmation(e.currentTarget.dataset.id, e.currentTarget.dataset.type); }; }); };
             const addPayTransactionListeners = () => { document.querySelectorAll('.pay-transaction-btn').forEach(b => { b.onclick = (e) => { markTransactionAsPaid(e.currentTarget.dataset.id, true); }; }); }; 
             const addEditTransactionListeners = () => { document.querySelectorAll('.edit-transaction-btn').forEach(b => { b.onclick = (e) => { openEditModal(e.currentTarget.dataset.id); }; }); };
 
@@ -1276,7 +1308,7 @@
                 const noLinkOpt = document.createElement('option');
                 noLinkOpt.value = "";
                 noLinkOpt.textContent = targetSelect === accountSelect ? (forRevenue ? "Selecione uma Conta" : "Não Vincular / Geral") : "Selecione";
-                if (forRevenue) noLinkOpt.disabled = true; // Torna obrigatório se for para receita
+                if (forRevenue) noLinkOpt.disabled = true; 
                 targetSelect.appendChild(noLinkOpt);
 
                 accounts.forEach(acc => {
@@ -1290,7 +1322,7 @@
                     targetSelect.appendChild(opt);
                 });
 
-                if (!forRevenue) { // Só adiciona cartões se não for para receita
+                if (!forRevenue) { 
                     creditCards.forEach(card => {
                         const opt = document.createElement('option');
                         opt.value = card.id;
@@ -1299,7 +1331,7 @@
                     });
                 }
                 if (!targetSelect.value && targetSelect === accountSelect && !forRevenue) targetSelect.value = "";
-                else if (!targetSelect.value && forRevenue && accounts.length > 0) targetSelect.value = ""; // Força seleção para receita
+                else if (!targetSelect.value && forRevenue && accounts.length > 0) targetSelect.value = ""; 
             };
              
             const populateCategorySelect = (selectElement = categorySelect) => { if(!selectElement) return; const currVal = selectElement.value; selectElement.innerHTML = ''; if (selectElement === categorySelect) { const phOpt = document.createElement('option'); phOpt.value = ""; phOpt.textContent = "Selecione categoria"; phOpt.disabled = true; phOpt.selected = !currVal; selectElement.appendChild(phOpt); } categories.sort((a,b) => a.localeCompare(b)).forEach(cat => { const opt = document.createElement('option'); opt.value = cat; opt.textContent = cat; selectElement.appendChild(opt); }); const newOpt = document.createElement('option'); newOpt.value = 'nova-categoria'; newOpt.textContent = 'Adicionar Nova...'; selectElement.appendChild(newOpt); if (categories.includes(currVal)) selectElement.value = currVal; else if (currVal === 'nova-categoria' && selectElement === categorySelect) selectElement.value = 'nova-categoria'; else if (!currVal && selectElement !== categorySelect && categories.length > 0 && selectElement.options.length > (selectElement === categorySelect ? 1:0) ) selectElement.value = categories[0]; };
@@ -1313,7 +1345,6 @@
                     populateAccountSelects(accountSelect, isRevenueType);
                     if (isRevenueType) {
                         accountSelect.required = true;
-                        // Opcional: remover seleção de cartão se houver
                         if (creditCards.some(card => card.id === accountSelect.value)) {
                             accountSelect.value = "";
                         }
@@ -1396,14 +1427,14 @@
                             let target = newTx.isCreditCard ? tempCreditCards.find(c => c.id === newTx.accountId) : tempAccounts.find(a => a.id === newTx.accountId);
                             if (target) {
                                 if (newTx.isCreditCard) { if (newTx.fundamentalType === 'despesa') target.availableLimit -= newTx.value; else target.availableLimit += newTx.value; } 
-                                else if (newTx.isPaid || newTx.fundamentalType === 'receita') { // Receitas sempre afetam saldo
+                                else if (newTx.isPaid || newTx.fundamentalType === 'receita') { 
                                     if (newTx.fundamentalType === 'despesa') { 
                                         if (target.type === 'corrente' && target.limitOverdraft > 0 && (target.balance - newTx.value < -target.limitOverdraft)) { 
                                             showFeedback(`Transação ${formatCurrency(newTx.value)} para ${target.name} excede limite de cheque especial.`, 'error'); 
                                             transactionAddedSuccessfully = false; break; 
                                         } 
                                         target.balance -= newTx.value; 
-                                    } else { // Receita
+                                    } else { 
                                         target.balance += newTx.value; 
                                     }
                                 }
@@ -1899,7 +1930,7 @@
             const checkCreditCardDueDates = () => { const today=new Date();today.setHours(0,0,0,0);creditCards.forEach(card=>{const dueDay=card.dueDay;let billDueDate=new Date(today.getFullYear(),today.getMonth(),dueDay);billDueDate.setHours(0,0,0,0);if(today.getDate()>dueDay)billDueDate.setMonth(today.getMonth()+1);let billClosingDate=new Date(billDueDate.getTime());billClosingDate.setDate(billDueDate.getDate()-10);if(billClosingDate.getDate() > dueDay) billClosingDate.setMonth(billClosingDate.getMonth()-1);billClosingDate.setHours(0,0,0,0);if(today.getTime()===billClosingDate.getTime()){const closingBill=transactions.reduce((s,t)=>{const tD=new Date(t.date);let cSA=new Date(billClosingDate);cSA.setDate(cSA.getDate()-(card.dueDay>10?30:28));if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&tD>=cSA&&tD<billClosingDate)return s+t.value;return s;},0);if(closingBill>0)showFeedback(`FATURA FECHADA: ${card.name} fechou! Valor: ${formatCurrency(closingBill)}. Venc.: ${billDueDate.toLocaleDateString('pt-BR')}`,'info');}const diffT=billDueDate.getTime()-today.getTime();const diffD=Math.ceil(diffT/(1000*60*60*24));const billNotify=transactions.reduce((s,t)=>{const tD=new Date(t.date);if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&!t.isPaid&&tD>=billClosingDate&&tD<billDueDate)return s+t.value;return s;},0);if(diffD<=7&&diffD>=0&&billNotify>0)showFeedback(`VENC. PRÓXIMO: ${card.name} vence ${diffD===0?'HOJE':'em '+diffD+' dia(s)'}! Valor: ${formatCurrency(billNotify)}`,'info');});};
             if(financialGoalsHeader) financialGoalsHeader.addEventListener('click',()=>{financialGoalsContent.classList.toggle('hidden');financialGoalsArrow.classList.toggle('rotated');});
             if(addFinancialGoalForm) addFinancialGoalForm.addEventListener('submit',(e)=>{e.preventDefault();const name=document.getElementById('goal-name').value.trim();const targetAmount=parseFloat(document.getElementById('goal-target-amount').value);const deadline=document.getElementById('goal-deadline').value;if(!name||isNaN(targetAmount)||targetAmount<=0||!deadline){showFeedback("Preencha campos da meta.","error");return;}if(new Date(deadline)<=new Date()){showFeedback("Prazo da meta deve ser futuro.","error");return;}const newGoal={id:generateUniqueId(),name,targetAmount,deadline,currentAmountSaved:0,aiPlan:"",status:'active'};financialGoals.push(newGoal);saveFinancialGoals();renderFinancialGoals();addFinancialGoalForm.reset();showFeedback(`Meta "${name}" adicionada!`,"success");});
-            const renderFinancialGoals = () => { if(!financialGoalsList||!noFinancialGoalsMessage)return;financialGoalsList.innerHTML='';const activeGoals=financialGoals.filter(g=>g.status==='active');if(activeGoals.length===0){noFinancialGoalsMessage.classList.remove('hidden');return;}noFinancialGoalsMessage.classList.add('hidden');activeGoals.forEach(goal=>{const li=document.createElement('li');const deadlineDate=new Date(goal.deadline);const today=new Date();const timeDiff=deadlineDate.getTime()-today.getTime();const daysRem=Math.max(0,Math.ceil(timeDiff/(1000*60*60*24)));const monthsRem=Math.max(0,Math.ceil(daysRem/30.44));li.innerHTML=`<div class="goal-details"><h4 class="text-lg font-semibold text-green-700">${goal.name}</h4><p><strong>Meta:</strong> ${formatCurrency(goal.targetAmount)}</p><p><strong>Prazo:</strong> ${deadlineDate.toLocaleDateString('pt-BR')} (${daysRem} dias / ${monthsRem} meses restantes)</p><p><strong>Status:</strong> ${goal.status==='active'?'Ativa':'Concluída'}</p></div><div class="goal-actions mt-3"><button data-goal-id="${goal.id}" class="complete-goal-btn px-3 py-1.5 text-sm bg-green-500 text-white rounded-md hover:bg-green-600">Marcar Concluída</button><button data-goal-id="${goal.id}" class="delete-goal-btn px-3 py-1.5 text-sm bg-red-500 text-white rounded-md hover:bg-red-600">Excluir</button></div>`;financialGoalsList.appendChild(li);li.querySelector('.complete-goal-btn').addEventListener('click',(e)=>{const gId=e.currentTarget.dataset.goalId;const gIdx=financialGoals.findIndex(g=>g.id===gId);if(gIdx>-1){financialGoals[gIdx].status='completed';saveFinancialGoals();renderFinancialGoals();showFeedback(`Meta "${financialGoals[gIdx].name}" concluída!`,'success');}});li.querySelector('.delete-goal-btn').addEventListener('click',(e)=>{const gId=e.currentTarget.dataset.goalId;financialGoals=financialGoals.filter(g=>g.id!==gId);saveFinancialGoals();renderFinancialGoals();showFeedback("Meta excluída.","info");});});};
+            const renderFinancialGoals = () => { if(!financialGoalsList||!noFinancialGoalsMessage)return;financialGoalsList.innerHTML='';const activeGoals=financialGoals.filter(g=>g.status==='active');if(activeGoals.length===0){noFinancialGoalsMessage.classList.remove('hidden');return;}noFinancialGoalsMessage.classList.add('hidden');activeGoals.forEach(goal=>{const li=document.createElement('li');const deadlineDate=new Date(goal.deadline);const today=new Date();const timeDiff=deadlineDate.getTime()-today.getTime();const daysRem=Math.max(0,Math.ceil(timeDiff/(1000*60*60*24)));const monthsRem=Math.max(0,Math.ceil(daysRem/30.44));li.innerHTML=`<div class="goal-details"><h4 class="text-lg font-semibold text-green-700">${goal.name}</h4><p><strong>Meta:</strong> ${formatCurrency(goal.targetAmount)}</p><p><strong>Prazo:</strong> ${deadlineDate.toLocaleDateString('pt-BR')} (${daysRem} dias / ${monthsRem} meses restantes)</p><p><strong>Status:</strong> ${goal.status==='active'?'Ativa':'Concluída'}</p></div><div class="goal-actions mt-3"><button data-goal-id="${goal.id}" class="complete-goal-btn px-3 py-1.5 text-sm bg-green-500 text-white rounded-md hover:bg-green-600">Marcar Concluída</button><button data-goal-id="${goal.id}" class="delete-goal-btn px-3 py-1.5 text-sm bg-red-500 text-white rounded-md hover:bg-red-600">Excluir</button></div>`;financialGoalsList.appendChild(li);li.querySelector('.complete-goal-btn').addEventListener('click',(e)=>{const gId=e.currentTarget.dataset.goalId;const gIdx=financialGoals.findIndex(g=>g.id===gId);if(gIdx>-1){financialGoals[gIdx].status='completed';saveFinancialGoals();renderFinancialGoals();showFeedback(`Meta "${financialGoals[gIdx].name}" concluída!`,'success');}});li.querySelector('.delete-goal-btn').addEventListener('click',(e)=>{requestDeleteConfirmation(e.currentTarget.dataset.goalId, 'goal');});});};
             if(financialGoalsHeader) financialGoalsHeader.addEventListener('click',()=>{financialGoalsContent.classList.toggle('hidden');financialGoalsArrow.classList.toggle('rotated');});
 
             // --- Relatórios ---
@@ -1915,7 +1946,7 @@
                 accountEntriesTitle.textContent = `Extrato de Entradas - ${accountName}`;
                 accountEntriesList.innerHTML = '';
                 const entries = transactions.filter(t => t.accountId === accountId && (t.type === 'receita' || t.type === 'pix_recebido'))
-                                         .sort((a,b) => new Date(b.date) - new Date(a.date)); // Mais recentes primeiro
+                                         .sort((a,b) => new Date(b.date) - new Date(a.date)); 
 
                 if (entries.length === 0) {
                     noAccountEntriesMessage.classList.remove('hidden');
@@ -1936,6 +1967,90 @@
 
             if(closeAccountEntriesModalBtn) closeAccountEntriesModalBtn.addEventListener('click', () => accountEntriesModal.classList.add('hidden'));
             if(closeAccountEntriesModalFooterBtn) closeAccountEntriesModalFooterBtn.addEventListener('click', () => accountEntriesModal.classList.add('hidden'));
+
+            // --- Confirmação de Exclusão ---
+            function requestDeleteConfirmation(id, type, isBulk = false, ids = []) {
+                itemToDelete = { id, type, showFeedback: !isBulk, isBulk, ids };
+                let itemName = "";
+                if (isBulk) {
+                    itemName = `${ids.length} transações/grupos`;
+                } else if (type === 'account') {
+                    const acc = accounts.find(a => a.id === id);
+                    itemName = acc ? `a conta "${acc.name}"` : "este item";
+                } else if (type === 'creditCard') {
+                    const card = creditCards.find(c => c.id === id);
+                    itemName = card ? `o cartão "${card.name}"` : "este item";
+                } else if (type === 'transaction') {
+                    const tx = transactions.find(t => t.id === id);
+                    itemName = tx ? `a transação "${tx.description}"` : "este item";
+                     if (tx && tx.originalGroupId) itemName += " e todas as suas parcelas";
+                } else if (type === 'goal') {
+                    const goal = financialGoals.find(g => g.id === id);
+                    itemName = goal ? `a meta "${goal.name}"` : "este item";
+                }
+
+                confirmationModalMessage.textContent = `Tem a certeza que deseja excluir ${itemName}? Esta ação não pode ser desfeita.`;
+                confirmationModal.classList.remove('hidden');
+            }
+
+            if(closeConfirmationModalBtn) closeConfirmationModalBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));
+            if(cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));
+
+            if(confirmDeleteBtn) confirmDeleteBtn.addEventListener('click', () => {
+                if (itemToDelete.isBulk) {
+                    let deletedGroupsCount = 0;
+                    let deletedSingleCount = 0;
+                    const groupIdsProcessed = new Set();
+                    const idsToDeleteDirectly = [];
+
+                    itemToDelete.ids.forEach(itemId => {
+                        const transaction = transactions.find(t => t.id === itemId);
+                        if (transaction) {
+                             const groupId = transaction.originalGroupId;
+                             if (groupId && groupId !== "null" && groupId !== "" && !groupIdsProcessed.has(groupId)) {
+                                transactions.filter(t => t.originalGroupId === groupId).forEach(tInGroup => {
+                                    performDeleteOperation(tInGroup.id);
+                                });
+                                groupIdsProcessed.add(groupId);
+                                deletedGroupsCount++;
+                            } else if (!groupId || groupId === "null" || groupId === "") {
+                                idsToDeleteDirectly.push(transactionId); // Deve ser transactionId, não itemId
+                            }
+                        }
+                    });
+                     idsToDeleteDirectly.forEach(id => {
+                        const tx = transactions.find(t => t.id === id);
+                        if (tx && (!tx.originalGroupId || !groupIdsProcessed.has(tx.originalGroupId))) {
+                           if(performDeleteOperation(id)) deletedSingleCount++;
+                        }
+                    });
+
+
+                    let feedbackMsg = "";
+                    if (deletedGroupsCount > 0) feedbackMsg += `${deletedGroupsCount} grupo(s) de parcelas excluído(s). `;
+                    if (deletedSingleCount > 0) feedbackMsg += `${deletedSingleCount} transação(ões) única(s) excluída(s).`;
+
+                    if (deletedGroupsCount > 0 || deletedSingleCount > 0) {
+                         showFeedback(feedbackMsg.trim() || "Transações selecionadas excluídas.", "success");
+                    } else {
+                        showFeedback("Nenhuma transação foi efetivamente excluída.", "info");
+                    }
+                } else {
+                    performDelete(itemToDelete.id, itemToDelete.type, itemToDelete.showFeedback);
+                }
+                
+                saveTransactions(); saveAccounts(); saveCreditCards(); saveFinancialGoals();
+                renderTransactions(searchTransactionsInput.value);
+                renderAccounts();
+                renderCreditCards();
+                renderFinancialGoals();
+                updateSummary();
+                renderMonthlySummary();
+                renderDetailedCardBills();
+                checkCreditCardDueDates();
+                confirmationModal.classList.add('hidden');
+                updateSelectedTransactionsActions(); // Atualiza botões de ação em lote
+            });
 
 
             // Carregamento inicial
