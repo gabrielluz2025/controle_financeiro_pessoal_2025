@@ -872,11 +872,11 @@
             const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
             const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
             const closeConfirmationModalBtn = document.getElementById('close-confirmation-modal');
-            const suggestedGoalsHeader = document.getElementById('suggested-goals-header'); // Novo
-            const suggestedGoalsContent = document.getElementById('suggested-goals-content'); // Novo
-            const suggestedGoalsArrow = document.getElementById('suggested-goals-arrow'); // Novo
-            const suggestedGoalsList = document.getElementById('suggested-goals-list'); // Novo
-            const noSuggestedGoalsMessage = document.getElementById('no-suggested-goals-message'); // Novo
+            const suggestedGoalsHeader = document.getElementById('suggested-goals-header'); 
+            const suggestedGoalsContent = document.getElementById('suggested-goals-content'); 
+            const suggestedGoalsArrow = document.getElementById('suggested-goals-arrow'); 
+            const suggestedGoalsList = document.getElementById('suggested-goals-list'); 
+            const noSuggestedGoalsMessage = document.getElementById('no-suggested-goals-message'); 
 
 
             // --- Funções Utilitárias ---
@@ -1437,8 +1437,10 @@
                         if (newTx.accountId) { 
                             let target = newTx.isCreditCard ? tempCreditCards.find(c => c.id === newTx.accountId) : tempAccounts.find(a => a.id === newTx.accountId);
                             if (target) {
-                                if (newTx.isCreditCard) { if (newTx.fundamentalType === 'despesa') target.availableLimit -= newTx.value; else target.availableLimit += newTx.value; } 
-                                else if (newTx.isPaid || newTx.fundamentalType === 'receita') { 
+                                if (newTx.isCreditCard) { 
+                                    if (newTx.fundamentalType === 'despesa') target.availableLimit -= newTx.value; 
+                                    // else target.availableLimit += newTx.value; // Crédito em cartão não afeta limite desta forma
+                                } else if (newTx.isPaid || newTx.fundamentalType === 'receita') { 
                                     if (newTx.fundamentalType === 'despesa') { 
                                         if (target.type === 'corrente' && target.limitOverdraft > 0 && (target.balance - newTx.value < -target.limitOverdraft)) { 
                                             showFeedback(`Transação ${formatCurrency(newTx.value)} para ${target.name} excede limite de cheque especial.`, 'error'); 
@@ -1459,7 +1461,7 @@
                     renderTransactions(); updateSummary(); renderCreditCards(); checkCreditCardDueDates(); 
                     transactionForm.reset(); installmentsInput.value = 1; installmentsPaidInput.value = 0; accountSelect.value = ""; newCategoryInput.classList.add('hidden'); populateCategorySelect(); 
                     showFeedback('Transação(ões) adicionada(s)!', 'success');
-                    suggestFinancialGoals(); // Atualiza sugestões
+                    suggestFinancialGoals(); 
                 });
             }
 
@@ -1626,7 +1628,7 @@
                         showFeedback("Nenhuma categoria de transação foi alterada.", "info");
                     }
                     updateSelectedTransactionsActions(); 
-                    suggestFinancialGoals(); // Atualiza sugestões
+                    suggestFinancialGoals(); 
                 });
             }
 
@@ -1733,7 +1735,7 @@
                     renderTransactions(searchTransactionsInput.value);
                     renderAccounts(); renderCreditCards();
                     updateSummary(); renderMonthlySummary(); checkCreditCardDueDates();
-                    suggestFinancialGoals(); // Atualiza sugestões
+                    suggestFinancialGoals(); 
                     if (type === 'accountEntry' && accountIdForReversal) {
                         const accountForModal = accounts.find(a => a.id === accountIdForReversal);
                         if (accountForModal) openAccountEntriesModal(accountIdForReversal, accountForModal.name);
@@ -1741,8 +1743,55 @@
                 }
                 return itemDeleted;
             };
-            const markTransactionAsPaid = (id, showIndividualFeedback = true) => { const tx = transactions.find(t=>t.id===id); if(tx&&!tx.isPaid){const prevPaid=tx.isPaid;tx.isPaid=true;if(!prevPaid&&tx.accountId){if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){card.availableLimit+=tx.value; 
-            saveCreditCards();}}else{const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa'){if(acc.type==='corrente'&&acc.limitOverdraft>0&&(acc.balance-tx.value<-acc.limitOverdraft)){showFeedback(`Pagamento ${formatCurrency(tx.value)} p/ ${acc.name} excede limite.`,'error');tx.isPaid=false;return false;}else acc.balance-=tx.value;}else acc.balance+=tx.value;saveAccounts();}}}saveTransactions();if(showIndividualFeedback)showFeedback('Transação paga!','success');renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates(); suggestFinancialGoals(); return true;}else if(tx&&tx.isPaid){if(showIndividualFeedback)showFeedback('Transação já está paga.','info');return false;}return false;};
+            const markTransactionAsPaid = (id, showIndividualFeedback = true) => {
+                const tx = transactions.find(t => t.id === id);
+                if (tx && !tx.isPaid) {
+                    const wasPaid = tx.isPaid;
+                    tx.isPaid = true;
+                    if (!wasPaid && tx.accountId) {
+                        if (tx.isCreditCard) {
+                            const card = creditCards.find(c => c.id === tx.accountId);
+                            if (card) {
+                                // Ao pagar uma despesa de cartão, o limite disponível AUMENTA
+                                if (tx.fundamentalType === 'despesa') {
+                                     card.availableLimit += tx.value;
+                                     // A fatura em si (currentBillAmount) será recalculada em renderCreditCards
+                                }
+                                saveCreditCards();
+                            }
+                        } else {
+                            const acc = accounts.find(a => a.id === tx.accountId);
+                            if (acc) {
+                                if (tx.fundamentalType === 'despesa') {
+                                    if (acc.type === 'corrente' && acc.limitOverdraft > 0 && (acc.balance - tx.value < -acc.limitOverdraft)) {
+                                        showFeedback(`Pagamento ${formatCurrency(tx.value)} para ${acc.name} excede limite de cheque especial.`, 'error');
+                                        tx.isPaid = false; // Reverte o status
+                                        return false;
+                                    }
+                                    acc.balance -= tx.value;
+                                } else { // Receita
+                                    acc.balance += tx.value;
+                                }
+                                saveAccounts();
+                            }
+                        }
+                    }
+                    saveTransactions();
+                    if (showIndividualFeedback) showFeedback('Transação paga!', 'success');
+                    renderTransactions(searchTransactionsInput.value);
+                    updateSummary();
+                    renderMonthlySummary();
+                    renderCreditCards(); // Crucial para atualizar a fatura e limite disponível do cartão
+                    checkCreditCardDueDates();
+                    suggestFinancialGoals();
+                    return true;
+                } else if (tx && tx.isPaid) {
+                    if (showIndividualFeedback) showFeedback('Transação já está paga.', 'info');
+                    return false;
+                }
+                return false;
+            };
+
             const openEditModal = (id) => { const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');return;}editTransactionIdInput.value=tx.id;editDateInput.value=tx.date;editDescriptionInput.value=tx.description;editValueInput.value=tx.value.toFixed(2);populateCategorySelect(editCategorySelect);editCategorySelect.value=tx.category;editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';const[paid,total]=tx.installments.split('/').map(Number);editInstallmentsTotalInput.value=total;editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsPaidInput.value=paid;editInstallmentsPaidInput.max=total;editDateInput.readOnly=false;editDescriptionInput.readOnly=false;editDescriptionInput.classList.remove('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=false;editValueInput.classList.remove('bg-gray-100','cursor-not-allowed');editTransactionModal.classList.remove('hidden');};
             if(editCategorySelect) editCategorySelect.addEventListener('change', () => { if(editCategorySelect.value==='nova-categoria'){editNewCategoryInput.classList.remove('hidden');editNewCategoryInput.focus();}else{editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';}});
             const closeEditModal = () => {editTransactionModal.classList.add('hidden');editDescriptionInput.readOnly=true;editDescriptionInput.classList.add('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=true;editValueInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editDateInput.readOnly=true;editNewCategoryInput.classList.add('hidden');};
@@ -1785,16 +1834,12 @@
                 }
 
                 let totalGastoCartoesMesAtual = 0;
-                creditCards.forEach(card => {
-                    const currentMonthBillForThisCard = transactions.reduce((sum, t) => {
-                        const tDate = new Date(t.date + "T00:00:00");
-                        if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
-                            tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
-                            return sum + t.value;
-                        }
-                        return sum;
-                    }, 0);
-                    totalGastoCartoesMesAtual += currentMonthBillForThisCard;
+                transactions.forEach(t => {
+                    const tDate = new Date(t.date + "T00:00:00");
+                    if (t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
+                        tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
+                        totalGastoCartoesMesAtual += t.value;
+                    }
                 });
                 if (totalGastoCartoesMesEl) totalGastoCartoesMesEl.textContent = formatCurrency(totalGastoCartoesMesAtual);
 
@@ -2049,7 +2094,7 @@
                 let fbMsg = `Importação: ${importedCount} transação(ões) originais processada(s).`;
                 if (skippedCount > 0 && importErrors.length === 0) fbMsg += ` ${skippedCount} ignorada(s).`; else if (skippedCount > 0 && importErrors.length > 0 && importedCount > 0) fbMsg += ` ${skippedCount} adicional(is) ignorada(s).`;
                 showFeedback(fbMsg,importedCount > 0 ? 'success' : (importErrors.length > 0 ? 'error' : 'info') );
-                suggestFinancialGoals(); // Atualiza sugestões
+                suggestFinancialGoals(); 
             });
             if(cancelReviewBtn) cancelReviewBtn.addEventListener('click', () => { importedTransactionsToReview = []; importedTransactionsTableBody.innerHTML = ''; importReviewSection.classList.add('hidden'); fileInput.value = ''; showFeedback('Importação cancelada.', 'info'); fileInput.disabled = false; importFileBtn.disabled = false; });
             
@@ -2105,9 +2150,11 @@
                         return sum;
                     }, 0);
                 });
-                // Considerar "alto" se for mais que 30% das despesas do último mês (se houver despesas)
-                if (lastMonthExpenses > 0 && totalCurrentCardBills > (lastMonthExpenses * 0.5)) {
+                
+                if (lastMonthExpenses > 0 && totalCurrentCardBills > (lastMonthExpenses * 0.5)) { // Se faturas > 50% das despesas
                      suggestions.push(`<strong>Gastos com Cartão:</strong> Suas faturas atuais de cartão somam ${formatCurrency(totalCurrentCardBills)}. Considere analisar e reduzir esses gastos.`);
+                } else if (totalCurrentCardBills > 0 && lastMonthExpenses === 0) { // Se há fatura mas não há despesas registradas para comparação
+                     suggestions.push(`<strong>Gastos com Cartão:</strong> Suas faturas atuais de cartão somam ${formatCurrency(totalCurrentCardBills)}. Monitore esses gastos.`);
                 }
 
 
@@ -2124,7 +2171,7 @@
                 if (Object.keys(spendingByCategoryLastMonth).length > 0) {
                     const topSpendingCategory = Object.entries(spendingByCategoryLastMonth)
                         .sort(([,a],[,b]) => b-a)[0];
-                    if (topSpendingCategory && topSpendingCategory[1] > (lastMonthExpenses * 0.2)) { // Se a top categoria for > 20% das despesas
+                    if (topSpendingCategory && topSpendingCategory[1] > (lastMonthExpenses * 0.2)) { 
                         suggestions.push(`<strong>Otimizar Gastos:</strong> No último mês, sua maior despesa foi com "${topSpendingCategory[0]}" (${formatCurrency(topSpendingCategory[1])}). Avalie se é possível reduzir essa despesa.`);
                     }
                 }
@@ -2135,7 +2182,7 @@
                     return installmentsParts.length === 2 && parseInt(installmentsParts[0]) < parseInt(installmentsParts[1]) && !t.isPaid;
                 }).length;
 
-                if (activeInstallments > 3) { // Exemplo: mais de 3 parcelamentos ativos
+                if (activeInstallments > 3) { 
                     suggestions.push(`<strong>Parcelamentos:</strong> Você possui ${activeInstallments} compras parceladas em aberto. Considere focar em quitar algumas para liberar seu orçamento futuro.`);
                 }
 
@@ -2144,7 +2191,7 @@
                     noSuggestedGoalsMessage.classList.add('hidden');
                     suggestions.forEach(suggestionText => {
                         const li = document.createElement('li');
-                        li.innerHTML = suggestionText; // Usar innerHTML para renderizar o <strong>
+                        li.innerHTML = suggestionText; 
                         suggestedGoalsList.appendChild(li);
                     });
                 } else {
