@@ -300,7 +300,7 @@
     <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8">
         <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-8">Controle Financeiro Pessoal Completo</h1>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="bg-blue-100 p-4 rounded-lg shadow-md">
                 <h2 class="text-lg font-semibold text-blue-800">Poder de Compra Total</h2>
                 <p id="total-receitas" class="text-2xl font-bold text-blue-700">R$ 0,00</p>
@@ -312,6 +312,9 @@
             <div class="bg-green-100 p-4 rounded-lg shadow-md">
                 <h2 class="text-lg font-semibold text-green-800">Saldo Consolidado</h2>
                 <p id="saldo-atual" class="text-2xl font-bold text-green-700">R$ 0,00</p>
+            </div>
+            <div class="bg-orange-100 p-4 rounded-lg shadow-md"> <h2 class="text-lg font-semibold text-orange-800">Gasto Cartões (Mês)</h2>
+                <p id="total-gasto-cartoes-mes" class="text-2xl font-bold text-orange-700">R$ 0,00</p>
             </div>
         </div>
         
@@ -825,6 +828,7 @@
             const totalReceitasEl = document.getElementById('total-receitas');
             const totalDespesasEl = document.getElementById('total-despesas');
             const saldoAtualEl = document.getElementById('saldo-atual');
+            const totalGastoCartoesMesEl = document.getElementById('total-gasto-cartoes-mes'); // Novo elemento
             const noTransactionsMessage = document.getElementById('no-transactions-message');
             const feedbackMessageEl = document.getElementById('feedback-message');
             const addAccountForm = document.getElementById('add-account-form');
@@ -1827,6 +1831,21 @@
                     saldoAtualEl.textContent = formatCurrency(saldoConsolidado);
                     saldoAtualEl.className = `text-2xl font-bold ${saldoConsolidado >= 0 ? 'text-green-700' : 'text-red-700'}`;
                 }
+
+                let totalGastoCartoesMesAtual = 0;
+                creditCards.forEach(card => {
+                    const currentMonthBillForThisCard = transactions.reduce((sum, t) => {
+                        const tDate = new Date(t.date + "T00:00:00");
+                        if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
+                            tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
+                            return sum + t.value;
+                        }
+                        return sum;
+                    }, 0);
+                    totalGastoCartoesMesAtual += currentMonthBillForThisCard;
+                });
+                if (totalGastoCartoesMesEl) totalGastoCartoesMesEl.textContent = formatCurrency(totalGastoCartoesMesAtual);
+
             };
             const updateMonthlyDisplay = () => { if(currentMonthDisplay) currentMonthDisplay.textContent = new Date(currentYear,currentMonth).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});};
             const renderMonthlySummary = () => { let monthExp=0;const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);transactions.forEach(t=>{const tD=new Date(t.date + "T00:00:00");if(t.fundamentalType==='despesa'&&((tD.getMonth()===currentMonth&&tD.getFullYear()===currentYear)||(tD<bom&&!t.isPaid)))monthExp+=t.value;});if(totalDespesasEl)totalDespesasEl.textContent=formatCurrency(monthExp);}; 
@@ -2091,6 +2110,7 @@
                 generateGoalIdeasBtn.addEventListener('click', async () => {
                     if (goalIdeasSpinner) goalIdeasSpinner.classList.remove('hidden');
                     if (goalIdeasOutput) goalIdeasOutput.innerHTML = '<p class="text-center text-gray-500">A gerar ideias...</p>';
+                    console.log("Botão 'Gerar Ideias de Metas' clicado.");
 
                     const today = new Date();
                     const lastMonthDate = new Date(today.getFullYear(), today.getMonth() -1, 1);
@@ -2116,11 +2136,8 @@
                     const accountBalancesSummary = accounts.map(acc => `${acc.name} (${acc.type}): ${formatCurrency(acc.balance)}`).join(', ');
                     const totalAccountBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
                     
-                    // const currentMonthCardBills = parseFloat(document.getElementById('total-card-bills') ? document.getElementById('total-card-bills').textContent.replace(/[R$.\s]/g, '').replace(',', '.') : '0') || 0;
-                    // A linha acima foi comentada pois o elemento 'total-card-bills' foi removido.
-                    // Para obter o total de faturas, seria necessário recalcular aqui ou usar um valor já calculado se disponível.
-                    // Por simplicidade, vou passar 0 por enquanto, mas o ideal seria ter esse valor.
-                    const currentMonthCardBills = 0; 
+                    const totalGastoCartoesMesEl = document.getElementById('total-gasto-cartoes-mes');
+                    const currentMonthCardBills = totalGastoCartoesMesEl ? (parseFloat(totalGastoCartoesMesEl.textContent.replace(/[R$.\s]/g, '').replace(',', '.')) || 0) : 0;
 
 
                     const spendingByCategoryLastMonth = transactions.filter(t => {
@@ -2159,6 +2176,8 @@
                         Seja conciso e prático nas sugestões.
                     `;
                     
+                    console.log("Prompt para API:", prompt);
+
                     let chatHistory = [];
                     chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                     const payload = { contents: chatHistory };
@@ -2172,8 +2191,8 @@
                             body: JSON.stringify(payload)
                         });
                         
-                        console.log("API Response Status:", response.status); // Log status
-                        console.log("API Response Status Text:", response.statusText); // Log status text
+                        console.log("API Response Status:", response.status); 
+                        console.log("API Response Status Text:", response.statusText); 
 
                         if (!response.ok) { 
                             const errorBody = await response.text();
@@ -2186,15 +2205,16 @@
 
                         if (result.candidates && result.candidates.length > 0 &&
                             result.candidates[0].content && result.candidates[0].content.parts &&
-                            result.candidates[0].content.parts.length > 0) {
+                            result.candidates[0].content.parts.length > 0 &&
+                            result.candidates[0].content.parts[0].text) { // Adicionada verificação para text
                             let text = result.candidates[0].content.parts[0].text;
                             text = text.replace(/- \*\*(.*?):\*\*/g, '<p class="mt-2"><strong>$1:</strong>');
                             text = text.replace(/\n- /g, '</p><p class="mt-2">- ');
                             text = text.replace(/\n/g, '<br>'); 
                             if (goalIdeasOutput) goalIdeasOutput.innerHTML = text;
                         } else {
-                            if (goalIdeasOutput) goalIdeasOutput.innerHTML = '<p class="text-red-500">Não foi possível gerar ideias de metas neste momento (estrutura de resposta inesperada). Tente novamente mais tarde.</p>';
-                            console.error("Resposta da API inesperada ou sem conteúdo:", result); 
+                            if (goalIdeasOutput) goalIdeasOutput.innerHTML = '<p class="text-red-500">Não foi possível gerar ideias de metas neste momento (estrutura de resposta inesperada ou texto ausente). Tente novamente mais tarde.</p>';
+                            console.error("Resposta da API inesperada, sem conteúdo ou sem texto:", result); 
                         }
                     } catch (error) {
                         console.error("Erro ao gerar ideias de metas (catch block):", error);
