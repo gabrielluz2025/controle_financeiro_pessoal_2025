@@ -527,12 +527,52 @@
                 </div>
             </div>
             </div>
-        <div id="feedback-message"></div> <div id="import-review-section" class="mb-8 border-b pb-6 border-gray-200 hidden">
+        <div id="feedback-message"></div> 
+        <div id="import-review-section" class="mb-8 border-b pb-6 border-gray-200 hidden">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Revisar Transações Importadas</h2>
             <p class="text-sm text-gray-600 mb-4">
                 Selecione as transações que deseja importar. Vincule-as a uma conta ou cartão e ajuste os dados conforme necessário.
                  <span class="font-bold text-orange-600">Para Word/Imagem, revise a descrição e complete os demais campos, especialmente data, valor e parcelas.</span>
             </p>
+            <div id="bulk-edit-imported-controls" class="hidden mt-4 mb-4 p-4 bg-gray-100 rounded-md shadow">
+                <h4 class="text-md font-semibold text-gray-700 mb-3">Editar Selecionadas:</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label for="bulk-edit-type" class="block text-xs font-medium text-gray-700">Tipo:</label>
+                        <select id="bulk-edit-type" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2">
+                            <option value="">Manter original</option>
+                            <option value="receita">Receita</option>
+                            <option value="despesa">Despesa</option>
+                            <option value="saque">Saque</option>
+                            <option value="pix_enviado">PIX Enviado</option>
+                            <option value="pix_recebido">PIX Recebido</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="bulk-edit-category" class="block text-xs font-medium text-gray-700">Categoria:</label>
+                        <select id="bulk-edit-category" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2">
+                            {/* Options preenchidas por JS */}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="bulk-edit-account" class="block text-xs font-medium text-gray-700">Vincular a:</label>
+                        <select id="bulk-edit-account" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2">
+                            {/* Options preenchidas por JS */}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="bulk-edit-status" class="block text-xs font-medium text-gray-700">Status Pagamento:</label>
+                        <select id="bulk-edit-status" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2">
+                            <option value="">Manter original</option>
+                            <option value="true">Pago</option>
+                            <option value="false">Não Pago</option>
+                        </select>
+                    </div>
+                    <div class="lg:col-span-4 flex justify-end mt-2">
+                        <button id="apply-bulk-edit-imported-btn" class="px-4 py-2 bg-orange-500 text-white font-semibold rounded-md shadow-md hover:bg-orange-600 text-xs">Aplicar às Selecionadas</button>
+                    </div>
+                </div>
+            </div>
             <div class="overflow-x-auto rounded-lg shadow-md mb-4">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-yellow-50">
@@ -823,6 +863,12 @@
             const reportYearSelect2 = document.getElementById('report-year-comp');   
             const generateReportBtn = document.getElementById('generate-report-btn');
             const reportOutputArea = document.getElementById('report-output-area');
+            const bulkEditImportedControls = document.getElementById('bulk-edit-imported-controls');
+            const bulkEditTypeSelect = document.getElementById('bulk-edit-type');
+            const bulkEditCategorySelect = document.getElementById('bulk-edit-category');
+            const bulkEditAccountSelect = document.getElementById('bulk-edit-account');
+            const bulkEditStatusSelect = document.getElementById('bulk-edit-status');
+            const applyBulkEditImportedBtn = document.getElementById('apply-bulk-edit-imported-btn');
 
 
             // --- Funções Utilitárias ---
@@ -1012,7 +1058,6 @@
                         initialBalanceInput.placeholder = '0.00 (Pode ser negativo se usando cheque especial)';
                     }
                 });
-                 // Mostrar campo de cheque especial se 'corrente' for o tipo padrão ao carregar
                 if (overdraftLimitDiv && accountTypeSelect.value === 'corrente') {
                     overdraftLimitDiv.classList.remove('hidden');
                 }
@@ -1058,7 +1103,17 @@
                     const name = document.getElementById('card-name').value.trim(); 
                     const limit = parseFloat(document.getElementById('card-limit').value) || 0; 
                     const dueDay = parseInt(cardDueDayInput.value); 
-                    const closingDay = dueDay > 10 ? dueDay - 10 : (dueDay === 1 ? 21 : 1); // Ajuste para fechamento
+                    
+                    let closingDay = dueDay - 10;
+                    if (closingDay <= 0) { 
+                        const tempDate = new Date();
+                        tempDate.setDate(dueDay); 
+                        tempDate.setMonth(tempDate.getMonth() -1); 
+                        tempDate.setDate(tempDate.getDate() -10 + (dueDay <=10 ? 0 : 1)); 
+                        closingDay = tempDate.getDate();
+                    }
+
+
                     if (name && limit > 0 && dueDay >= 1 && dueDay <= 31) { 
                         const newCard = { id:generateUniqueId(), name, limit, availableLimit:limit, currentBillAmount:0, dueDay, closingDay }; 
                         creditCards.push(newCard); 
@@ -1359,7 +1414,8 @@
             function performDeleteOperation(transactionId) { const txIdx=transactions.findIndex(t=>t.id===transactionId);if(txIdx>-1){const delTx=transactions[txIdx];if(delTx.accountId){if(delTx.isCreditCard){const card=creditCards.find(c=>c.id===delTx.accountId);if(card){if(delTx.fundamentalType==='despesa')card.availableLimit+=delTx.value;else card.availableLimit-=delTx.value;}}else{const acc=accounts.find(a=>a.id===delTx.accountId);if(acc&&delTx.isPaid){if(delTx.fundamentalType==='despesa')acc.balance+=delTx.value;else acc.balance-=delTx.value;}}}transactions.splice(txIdx,1);return true;}return false;}
             function populateLinkSelectedAccountSelect() { if(!linkSelectedAccountSelect) return; linkSelectedAccountSelect.innerHTML='<option value="">Vincular a...</option>';accounts.forEach(acc=>{const opt=document.createElement('option');opt.value=acc.id;let typeTxt="";if(acc.type==='corrente')typeTxt="C/C";else if(acc.type==='poupanca')typeTxt="Poupança";else typeTxt="Dinheiro";opt.textContent=`${acc.name} (${typeTxt})`;linkSelectedAccountSelect.appendChild(opt);});creditCards.forEach(card=>{const opt=document.createElement('option');opt.value=card.id;opt.textContent=`${card.name} (Cartão)`;linkSelectedAccountSelect.appendChild(opt);});}
             const performDelete = (id, type, showIndividualFeedback = true) => { let itemDeleted=false;if(type==='account'){if(transactions.some(t=>t.accountId===id)){if(showIndividualFeedback)showFeedback('Exclua transações da conta primeiro.','error');return false;}accounts=accounts.filter(acc=>acc.id!==id);saveAccounts();renderAccounts();populateAccountSelects();updateSummary();populateLinkSelectedAccountSelect();if(showIndividualFeedback)showFeedback('Conta excluída.','success');itemDeleted=true;}else if(type==='creditCard'){if(transactions.some(t=>t.accountId===id)){if(showIndividualFeedback)showFeedback('Exclua transações do cartão primeiro.','error');return false;}creditCards=creditCards.filter(card=>card.id!==id);saveCreditCards();renderCreditCards();populateAccountSelects();updateSummary();populateLinkSelectedAccountSelect();if(showIndividualFeedback)showFeedback('Cartão excluído.','success');itemDeleted=true;}else if(type==='transaction'){const initTx=transactions.find(t=>t.id===id);if(!initTx)return false;const grpId=initTx.originalGroupId;let txsToDel=[];if(grpId&&grpId!=="null"&&grpId!==""){txsToDel=transactions.filter(t=>t.originalGroupId===grpId);}else{txsToDel.push(initTx);}if(txsToDel.length===0&&initTx)txsToDel.push(initTx);if(txsToDel.length>0){txsToDel.forEach(delTx=>{if(delTx.accountId){if(delTx.isCreditCard){const card=creditCards.find(c=>c.id===delTx.accountId);if(card){if(delTx.fundamentalType==='despesa')card.availableLimit+=delTx.value;else card.availableLimit-=delTx.value;}}else{const acc=accounts.find(a=>a.id===delTx.accountId);if(acc&&delTx.isPaid){if(delTx.fundamentalType==='despesa')acc.balance+=delTx.value;else acc.balance-=delTx.value;}}}});transactions=transactions.filter(t=>!txsToDel.some(del=>del.id===t.id));itemDeleted=true;}if(itemDeleted&&showIndividualFeedback){if(grpId&&grpId!=="null"&&grpId!==""){showFeedback(`Grupo de parcelas (${txsToDel.length}) excluído.`,'success');}else{showFeedback('Transação excluída.','success');}saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();}}return itemDeleted;};
-            const markTransactionAsPaid = (id, showIndividualFeedback = true) => { const tx = transactions.find(t=>t.id===id); if(tx&&!tx.isPaid){const prevPaid=tx.isPaid;tx.isPaid=true;if(!prevPaid&&tx.accountId&&!tx.isCreditCard){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa'){if(acc.type==='corrente' && acc.limitOverdraft > 0 &&(acc.balance-tx.value<-acc.limitOverdraft)){showFeedback(`Pagamento ${formatCurrency(tx.value)} p/ ${acc.name} excede limite.`,'error');tx.isPaid = false; return false;}else acc.balance-=tx.value;}else acc.balance+=tx.value;saveAccounts();}}saveTransactions();if(showIndividualFeedback) showFeedback('Transação paga!','success');renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates(); return true;}else if(tx&&tx.isPaid){if(showIndividualFeedback)showFeedback('Transação já está paga.','info'); return false;} return false;};
+            const markTransactionAsPaid = (id, showIndividualFeedback = true) => { const tx = transactions.find(t=>t.id===id); if(tx&&!tx.isPaid){const prevPaid=tx.isPaid;tx.isPaid=true;if(!prevPaid&&tx.accountId){if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){card.availableLimit+=tx.value; // Devolve ao limite ao pagar fatura (ou parte dela)
+            saveCreditCards();}}else{const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa'){if(acc.type==='corrente'&&acc.limitOverdraft>0&&(acc.balance-tx.value<-acc.limitOverdraft)){showFeedback(`Pagamento ${formatCurrency(tx.value)} p/ ${acc.name} excede limite.`,'error');tx.isPaid=false;return false;}else acc.balance-=tx.value;}else acc.balance+=tx.value;saveAccounts();}}}saveTransactions();if(showIndividualFeedback)showFeedback('Transação paga!','success');renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();return true;}else if(tx&&tx.isPaid){if(showIndividualFeedback)showFeedback('Transação já está paga.','info');return false;}return false;};
             const openEditModal = (id) => { const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');return;}editTransactionIdInput.value=tx.id;editDateInput.value=tx.date;editDescriptionInput.value=tx.description;editValueInput.value=tx.value.toFixed(2);populateCategorySelect(editCategorySelect);editCategorySelect.value=tx.category;editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';const[paid,total]=tx.installments.split('/').map(Number);editInstallmentsTotalInput.value=total;editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsPaidInput.value=paid;editInstallmentsPaidInput.max=total;editDateInput.readOnly=false;editDescriptionInput.readOnly=false;editDescriptionInput.classList.remove('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=false;editValueInput.classList.remove('bg-gray-100','cursor-not-allowed');editTransactionModal.classList.remove('hidden');};
             if(editCategorySelect) editCategorySelect.addEventListener('change', () => { if(editCategorySelect.value==='nova-categoria'){editNewCategoryInput.classList.remove('hidden');editNewCategoryInput.focus();}else{editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';}});
             const closeEditModal = () => {editTransactionModal.classList.add('hidden');editDescriptionInput.readOnly=true;editDescriptionInput.classList.add('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=true;editValueInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editDateInput.readOnly=true;editNewCategoryInput.classList.add('hidden');};
@@ -1436,6 +1492,7 @@
                 if (!importedTransactionsToReview || importedTransactionsToReview.length === 0) { 
                     importReviewSection.classList.add('hidden'); 
                     if(selectAllImportedCheckbox) selectAllImportedCheckbox.checked = false; 
+                    updateBulkEditControlsVisibility(); 
                     return; 
                 }
                 importedTransactionsToReview.forEach((tx, idx) => { 
@@ -1469,19 +1526,121 @@
                     const instTotEl=tr.querySelector('.installments-total-review');const instPaidEl=tr.querySelector('.installments-paid-review');
                     instTotEl.addEventListener('change',(e)=>{let t=parseInt(e.target.value)||1;if(t<1)t=1;e.target.value=t;importedTransactionsToReview[idx].installmentsTotal=t;if(parseInt(instPaidEl.value)>t){instPaidEl.value=t;importedTransactionsToReview[idx].installmentsPaid=t;}});
                     instPaidEl.addEventListener('change',(e)=>{const t=parseInt(instTotEl.value)||1;let p=parseInt(e.target.value)||0;if(p<0)p=0;if(p>t)p=t;e.target.value=p;importedTransactionsToReview[idx].installmentsPaid=p;});
-                    tr.querySelector('.imported-transaction-checkbox').addEventListener('change', () => {
-                        const allCheckboxes = document.querySelectorAll('.imported-transaction-checkbox');
-                        const checkedCheckboxes = document.querySelectorAll('.imported-transaction-checkbox:checked');
-                        if(selectAllImportedCheckbox) selectAllImportedCheckbox.checked = allCheckboxes.length > 0 && allCheckboxes.length === checkedCheckboxes.length;
-                    });
+                    tr.querySelector('.imported-transaction-checkbox').addEventListener('change', updateBulkEditControlsVisibility);
                 });
                 if(selectAllImportedCheckbox) selectAllImportedCheckbox.checked = true; 
+                updateBulkEditControlsVisibility();
+                populateBulkEditSelects();
             };
             if (selectAllImportedCheckbox) {
                 selectAllImportedCheckbox.addEventListener('change', (e) => {
                     document.querySelectorAll('.imported-transaction-checkbox').forEach(checkbox => {
                         checkbox.checked = e.target.checked;
                     });
+                    updateBulkEditControlsVisibility();
+                });
+            }
+            if(importedTransactionsTableBody) { 
+                importedTransactionsTableBody.addEventListener('change', (e) => {
+                    if (e.target.classList.contains('imported-transaction-checkbox')) {
+                        updateBulkEditControlsVisibility();
+                    }
+                });
+            }
+
+            function updateBulkEditControlsVisibility() {
+                if (!bulkEditImportedControls) return;
+                const anySelected = document.querySelectorAll('.imported-transaction-checkbox:checked').length > 0;
+                bulkEditImportedControls.classList.toggle('hidden', !anySelected);
+            }
+
+            function populateBulkEditSelects() {
+                if (bulkEditCategorySelect) {
+                    bulkEditCategorySelect.innerHTML = '<option value="">Manter original</option>';
+                    categories.sort((a,b) => a.localeCompare(b)).forEach(cat => {
+                        const option = document.createElement('option');
+                        option.value = cat;
+                        option.textContent = cat;
+                        bulkEditCategorySelect.appendChild(option);
+                    });
+                    const newCatOpt = document.createElement('option');
+                    newCatOpt.value = 'nova-categoria-bulk';
+                    newCatOpt.textContent = 'Adicionar Nova Categoria...';
+                    bulkEditCategorySelect.appendChild(newCatOpt);
+                }
+                if (bulkEditAccountSelect) {
+                    bulkEditAccountSelect.innerHTML = '<option value="">Manter original</option><option value="DESVINCULAR">Desvincular</option>';
+                    accounts.forEach(acc => {
+                        const opt = document.createElement('option');
+                        opt.value = acc.id;
+                        let typeText = "";
+                        if(acc.type === 'corrente') typeText = "C/C";
+                        else if (acc.type === 'poupanca') typeText = "Poupança";
+                        else typeText = "Dinheiro";
+                        opt.textContent = `${acc.name} (${typeText})`;
+                        bulkEditAccountSelect.appendChild(opt);
+                    });
+                    creditCards.forEach(card => {
+                        const opt = document.createElement('option');
+                        opt.value = card.id;
+                        opt.textContent = `${card.name} (Cartão)`;
+                        bulkEditAccountSelect.appendChild(opt);
+                    });
+                }
+            }
+            
+            if(applyBulkEditImportedBtn) {
+                applyBulkEditImportedBtn.addEventListener('click', () => {
+                    const selectedIndexes = Array.from(document.querySelectorAll('.imported-transaction-checkbox:checked'))
+                                              .map(cb => parseInt(cb.dataset.index));
+                    if (selectedIndexes.length === 0) {
+                        showFeedback("Nenhuma transação selecionada na tabela de revisão.", "info");
+                        return;
+                    }
+
+                    const newType = bulkEditTypeSelect.value;
+                    let newCategory = bulkEditCategorySelect.value;
+                    const newAccountId = bulkEditAccountSelect.value;
+                    const newStatus = bulkEditStatusSelect.value;
+
+                    if (newCategory === 'nova-categoria-bulk') {
+                        const typedNewCategory = prompt("Digite o nome da nova categoria:");
+                        if (typedNewCategory && typedNewCategory.trim()) {
+                            newCategory = typedNewCategory.trim();
+                            if (!categories.includes(newCategory)) {
+                                categories.push(newCategory);
+                                saveCategories();
+                                populateCategorySelect(); 
+                                populateCategorySelect(editCategorySelect); 
+                                populateBulkEditSelects(); 
+                            }
+                            bulkEditCategorySelect.value = newCategory; 
+                        } else {
+                            showFeedback("Nome da nova categoria inválido. Alteração de categoria não aplicada.", "info");
+                            newCategory = ""; 
+                        }
+                    }
+
+
+                    selectedIndexes.forEach(index => {
+                        const tx = importedTransactionsToReview[index];
+                        if (newType) {
+                            tx.type = newType;
+                            tx.fundamentalType = (newType === 'receita' || newType === 'pix_recebido') ? 'receita' : 'despesa';
+                        }
+                        if (newCategory) tx.category = newCategory;
+                        if (newAccountId === "DESVINCULAR") {
+                            tx.accountId = null;
+                            tx.isCreditCard = false;
+                        } else if (newAccountId) {
+                            tx.accountId = newAccountId;
+                            tx.isCreditCard = creditCards.some(c => c.id === newAccountId);
+                        }
+                        if (newStatus !== "") tx.isPaid = newStatus === 'true';
+                    });
+
+                    renderImportedTransactionsForReview(); 
+                    showFeedback("Alterações em lote aplicadas às transações selecionadas para revisão.", "success");
                 });
             }
             
