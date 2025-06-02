@@ -237,8 +237,8 @@
         .bill-details-content li {
             margin-bottom: 0.25rem;
         }
-        #account-entries-modal .modal-content {
-            max-height: 80vh; /* Limitar altura do modal */
+        #account-entries-modal .modal-content, #edit-account-modal .modal-content, #edit-credit-card-modal .modal-content { /* Aplicado a todos os modais de edição/visualização */
+            max-height: 80vh; 
         }
         #confirmation-modal .modal-content {
              max-width: 400px;
@@ -254,14 +254,20 @@
          #suggested-goals-list li strong {
             color: #312e81; /* indigo-900 */
          }
-         #clear-all-data-link { /* Estilo para o link de limpar dados */
-            font-size: 0.8rem; /* Tamanho menor */
-            color: #6b7280; /* Cor cinza */
+         #clear-all-data-link { 
+            font-size: 0.8rem; 
+            color: #6b7280; 
             text-decoration: underline;
             cursor: pointer;
          }
          #clear-all-data-link:hover {
-            color: #ef4444; /* Vermelho ao passar o mouse */
+            color: #ef4444; 
+         }
+         .add-transaction-type-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
          }
 
     </style>
@@ -384,69 +390,17 @@
             </div>
         </div>
 
-
         <div class="mb-8 border-b pb-6 border-gray-200">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Adicionar Nova Transação Manualmente</h2>
-            <form id="transaction-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                    <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Data</label>
-                    <input type="date" id="date" required
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                    <input type="text" id="description" placeholder="Ex: Salário, Aluguel, Supermercado" required
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="value" class="block text-sm font-medium text-gray-700 mb-1">Valor da Parcela (R$)</label> 
-                    <input type="number" id="value" step="0.01" placeholder="0.00" required
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                    <select id="type" required
-                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        <option value="receita">Receita</option>
-                        <option value="despesa">Despesa</option>
-                        <option value="saque">Saque (da conta)</option>
-                        <option value="pix_enviado">PIX Enviado (Pagamento)</option>
-                        <option value="pix_recebido">PIX Recebido</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="category-select" class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-                    <div class="flex items-center space-x-2">
-                        <select id="category-select" required
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            </select>
-                    </div>
-                    <input type="text" id="new-category-input" placeholder="Nova Categoria"
-                           class="mt-2 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hidden">
-                </div>
-                <div>
-                    <label for="account-select" class="block text-sm font-medium text-gray-700 mb-1">Conta / Cartão (Opcional)</label>
-                    <select id="account-select"
-                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </select>
-                </div>
-                <div class="col-span-1 sm:col-span-2 lg:col-span-1">
-                    <label for="installments" class="block text-sm font-medium text-gray-700 mb-1">Parcelas (total)</label>
-                    <input type="number" id="installments" min="1" value="1"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div class="col-span-1 sm:col-span-2 lg:col-span-1"> <label for="installments-paid" class="block text-sm font-medium text-gray-700 mb-1">Parcelas já pagas</label>
-                    <input type="number" id="installments-paid" min="0" value="0"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div class="sm:col-span-2 lg:col-span-full flex items-end justify-end">
-                    <button type="submit"
-                            class="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                        Adicionar Transação
-                    </button>
-                </div>
-            </form>
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Adicionar Nova Transação</h2>
+            <div class="flex flex-wrap gap-3">
+                <button id="open-add-receita-modal-btn" data-type="receita" class="add-transaction-type-btn bg-green-500 hover:bg-green-600 text-white">Nova Receita</button>
+                <button id="open-add-despesa-modal-btn" data-type="despesa" class="add-transaction-type-btn bg-red-500 hover:bg-red-600 text-white">Nova Despesa</button>
+                <button id="open-add-saque-modal-btn" data-type="saque" class="add-transaction-type-btn bg-yellow-500 hover:bg-yellow-600 text-gray-800">Novo Saque</button>
+                <button id="open-add-pix-enviado-modal-btn" data-type="pix_enviado" class="add-transaction-type-btn bg-sky-500 hover:bg-sky-600 text-white">Novo PIX Enviado</button>
+                <button id="open-add-pix-recebido-modal-btn" data-type="pix_recebido" class="add-transaction-type-btn bg-emerald-500 hover:bg-emerald-600 text-white">Novo PIX Recebido</button>
+            </div>
         </div>
+
 
         <div class="mb-8 border-b pb-6 border-gray-200">
             <div id="import-header" class="collapsible-header">
@@ -685,6 +639,142 @@
 
     </div>
 
+    <div id="add-transaction-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="add-transaction-modal-title">Adicionar Nova Transação</h3>
+                <button class="modal-close-btn" id="close-add-transaction-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="transaction-form-modal" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="modal-date" class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                        <input type="date" id="modal-date" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="modal-description" class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                        <input type="text" id="modal-description" placeholder="Ex: Salário, Aluguel, Supermercado" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="modal-value" class="block text-sm font-medium text-gray-700 mb-1">Valor da Parcela (R$)</label>
+                        <input type="number" id="modal-value" step="0.01" placeholder="0.00" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="modal-type" class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                        <select id="modal-type" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="receita">Receita</option>
+                            <option value="despesa">Despesa</option>
+                            <option value="saque">Saque (da conta)</option>
+                            <option value="pix_enviado">PIX Enviado (Pagamento)</option>
+                            <option value="pix_recebido">PIX Recebido</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="modal-category-select" class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                        <div class="flex items-center space-x-2">
+                            <select id="modal-category-select" required
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </select>
+                        </div>
+                        <input type="text" id="modal-new-category-input" placeholder="Nova Categoria"
+                               class="mt-2 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hidden">
+                    </div>
+                    <div>
+                        <label for="modal-account-select" class="block text-sm font-medium text-gray-700 mb-1">Conta / Cartão (Opcional)</label>
+                        <select id="modal-account-select"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </select>
+                    </div>
+                    <div>
+                        <label for="modal-installments" class="block text-sm font-medium text-gray-700 mb-1">Parcelas (total)</label>
+                        <input type="number" id="modal-installments" min="1" value="1"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="modal-installments-paid" class="block text-sm font-medium text-gray-700 mb-1">Parcelas já pagas</label>
+                        <input type="number" id="modal-installments-paid" min="0" value="0"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="save-add-transaction-modal-btn" type="submit" form="transaction-form-modal"
+                        class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                    Adicionar Transação
+                </button>
+                <button id="cancel-add-transaction-modal-btn"
+                        class="px-4 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition duration-150 ease-in-out">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-account-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Conta</h3>
+                <button class="modal-close-btn" id="close-edit-account-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-account-id">
+                <div>
+                    <label for="edit-account-name" class="block text-sm font-medium text-gray-700 mb-1">Nome da Conta</label>
+                    <input type="text" id="edit-account-name" required class="w-full">
+                </div>
+                <div>
+                    <label for="edit-account-type" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Conta</label>
+                    <input type="text" id="edit-account-type-display" readonly class="w-full bg-gray-100 cursor-not-allowed">
+                </div>
+                <div>
+                    <label for="edit-account-balance" class="block text-sm font-medium text-gray-700 mb-1">Saldo Atual (R$)</label>
+                    <input type="number" id="edit-account-balance" step="0.01" required class="w-full">
+                </div>
+                <div id="edit-overdraft-limit-div" class="hidden">
+                    <label for="edit-overdraft-limit" class="block text-sm font-medium text-gray-700 mb-1">Limite Ch. Especial (R$)</label>
+                    <input type="number" id="edit-overdraft-limit" step="0.01" class="w-full">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-edit-account-btn" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600">Salvar</button>
+                <button id="cancel-edit-account-btn" class="px-4 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-credit-card-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Cartão de Crédito</h3>
+                <button class="modal-close-btn" id="close-edit-credit-card-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-credit-card-id">
+                <div>
+                    <label for="edit-card-name" class="block text-sm font-medium text-gray-700 mb-1">Nome do Cartão</label>
+                    <input type="text" id="edit-card-name" required class="w-full">
+                </div>
+                <div>
+                    <label for="edit-card-limit" class="block text-sm font-medium text-gray-700 mb-1">Limite (R$)</label>
+                    <input type="number" id="edit-card-limit" step="0.01" required class="w-full">
+                </div>
+                <div>
+                    <label for="edit-card-due-day" class="block text-sm font-medium text-gray-700 mb-1">Dia Venc. Fatura</label>
+                    <input type="number" id="edit-card-due-day" min="1" max="31" required class="w-full">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-edit-credit-card-btn" class="px-4 py-2 bg-purple-500 text-white font-semibold rounded-md shadow-md hover:bg-purple-600">Salvar</button>
+                <button id="cancel-edit-credit-card-btn" class="px-4 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+
     <div id="edit-transaction-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -804,20 +894,29 @@
             const accountsList = document.getElementById('accounts-list');
             const addCreditCardForm = document.getElementById('add-credit-card-form');
             const creditCardsList = document.getElementById('credit-cards-list');
-            const accountSelect = document.getElementById('account-select'); 
             const accountTypeSelect = document.getElementById('account-type'); 
             const initialBalanceInput = document.getElementById('initial-balance');
             const initialValueLabel = document.querySelector('label[for="initial-balance"]'); 
             const overdraftLimitDiv = document.getElementById('overdraft-limit-div');
             const overdraftLimitInput = document.getElementById('overdraft-limit');
             const cardDueDayInput = document.getElementById('card-due-day');
-            const transactionForm = document.getElementById('transaction-form');
-            const transactionList = document.getElementById('transaction-list');
-            const installmentsInput = document.getElementById('installments');
-            const installmentsPaidInput = document.getElementById('installments-paid'); 
-            const transactionTypeSelect = document.getElementById('type');
-            const categorySelect = document.getElementById('category-select');
-            const newCategoryInput = document.getElementById('new-category-input');
+            
+            const addTransactionModal = document.getElementById('add-transaction-modal');
+            const closeAddTransactionModalBtn = document.getElementById('close-add-transaction-modal');
+            const cancelAddTransactionModalBtn = document.getElementById('cancel-add-transaction-modal-btn');
+            const saveAddTransactionModalBtn = document.getElementById('save-add-transaction-modal-btn');
+            const transactionFormModal = document.getElementById('transaction-form-modal');
+            const modalDateInput = document.getElementById('modal-date');
+            const modalDescriptionInput = document.getElementById('modal-description');
+            const modalValueInput = document.getElementById('modal-value');
+            const modalTypeSelect = document.getElementById('modal-type');
+            const modalCategorySelect = document.getElementById('modal-category-select');
+            const modalNewCategoryInput = document.getElementById('modal-new-category-input');
+            const modalAccountSelect = document.getElementById('modal-account-select');
+            const modalInstallmentsInput = document.getElementById('modal-installments');
+            const modalInstallmentsPaidInput = document.getElementById('modal-installments-paid');
+            const addTransactionModalTitle = document.getElementById('add-transaction-modal-title');
+
             const importHeader = document.getElementById('import-header');
             const importSectionContent = document.getElementById('import-section-content');
             const importArrow = document.getElementById('import-arrow');
@@ -831,7 +930,8 @@
             const nextMonthBtn = document.getElementById('next-month-btn');
             const currentMonthDisplay = document.getElementById('current-month-display');
             const downloadXlsxBtn = document.getElementById('download-xlsx-btn');
-            const clearAllDataLink = document.getElementById('clear-all-data-link'); // Novo link
+            const clearAllDataLink = document.getElementById('clear-all-data-link'); 
+
             const editTransactionModal = document.getElementById('edit-transaction-modal');
             const closeEditModalBtn = document.getElementById('close-edit-modal');
             const saveEditTransactionBtn = document.getElementById('save-edit-transaction-btn');
@@ -844,6 +944,27 @@
             const editNewCategoryInput = document.getElementById('edit-new-category'); 
             const editInstallmentsTotalInput = document.getElementById('edit-installments-total');
             const editInstallmentsPaidInput = document.getElementById('edit-installments-paid');
+
+            const editAccountModal = document.getElementById('edit-account-modal');
+            const closeEditAccountModalBtn = document.getElementById('close-edit-account-modal');
+            const cancelEditAccountBtn = document.getElementById('cancel-edit-account-btn');
+            const saveEditAccountBtn = document.getElementById('save-edit-account-btn');
+            const editAccountIdInput = document.getElementById('edit-account-id');
+            const editAccountNameInput = document.getElementById('edit-account-name');
+            const editAccountTypeDisplay = document.getElementById('edit-account-type-display');
+            const editAccountBalanceInput = document.getElementById('edit-account-balance');
+            const editOverdraftLimitDiv = document.getElementById('edit-overdraft-limit-div');
+            const editOverdraftLimitInput = document.getElementById('edit-overdraft-limit');
+
+            const editCreditCardModal = document.getElementById('edit-credit-card-modal');
+            const closeEditCreditCardModalBtn = document.getElementById('close-edit-credit-card-modal');
+            const cancelEditCreditCardBtn = document.getElementById('cancel-edit-credit-card-btn');
+            const saveEditCreditCardBtn = document.getElementById('save-edit-credit-card-btn');
+            const editCreditCardIdInput = document.getElementById('edit-credit-card-id');
+            const editCardNameInput = document.getElementById('edit-card-name');
+            const editCardLimitInput = document.getElementById('edit-card-limit');
+            const editCardDueDayInput = document.getElementById('edit-card-due-day');
+
             const searchTransactionsInput = document.getElementById('search-transactions-input');
             const selectAllTransactionsCheckbox = document.getElementById('select-all-transactions');
             const paySelectedTransactionsBtn = document.getElementById('pay-selected-transactions-btn');
@@ -1048,7 +1169,20 @@
             }
 
             // --- Event Listeners ---
-            const addDeleteListeners = () => { document.querySelectorAll('.delete-btn').forEach(b => { b.onclick = (e) => { requestDeleteConfirmation(e.currentTarget.dataset.id, e.currentTarget.dataset.type); }; }); };
+            const addDeleteListeners = () => { 
+                document.querySelectorAll('.delete-btn').forEach(b => { 
+                    b.onclick = (e) => { 
+                        const target = e.currentTarget;
+                        requestDeleteConfirmation(target.dataset.id, target.dataset.type); 
+                    }; 
+                }); 
+                document.querySelectorAll('.edit-account-btn').forEach(b => {
+                    b.onclick = (e) => openEditAccountModal(e.currentTarget.dataset.id);
+                });
+                document.querySelectorAll('.edit-credit-card-btn').forEach(b => {
+                    b.onclick = (e) => openEditCreditCardModal(e.currentTarget.dataset.id);
+                });
+            };
             const addPayTransactionListeners = () => { document.querySelectorAll('.pay-transaction-btn').forEach(b => { b.onclick = (e) => { markTransactionAsPaid(e.currentTarget.dataset.id, true); }; }); }; 
             const addEditTransactionListeners = () => { document.querySelectorAll('.edit-transaction-btn').forEach(b => { b.onclick = (e) => { openEditModal(e.currentTarget.dataset.id); }; }); };
 
@@ -1058,7 +1192,10 @@
                 const storedCreditCards = localStorage.getItem('financialCreditCards'); if (storedCreditCards) creditCards = JSON.parse(storedCreditCards);
                 const storedTransactions = localStorage.getItem('financialFinancialTransactions'); if (storedTransactions) transactions = JSON.parse(storedTransactions);
                 const storedCategories = localStorage.getItem('financialCategories'); if (storedCategories) { categories = JSON.parse(storedCategories); if (!categories.includes("Revisar Importação")) categories.push("Revisar Importação"); } else { if (!categories.includes("Revisar Importação")) categories.push("Revisar Importação");}
-                renderAccounts(); renderCreditCards(); populateAccountSelects(); populateCategorySelect(); populateCategorySelect(editCategorySelect); 
+                renderAccounts(); renderCreditCards(); 
+                populateAccountSelects(modalAccountSelect); 
+                populateCategorySelect(modalCategorySelect); 
+                populateCategorySelect(editCategorySelect); 
                 populateLinkSelectedAccountSelect(); 
                 populateLinkSelectedCategorySelect(); 
                 populateReportSelectors(); 
@@ -1081,7 +1218,7 @@
                         initialBalanceInput.placeholder = '0.00 (Pode ser negativo se usando cheque especial)';
                     }
                 });
-                if (overdraftLimitDiv && accountTypeSelect.value === 'corrente') {
+                if (overdraftLimitDiv && accountTypeSelect.value === 'corrente') { // Garante que apareça no load se for corrente
                     overdraftLimitDiv.classList.remove('hidden');
                 }
             }
@@ -1110,10 +1247,15 @@
                     accounts.push(newAccount);
                     saveAccounts();
                     renderAccounts();
-                    populateAccountSelects();
+                    populateAccountSelects(modalAccountSelect);
                     updateSummary();
                     addAccountForm.reset();
-                    if (overdraftLimitDiv) overdraftLimitDiv.classList.add('hidden'); 
+                    // Manter o campo de cheque especial visível se o tipo for corrente
+                    if (accountTypeSelect.value === 'corrente') {
+                        overdraftLimitDiv.classList.remove('hidden');
+                    } else {
+                        overdraftLimitDiv.classList.add('hidden');
+                    }
                     if (initialValueLabel) initialValueLabel.textContent = 'Saldo Inicial (R$)';
                     if (initialBalanceInput) initialBalanceInput.placeholder = '0.00';
                     showFeedback('Conta adicionada com sucesso!', 'success');
@@ -1143,7 +1285,7 @@
                         creditCards.push(newCard); 
                         saveCreditCards(); 
                         renderCreditCards(); 
-                        populateAccountSelects(); 
+                        populateAccountSelects(modalAccountSelect); 
                         addCreditCardForm.reset(); 
                         showFeedback('Cartão adicionado!', 'success'); 
                         populateLinkSelectedAccountSelect(); 
@@ -1193,9 +1335,13 @@
                     accountDetailsHtml += `</div>`;
                     
                     li.innerHTML = `<div class="flex-grow">${accountDetailsHtml}</div>
-                        <button data-id="${account.id}" data-type="account" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 ml-2 self-start">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                        </button>`;
+                        <div class="flex items-center"> <button data-id="${account.id}" class="edit-account-btn text-yellow-500 hover:text-yellow-700 p-1 rounded-full hover:bg-yellow-100 mr-2">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
+                            </button>
+                            <button data-id="${account.id}" data-type="account" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            </button>
+                        </div>`;
                     
                     const headerDiv = li.querySelector('.account-item-header');
                     const detailsDiv = li.querySelector('.account-details-content');
@@ -1213,7 +1359,7 @@
 
                     accountsList.appendChild(li);
                 });
-                addDeleteListeners();
+                addDeleteListeners(); // Certifique-se que os listeners de delete e edit são chamados aqui
             };
             
             const renderCardBillDetails = (cardId, targetListElement, noTransactionsMessageElement) => {
@@ -1291,9 +1437,13 @@
                                     </div>
                                 </div>
                             </div>
-                            <button data-id="${card.id}" data-type="creditCard" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 ml-2 self-start">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                            </button>
+                            <div class="flex items-center"> <button data-id="${card.id}" class="edit-credit-card-btn text-yellow-500 hover:text-yellow-700 p-1 rounded-full hover:bg-yellow-100 mr-2">
+                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
+                                </button>
+                                <button data-id="${card.id}" data-type="creditCard" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                                </button>
+                            </div>
                         </div>`;
                     creditCardsList.appendChild(li);
 
@@ -1325,13 +1475,15 @@
             };
 
 
-            const populateAccountSelects = (targetSelect = accountSelect, forRevenue = false) => {
+            const populateAccountSelects = (targetSelect = modalAccountSelect, forRevenue = false) => { 
                 if (!targetSelect) return;
                 targetSelect.innerHTML = '';
                 const noLinkOpt = document.createElement('option');
                 noLinkOpt.value = "";
-                noLinkOpt.textContent = targetSelect === accountSelect ? (forRevenue ? "Selecione uma Conta" : "Não Vincular / Geral") : "Selecione";
-                if (forRevenue) noLinkOpt.disabled = true; 
+                noLinkOpt.textContent = (forRevenue ? "Selecione uma Conta" : "Não Vincular / Geral");
+                if (forRevenue && accounts.length === 0) noLinkOpt.disabled = true;
+                else if (forRevenue) noLinkOpt.selected = true; 
+                
                 targetSelect.appendChild(noLinkOpt);
 
                 accounts.forEach(acc => {
@@ -1353,42 +1505,103 @@
                         targetSelect.appendChild(opt);
                     });
                 }
-                if (!targetSelect.value && targetSelect === accountSelect && !forRevenue) targetSelect.value = "";
-                else if (!targetSelect.value && forRevenue && accounts.length > 0) targetSelect.value = ""; 
+                if (!targetSelect.value && !forRevenue) targetSelect.value = "";
             };
              
-            const populateCategorySelect = (selectElement = categorySelect) => { if(!selectElement) return; const currVal = selectElement.value; selectElement.innerHTML = ''; if (selectElement === categorySelect) { const phOpt = document.createElement('option'); phOpt.value = ""; phOpt.textContent = "Selecione categoria"; phOpt.disabled = true; phOpt.selected = !currVal; selectElement.appendChild(phOpt); } categories.sort((a,b) => a.localeCompare(b)).forEach(cat => { const opt = document.createElement('option'); opt.value = cat; opt.textContent = cat; selectElement.appendChild(opt); }); const newOpt = document.createElement('option'); newOpt.value = 'nova-categoria'; newOpt.textContent = 'Adicionar Nova...'; selectElement.appendChild(newOpt); if (categories.includes(currVal)) selectElement.value = currVal; else if (currVal === 'nova-categoria' && selectElement === categorySelect) selectElement.value = 'nova-categoria'; else if (!currVal && selectElement !== categorySelect && categories.length > 0 && selectElement.options.length > (selectElement === categorySelect ? 1:0) ) selectElement.value = categories[0]; };
+            const populateCategorySelect = (selectElement = modalCategorySelect) => { 
+                if(!selectElement) return; 
+                const currVal = selectElement.value; 
+                selectElement.innerHTML = ''; 
+                
+                const phOpt = document.createElement('option'); 
+                phOpt.value = ""; 
+                phOpt.textContent = "Selecione categoria"; 
+                phOpt.disabled = true; 
+                phOpt.selected = !currVal; 
+                selectElement.appendChild(phOpt); 
+                
+                categories.sort((a,b) => a.localeCompare(b)).forEach(cat => { 
+                    const opt = document.createElement('option'); 
+                    opt.value = cat; 
+                    opt.textContent = cat; 
+                    selectElement.appendChild(opt); 
+                }); 
+                const newOpt = document.createElement('option'); 
+                newOpt.value = 'nova-categoria'; 
+                newOpt.textContent = 'Adicionar Nova...'; 
+                selectElement.appendChild(newOpt); 
+                
+                if (categories.includes(currVal)) selectElement.value = currVal; 
+                else if (currVal === 'nova-categoria') selectElement.value = 'nova-categoria';
+                else if (selectElement.options.length > 1) selectElement.value = ""; 
+            };
             
-            if(categorySelect) {
-                categorySelect.addEventListener('change', () => { if (categorySelect.value === 'nova-categoria') { newCategoryInput.classList.remove('hidden'); newCategoryInput.focus(); newCategoryInput.value = ''; } else { newCategoryInput.classList.add('hidden'); newCategoryInput.value = ''; }});
+            if(modalCategorySelect) { 
+                modalCategorySelect.addEventListener('change', () => { 
+                    if (modalCategorySelect.value === 'nova-categoria') { 
+                        modalNewCategoryInput.classList.remove('hidden'); 
+                        modalNewCategoryInput.focus(); 
+                        modalNewCategoryInput.value = ''; 
+                    } else { 
+                        modalNewCategoryInput.classList.add('hidden'); 
+                        modalNewCategoryInput.value = ''; 
+                    }
+                });
             }
-             if (transactionTypeSelect) {
-                transactionTypeSelect.addEventListener('change', (e) => {
+            if (modalTypeSelect) { 
+                modalTypeSelect.addEventListener('change', (e) => {
                     const isRevenueType = e.target.value === 'receita' || e.target.value === 'pix_recebido';
-                    populateAccountSelects(accountSelect, isRevenueType);
+                    populateAccountSelects(modalAccountSelect, isRevenueType);
                     if (isRevenueType) {
-                        accountSelect.required = true;
-                        if (creditCards.some(card => card.id === accountSelect.value)) {
-                            accountSelect.value = "";
+                        modalAccountSelect.required = true;
+                        if (creditCards.some(card => card.id === modalAccountSelect.value)) {
+                            modalAccountSelect.value = "";
                         }
                     } else {
-                        accountSelect.required = false;
+                        modalAccountSelect.required = false;
                     }
                 });
             }
 
+            // --- Abrir Modal para Adicionar Transação ---
+            document.querySelectorAll('.add-transaction-type-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const type = e.currentTarget.dataset.type;
+                    if (addTransactionModalTitle) addTransactionModalTitle.textContent = `Adicionar Nova ${type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}`;
+                    
+                    transactionFormModal.reset(); 
+                    modalTypeSelect.value = type; 
+                    
+                    const event = new Event('change');
+                    modalTypeSelect.dispatchEvent(event);
 
-            // --- Gerenciamento de Transações ---
-            if(transactionForm) {
-                transactionForm.addEventListener('submit', (e) => {
+                    populateCategorySelect(modalCategorySelect); 
+                    populateAccountSelects(modalAccountSelect, type === 'receita' || type === 'pix_recebido'); 
+
+                    modalNewCategoryInput.classList.add('hidden'); 
+                    modalDateInput.value = new Date().toISOString().split('T')[0]; 
+                    modalInstallmentsInput.value = 1;
+                    modalInstallmentsPaidInput.value = 0;
+
+                    addTransactionModal.classList.remove('hidden');
+                });
+            });
+
+            if(closeAddTransactionModalBtn) closeAddTransactionModalBtn.addEventListener('click', () => addTransactionModal.classList.add('hidden'));
+            if(cancelAddTransactionModalBtn) cancelAddTransactionModalBtn.addEventListener('click', () => addTransactionModal.classList.add('hidden'));
+
+
+            // --- Gerenciamento de Transações (agora no modal) ---
+            if(transactionFormModal) {
+                transactionFormModal.addEventListener('submit', (e) => {
                     e.preventDefault();
-                    const baseDateString = document.getElementById('date').value;
-                    const description = document.getElementById('description').value.trim();
-                    const valuePerInstallment = parseFloat(document.getElementById('value').value); 
-                    let type = document.getElementById('type').value; 
-                    const accountId = document.getElementById('account-select').value; 
-                    const totalInstallments = parseInt(installmentsInput.value) || 1;
-                    const installmentsPaidCount = parseInt(installmentsPaidInput.value) || 0; 
+                    const baseDateString = modalDateInput.value;
+                    const description = modalDescriptionInput.value.trim();
+                    const valuePerInstallment = parseFloat(modalValueInput.value); 
+                    let type = modalTypeSelect.value; 
+                    const accountId = modalAccountSelect.value; 
+                    const totalInstallments = parseInt(modalInstallmentsInput.value) || 1;
+                    const installmentsPaidCount = parseInt(modalInstallmentsPaidInput.value) || 0; 
                     let fundamentalType = (type === 'receita' || type === 'pix_recebido') ? 'receita' : 'despesa'; 
 
                     if (fundamentalType === 'receita' && !accountId) {
@@ -1402,15 +1615,26 @@
 
 
                     let category;
-                    if (categorySelect.value === 'nova-categoria') {
-                        category = newCategoryInput.value.trim();
-                        if (category && !categories.includes(category)) { categories.push(category); saveCategories(); populateCategorySelect(); populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect(); categorySelect.value = category; } 
-                        else if (categories.includes(category)) { categorySelect.value = category; newCategoryInput.classList.add('hidden'); newCategoryInput.value = ''; } 
+                    if (modalCategorySelect.value === 'nova-categoria') {
+                        category = modalNewCategoryInput.value.trim();
+                        if (category && !categories.includes(category)) { 
+                            categories.push(category); 
+                            saveCategories(); 
+                            populateCategorySelect(modalCategorySelect); 
+                            populateCategorySelect(editCategorySelect); 
+                            populateLinkSelectedCategorySelect(); 
+                            modalCategorySelect.value = category; 
+                        } 
+                        else if (categories.includes(category)) { 
+                            modalCategorySelect.value = category; 
+                            modalNewCategoryInput.classList.add('hidden'); 
+                            modalNewCategoryInput.value = ''; 
+                        } 
                         else if (!category) { showFeedback('Insira nome para nova categoria.','error'); return; }
-                    } else { category = categorySelect.value; }
+                    } else { category = modalCategorySelect.value; }
 
-                    if (!baseDateString || !description || isNaN(valuePerInstallment) || valuePerInstallment <= 0 || !type || !category ) { showFeedback('Preencha todos os campos obrigatórios.','error'); return; }
-                    if (installmentsPaidCount > totalInstallments || installmentsPaidCount < 0) { showFeedback('Parcelas pagas inválido.','error'); return; }
+                    if (!baseDateString || !description || isNaN(valuePerInstallment) || valuePerInstallment <= 0 || !type || !category ) { showFeedback('Preencha todos os campos obrigatórios do modal.','error'); return; }
+                    if (installmentsPaidCount > totalInstallments || installmentsPaidCount < 0) { showFeedback('Número de parcelas pagas inválido.','error'); return; }
 
                     const account = accountId ? accounts.find(acc => acc.id === accountId) : null;
                     const creditCard = accountId ? creditCards.find(card => card.id === accountId) : null;
@@ -1451,7 +1675,6 @@
                             if (target) {
                                 if (newTx.isCreditCard) { 
                                     if (newTx.fundamentalType === 'despesa' && newTx.isPaid) { 
-                                        // Não afeta limite ao adicionar uma despesa de cartão já paga.
                                     } else if (newTx.fundamentalType === 'despesa' && !newTx.isPaid) {
                                         target.availableLimit -= newTx.value; 
                                     }
@@ -1474,7 +1697,7 @@
                     transactions.push(...transactionsToAdd); 
                     saveTransactions(); saveAccounts(); saveCreditCards();
                     renderTransactions(); updateSummary(); renderCreditCards(); checkCreditCardDueDates(); 
-                    transactionForm.reset(); installmentsInput.value = 1; installmentsPaidInput.value = 0; accountSelect.value = ""; newCategoryInput.classList.add('hidden'); populateCategorySelect(); 
+                    addTransactionModal.classList.add('hidden'); 
                     showFeedback('Transação(ões) adicionada(s)!', 'success');
                     suggestFinancialGoals(); 
                 });
@@ -1692,7 +1915,7 @@
                     transactions = [];
                     categories = [ "Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros", "Revisar Importação"];
                     itemDeleted = true;
-                    if (showIndividualFeedback) showFeedback('Todos os dados foram limpos!', 'success');
+                    if (showIndividualFeedback) showFeedback('Todos os dados foram limpos com sucesso!', 'success');
                 }
                 else if (type === 'account') {
                     if (transactions.some(t => t.accountId === id)) {
@@ -1718,10 +1941,8 @@
                             if (delTx.isCreditCard) {
                                 const card = creditCards.find(c => c.id === delTx.accountId);
                                 if (card) {
-                                    // Ao excluir uma despesa de cartão, o limite disponível deve ser restaurado
-                                    // independentemente de estar paga ou não, pois a compra está sendo desfeita.
-                                    if (delTx.fundamentalType === 'despesa') card.availableLimit += delTx.value;
-                                    else if (delTx.fundamentalType === 'receita') card.availableLimit -= delTx.value; // Estorno de crédito no cartão
+                                    if (delTx.fundamentalType === 'despesa' && !delTx.isPaid) card.availableLimit += delTx.value; 
+                                    else if (delTx.fundamentalType === 'receita') card.availableLimit -= delTx.value; 
                                 }
                             } else {
                                 const acc = accounts.find(a => a.id === delTx.accountId);
@@ -1729,7 +1950,7 @@
                                     if (delTx.fundamentalType === 'receita') {
                                         acc.balance -= delTx.value;
                                     } else if (delTx.fundamentalType === 'despesa' && delTx.isPaid) {
-                                        acc.balance += delTx.value; // Devolve ao saldo se estava paga
+                                        acc.balance += delTx.value; 
                                     }
                                 }
                             }
@@ -1757,7 +1978,7 @@
                     saveTransactions(); saveAccounts(); saveCreditCards(); saveCategories();
                     renderTransactions(searchTransactionsInput.value);
                     renderAccounts(); renderCreditCards();
-                    populateAccountSelects(); populateCategorySelect(); populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect();
+                    populateAccountSelects(modalAccountSelect); populateCategorySelect(modalCategorySelect); populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect();
                     updateSummary(); renderMonthlySummary(); checkCreditCardDueDates();
                     suggestFinancialGoals(); 
                     if (type === 'accountEntry' && accountIdForReversal) {
@@ -1782,11 +2003,10 @@
                             const card = creditCards.find(c => c.id === tx.accountId);
                             if (card) {
                                 if (tx.fundamentalType === 'despesa') {
-                                     // Ao marcar uma despesa de cartão como paga, o limite disponível NÃO é afetado aqui.
-                                     // O limite é afetado quando a compra é feita (reduz) ou quando a fatura é paga (restaura o limite usado na fatura).
-                                     // Marcar uma compra individual como "paga" significa que ela foi quitada, mas ainda compõe a fatura.
+                                     // Não altera o limite disponível aqui, pois isso é feito ao pagar a fatura.
+                                     // Apenas marca a compra como paga na lista de transações.
                                 }
-                                saveCreditCards(); // Salva mesmo que não mude o limite, para o caso de outras propriedades do cartão mudarem no futuro
+                                // saveCreditCards(); // Não é necessário salvar o cartão aqui se apenas o status 'isPaid' da transação mudou
                             }
                         } else { 
                             const acc = accounts.find(a => a.id === tx.accountId);
@@ -1798,9 +2018,7 @@
                                         return false;
                                     }
                                     acc.balance -= tx.value; 
-                                } else { 
-                                    // Receitas já são somadas ao saldo na criação. Marcar como "paga" não altera o saldo.
-                                }
+                                } 
                                 saveAccounts();
                             }
                         }
@@ -2380,10 +2598,146 @@
             });
 
 
+            // --- Modais de Edição ---
+            // Editar Conta
+            if (closeEditAccountModalBtn) closeEditAccountModalBtn.addEventListener('click', () => editAccountModal.classList.add('hidden'));
+            if (cancelEditAccountBtn) cancelEditAccountBtn.addEventListener('click', () => editAccountModal.classList.add('hidden'));
+            if (saveEditAccountBtn) saveEditAccountBtn.addEventListener('click', () => {
+                const id = editAccountIdInput.value;
+                const account = accounts.find(acc => acc.id === id);
+                if (!account) return;
+
+                const newName = editAccountNameInput.value.trim();
+                const newBalance = parseFloat(editAccountBalanceInput.value);
+                const newOverdraftLimit = account.type === 'corrente' ? (parseFloat(editOverdraftLimitInput.value) || 0) : 0;
+
+                if (!newName) {
+                    showFeedback('O nome da conta não pode ser vazio.', 'error');
+                    return;
+                }
+                if (isNaN(newBalance)) {
+                    showFeedback('Saldo inválido.', 'error');
+                    return;
+                }
+                 if (account.type === 'corrente' && isNaN(newOverdraftLimit)) {
+                    showFeedback('Limite do cheque especial inválido.', 'error');
+                    return;
+                }
+
+                account.name = newName;
+                account.balance = newBalance;
+                if (account.type === 'corrente') {
+                    account.limitOverdraft = newOverdraftLimit;
+                }
+
+                saveAccounts();
+                renderAccounts();
+                populateAccountSelects(modalAccountSelect);
+                populateLinkSelectedAccountSelect();
+                updateSummary();
+                suggestFinancialGoals();
+                editAccountModal.classList.add('hidden');
+                showFeedback('Conta atualizada com sucesso!', 'success');
+            });
+
+            // Editar Cartão
+            if (closeEditCreditCardModalBtn) closeEditCreditCardModalBtn.addEventListener('click', () => editCreditCardModal.classList.add('hidden'));
+            if (cancelEditCreditCardBtn) cancelEditCreditCardBtn.addEventListener('click', () => editCreditCardModal.classList.add('hidden'));
+            if (saveEditCreditCardBtn) saveEditCreditCardBtn.addEventListener('click', () => {
+                const id = editCreditCardIdInput.value;
+                const card = creditCards.find(c => c.id === id);
+                if (!card) return;
+
+                const newName = editCardNameInput.value.trim();
+                const newLimit = parseFloat(editCardLimitInput.value);
+                const newDueDay = parseInt(editCardDueDayInput.value);
+
+                if (!newName) {
+                    showFeedback('O nome do cartão não pode ser vazio.', 'error');
+                    return;
+                }
+                if (isNaN(newLimit) || newLimit <= 0) {
+                    showFeedback('Limite do cartão inválido.', 'error');
+                    return;
+                }
+                if (isNaN(newDueDay) || newDueDay < 1 || newDueDay > 31) {
+                    showFeedback('Dia de vencimento inválido.', 'error');
+                    return;
+                }
+
+                // Recalcular limite disponível se o limite total mudou
+                const oldLimit = card.limit;
+                card.name = newName;
+                card.limit = newLimit;
+                card.dueDay = newDueDay;
+
+                // Recalcular availableLimit: Novo Limite - (Limite Antigo - Limite Disponível Antigo)
+                // Isso mantém o valor gasto constante, ajustando o disponível ao novo limite.
+                const spentAmount = oldLimit - card.availableLimit;
+                card.availableLimit = newLimit - spentAmount;
+
+
+                let newClosingDay = newDueDay - 10;
+                if (newClosingDay <= 0) {
+                    const tempDate = new Date();
+                    tempDate.setDate(newDueDay);
+                    tempDate.setMonth(tempDate.getMonth() - 1);
+                    tempDate.setDate(tempDate.getDate() - 10 + (newDueDay <= 10 ? 0 : 1));
+                    newClosingDay = tempDate.getDate();
+                }
+                card.closingDay = newClosingDay;
+
+
+                saveCreditCards();
+                renderCreditCards();
+                populateAccountSelects(modalAccountSelect);
+                populateLinkSelectedAccountSelect();
+                updateSummary();
+                checkCreditCardDueDates();
+                suggestFinancialGoals();
+                editCreditCardModal.classList.add('hidden');
+                showFeedback('Cartão atualizado com sucesso!', 'success');
+            });
+
+
             // Carregamento inicial
             loadData(); 
             updateMonthlyDisplay(); 
         });
+
+        function openEditAccountModal(accountId) {
+            const account = accounts.find(acc => acc.id === accountId);
+            if (!account) return;
+
+            document.getElementById('edit-account-id').value = account.id;
+            document.getElementById('edit-account-name').value = account.name;
+            document.getElementById('edit-account-type-display').value = account.type === 'corrente' ? 'Conta Corrente' : (account.type === 'poupanca' ? 'Conta Poupança' : 'Dinheiro (Caixa)');
+            document.getElementById('edit-account-balance').value = account.balance.toFixed(2);
+            
+            const overdraftDiv = document.getElementById('edit-overdraft-limit-div');
+            const overdraftInput = document.getElementById('edit-overdraft-limit');
+            if (account.type === 'corrente') {
+                overdraftInput.value = (account.limitOverdraft || 0).toFixed(2);
+                overdraftDiv.classList.remove('hidden');
+            } else {
+                overdraftInput.value = '';
+                overdraftDiv.classList.add('hidden');
+            }
+            document.getElementById('edit-account-modal').classList.remove('hidden');
+        }
+
+        function openEditCreditCardModal(cardId) {
+            const card = creditCards.find(c => c.id === cardId);
+            if (!card) return;
+
+            document.getElementById('edit-credit-card-id').value = card.id;
+            document.getElementById('edit-card-name').value = card.name;
+            document.getElementById('edit-card-limit').value = card.limit.toFixed(2);
+            document.getElementById('edit-card-due-day').value = card.dueDay;
+            
+            document.getElementById('edit-credit-card-modal').classList.remove('hidden');
+        }
+
     </script>
 </body>
 </html>
