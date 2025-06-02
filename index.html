@@ -205,57 +205,7 @@
         #imported-transactions-table-body textarea {
             min-height: 40px; 
         }
-        .ai-btn-spinner { 
-            display: inline-block;
-            width: 1em;
-            height: 1em;
-            border: 2px solid currentColor;
-            border-right-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.75s linear infinite;
-            margin-left: 0.5em;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        /* Estilos para a lista de metas */
-        #financial-goals-list li {
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background-color: #f9fafb; /* Fundo levemente diferente */
-        }
-        #financial-goals-list .goal-details p {
-            margin-bottom: 0.25rem;
-        }
-        #financial-goals-list .goal-actions button {
-            margin-right: 0.5rem;
-        }
-        #financial-goals-list .ai-plan-content {
-            margin-top: 0.75rem;
-            padding: 0.75rem;
-            background-color: #fff;
-            border: 1px dashed #cbd5e1;
-            border-radius: 0.375rem;
-            font-size: 0.9rem;
-        }
-         #financial-goals-list .ai-plan-content h4 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #1e3a8a; 
-            margin-bottom: 0.5rem;
-        }
-        #financial-goals-list .ai-plan-content ul {
-            list-style-position: inside;
-            padding-left: 0.5rem;
-        }
-         #financial-goals-list .ai-plan-content li {
-            border: none;
-            padding: 0;
-            margin-bottom: 0.25rem;
-            background-color: transparent;
-        }
+      
         #reports-section-content .report-table th, #reports-section-content .report-table td {
             padding: 0.5rem 0.75rem;
             border: 1px solid #e2e8f0;
@@ -293,6 +243,17 @@
         #confirmation-modal .modal-content {
              max-width: 400px;
         }
+        #suggested-goals-list li {
+            background-color: #eef2ff; /* indigo-50 */
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem; /* rounded-md */
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #3730a3; /* indigo-800 */
+        }
+         #suggested-goals-list li strong {
+            color: #312e81; /* indigo-900 */
+         }
 
     </style>
 </head>
@@ -313,7 +274,8 @@
                 <h2 class="text-lg font-semibold text-green-800">Saldo Consolidado</h2>
                 <p id="saldo-atual" class="text-2xl font-bold text-green-700">R$ 0,00</p>
             </div>
-            <div class="bg-orange-100 p-4 rounded-lg shadow-md"> <h2 class="text-lg font-semibold text-orange-800">Gasto Cartões (Mês)</h2>
+            <div class="bg-orange-100 p-4 rounded-lg shadow-md"> 
+                <h2 class="text-lg font-semibold text-orange-800">Gasto Cartões (Mês)</h2>
                 <p id="total-gasto-cartoes-mes" class="text-2xl font-bold text-orange-700">R$ 0,00</p>
             </div>
         </div>
@@ -398,21 +360,15 @@
         </div>
 
         <div class="mb-8 border-b pb-6 border-gray-200">
-            <div id="goal-ideas-header" class="collapsible-header">
-                <h2 class="text-2xl font-semibold text-gray-700">Ideias de Metas Financeiras (IA)</h2>
-                <svg id="goal-ideas-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            <div id="suggested-goals-header" class="collapsible-header">
+                <h2 class="text-2xl font-semibold text-gray-700">Sugestões de Metas Financeiras</h2>
+                <svg id="suggested-goals-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
             </div>
-            <div id="goal-ideas-content" class="hidden">
-                <div class="p-4 bg-gray-50 rounded-lg shadow-sm">
-                    <p class="text-sm text-gray-600 mb-4">Clique no botão abaixo para que a Inteligência Artificial sugira metas financeiras com base nos seus dados atuais. Quanto mais dados você tiver registrado (receitas, despesas, contas), mais personalizadas serão as sugestões.</p>
-                    <button id="generate-goal-ideas-btn" class="w-full sm:w-auto px-6 py-2 bg-teal-500 text-white font-semibold rounded-md shadow-md hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400 transition duration-150 ease-in-out flex items-center justify-center">
-                        Gerar Ideias de Metas
-                        <span id="goal-ideas-spinner" class="ai-btn-spinner hidden ml-2"></span>
-                    </button>
-                    <div id="goal-ideas-output" class="mt-6 p-4 bg-white rounded-md shadow text-sm text-gray-700 min-h-[100px]">
-                        {/* As ideias de metas serão exibidas aqui */}
-                    </div>
-                </div>
+            <div id="suggested-goals-content" class="hidden p-4 bg-gray-50 rounded-lg shadow-sm">
+                <ul id="suggested-goals-list" class="space-y-2">
+                    {/* Sugestões de metas serão inseridas aqui */}
+                </ul>
+                <p id="no-suggested-goals-message" class="text-center text-gray-500 mt-2 hidden">Nenhuma sugestão de meta no momento. Adicione mais transações para receber sugestões.</p>
             </div>
         </div>
 
@@ -816,7 +772,7 @@
             "Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação",
             "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros", "Revisar Importação"
         ];
-        let financialGoals = []; 
+        // financialGoals foi removido pois a seção de metas manuais não está mais presente.
 
         let importedTransactionsToReview = [];
         let currentMonth = new Date().getMonth(); 
@@ -828,7 +784,7 @@
             const totalReceitasEl = document.getElementById('total-receitas');
             const totalDespesasEl = document.getElementById('total-despesas');
             const saldoAtualEl = document.getElementById('saldo-atual');
-            const totalGastoCartoesMesEl = document.getElementById('total-gasto-cartoes-mes'); // Novo elemento
+            const totalGastoCartoesMesEl = document.getElementById('total-gasto-cartoes-mes'); 
             const noTransactionsMessage = document.getElementById('no-transactions-message');
             const feedbackMessageEl = document.getElementById('feedback-message');
             const addAccountForm = document.getElementById('add-account-form');
@@ -874,12 +830,6 @@
             const editNewCategoryInput = document.getElementById('edit-new-category'); 
             const editInstallmentsTotalInput = document.getElementById('edit-installments-total');
             const editInstallmentsPaidInput = document.getElementById('edit-installments-paid');
-            const goalIdeasHeader = document.getElementById('goal-ideas-header'); 
-            const goalIdeasContent = document.getElementById('goal-ideas-content'); 
-            const goalIdeasArrow = document.getElementById('goal-ideas-arrow'); 
-            const generateGoalIdeasBtn = document.getElementById('generate-goal-ideas-btn'); 
-            const goalIdeasSpinner = document.getElementById('goal-ideas-spinner'); 
-            const goalIdeasOutput = document.getElementById('goal-ideas-output'); 
             const searchTransactionsInput = document.getElementById('search-transactions-input');
             const selectAllTransactionsCheckbox = document.getElementById('select-all-transactions');
             const paySelectedTransactionsBtn = document.getElementById('pay-selected-transactions-btn');
@@ -922,6 +872,11 @@
             const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
             const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
             const closeConfirmationModalBtn = document.getElementById('close-confirmation-modal');
+            const suggestedGoalsHeader = document.getElementById('suggested-goals-header'); // Novo
+            const suggestedGoalsContent = document.getElementById('suggested-goals-content'); // Novo
+            const suggestedGoalsArrow = document.getElementById('suggested-goals-arrow'); // Novo
+            const suggestedGoalsList = document.getElementById('suggested-goals-list'); // Novo
+            const noSuggestedGoalsMessage = document.getElementById('no-suggested-goals-message'); // Novo
 
 
             // --- Funções Utilitárias ---
@@ -1089,19 +1044,20 @@
                 const storedCreditCards = localStorage.getItem('financialCreditCards'); if (storedCreditCards) creditCards = JSON.parse(storedCreditCards);
                 const storedTransactions = localStorage.getItem('financialFinancialTransactions'); if (storedTransactions) transactions = JSON.parse(storedTransactions);
                 const storedCategories = localStorage.getItem('financialCategories'); if (storedCategories) { categories = JSON.parse(storedCategories); if (!categories.includes("Revisar Importação")) categories.push("Revisar Importação"); } else { if (!categories.includes("Revisar Importação")) categories.push("Revisar Importação");}
-                const storedFinancialGoals = localStorage.getItem('financialGoals'); if (storedFinancialGoals) financialGoals = JSON.parse(storedFinancialGoals);
+                // financialGoals não é mais carregado pois a funcionalidade de metas manuais foi removida.
                 renderAccounts(); renderCreditCards(); populateAccountSelects(); populateCategorySelect(); populateCategorySelect(editCategorySelect); 
                 populateLinkSelectedAccountSelect(); 
                 populateLinkSelectedCategorySelect(); 
                 populateReportSelectors(); 
                 renderTransactions(); 
                 updateSummary(); renderMonthlySummary(); checkCreditCardDueDates(); 
+                suggestFinancialGoals(); // Chamada para novas sugestões de metas
             };
             const saveAccounts = () => localStorage.setItem('financialAccounts', JSON.stringify(accounts));
             const saveCreditCards = () => localStorage.setItem('financialCreditCards', JSON.stringify(creditCards));
             const saveTransactions = () => localStorage.setItem('financialFinancialTransactions', JSON.stringify(transactions));
             const saveCategories = () => localStorage.setItem('financialCategories', JSON.stringify(categories));
-            const saveFinancialGoals = () => localStorage.setItem('financialGoals', JSON.stringify(financialGoals)); 
+            // saveFinancialGoals removido
 
             // --- Gerenciamento de Contas e Cartões ---
             if(accountTypeSelect) {
@@ -1150,6 +1106,7 @@
                     if (initialBalanceInput) initialBalanceInput.placeholder = '0.00';
                     showFeedback('Conta adicionada com sucesso!', 'success');
                     populateLinkSelectedAccountSelect();
+                    suggestFinancialGoals(); // Atualiza sugestões
                 });
             }
             if(addCreditCardForm) {
@@ -1178,6 +1135,7 @@
                         addCreditCardForm.reset(); 
                         showFeedback('Cartão adicionado!', 'success'); 
                         populateLinkSelectedAccountSelect(); 
+                        suggestFinancialGoals(); // Atualiza sugestões
                     } else {
                         showFeedback('Preencha os campos do cartão.', 'error'); 
                     }
@@ -1501,6 +1459,7 @@
                     renderTransactions(); updateSummary(); renderCreditCards(); checkCreditCardDueDates(); 
                     transactionForm.reset(); installmentsInput.value = 1; installmentsPaidInput.value = 0; accountSelect.value = ""; newCategoryInput.classList.add('hidden'); populateCategorySelect(); 
                     showFeedback('Transação(ões) adicionada(s)!', 'success');
+                    suggestFinancialGoals(); // Atualiza sugestões
                 });
             }
 
@@ -1613,9 +1572,9 @@
                 if(selectAllTransactionsCheckbox) selectAllTransactionsCheckbox.checked = allVisibleCheckboxes.length > 0 && selectedCheckboxes.length === allVisibleCheckboxes.length;
             }
 
-            if(paySelectedTransactionsBtn) paySelectedTransactionsBtn.addEventListener('click', () => { const ids = Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb => cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{if(markTransactionAsPaid(id,false))count++;}); if(count>0)showFeedback(`${count} transação(ões) paga(s).`,"success"); else showFeedback("Nenhuma transação pendente alterada.","info"); renderTransactions(searchTransactionsInput.value); updateSelectedTransactionsActions(); });
-            if(unpaySelectedTransactionsBtn) unpaySelectedTransactionsBtn.addEventListener('click', () => { const ids=Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb=>cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{const tx=transactions.find(t=>t.id===id);if(tx&&tx.isPaid){const wasPaid=tx.isPaid;tx.isPaid=false;if(wasPaid&&tx.accountId&&!tx.isCreditCard){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa')acc.balance+=tx.value;else acc.balance-=tx.value;saveAccounts();}}count++;}}); if(count>0){saveTransactions();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();showFeedback(`${count} transação(ões) desmarcada(s) como paga(s).`,"success");}else showFeedback("Nenhuma transação paga alterada.","info");updateSelectedTransactionsActions();});
-            if(linkSelectedTransactionsBtn) linkSelectedTransactionsBtn.addEventListener('click', () => { const selCbs=Array.from(document.querySelectorAll('.transaction-checkbox:checked')); const targetAccId=linkSelectedAccountSelect.value; if(selCbs.length===0){showFeedback("Nenhuma transação selecionada.","info");return;}if(!targetAccId){showFeedback("Selecione conta/cartão para vincular.","error");return;}let linkedCount=0;const targetIsCC=creditCards.some(c=>c.id===targetAccId);const groupIdsToProc=new Set();const txsToUpdateInit=[];selCbs.forEach(cb=>{const txId=cb.dataset.id;const tx=transactions.find(t=>t.id===txId);if(tx){txsToUpdateInit.push(tx);if(tx.originalGroupId&&tx.originalGroupId!=="null"&&tx.originalGroupId!=="")groupIdsToProcess.add(tx.originalGroupId);}});const finalTxsToUpdate=[...txsToUpdateInit];groupIdsToProcess.forEach(gId=>{transactions.forEach(t=>{if(t.originalGroupId===gId&&!finalTxsToUpdate.find(ftu=>ftu.id===t.id))finalTxsToUpdate.push(t);});});const uniqueTxsToUpdate=[...new Set(finalTxsToUpdate)];uniqueTxsToUpdate.forEach(tx=>{if(tx.accountId&&tx.isPaid){if(tx.isCreditCard){const oldC=creditCards.find(c=>c.id===tx.accountId);if(oldC){if(tx.fundamentalType==='despesa')oldC.availableLimit+=tx.value;else oldC.availableLimit-=tx.value;}}else{const oldA=accounts.find(a=>a.id===tx.accountId);if(oldA){if(tx.fundamentalType==='despesa')oldA.balance+=tx.value;else oldA.balance-=tx.value;}}}tx.accountId=targetAccId;tx.isCreditCard=targetIsCC;if(tx.isPaid){if(targetIsCC){const newC=creditCards.find(c=>c.id===targetAccId);if(newC){if(tx.fundamentalType==='despesa')newC.availableLimit-=tx.value;else newC.availableLimit+=tx.value;}}else{const newA=accounts.find(a=>a.id===targetAccId);if(newA){if(newA.type==='corrente'&&newA.limitOverdraft>0&&tx.fundamentalType==='despesa'&&(newA.balance-tx.value<-newA.limitOverdraft)){showFeedback(`Vincular ${tx.description} a ${newA.name} excede limite.`,'error');}else{if(tx.fundamentalType==='despesa')newA.balance-=tx.value;else newA.balance+=tx.value;}}}}linkedCount++;});if(linkedCount>0){saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); showFeedback(`${linkedCount} transação(ões) vinculada(s).`,"success");}else showFeedback("Nenhuma transação vinculada.","info");updateSelectedTransactionsActions();});
+            if(paySelectedTransactionsBtn) paySelectedTransactionsBtn.addEventListener('click', () => { const ids = Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb => cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{if(markTransactionAsPaid(id,false))count++;}); if(count>0)showFeedback(`${count} transação(ões) paga(s).`,"success"); else showFeedback("Nenhuma transação pendente alterada.","info"); renderTransactions(searchTransactionsInput.value); updateSelectedTransactionsActions(); suggestFinancialGoals(); });
+            if(unpaySelectedTransactionsBtn) unpaySelectedTransactionsBtn.addEventListener('click', () => { const ids=Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb=>cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{const tx=transactions.find(t=>t.id===id);if(tx&&tx.isPaid){const wasPaid=tx.isPaid;tx.isPaid=false;if(wasPaid&&tx.accountId&&!tx.isCreditCard){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa')acc.balance+=tx.value;else acc.balance-=tx.value;saveAccounts();}}count++;}}); if(count>0){saveTransactions();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();showFeedback(`${count} transação(ões) desmarcada(s) como paga(s).`,"success");}else showFeedback("Nenhuma transação paga alterada.","info");updateSelectedTransactionsActions(); suggestFinancialGoals();});
+            if(linkSelectedTransactionsBtn) linkSelectedTransactionsBtn.addEventListener('click', () => { const selCbs=Array.from(document.querySelectorAll('.transaction-checkbox:checked')); const targetAccId=linkSelectedAccountSelect.value; if(selCbs.length===0){showFeedback("Nenhuma transação selecionada.","info");return;}if(!targetAccId){showFeedback("Selecione conta/cartão para vincular.","error");return;}let linkedCount=0;const targetIsCC=creditCards.some(c=>c.id===targetAccId);const groupIdsToProc=new Set();const txsToUpdateInit=[];selCbs.forEach(cb=>{const txId=cb.dataset.id;const tx=transactions.find(t=>t.id===txId);if(tx){txsToUpdateInit.push(tx);if(tx.originalGroupId&&tx.originalGroupId!=="null"&&tx.originalGroupId!=="")groupIdsToProcess.add(tx.originalGroupId);}});const finalTxsToUpdate=[...txsToUpdateInit];groupIdsToProcess.forEach(gId=>{transactions.forEach(t=>{if(t.originalGroupId===gId&&!finalTxsToUpdate.find(ftu=>ftu.id===t.id))finalTxsToUpdate.push(t);});});const uniqueTxsToUpdate=[...new Set(finalTxsToUpdate)];uniqueTxsToUpdate.forEach(tx=>{if(tx.accountId&&tx.isPaid){if(tx.isCreditCard){const oldC=creditCards.find(c=>c.id===tx.accountId);if(oldC){if(tx.fundamentalType==='despesa')oldC.availableLimit+=tx.value;else oldC.availableLimit-=tx.value;}}else{const oldA=accounts.find(a=>a.id===tx.accountId);if(oldA){if(tx.fundamentalType==='despesa')oldA.balance+=tx.value;else oldA.balance-=tx.value;}}}tx.accountId=targetAccId;tx.isCreditCard=targetIsCC;if(tx.isPaid){if(targetIsCC){const newC=creditCards.find(c=>c.id===targetAccId);if(newC){if(tx.fundamentalType==='despesa')newC.availableLimit-=tx.value;else newC.availableLimit+=tx.value;}}else{const newA=accounts.find(a=>a.id===targetAccId);if(newA){if(newA.type==='corrente'&&newA.limitOverdraft>0&&tx.fundamentalType==='despesa'&&(newA.balance-tx.value<-newA.limitOverdraft)){showFeedback(`Vincular ${tx.description} a ${newA.name} excede limite.`,'error');}else{if(tx.fundamentalType==='despesa')newA.balance-=tx.value;else newA.balance+=tx.value;}}}}linkedCount++;});if(linkedCount>0){saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); showFeedback(`${linkedCount} transação(ões) vinculada(s).`,"success");}else showFeedback("Nenhuma transação vinculada.","info");updateSelectedTransactionsActions(); suggestFinancialGoals();});
             
             if(linkSelectedCategoryBtn) {
                 linkSelectedCategoryBtn.addEventListener('click', () => {
@@ -1667,6 +1626,7 @@
                         showFeedback("Nenhuma categoria de transação foi alterada.", "info");
                     }
                     updateSelectedTransactionsActions(); 
+                    suggestFinancialGoals(); // Atualiza sugestões
                 });
             }
 
@@ -1767,21 +1727,13 @@
                         itemDeleted = true;
                         if (showIndividualFeedback) showFeedback('Entrada da conta excluída.', 'success');
                     }
-                } else if (type === 'goal') {
-                    const goalIndex = financialGoals.findIndex(g => g.id === id);
-                    if (goalIndex > -1) {
-                        const goalName = financialGoals[goalIndex].name;
-                        financialGoals.splice(goalIndex, 1);
-                        saveFinancialGoals();
-                        if (showIndividualFeedback) showFeedback(`Meta "${goalName}" excluída.`, 'info');
-                        itemDeleted = true;
-                    }
-                }
+                } 
                 if (itemDeleted) {
                     saveTransactions(); saveAccounts(); saveCreditCards();
                     renderTransactions(searchTransactionsInput.value);
                     renderAccounts(); renderCreditCards();
                     updateSummary(); renderMonthlySummary(); checkCreditCardDueDates();
+                    suggestFinancialGoals(); // Atualiza sugestões
                     if (type === 'accountEntry' && accountIdForReversal) {
                         const accountForModal = accounts.find(a => a.id === accountIdForReversal);
                         if (accountForModal) openAccountEntriesModal(accountIdForReversal, accountForModal.name);
@@ -1790,13 +1742,13 @@
                 return itemDeleted;
             };
             const markTransactionAsPaid = (id, showIndividualFeedback = true) => { const tx = transactions.find(t=>t.id===id); if(tx&&!tx.isPaid){const prevPaid=tx.isPaid;tx.isPaid=true;if(!prevPaid&&tx.accountId){if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){card.availableLimit+=tx.value; 
-            saveCreditCards();}}else{const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa'){if(acc.type==='corrente'&&acc.limitOverdraft>0&&(acc.balance-tx.value<-acc.limitOverdraft)){showFeedback(`Pagamento ${formatCurrency(tx.value)} p/ ${acc.name} excede limite.`,'error');tx.isPaid=false;return false;}else acc.balance-=tx.value;}else acc.balance+=tx.value;saveAccounts();}}}saveTransactions();if(showIndividualFeedback)showFeedback('Transação paga!','success');renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();return true;}else if(tx&&tx.isPaid){if(showIndividualFeedback)showFeedback('Transação já está paga.','info');return false;}return false;};
+            saveCreditCards();}}else{const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa'){if(acc.type==='corrente'&&acc.limitOverdraft>0&&(acc.balance-tx.value<-acc.limitOverdraft)){showFeedback(`Pagamento ${formatCurrency(tx.value)} p/ ${acc.name} excede limite.`,'error');tx.isPaid=false;return false;}else acc.balance-=tx.value;}else acc.balance+=tx.value;saveAccounts();}}}saveTransactions();if(showIndividualFeedback)showFeedback('Transação paga!','success');renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates(); suggestFinancialGoals(); return true;}else if(tx&&tx.isPaid){if(showIndividualFeedback)showFeedback('Transação já está paga.','info');return false;}return false;};
             const openEditModal = (id) => { const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');return;}editTransactionIdInput.value=tx.id;editDateInput.value=tx.date;editDescriptionInput.value=tx.description;editValueInput.value=tx.value.toFixed(2);populateCategorySelect(editCategorySelect);editCategorySelect.value=tx.category;editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';const[paid,total]=tx.installments.split('/').map(Number);editInstallmentsTotalInput.value=total;editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsPaidInput.value=paid;editInstallmentsPaidInput.max=total;editDateInput.readOnly=false;editDescriptionInput.readOnly=false;editDescriptionInput.classList.remove('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=false;editValueInput.classList.remove('bg-gray-100','cursor-not-allowed');editTransactionModal.classList.remove('hidden');};
             if(editCategorySelect) editCategorySelect.addEventListener('change', () => { if(editCategorySelect.value==='nova-categoria'){editNewCategoryInput.classList.remove('hidden');editNewCategoryInput.focus();}else{editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';}});
             const closeEditModal = () => {editTransactionModal.classList.add('hidden');editDescriptionInput.readOnly=true;editDescriptionInput.classList.add('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=true;editValueInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editDateInput.readOnly=true;editNewCategoryInput.classList.add('hidden');};
             if(closeEditModalBtn) closeEditModalBtn.addEventListener('click',closeEditModal);
             if(cancelEditTransactionBtn) cancelEditTransactionBtn.addEventListener('click',closeEditModal);
-            if(saveEditTransactionBtn) saveEditTransactionBtn.addEventListener('click',()=>{const id=editTransactionIdInput.value;const newDate=editDateInput.value;const newDesc=editDescriptionInput.value.trim();const newVal=parseFloat(editValueInput.value);const newPaidInst=parseInt(editInstallmentsPaidInput.value);let newCat=editCategorySelect.value;if(newCat==='nova-categoria'){const typedNewCat=editNewCategoryInput.value.trim();if(typedNewCat){if(!categories.includes(typedNewCat)){categories.push(typedNewCat);saveCategories();populateCategorySelect();populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect();}newCat=typedNewCat;}else{showFeedback('Nova categoria vazia.','error');return;}}const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');closeEditModal();return;}const totalInst=parseInt(tx.installments.split('/')[1]);if(!newDate||!newDesc||isNaN(newVal)||newVal<=0||isNaN(newPaidInst)||newPaidInst<0||newPaidInst>totalInst){showFeedback('Dados inválidos.','error');return;}const oldVal=tx.value;const oldPaid=tx.isPaid;const fundType=tx.fundamentalType;if(tx.accountId){if(!tx.isCreditCard&&oldPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance+=oldVal;else acc.balance-=oldVal;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit+=oldVal;else card.availableLimit-=oldVal;}}}tx.date=newDate;tx.description=newDesc;tx.value=newVal;tx.category=newCat;tx.installments=`${newPaidInst}/${totalInst}`;tx.isPaid=newPaidInst>=totalInst;if(tx.accountId){if(!tx.isCreditCard&&tx.isPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance-=tx.value;else acc.balance+=tx.value;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit-=tx.value;else card.availableLimit+=tx.value;}}}saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();showFeedback('Transação atualizada!','success');closeEditModal();});
+            if(saveEditTransactionBtn) saveEditTransactionBtn.addEventListener('click',()=>{const id=editTransactionIdInput.value;const newDate=editDateInput.value;const newDesc=editDescriptionInput.value.trim();const newVal=parseFloat(editValueInput.value);const newPaidInst=parseInt(editInstallmentsPaidInput.value);let newCat=editCategorySelect.value;if(newCat==='nova-categoria'){const typedNewCat=editNewCategoryInput.value.trim();if(typedNewCat){if(!categories.includes(typedNewCat)){categories.push(typedNewCat);saveCategories();populateCategorySelect();populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect();}newCat=typedNewCat;}else{showFeedback('Nova categoria vazia.','error');return;}}const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');closeEditModal();return;}const totalInst=parseInt(tx.installments.split('/')[1]);if(!newDate||!newDesc||isNaN(newVal)||newVal<=0||isNaN(newPaidInst)||newPaidInst<0||newPaidInst>totalInst){showFeedback('Dados inválidos.','error');return;}const oldVal=tx.value;const oldPaid=tx.isPaid;const fundType=tx.fundamentalType;if(tx.accountId){if(!tx.isCreditCard&&oldPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance+=oldVal;else acc.balance-=oldVal;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit+=oldVal;else card.availableLimit-=oldVal;}}}tx.date=newDate;tx.description=newDesc;tx.value=newVal;tx.category=newCat;tx.installments=`${newPaidInst}/${totalInst}`;tx.isPaid=newPaidInst>=totalInst;if(tx.accountId){if(!tx.isCreditCard&&tx.isPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance-=tx.value;else acc.balance+=tx.value;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit-=tx.value;else card.availableLimit+=tx.value;}}}saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();showFeedback('Transação atualizada!','success');closeEditModal(); suggestFinancialGoals();});
 
             // --- Resumo e Cálculos ---
             const updateSummary = () => {
@@ -1849,8 +1801,8 @@
             };
             const updateMonthlyDisplay = () => { if(currentMonthDisplay) currentMonthDisplay.textContent = new Date(currentYear,currentMonth).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});};
             const renderMonthlySummary = () => { let monthExp=0;const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);transactions.forEach(t=>{const tD=new Date(t.date + "T00:00:00");if(t.fundamentalType==='despesa'&&((tD.getMonth()===currentMonth&&tD.getFullYear()===currentYear)||(tD<bom&&!t.isPaid)))monthExp+=t.value;});if(totalDespesasEl)totalDespesasEl.textContent=formatCurrency(monthExp);}; 
-            if(prevMonthBtn) prevMonthBtn.addEventListener('click',()=>{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();renderCreditCards();}); 
-            if(nextMonthBtn) nextMonthBtn.addEventListener('click',()=>{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();renderCreditCards();});
+            if(prevMonthBtn) prevMonthBtn.addEventListener('click',()=>{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();renderCreditCards(); suggestFinancialGoals();}); 
+            if(nextMonthBtn) nextMonthBtn.addEventListener('click',()=>{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();renderCreditCards(); suggestFinancialGoals();});
 
 
             // --- Funções de Importação Modificadas ---
@@ -2097,6 +2049,7 @@
                 let fbMsg = `Importação: ${importedCount} transação(ões) originais processada(s).`;
                 if (skippedCount > 0 && importErrors.length === 0) fbMsg += ` ${skippedCount} ignorada(s).`; else if (skippedCount > 0 && importErrors.length > 0 && importedCount > 0) fbMsg += ` ${skippedCount} adicional(is) ignorada(s).`;
                 showFeedback(fbMsg,importedCount > 0 ? 'success' : (importErrors.length > 0 ? 'error' : 'info') );
+                suggestFinancialGoals(); // Atualiza sugestões
             });
             if(cancelReviewBtn) cancelReviewBtn.addEventListener('click', () => { importedTransactionsToReview = []; importedTransactionsTableBody.innerHTML = ''; importReviewSection.classList.add('hidden'); fileInput.value = ''; showFeedback('Importação cancelada.', 'info'); fileInput.disabled = false; importFileBtn.disabled = false; });
             
@@ -2104,126 +2057,100 @@
             if(downloadXlsxBtn) downloadXlsxBtn.addEventListener('click', () => { const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);const dataExp=transactions.filter(t=>{const td=new Date(t.date);td.setHours(0,0,0,0);return(td.getMonth()===currentMonth&&td.getFullYear()===currentYear)||(td<bom&&!t.isPaid);}).sort((a,b)=>new Date(a.date)-new Date(b.date)).map(t=>{let typeD=t.type;if(t.type==='pix_enviado')typeD='PIX Enviado';else if(t.type==='pix_recebido')typeD='PIX Recebido';else if(t.type==='saque')typeD='Saque';else if(t.type==='receita')typeD='Receita';else if(t.type==='despesa')typeD='Despesa';return{Data:new Date(t.date).toLocaleDateString('pt-BR'),Descrição:t.description,Valor:t.value,Tipo:typeD,Categoria:t.category,'Conta / Cartão':t.accountId?(t.isCreditCard?(creditCards.find(c=>c.id===t.accountId)?.name||'N/A'):(accounts.find(a=>a.id===t.accountId)?.name||'N/A')):"Não Vinculada",Parcela:t.installments,Pago:t.isPaid?'Sim':'Não'}});if(dataExp.length===0){showFeedback('Não há transações para baixar.','info');return;}const ws=XLSX.utils.json_to_sheet(dataExp);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Transacoes");const mName=new Date(currentYear,currentMonth).toLocaleDateString('pt-BR',{month:'long'});XLSX.writeFile(wb,`transacoes_${mName}_${currentYear}.xlsx`);showFeedback('Planilha baixada!','success');});
             
             const checkCreditCardDueDates = () => { const today=new Date();today.setHours(0,0,0,0);creditCards.forEach(card=>{const dueDay=card.dueDay;let billDueDate=new Date(today.getFullYear(),today.getMonth(),dueDay);billDueDate.setHours(0,0,0,0);if(today.getDate()>dueDay)billDueDate.setMonth(today.getMonth()+1);let billClosingDate=new Date(billDueDate.getTime());billClosingDate.setDate(billDueDate.getDate()-10);if(billClosingDate.getDate() > dueDay) billClosingDate.setMonth(billClosingDate.getMonth()-1);billClosingDate.setHours(0,0,0,0);if(today.getTime()===billClosingDate.getTime()){const closingBill=transactions.reduce((s,t)=>{const tD=new Date(t.date);let cSA=new Date(billClosingDate);cSA.setDate(cSA.getDate()-(card.dueDay>10?30:28));if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&tD>=cSA&&tD<billClosingDate)return s+t.value;return s;},0);if(closingBill>0)showFeedback(`FATURA FECHADA: ${card.name} fechou! Valor: ${formatCurrency(closingBill)}. Venc.: ${billDueDate.toLocaleDateString('pt-BR')}`,'info');}const diffT=billDueDate.getTime()-today.getTime();const diffD=Math.ceil(diffT/(1000*60*60*24));const billNotify=transactions.reduce((s,t)=>{const tD=new Date(t.date);if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&!t.isPaid&&tD>=billClosingDate&&tD<billDueDate)return s+t.value;return s;},0);if(diffD<=7&&diffD>=0&&billNotify>0)showFeedback(`VENC. PRÓXIMO: ${card.name} vence ${diffD===0?'HOJE':'em '+diffD+' dia(s)'}! Valor: ${formatCurrency(billNotify)}`,'info');});};
-            if(goalIdeasHeader) goalIdeasHeader.addEventListener('click',()=>{goalIdeasContent.classList.toggle('hidden');goalIdeasArrow.classList.toggle('rotated');});
             
-            if(generateGoalIdeasBtn) {
-                generateGoalIdeasBtn.addEventListener('click', async () => {
-                    if (goalIdeasSpinner) goalIdeasSpinner.classList.remove('hidden');
-                    if (goalIdeasOutput) goalIdeasOutput.innerHTML = '<p class="text-center text-gray-500">A gerar ideias...</p>';
-                    console.log("Botão 'Gerar Ideias de Metas' clicado.");
-
-                    const today = new Date();
-                    const lastMonthDate = new Date(today.getFullYear(), today.getMonth() -1, 1);
-                    const prevMonth = lastMonthDate.getMonth();
-                    const prevYear = lastMonthDate.getFullYear();
-
-                    const lastMonthIncome = transactions.reduce((sum, t) => {
-                        const tDate = new Date(t.date + "T00:00:00");
-                        if (t.fundamentalType === 'receita' && tDate.getFullYear() === prevYear && tDate.getMonth() === prevMonth) {
-                            return sum + t.value;
-                        }
-                        return sum;
-                    }, 0);
-
-                    const lastMonthExpenses = transactions.reduce((sum, t) => {
-                        const tDate = new Date(t.date + "T00:00:00");
-                        if (t.fundamentalType === 'despesa' && tDate.getFullYear() === prevYear && tDate.getMonth() === prevMonth) {
-                            return sum + t.value;
-                        }
-                        return sum;
-                    }, 0);
-                    
-                    const accountBalancesSummary = accounts.map(acc => `${acc.name} (${acc.type}): ${formatCurrency(acc.balance)}`).join(', ');
-                    const totalAccountBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-                    
-                    const totalGastoCartoesMesEl = document.getElementById('total-gasto-cartoes-mes');
-                    const currentMonthCardBills = totalGastoCartoesMesEl ? (parseFloat(totalGastoCartoesMesEl.textContent.replace(/[R$.\s]/g, '').replace(',', '.')) || 0) : 0;
-
-
-                    const spendingByCategoryLastMonth = transactions.filter(t => {
-                        const tDate = new Date(t.date + "T00:00:00");
-                        return t.fundamentalType === 'despesa' && tDate.getFullYear() === prevYear && tDate.getMonth() === prevMonth;
-                    }).reduce((acc, t) => {
-                        acc[t.category] = (acc[t.category] || 0) + t.value;
-                        return acc;
-                    }, {});
-
-                    const topSpendingCategories = Object.entries(spendingByCategoryLastMonth)
-                        .sort(([,a],[,b]) => b-a)
-                        .slice(0, 3)
-                        .map(([cat, val]) => `- ${cat}: ${formatCurrency(val)}`)
-                        .join('\n');
-
-                    const prompt = `
-                        Com base nos seguintes dados financeiros de um usuário, sugira de 3 a 4 ideias de metas financeiras realistas e acionáveis.
-                        Para cada meta, forneça uma breve justificativa (1-2 frases) de por que seria relevante para este usuário.
-                        Priorize metas que ajudem a melhorar a saúde financeira geral. As sugestões devem ser curtas e diretas.
-
-                        Dados Financeiros:
-                        - Renda Mensal (aproximada do último mês completo): ${formatCurrency(lastMonthIncome)}
-                        - Despesas Mensais Totais (aproximadas do último mês completo): ${formatCurrency(lastMonthExpenses)}
-                        - Saldo Líquido Atual em Todas as Contas: ${formatCurrency(totalAccountBalance)}
-                        - Faturas de Cartão de Crédito Pendentes (mês atual): ${formatCurrency(currentMonthCardBills)}
-                        - Principais Categorias de Gasto (último mês, se houver):
-                          ${topSpendingCategories || "Nenhuma despesa registrada no último mês."}
-
-                        Formato da Resposta Esperada (use markdown para negrito e listas):
-                        - **Nome da Meta 1:** Justificativa...
-                        - **Nome da Meta 2:** Justificativa...
-                        (Até 4 metas)
-
-                        Se os dados forem insuficientes para gerar metas altamente personalizadas (ex: renda ou despesas zeradas no último mês), sugira metas financeiras genéricas importantes como 'Criar uma reserva de emergência para cobrir X meses de despesas.' ou 'Começar a investir R$Y por mês em Z.' ou 'Reduzir gastos em [categoria com maior despesa, se houver] em X%.'
-                        Seja conciso e prático nas sugestões.
-                    `;
-                    
-                    console.log("Prompt para API:", prompt);
-
-                    let chatHistory = [];
-                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                    const payload = { contents: chatHistory };
-                    const apiKey = ""; 
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                    try {
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        
-                        console.log("API Response Status:", response.status); 
-                        console.log("API Response Status Text:", response.statusText); 
-
-                        if (!response.ok) { 
-                            const errorBody = await response.text();
-                            console.error("API Error Response Body:", errorBody);
-                            throw new Error(`API request failed with status ${response.status}: ${response.statusText}. Body: ${errorBody}`);
-                        }
-                        
-                        const result = await response.json();
-                        console.log("API Full Result:", result); 
-
-                        if (result.candidates && result.candidates.length > 0 &&
-                            result.candidates[0].content && result.candidates[0].content.parts &&
-                            result.candidates[0].content.parts.length > 0 &&
-                            result.candidates[0].content.parts[0].text) { // Adicionada verificação para text
-                            let text = result.candidates[0].content.parts[0].text;
-                            text = text.replace(/- \*\*(.*?):\*\*/g, '<p class="mt-2"><strong>$1:</strong>');
-                            text = text.replace(/\n- /g, '</p><p class="mt-2">- ');
-                            text = text.replace(/\n/g, '<br>'); 
-                            if (goalIdeasOutput) goalIdeasOutput.innerHTML = text;
-                        } else {
-                            if (goalIdeasOutput) goalIdeasOutput.innerHTML = '<p class="text-red-500">Não foi possível gerar ideias de metas neste momento (estrutura de resposta inesperada ou texto ausente). Tente novamente mais tarde.</p>';
-                            console.error("Resposta da API inesperada, sem conteúdo ou sem texto:", result); 
-                        }
-                    } catch (error) {
-                        console.error("Erro ao gerar ideias de metas (catch block):", error);
-                        if (goalIdeasOutput) goalIdeasOutput.innerHTML = `<p class="text-red-500">Erro ao conectar com o serviço de IA. Verifique sua conexão ou tente mais tarde. Detalhe: ${error.message}</p>`;
-                    } finally {
-                        if (goalIdeasSpinner) goalIdeasSpinner.classList.add('hidden');
+            // --- Nova Seção: Sugestões de Metas (sem IA) ---
+            if(suggestedGoalsHeader) {
+                suggestedGoalsHeader.addEventListener('click', () => {
+                    suggestedGoalsContent.classList.toggle('hidden');
+                    suggestedGoalsArrow.classList.toggle('rotated');
+                    if (!suggestedGoalsContent.classList.contains('hidden')) {
+                        suggestFinancialGoals(); // Gera/atualiza as metas ao expandir
                     }
                 });
             }
+
+            const suggestFinancialGoals = () => {
+                if (!suggestedGoalsList || !noSuggestedGoalsMessage) return;
+                suggestedGoalsList.innerHTML = '';
+                const suggestions = [];
+
+                // 1. Reserva de Emergência
+                const totalAccountBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+                const lastMonthExpenses = transactions.reduce((sum, t) => {
+                    const tDate = new Date(t.date + "T00:00:00");
+                    const lastMonth = new Date(currentYear, currentMonth -1, 1); // Mês anterior
+                    if (t.fundamentalType === 'despesa' && tDate.getFullYear() === lastMonth.getFullYear() && tDate.getMonth() === lastMonth.getMonth()) {
+                        return sum + t.value;
+                    }
+                    return sum;
+                }, 0);
+                
+                const emergencyFundTarget = lastMonthExpenses * 3; // Ex: 3 meses de despesas
+                if (lastMonthExpenses > 0 && totalAccountBalance < emergencyFundTarget) {
+                    suggestions.push(`<strong>Reserva de Emergência:</strong> Aumentar sua reserva para cobrir pelo menos 3 meses de despesas (${formatCurrency(emergencyFundTarget)}). Saldo atual: ${formatCurrency(totalAccountBalance)}.`);
+                } else if (lastMonthExpenses === 0 && totalAccountBalance < 1000) { // Sugestão genérica se não há despesas
+                     suggestions.push(`<strong>Reserva de Emergência:</strong> Comece a construir uma reserva de emergência. Tente guardar um valor fixo por mês.`);
+                }
+
+
+                // 2. Redução de Gastos com Cartão (se houver faturas altas)
+                let totalCurrentCardBills = 0;
+                creditCards.forEach(card => {
+                    totalCurrentCardBills += transactions.reduce((sum, t) => {
+                        const tDate = new Date(t.date + "T00:00:00");
+                        if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
+                            tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
+                            return sum + t.value;
+                        }
+                        return sum;
+                    }, 0);
+                });
+                // Considerar "alto" se for mais que 30% das despesas do último mês (se houver despesas)
+                if (lastMonthExpenses > 0 && totalCurrentCardBills > (lastMonthExpenses * 0.5)) {
+                     suggestions.push(`<strong>Gastos com Cartão:</strong> Suas faturas atuais de cartão somam ${formatCurrency(totalCurrentCardBills)}. Considere analisar e reduzir esses gastos.`);
+                }
+
+
+                // 3. Analisar Categoria com Maior Gasto
+                const spendingByCategoryLastMonth = transactions.filter(t => {
+                    const tDate = new Date(t.date + "T00:00:00");
+                     const lastMonth = new Date(currentYear, currentMonth -1, 1);
+                    return t.fundamentalType === 'despesa' && tDate.getFullYear() === lastMonth.getFullYear() && tDate.getMonth() === lastMonth.getMonth();
+                }).reduce((acc, t) => {
+                    acc[t.category] = (acc[t.category] || 0) + t.value;
+                    return acc;
+                }, {});
+
+                if (Object.keys(spendingByCategoryLastMonth).length > 0) {
+                    const topSpendingCategory = Object.entries(spendingByCategoryLastMonth)
+                        .sort(([,a],[,b]) => b-a)[0];
+                    if (topSpendingCategory && topSpendingCategory[1] > (lastMonthExpenses * 0.2)) { // Se a top categoria for > 20% das despesas
+                        suggestions.push(`<strong>Otimizar Gastos:</strong> No último mês, sua maior despesa foi com "${topSpendingCategory[0]}" (${formatCurrency(topSpendingCategory[1])}). Avalie se é possível reduzir essa despesa.`);
+                    }
+                }
+
+                // 4. Quitar Parcelamentos
+                const activeInstallments = transactions.filter(t => {
+                    const installmentsParts = t.installments.split('/');
+                    return installmentsParts.length === 2 && parseInt(installmentsParts[0]) < parseInt(installmentsParts[1]) && !t.isPaid;
+                }).length;
+
+                if (activeInstallments > 3) { // Exemplo: mais de 3 parcelamentos ativos
+                    suggestions.push(`<strong>Parcelamentos:</strong> Você possui ${activeInstallments} compras parceladas em aberto. Considere focar em quitar algumas para liberar seu orçamento futuro.`);
+                }
+
+
+                if (suggestions.length > 0) {
+                    noSuggestedGoalsMessage.classList.add('hidden');
+                    suggestions.forEach(suggestionText => {
+                        const li = document.createElement('li');
+                        li.innerHTML = suggestionText; // Usar innerHTML para renderizar o <strong>
+                        suggestedGoalsList.appendChild(li);
+                    });
+                } else {
+                    noSuggestedGoalsMessage.classList.remove('hidden');
+                }
+            };
 
 
             // --- Relatórios ---
@@ -2287,11 +2214,7 @@
                     const tx = transactions.find(t => t.id === id);
                     itemName = tx ? `a transação "${tx.description}"` : "este item";
                      if (tx && tx.originalGroupId && type === 'transaction') itemName += " e todas as suas parcelas";
-                } else if (type === 'goal') { 
-                    const goal = financialGoals.find(g => g.id === id);
-                    itemName = goal ? `a meta "${goal.name}"` : "este item";
-                }
-
+                } 
                 confirmationModalMessage.textContent = `Tem a certeza que deseja excluir ${itemName}? Esta ação não pode ser desfeita.`;
                 confirmationModal.classList.remove('hidden');
             }
