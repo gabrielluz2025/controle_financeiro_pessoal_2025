@@ -271,6 +271,9 @@
         .bill-details-content li {
             margin-bottom: 0.25rem;
         }
+        #account-entries-modal .modal-content {
+            max-height: 80vh; /* Limitar altura do modal */
+        }
 
 
     </style>
@@ -764,6 +767,36 @@
             </div>
         </div>
     </div>
+     <div id="account-entries-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="account-entries-title">Extrato de Entradas</h3>
+                <button class="modal-close-btn" id="close-account-entries-modal">&times;</button>
+            </div>
+            <div class="modal-body overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="account-entries-list" class="bg-white divide-y divide-gray-200">
+                        {/* Entradas serão listadas aqui */}
+                    </tbody>
+                </table>
+                <p id="no-account-entries-message" class="text-center text-gray-500 mt-4 hidden">Nenhuma entrada registrada para esta conta.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="close-account-entries-modal-footer"
+                        class="px-4 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         // Arrays globais para armazenar dados
@@ -869,6 +902,12 @@
             const bulkEditAccountSelect = document.getElementById('bulk-edit-account');
             const bulkEditStatusSelect = document.getElementById('bulk-edit-status');
             const applyBulkEditImportedBtn = document.getElementById('apply-bulk-edit-imported-btn');
+            const accountEntriesModal = document.getElementById('account-entries-modal');
+            const closeAccountEntriesModalBtn = document.getElementById('close-account-entries-modal');
+            const closeAccountEntriesModalFooterBtn = document.getElementById('close-account-entries-modal-footer');
+            const accountEntriesList = document.getElementById('account-entries-list');
+            const accountEntriesTitle = document.getElementById('account-entries-title');
+            const noAccountEntriesMessage = document.getElementById('no-account-entries-message');
 
 
             // --- Funções Utilitárias ---
@@ -1164,6 +1203,7 @@
                     } else { 
                         accountDetailsHtml += `<p>Saldo: <span class="font-bold ${account.balance >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(account.balance)}</span></p>`;
                     }
+                     accountDetailsHtml += `<button data-account-id="${account.id}" class="view-account-entries-btn text-xs text-blue-600 hover:text-blue-800 mt-1">Ver Entradas</button>`;
                     accountDetailsHtml += `</div>`;
                     
                     li.innerHTML = `<div class="flex-grow">${accountDetailsHtml}</div>
@@ -1179,6 +1219,11 @@
                         detailsDiv.classList.toggle('hidden');
                         arrowIcon.classList.toggle('rotated');
                     });
+                     li.querySelector('.view-account-entries-btn').addEventListener('click', (e) => {
+                        e.stopPropagation(); // Para não disparar o colapso da conta
+                        openAccountEntriesModal(account.id, account.name);
+                    });
+
 
                     accountsList.appendChild(li);
                 });
@@ -1225,13 +1270,59 @@
                 }); 
                 addDeleteListeners(); 
             };
-            const populateAccountSelects = (targetSelect = accountSelect) => { if(!targetSelect) return; targetSelect.innerHTML = ''; const noLinkOpt = document.createElement('option'); noLinkOpt.value = ""; noLinkOpt.textContent = targetSelect === accountSelect ? "Não Vincular / Geral" : "Selecione"; targetSelect.appendChild(noLinkOpt); accounts.forEach(acc => { const opt = document.createElement('option'); opt.value = acc.id; let typeText = ""; if(acc.type === 'corrente') typeText = "C/C"; else if (acc.type === 'poupanca') typeText = "Poupança"; else typeText = "Dinheiro"; opt.textContent = `${acc.name} (${typeText})`; targetSelect.appendChild(opt); }); creditCards.forEach(card => { const opt = document.createElement('option'); opt.value = card.id; opt.textContent = `${card.name} (Cartão)`; targetSelect.appendChild(opt); }); if (!targetSelect.value && targetSelect === accountSelect) targetSelect.value = ""; };
+            const populateAccountSelects = (targetSelect = accountSelect, forRevenue = false) => {
+                if (!targetSelect) return;
+                targetSelect.innerHTML = '';
+                const noLinkOpt = document.createElement('option');
+                noLinkOpt.value = "";
+                noLinkOpt.textContent = targetSelect === accountSelect ? (forRevenue ? "Selecione uma Conta" : "Não Vincular / Geral") : "Selecione";
+                if (forRevenue) noLinkOpt.disabled = true; // Torna obrigatório se for para receita
+                targetSelect.appendChild(noLinkOpt);
+
+                accounts.forEach(acc => {
+                    const opt = document.createElement('option');
+                    opt.value = acc.id;
+                    let typeText = "";
+                    if (acc.type === 'corrente') typeText = "C/C";
+                    else if (acc.type === 'poupanca') typeText = "Poupança";
+                    else typeText = "Dinheiro";
+                    opt.textContent = `${acc.name} (${typeText})`;
+                    targetSelect.appendChild(opt);
+                });
+
+                if (!forRevenue) { // Só adiciona cartões se não for para receita
+                    creditCards.forEach(card => {
+                        const opt = document.createElement('option');
+                        opt.value = card.id;
+                        opt.textContent = `${card.name} (Cartão)`;
+                        targetSelect.appendChild(opt);
+                    });
+                }
+                if (!targetSelect.value && targetSelect === accountSelect && !forRevenue) targetSelect.value = "";
+                else if (!targetSelect.value && forRevenue && accounts.length > 0) targetSelect.value = ""; // Força seleção para receita
+            };
              
             const populateCategorySelect = (selectElement = categorySelect) => { if(!selectElement) return; const currVal = selectElement.value; selectElement.innerHTML = ''; if (selectElement === categorySelect) { const phOpt = document.createElement('option'); phOpt.value = ""; phOpt.textContent = "Selecione categoria"; phOpt.disabled = true; phOpt.selected = !currVal; selectElement.appendChild(phOpt); } categories.sort((a,b) => a.localeCompare(b)).forEach(cat => { const opt = document.createElement('option'); opt.value = cat; opt.textContent = cat; selectElement.appendChild(opt); }); const newOpt = document.createElement('option'); newOpt.value = 'nova-categoria'; newOpt.textContent = 'Adicionar Nova...'; selectElement.appendChild(newOpt); if (categories.includes(currVal)) selectElement.value = currVal; else if (currVal === 'nova-categoria' && selectElement === categorySelect) selectElement.value = 'nova-categoria'; else if (!currVal && selectElement !== categorySelect && categories.length > 0 && selectElement.options.length > (selectElement === categorySelect ? 1:0) ) selectElement.value = categories[0]; };
             
             if(categorySelect) {
                 categorySelect.addEventListener('change', () => { if (categorySelect.value === 'nova-categoria') { newCategoryInput.classList.remove('hidden'); newCategoryInput.focus(); newCategoryInput.value = ''; } else { newCategoryInput.classList.add('hidden'); newCategoryInput.value = ''; }});
             }
+             if (transactionTypeSelect) {
+                transactionTypeSelect.addEventListener('change', (e) => {
+                    const isRevenueType = e.target.value === 'receita' || e.target.value === 'pix_recebido';
+                    populateAccountSelects(accountSelect, isRevenueType);
+                    if (isRevenueType) {
+                        accountSelect.required = true;
+                        // Opcional: remover seleção de cartão se houver
+                        if (creditCards.some(card => card.id === accountSelect.value)) {
+                            accountSelect.value = "";
+                        }
+                    } else {
+                        accountSelect.required = false;
+                    }
+                });
+            }
+
 
             // --- Gerenciamento de Transações ---
             if(transactionForm) {
@@ -1244,6 +1335,17 @@
                     const accountId = document.getElementById('account-select').value; 
                     const totalInstallments = parseInt(installmentsInput.value) || 1;
                     const installmentsPaidCount = parseInt(installmentsPaidInput.value) || 0; 
+                    let fundamentalType = (type === 'receita' || type === 'pix_recebido') ? 'receita' : 'despesa'; 
+
+                    if (fundamentalType === 'receita' && !accountId) {
+                        showFeedback('Para receitas, é obrigatório vincular a uma conta.', 'error');
+                        return;
+                    }
+                     if (fundamentalType === 'receita' && creditCards.some(card => card.id === accountId)) {
+                        showFeedback('Receitas não podem ser vinculadas a cartões de crédito.', 'error');
+                        return;
+                    }
+
 
                     let category;
                     if (categorySelect.value === 'nova-categoria') {
@@ -1261,7 +1363,6 @@
                     const isCreditCardTransaction = !!creditCard;
                     let transactionsToAdd = [];
                     const originalGroupId = generateUniqueId(); 
-                    let fundamentalType = (type === 'receita' || type === 'pix_recebido') ? 'receita' : 'despesa'; 
                     
                     for (let k = 1; k <= totalInstallments; k++) {
                         const transactionDateObject = new Date(baseDateString + "T00:00:00"); 
@@ -1295,7 +1396,17 @@
                             let target = newTx.isCreditCard ? tempCreditCards.find(c => c.id === newTx.accountId) : tempAccounts.find(a => a.id === newTx.accountId);
                             if (target) {
                                 if (newTx.isCreditCard) { if (newTx.fundamentalType === 'despesa') target.availableLimit -= newTx.value; else target.availableLimit += newTx.value; } 
-                                else if (newTx.isPaid) { if (newTx.fundamentalType === 'despesa') { if (target.type === 'corrente' && target.limitOverdraft > 0 && (target.balance - newTx.value < -target.limitOverdraft)) { showFeedback(`Transação ${formatCurrency(newTx.value)} para ${target.name} excede limite de cheque especial.`, 'error'); transactionAddedSuccessfully = false; break; } target.balance -= newTx.value; } else target.balance += newTx.value; }
+                                else if (newTx.isPaid || newTx.fundamentalType === 'receita') { // Receitas sempre afetam saldo
+                                    if (newTx.fundamentalType === 'despesa') { 
+                                        if (target.type === 'corrente' && target.limitOverdraft > 0 && (target.balance - newTx.value < -target.limitOverdraft)) { 
+                                            showFeedback(`Transação ${formatCurrency(newTx.value)} para ${target.name} excede limite de cheque especial.`, 'error'); 
+                                            transactionAddedSuccessfully = false; break; 
+                                        } 
+                                        target.balance -= newTx.value; 
+                                    } else { // Receita
+                                        target.balance += newTx.value; 
+                                    }
+                                }
                             } else { showFeedback('Conta/Cartão não encontrado.', 'info'); newTx.accountId = null; newTx.isCreditCard = false; }
                         }
                     }
@@ -1310,7 +1421,7 @@
             }
 
             // --- Renderização e Lógica de Exclusão/Pagamento/Edição de Transações ---
-            const renderTransactions = (searchTerm = "") => {
+            const renderTransactions = (searchTerm = "", filterType = "all_except_revenue") => {
                 if (!transactionList) return;
                 transactionList.innerHTML = '';
                 const beginningOfCurrentMonth = new Date(currentYear, currentMonth, 1);
@@ -1323,7 +1434,7 @@
                     const isInCurrentMonthAndYear = transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth;
                     const isPendingFromPreviousMonth = transactionDate < beginningOfCurrentMonth && !t.isPaid;
                     
-                    if (!t.isCreditCard && !t.isPaid && transactionDate < beginningOfCurrentMonth && !overdueAlerts.has(t.id)) {
+                    if (!t.isCreditCard && !t.isPaid && transactionDate < beginningOfCurrentMonth && !overdueAlerts.has(t.id) && t.fundamentalType === 'despesa') {
                         showFeedback(`Atenção: A despesa "${t.description}" de ${transactionDate.toLocaleDateString('pt-BR')} está em atraso!`, 'error');
                         overdueAlerts.add(t.id);
                     }
@@ -1333,8 +1444,18 @@
                         t.category.toLowerCase().includes(lowerSearchTerm) ||
                         formatCurrency(t.value).toLowerCase().includes(lowerSearchTerm) ||
                         (t.accountId && (accounts.find(a=>a.id === t.accountId)?.name.toLowerCase().includes(lowerSearchTerm) || creditCards.find(c=>c.id === t.accountId)?.name.toLowerCase().includes(lowerSearchTerm)));
+                    
+                    let typeMatch = false;
+                    if (filterType === "all_except_revenue") {
+                        typeMatch = t.fundamentalType !== 'receita';
+                    } else if (filterType === "revenue_only") {
+                        typeMatch = t.fundamentalType === 'receita';
+                    } else if (filterType === "expenses_only") {
+                        typeMatch = t.fundamentalType === 'despesa';
+                    }
 
-                    return (isInCurrentMonthAndYear || isPendingFromPreviousMonth) && matchesSearch;
+
+                    return (isInCurrentMonthAndYear || isPendingFromPreviousMonth) && matchesSearch && typeMatch;
                 }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
                 if (filteredTransactions.length === 0) {
@@ -1414,7 +1535,7 @@
             function performDeleteOperation(transactionId) { const txIdx=transactions.findIndex(t=>t.id===transactionId);if(txIdx>-1){const delTx=transactions[txIdx];if(delTx.accountId){if(delTx.isCreditCard){const card=creditCards.find(c=>c.id===delTx.accountId);if(card){if(delTx.fundamentalType==='despesa')card.availableLimit+=delTx.value;else card.availableLimit-=delTx.value;}}else{const acc=accounts.find(a=>a.id===delTx.accountId);if(acc&&delTx.isPaid){if(delTx.fundamentalType==='despesa')acc.balance+=delTx.value;else acc.balance-=delTx.value;}}}transactions.splice(txIdx,1);return true;}return false;}
             function populateLinkSelectedAccountSelect() { if(!linkSelectedAccountSelect) return; linkSelectedAccountSelect.innerHTML='<option value="">Vincular a...</option>';accounts.forEach(acc=>{const opt=document.createElement('option');opt.value=acc.id;let typeTxt="";if(acc.type==='corrente')typeTxt="C/C";else if(acc.type==='poupanca')typeTxt="Poupança";else typeTxt="Dinheiro";opt.textContent=`${acc.name} (${typeTxt})`;linkSelectedAccountSelect.appendChild(opt);});creditCards.forEach(card=>{const opt=document.createElement('option');opt.value=card.id;opt.textContent=`${card.name} (Cartão)`;linkSelectedAccountSelect.appendChild(opt);});}
             const performDelete = (id, type, showIndividualFeedback = true) => { let itemDeleted=false;if(type==='account'){if(transactions.some(t=>t.accountId===id)){if(showIndividualFeedback)showFeedback('Exclua transações da conta primeiro.','error');return false;}accounts=accounts.filter(acc=>acc.id!==id);saveAccounts();renderAccounts();populateAccountSelects();updateSummary();populateLinkSelectedAccountSelect();if(showIndividualFeedback)showFeedback('Conta excluída.','success');itemDeleted=true;}else if(type==='creditCard'){if(transactions.some(t=>t.accountId===id)){if(showIndividualFeedback)showFeedback('Exclua transações do cartão primeiro.','error');return false;}creditCards=creditCards.filter(card=>card.id!==id);saveCreditCards();renderCreditCards();populateAccountSelects();updateSummary();populateLinkSelectedAccountSelect();if(showIndividualFeedback)showFeedback('Cartão excluído.','success');itemDeleted=true;}else if(type==='transaction'){const initTx=transactions.find(t=>t.id===id);if(!initTx)return false;const grpId=initTx.originalGroupId;let txsToDel=[];if(grpId&&grpId!=="null"&&grpId!==""){txsToDel=transactions.filter(t=>t.originalGroupId===grpId);}else{txsToDel.push(initTx);}if(txsToDel.length===0&&initTx)txsToDel.push(initTx);if(txsToDel.length>0){txsToDel.forEach(delTx=>{if(delTx.accountId){if(delTx.isCreditCard){const card=creditCards.find(c=>c.id===delTx.accountId);if(card){if(delTx.fundamentalType==='despesa')card.availableLimit+=delTx.value;else card.availableLimit-=delTx.value;}}else{const acc=accounts.find(a=>a.id===delTx.accountId);if(acc&&delTx.isPaid){if(delTx.fundamentalType==='despesa')acc.balance+=delTx.value;else acc.balance-=delTx.value;}}}});transactions=transactions.filter(t=>!txsToDel.some(del=>del.id===t.id));itemDeleted=true;}if(itemDeleted&&showIndividualFeedback){if(grpId&&grpId!=="null"&&grpId!==""){showFeedback(`Grupo de parcelas (${txsToDel.length}) excluído.`,'success');}else{showFeedback('Transação excluída.','success');}saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();}}return itemDeleted;};
-            const markTransactionAsPaid = (id, showIndividualFeedback = true) => { const tx = transactions.find(t=>t.id===id); if(tx&&!tx.isPaid){const prevPaid=tx.isPaid;tx.isPaid=true;if(!prevPaid&&tx.accountId){if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){card.availableLimit+=tx.value; // Devolve ao limite ao pagar fatura (ou parte dela)
+            const markTransactionAsPaid = (id, showIndividualFeedback = true) => { const tx = transactions.find(t=>t.id===id); if(tx&&!tx.isPaid){const prevPaid=tx.isPaid;tx.isPaid=true;if(!prevPaid&&tx.accountId){if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){card.availableLimit+=tx.value; 
             saveCreditCards();}}else{const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa'){if(acc.type==='corrente'&&acc.limitOverdraft>0&&(acc.balance-tx.value<-acc.limitOverdraft)){showFeedback(`Pagamento ${formatCurrency(tx.value)} p/ ${acc.name} excede limite.`,'error');tx.isPaid=false;return false;}else acc.balance-=tx.value;}else acc.balance+=tx.value;saveAccounts();}}}saveTransactions();if(showIndividualFeedback)showFeedback('Transação paga!','success');renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();return true;}else if(tx&&tx.isPaid){if(showIndividualFeedback)showFeedback('Transação já está paga.','info');return false;}return false;};
             const openEditModal = (id) => { const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');return;}editTransactionIdInput.value=tx.id;editDateInput.value=tx.date;editDescriptionInput.value=tx.description;editValueInput.value=tx.value.toFixed(2);populateCategorySelect(editCategorySelect);editCategorySelect.value=tx.category;editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';const[paid,total]=tx.installments.split('/').map(Number);editInstallmentsTotalInput.value=total;editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsPaidInput.value=paid;editInstallmentsPaidInput.max=total;editDateInput.readOnly=false;editDescriptionInput.readOnly=false;editDescriptionInput.classList.remove('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=false;editValueInput.classList.remove('bg-gray-100','cursor-not-allowed');editTransactionModal.classList.remove('hidden');};
             if(editCategorySelect) editCategorySelect.addEventListener('change', () => { if(editCategorySelect.value==='nova-categoria'){editNewCategoryInput.classList.remove('hidden');editNewCategoryInput.focus();}else{editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';}});
@@ -1704,7 +1825,7 @@
                             const acc = tempAccounts.find(a => a.id === installmentTransaction.accountId); 
                             const card = tempCreditCards.find(c => c.id === installmentTransaction.accountId); 
                             if (installmentTransaction.isCreditCard && card) { if (installmentTransaction.fundamentalType === 'despesa') card.availableLimit -= installmentTransaction.value; else card.availableLimit += installmentTransaction.value; } 
-                            else if (acc) { if (installmentTransaction.isPaid) { if (installmentTransaction.fundamentalType === 'despesa') { if (acc.type === 'corrente' && acc.limitOverdraft > 0 && (acc.balance - installmentTransaction.value < -acc.limitOverdraft)) { importErrors.push(`Parcela ${formatCurrency(installmentTransaction.value)} p/ ${acc.name} excede limite.`); installmentValid = false; } else if (installmentValid) acc.balance -= installmentTransaction.value; } else if (installmentValid) acc.balance += installmentTransaction.value; }} 
+                            else if (acc) { if (installmentTransaction.isPaid || installmentTransaction.fundamentalType === 'receita') { if (installmentTransaction.fundamentalType === 'despesa') { if (acc.type === 'corrente' && acc.limitOverdraft > 0 && (acc.balance - installmentTransaction.value < -acc.limitOverdraft)) { importErrors.push(`Parcela ${formatCurrency(installmentTransaction.value)} p/ ${acc.name} excede limite.`); installmentValid = false; } else if (installmentValid) acc.balance -= installmentTransaction.value; } else if (installmentValid) acc.balance += installmentTransaction.value; }} 
                             else { importErrors.push(`Conta/Cartão ID ${installmentTransaction.accountId} não encontrado.`); installmentValid = false; }
                         }
                         if (installmentValid) transactionsToCommit.push(installmentTransaction); else skippedCount++;
@@ -1786,6 +1907,36 @@
             if(reportTypeSelect) reportTypeSelect.addEventListener('change', () => { const isComparison = reportTypeSelect.value.startsWith('comparison_'); const isMonthly = reportTypeSelect.value.includes('monthly'); if(reportMonthSelectorDiv1) reportMonthSelectorDiv1.classList.toggle('hidden', !isMonthly && reportTypeSelect.value !== 'monthly' && !reportTypeSelect.value.startsWith('comparison_monthly')); if(reportYearSelectorDiv1) reportYearSelectorDiv1.classList.toggle('hidden', false); if(reportMonthSelectorDiv2) reportMonthSelectorDiv2.classList.toggle('hidden', !isComparison || !reportTypeSelect.value.includes('monthly')); if(reportYearSelectorDiv2) reportYearSelectorDiv2.classList.toggle('hidden', !isComparison); });
             function populateReportSelectors() { const currentYr = new Date().getFullYear(); const currentMth = new Date().getMonth(); const populateYearSelect = (selEl, defYr) => { if(!selEl)return; selEl.innerHTML=''; for(let y=currentYr+1;y>=currentYr-10;y--){const opt=document.createElement('option');opt.value=y;opt.textContent=y;if(y===defYr)opt.selected=true;selEl.appendChild(opt);}}; const populateMonthSelect = (selEl, defMth) => { if(!selEl)return; selEl.innerHTML='';const mNames=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];mNames.forEach((name,idx)=>{const opt=document.createElement('option');opt.value=idx;opt.textContent=name;if(idx===defMth)opt.selected=true;selEl.appendChild(opt);});}; populateYearSelect(reportYearSelect1,currentYr); populateMonthSelect(reportMonthSelect1,currentMth); populateYearSelect(reportYearSelect2,currentYr-1); populateMonthSelect(reportMonthSelect2,currentMth); }
             if(generateReportBtn) generateReportBtn.addEventListener('click', () => { const type=reportTypeSelect.value; const year1=parseInt(reportYearSelect1.value); const month1=parseInt(reportMonthSelect1.value); const year2=parseInt(reportYearSelect2.value); const month2=parseInt(reportMonthSelect2.value); reportOutputArea.innerHTML=''; let reportTxsP1=[],reportTxsP2=[]; let reportTitle="",p1Label="",p2Label=""; const getTxsForPeriod=(targetYr,targetMth,isAnnual)=>{const startDt=isAnnual?new Date(targetYr,0,1):new Date(targetYr,targetMth,1);startDt.setHours(0,0,0,0);const endDt=isAnnual?new Date(targetYr,11,31,23,59,59,999):new Date(targetYr,targetMth+1,0,23,59,59,999);return transactions.filter(t=>{if(t.fundamentalType!=='despesa')return false;const txDate=new Date(t.date+"T00:00:00");const isInPer=txDate>=startDt&&txDate<=endDt;const isPendPrev=txDate<startDt&&!t.isPaid;return isInPer||isPendPrev;});}; const calcExpByCat=(txs)=>txs.reduce((acc,t)=>{acc[t.category]=(acc[t.category]||0)+t.value;return acc;},{}); if(type==='monthly'||type==='annual'){reportTxsP1=getTxsForPeriod(year1,month1,type==='annual');reportTitle=type==='monthly'?`Relatório Gastos - ${reportMonthSelect1.options[reportMonthSelect1.selectedIndex].text} de ${year1}`:`Relatório Gastos - ${year1}`;if(reportTxsP1.length===0){reportOutputArea.innerHTML=`<p class="text-center">Nenhuma despesa para ${reportTitle.toLowerCase()}.</p>`;return;}const expsP1=calcExpByCat(reportTxsP1);const sortedCatsP1=Object.entries(expsP1).sort(([,a],[,b])=>b-a);let tblHTML=`<h3 class="text-xl font-semibold mb-3">${reportTitle}</h3><table class="min-w-full report-table mb-6"><thead><tr><th>Categoria</th><th>Total Gasto</th></tr></thead><tbody>`;let totalExpsP1=0;sortedCatsP1.forEach(([cat,total])=>{tblHTML+=`<tr><td>${cat}</td><td>${formatCurrency(total)}</td></tr>`;totalExpsP1+=total;});tblHTML+=`<tr class="font-bold bg-gray-50"><td>TOTAL GERAL</td><td>${formatCurrency(totalExpsP1)}</td></tr></tbody></table>`;reportOutputArea.innerHTML=tblHTML;}else{p1Label=type==='comparison_monthly'?`${reportMonthSelect1.options[reportMonthSelect1.selectedIndex].text}/${year1}`:`${year1}`;p2Label=type==='comparison_monthly'?`${reportMonthSelect2.options[reportMonthSelect2.selectedIndex].text}/${year2}`:`${year2}`;reportTitle=`Comparativo de Gastos: ${p1Label} vs ${p2Label}`;reportTxsP1=getTxsForPeriod(year1,month1,type==='comparison_annual');reportTxsP2=getTxsForPeriod(year2,month2,type==='comparison_annual');const expsP1=calcExpByCat(reportTxsP1);const expsP2=calcExpByCat(reportTxsP2);const allCats=new Set([...Object.keys(expsP1),...Object.keys(expsP2)]);if(allCats.size===0){reportOutputArea.innerHTML=`<p class="text-center">Nenhuma despesa para os períodos.</p>`;return;}const repData=Array.from(allCats).map(cat=>{const amt1=expsP1[cat]||0;const amt2=expsP2[cat]||0;const diff=amt1-amt2;let percTxt="N/A";if(amt2!==0)percTxt=(((amt1-amt2)/amt2)*100).toFixed(1)+"%";else if(amt1>0)percTxt="Novo Gasto";else if(amt1===0&&amt2===0)percTxt="0.0%";return{category:cat,amount1:amt1,amount2:amt2,difference:diff,percentageChangeText:percTxt};}).sort((a,b)=>b.amount1-a.amount1);let tblHTML=`<h3 class="text-xl font-semibold mb-3">${reportTitle}</h3><table class="min-w-full report-table mb-6"><thead class="bg-gray-100"><tr><th>Categoria</th><th>Gasto (${p1Label})</th><th>Gasto (${p2Label})</th><th>Diferença (R$)</th><th>Diferença (%)</th></tr></thead><tbody>`;let totP1=0,totP2=0,totDiff=0;repData.forEach(item=>{tblHTML+=`<tr><td>${item.category}</td><td>${formatCurrency(item.amount1)}</td><td>${formatCurrency(item.amount2)}</td><td>${formatCurrency(item.difference)}</td><td>${item.percentageChangeText}</td></tr>`;totP1+=item.amount1;totP2+=item.amount2;totDiff+=item.difference;});let totPercTxt="N/A";if(totP2!==0)totPercTxt=(((totP1-totP2)/totP2)*100).toFixed(1)+"%";else if(totP1>0)totPercTxt="Novo Gasto";else if(totP1===0&&totP2===0)totPercTxt="0.0%";tblHTML+=`<tr class="font-bold bg-gray-50"><td>TOTAL GERAL</td><td>${formatCurrency(totP1)}</td><td>${formatCurrency(totP2)}</td><td>${formatCurrency(totDiff)}</td><td>${totPercTxt}</td></tr></tbody></table>`;reportOutputArea.innerHTML=tblHTML;}showFeedback("Relatório gerado!","success");});
+            
+            // --- Modal de Entradas da Conta ---
+            function openAccountEntriesModal(accountId, accountName) {
+                if (!accountEntriesModal || !accountEntriesList || !noAccountEntriesMessage || !accountEntriesTitle) return;
+
+                accountEntriesTitle.textContent = `Extrato de Entradas - ${accountName}`;
+                accountEntriesList.innerHTML = '';
+                const entries = transactions.filter(t => t.accountId === accountId && (t.type === 'receita' || t.type === 'pix_recebido'))
+                                         .sort((a,b) => new Date(b.date) - new Date(a.date)); // Mais recentes primeiro
+
+                if (entries.length === 0) {
+                    noAccountEntriesMessage.classList.remove('hidden');
+                } else {
+                    noAccountEntriesMessage.classList.add('hidden');
+                    entries.forEach(entry => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${new Date(entry.date + "T00:00:00").toLocaleDateString('pt-BR')}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${entry.description}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-green-600 text-right">${formatCurrency(entry.value)}</td>
+                        `;
+                        accountEntriesList.appendChild(tr);
+                    });
+                }
+                accountEntriesModal.classList.remove('hidden');
+            }
+
+            if(closeAccountEntriesModalBtn) closeAccountEntriesModalBtn.addEventListener('click', () => accountEntriesModal.classList.add('hidden'));
+            if(closeAccountEntriesModalFooterBtn) closeAccountEntriesModalFooterBtn.addEventListener('click', () => accountEntriesModal.classList.add('hidden'));
+
 
             // Carregamento inicial
             loadData(); 
