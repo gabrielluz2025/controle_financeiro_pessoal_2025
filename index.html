@@ -71,6 +71,18 @@
         .collapsible-header h2 {
             margin-bottom: 0;
         }
+        .collapsible-header-inner { /* Para sub-seções colapsáveis */
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        .collapsible-header-inner:hover {
+            background-color: #f9fafb;
+        }
+
 
         .arrow-icon {
             transition: transform 0.3s ease;
@@ -264,8 +276,12 @@
         .account-item-header .arrow-icon, .card-item-header .arrow-icon {
             margin-left: 0.5rem;
         }
-        .account-details-content, .card-details-content, .bill-details-content ul {
+        .account-details-content, .card-details-content {
             padding-left: 1.5rem; /* Indentação para detalhes */
+            margin-top: 0.5rem;
+        }
+         .bill-details-content ul { /* Aplicado especificamente para a lista de transações da fatura */
+            padding-left: 1rem; /* Menor indentação para a lista de transações */
             margin-top: 0.5rem;
         }
         .bill-details-content li {
@@ -298,25 +314,7 @@
                 <p id="saldo-atual" class="text-2xl font-bold text-green-700">R$ 0,00</p>
             </div>
         </div>
-        <div class="bg-purple-100 p-4 rounded-lg shadow-md mb-8">
-            <h2 class="text-lg font-semibold text-purple-800">Total de Faturas de Cartão (Mês Atual)</h2>
-            <p id="total-card-bills" class="text-2xl font-bold text-purple-700">R$ 0,00</p>
-        </div>
-
-        <div class="mb-8 border-b pb-6 border-gray-200">
-            <div id="detailed-card-bills-header" class="collapsible-header">
-                <h2 class="text-2xl font-semibold text-gray-700">Faturas Detalhadas de Cartão</h2>
-                <svg id="detailed-card-bills-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </div>
-            <div id="detailed-card-bills-content" class="hidden">
-                <ul id="detailed-card-bills-list" class="bg-white rounded-md shadow-sm divide-y divide-gray-200">
-                    </ul>
-                <p id="no-card-bills-message" class="text-center text-gray-500 mt-4 hidden">Nenhuma fatura de cartão para exibir.</p>
-            </div>
-        </div>
-
+        
         <div class="mb-8 border-b pb-6 border-gray-200">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Gerenciar Contas</h2>
             <div class="p-4 bg-gray-50 rounded-lg shadow-sm mb-6">
@@ -641,8 +639,7 @@
                     </div>
                 </div>
                 <div id="report-output-area" class="mt-6 overflow-x-auto">
-                    {/* O relatório será exibido aqui */}
-                </div>
+                    </div>
             </div>
         </div>
 
@@ -828,7 +825,6 @@
             const totalReceitasEl = document.getElementById('total-receitas');
             const totalDespesasEl = document.getElementById('total-despesas');
             const saldoAtualEl = document.getElementById('saldo-atual');
-            const totalCardBillsEl = document.getElementById('total-card-bills');
             const noTransactionsMessage = document.getElementById('no-transactions-message');
             const feedbackMessageEl = document.getElementById('feedback-message');
             const addAccountForm = document.getElementById('add-account-form');
@@ -838,7 +834,7 @@
             const accountSelect = document.getElementById('account-select'); 
             const accountTypeSelect = document.getElementById('account-type'); 
             const initialBalanceInput = document.getElementById('initial-balance');
-            const initialValueLabel = document.querySelector('label[for="initial-balance"]'); // Corrigido seletor
+            const initialValueLabel = document.querySelector('label[for="initial-balance"]'); 
             const overdraftLimitDiv = document.getElementById('overdraft-limit-div');
             const overdraftLimitInput = document.getElementById('overdraft-limit');
             const cardDueDayInput = document.getElementById('card-due-day');
@@ -862,11 +858,6 @@
             const nextMonthBtn = document.getElementById('next-month-btn');
             const currentMonthDisplay = document.getElementById('current-month-display');
             const downloadXlsxBtn = document.getElementById('download-xlsx-btn');
-            const detailedCardBillsHeader = document.getElementById('detailed-card-bills-header');
-            const detailedCardBillsContent = document.getElementById('detailed-card-bills-content');
-            const detailedCardBillsArrow = document.getElementById('detailed-card-bills-arrow');
-            const detailedCardBillsList = document.getElementById('detailed-card-bills-list');
-            const noCardBillsMessage = document.getElementById('no-card-bills-message');
             const editTransactionModal = document.getElementById('edit-transaction-modal');
             const closeEditModalBtn = document.getElementById('close-edit-modal');
             const saveEditTransactionBtn = document.getElementById('save-edit-transaction-btn');
@@ -879,20 +870,20 @@
             const editNewCategoryInput = document.getElementById('edit-new-category'); 
             const editInstallmentsTotalInput = document.getElementById('edit-installments-total');
             const editInstallmentsPaidInput = document.getElementById('edit-installments-paid');
-            const goalIdeasHeader = document.getElementById('goal-ideas-header'); // Novo
-            const goalIdeasContent = document.getElementById('goal-ideas-content'); // Novo
-            const goalIdeasArrow = document.getElementById('goal-ideas-arrow'); // Novo
-            const generateGoalIdeasBtn = document.getElementById('generate-goal-ideas-btn'); // Novo
-            const goalIdeasSpinner = document.getElementById('goal-ideas-spinner'); // Novo
-            const goalIdeasOutput = document.getElementById('goal-ideas-output'); // Novo
+            const goalIdeasHeader = document.getElementById('goal-ideas-header'); 
+            const goalIdeasContent = document.getElementById('goal-ideas-content'); 
+            const goalIdeasArrow = document.getElementById('goal-ideas-arrow'); 
+            const generateGoalIdeasBtn = document.getElementById('generate-goal-ideas-btn'); 
+            const goalIdeasSpinner = document.getElementById('goal-ideas-spinner'); 
+            const goalIdeasOutput = document.getElementById('goal-ideas-output'); 
             const searchTransactionsInput = document.getElementById('search-transactions-input');
             const selectAllTransactionsCheckbox = document.getElementById('select-all-transactions');
             const paySelectedTransactionsBtn = document.getElementById('pay-selected-transactions-btn');
             const unpaySelectedTransactionsBtn = document.getElementById('unpay-selected-transactions-btn');
             const linkSelectedAccountSelect = document.getElementById('link-selected-account-select');
             const linkSelectedTransactionsBtn = document.getElementById('link-selected-transactions-btn');
-            const linkSelectedCategorySelect = document.getElementById('link-selected-category-select'); // Novo
-            const linkSelectedCategoryBtn = document.getElementById('link-selected-category-btn'); // Novo
+            const linkSelectedCategorySelect = document.getElementById('link-selected-category-select'); 
+            const linkSelectedCategoryBtn = document.getElementById('link-selected-category-btn'); 
             const deleteSelectedTransactionsBtn = document.getElementById('delete-selected-transactions-btn');
             const selectAllImportedCheckbox = document.getElementById('select-all-imported-transactions');
             const reportsHeader = document.getElementById('reports-header');
@@ -932,8 +923,8 @@
             // --- Funções Utilitárias ---
             const showFeedback = (message, type) => {
                 feedbackMessageEl.textContent = message;
-                feedbackMessageEl.className = ''; // Limpa classes anteriores
-                feedbackMessageEl.classList.add(`feedback-${type}`, 'block'); // Adiciona tipo e 'block'
+                feedbackMessageEl.className = ''; 
+                feedbackMessageEl.classList.add(`feedback-${type}`, 'block'); 
                 feedbackMessageEl.style.display = 'block'; 
                 setTimeout(() => {
                     if (feedbackMessageEl.textContent === message) { 
@@ -1097,16 +1088,16 @@
                 const storedFinancialGoals = localStorage.getItem('financialGoals'); if (storedFinancialGoals) financialGoals = JSON.parse(storedFinancialGoals);
                 renderAccounts(); renderCreditCards(); populateAccountSelects(); populateCategorySelect(); populateCategorySelect(editCategorySelect); 
                 populateLinkSelectedAccountSelect(); 
-                populateLinkSelectedCategorySelect(); // Novo
+                populateLinkSelectedCategorySelect(); 
                 populateReportSelectors(); 
                 renderTransactions(); 
-                updateSummary(); renderMonthlySummary(); renderDetailedCardBills(); checkCreditCardDueDates(); 
+                updateSummary(); renderMonthlySummary(); checkCreditCardDueDates(); 
             };
             const saveAccounts = () => localStorage.setItem('financialAccounts', JSON.stringify(accounts));
             const saveCreditCards = () => localStorage.setItem('financialCreditCards', JSON.stringify(creditCards));
             const saveTransactions = () => localStorage.setItem('financialFinancialTransactions', JSON.stringify(transactions));
             const saveCategories = () => localStorage.setItem('financialCategories', JSON.stringify(categories));
-            const saveFinancialGoals = () => localStorage.setItem('financialGoals', JSON.stringify(financialGoals)); // Embora removido, manter para não quebrar loadData de versões antigas
+            const saveFinancialGoals = () => localStorage.setItem('financialGoals', JSON.stringify(financialGoals)); 
 
             // --- Gerenciamento de Contas e Cartões ---
             if(accountTypeSelect) {
@@ -1198,7 +1189,7 @@
                 }
                 accounts.forEach(account => {
                     const li = document.createElement('li');
-                    li.className = 'p-3 border-b border-gray-200 flex justify-between items-start'; // Alterado para flex
+                    li.className = 'p-3 border-b border-gray-200 flex justify-between items-start'; 
 
                     let typeText = "";
                     if (account.type === 'corrente') typeText = "Conta Corrente";
@@ -1241,7 +1232,7 @@
                         arrowIcon.classList.toggle('rotated');
                     });
                      li.querySelector('.view-account-entries-btn').addEventListener('click', (e) => {
-                        e.stopPropagation(); // Para não disparar o colapso da conta
+                        e.stopPropagation(); 
                         openAccountEntriesModal(account.id, account.name);
                     });
 
@@ -1250,49 +1241,116 @@
                 });
                 addDeleteListeners();
             };
+            
+            const renderCardBillDetails = (cardId, targetListElement, noTransactionsMessageElement) => {
+                if (!targetListElement || !noTransactionsMessageElement) return;
+                targetListElement.innerHTML = '';
+                let hasTransactionsForBill = false;
 
-            const renderCreditCards = () => { 
-                if (!creditCardsList) return;
-                creditCardsList.innerHTML = ''; 
-                if (creditCards.length === 0) { creditCardsList.innerHTML = '<li class="p-4 text-gray-500 text-center">Nenhum cartão.</li>'; return; } 
-                creditCards.forEach(card => { 
-                    let bill = transactions.reduce((s,t)=>(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&!t.isPaid&&new Date(t.date + "T00:00:00").getMonth()===currentMonth&&new Date(t.date + "T00:00:00").getFullYear()===currentYear)?s+t.value:s,0); 
-                    const li=document.createElement('li');
-                    li.className='p-3 border-b border-gray-200 flex justify-between items-start'; // Alterado para flex
-                    
-                    li.innerHTML = `
-                        <div class="flex-grow">
-                            <div class="card-item-header flex justify-between items-center w-full">
-                                <div>
-                                    <span class="font-semibold">${card.name}</span>
-                                    <span class="text-sm text-gray-500 ml-2">(Crédito)</span>
-                                </div>
-                                 <svg class="arrow-icon w-5 h-5 text-gray-500 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </div>
-                            <div class="card-details-content hidden mt-2 pl-4 text-sm text-gray-600">
-                                <p>Limite: <span class="font-bold">${formatCurrency(card.limit)}</span></p>
-                                <p>Disponível: <span class="font-bold">${formatCurrency(card.availableLimit)}</span></p>
-                                <p>Fatura Atual: <span class="font-bold">${formatCurrency(bill)}</span></p>
-                                <p>Vencimento: Dia ${card.dueDay} (Fechamento aprox. dia ${card.closingDay || 'N/A'})</p>
-                            </div>
-                        </div>
-                        <button data-id="${card.id}" data-type="creditCard" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 ml-2 self-start">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                        </button>`;
-                    
-                    const headerDiv = li.querySelector('.card-item-header');
-                    const detailsDiv = li.querySelector('.card-details-content');
-                    const arrowIcon = headerDiv.querySelector('.arrow-icon');
+                const billTransactions = transactions.filter(t => {
+                    const tDate = new Date(t.date + "T00:00:00");
+                    return t.accountId === cardId &&
+                           t.isCreditCard &&
+                           t.fundamentalType === 'despesa' &&
+                           !t.isPaid && 
+                           tDate.getMonth() === currentMonth && 
+                           tDate.getFullYear() === currentYear;
+                }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                    headerDiv.addEventListener('click', () => {
-                        detailsDiv.classList.toggle('hidden');
-                        arrowIcon.classList.toggle('rotated');
+                if (billTransactions.length > 0) {
+                    hasTransactionsForBill = true;
+                    billTransactions.forEach(tx => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `${new Date(tx.date + "T00:00:00").toLocaleDateString('pt-BR')} - ${tx.description}: ${formatCurrency(tx.value)}`;
+                        targetListElement.appendChild(listItem);
                     });
-                    
-                    creditCardsList.appendChild(li); 
-                }); 
-                addDeleteListeners(); 
+                }
+                noTransactionsMessageElement.classList.toggle('hidden', !hasTransactionsForBill);
             };
+
+            const renderCreditCards = () => {
+                if (!creditCardsList) return;
+                creditCardsList.innerHTML = '';
+                if (creditCards.length === 0) {
+                    creditCardsList.innerHTML = '<li class="p-4 text-gray-500 text-center">Nenhum cartão de crédito adicionado.</li>';
+                    return;
+                }
+                creditCards.forEach(card => {
+                    const li = document.createElement('li');
+                    li.className = 'p-3 border-b border-gray-200'; 
+
+                    const currentBillAmountForCard = transactions.reduce((sum, t) => {
+                        const tDate = new Date(t.date + "T00:00:00");
+                        if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
+                            tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
+                            return sum + t.value;
+                        }
+                        return sum;
+                    }, 0);
+
+                    li.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex-grow">
+                                <div class="card-item-header flex justify-between items-center w-full cursor-pointer">
+                                    <div>
+                                        <span class="font-semibold text-gray-800">${card.name}</span>
+                                        <span class="text-sm text-gray-500 ml-2">(Crédito)</span>
+                                    </div>
+                                    <svg class="arrow-icon-card-details w-5 h-5 text-gray-500 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                </div>
+                                <div class="card-details-content hidden mt-2 pl-4 text-sm text-gray-600">
+                                    <p>Limite: <span class="font-bold">${formatCurrency(card.limit)}</span></p>
+                                    <p>Disponível: <span class="font-bold">${formatCurrency(card.availableLimit)}</span></p>
+                                    <p>Fatura Atual (Mês ${new Date(currentYear, currentMonth).toLocaleDateString('pt-BR', {month: 'long'})}): <span class="font-bold">${formatCurrency(currentBillAmountForCard)}</span></p>
+                                    <p>Vencimento: Dia ${card.dueDay} (Fechamento aprox. dia ${card.closingDay || 'N/A'})</p>
+                                    
+                                    <div class="mt-3 pt-2 border-t border-gray-200">
+                                        <div id="card-bill-details-header-${card.id}" class="collapsible-header-inner flex justify-between items-center cursor-pointer">
+                                            <h4 class="text-md font-semibold text-purple-700">Detalhes da Fatura Atual</h4>
+                                            <svg id="card-bill-arrow-${card.id}" class="arrow-icon w-5 h-5 text-purple-600 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                        </div>
+                                        <div id="card-bill-content-${card.id}" class="bill-details-content hidden mt-1">
+                                            <ul id="detailed-bill-list-${card.id}" class="text-sm text-gray-600 list-disc list-inside">
+                                                </ul>
+                                            <p id="no-bill-transactions-${card.id}" class="text-xs text-gray-500 mt-1 hidden">Nenhuma transação nesta fatura para o mês atual.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button data-id="${card.id}" data-type="creditCard" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 ml-2 self-start">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            </button>
+                        </div>`;
+                    creditCardsList.appendChild(li);
+
+                    const cardItemHeader = li.querySelector('.card-item-header');
+                    const cardDetailsContent = li.querySelector('.card-details-content');
+                    const cardDetailsArrow = cardItemHeader.querySelector('.arrow-icon-card-details');
+
+                    cardItemHeader.addEventListener('click', () => {
+                        cardDetailsContent.classList.toggle('hidden');
+                        cardDetailsArrow.classList.toggle('rotated');
+                    });
+
+                    const billDetailsHeader = li.querySelector(`#card-bill-details-header-${card.id}`);
+                    const billDetailsContent = li.querySelector(`#card-bill-content-${card.id}`);
+                    const billDetailsArrow = billDetailsHeader.querySelector(`#card-bill-arrow-${card.id}`);
+                    const billListUl = li.querySelector(`#detailed-bill-list-${card.id}`);
+                    const noBillMessageP = li.querySelector(`#no-bill-transactions-${card.id}`);
+
+                    billDetailsHeader.addEventListener('click', (e) => {
+                        e.stopPropagation(); 
+                        billDetailsContent.classList.toggle('hidden');
+                        billDetailsArrow.classList.toggle('rotated');
+                        if (!billDetailsContent.classList.contains('hidden')) {
+                            renderCardBillDetails(card.id, billListUl, noBillMessageP);
+                        }
+                    });
+                });
+                addDeleteListeners();
+            };
+
+
             const populateAccountSelects = (targetSelect = accountSelect, forRevenue = false) => {
                 if (!targetSelect) return;
                 targetSelect.innerHTML = '';
@@ -1436,7 +1494,7 @@
                     if (accountId) { accounts = tempAccounts; creditCards = tempCreditCards; }
                     transactions.push(...transactionsToAdd); 
                     saveTransactions(); saveAccounts(); saveCreditCards();
-                    renderTransactions(); updateSummary(); renderDetailedCardBills(); checkCreditCardDueDates(); 
+                    renderTransactions(); updateSummary(); renderCreditCards(); checkCreditCardDueDates(); 
                     transactionForm.reset(); installmentsInput.value = 1; installmentsPaidInput.value = 0; accountSelect.value = ""; newCategoryInput.classList.add('hidden'); populateCategorySelect(); 
                     showFeedback('Transação(ões) adicionada(s)!', 'success');
                 });
@@ -1543,8 +1601,8 @@
                 if(unpaySelectedTransactionsBtn) unpaySelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
                 if(linkSelectedAccountSelect) linkSelectedAccountSelect.classList.toggle('hidden', !hasSelected);
                 if(linkSelectedTransactionsBtn) linkSelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
-                if(linkSelectedCategorySelect) linkSelectedCategorySelect.classList.toggle('hidden', !hasSelected); // Novo
-                if(linkSelectedCategoryBtn) linkSelectedCategoryBtn.classList.toggle('hidden', !hasSelected); // Novo
+                if(linkSelectedCategorySelect) linkSelectedCategorySelect.classList.toggle('hidden', !hasSelected); 
+                if(linkSelectedCategoryBtn) linkSelectedCategoryBtn.classList.toggle('hidden', !hasSelected); 
                 if(deleteSelectedTransactionsBtn) deleteSelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
                 
                 const allVisibleCheckboxes = document.querySelectorAll('.transaction-checkbox');
@@ -1552,10 +1610,9 @@
             }
 
             if(paySelectedTransactionsBtn) paySelectedTransactionsBtn.addEventListener('click', () => { const ids = Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb => cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{if(markTransactionAsPaid(id,false))count++;}); if(count>0)showFeedback(`${count} transação(ões) paga(s).`,"success"); else showFeedback("Nenhuma transação pendente alterada.","info"); renderTransactions(searchTransactionsInput.value); updateSelectedTransactionsActions(); });
-            if(unpaySelectedTransactionsBtn) unpaySelectedTransactionsBtn.addEventListener('click', () => { const ids=Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb=>cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{const tx=transactions.find(t=>t.id===id);if(tx&&tx.isPaid){const wasPaid=tx.isPaid;tx.isPaid=false;if(wasPaid&&tx.accountId&&!tx.isCreditCard){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa')acc.balance+=tx.value;else acc.balance-=tx.value;saveAccounts();}}count++;}}); if(count>0){saveTransactions();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();showFeedback(`${count} transação(ões) desmarcada(s) como paga(s).`,"success");}else showFeedback("Nenhuma transação paga alterada.","info");updateSelectedTransactionsActions();});
-            if(linkSelectedTransactionsBtn) linkSelectedTransactionsBtn.addEventListener('click', () => { const selCbs=Array.from(document.querySelectorAll('.transaction-checkbox:checked')); const targetAccId=linkSelectedAccountSelect.value; if(selCbs.length===0){showFeedback("Nenhuma transação selecionada.","info");return;}if(!targetAccId){showFeedback("Selecione conta/cartão para vincular.","error");return;}let linkedCount=0;const targetIsCC=creditCards.some(c=>c.id===targetAccId);const groupIdsToProc=new Set();const txsToUpdateInit=[];selCbs.forEach(cb=>{const txId=cb.dataset.id;const tx=transactions.find(t=>t.id===txId);if(tx){txsToUpdateInit.push(tx);if(tx.originalGroupId&&tx.originalGroupId!=="null"&&tx.originalGroupId!=="")groupIdsToProcess.add(tx.originalGroupId);}});const finalTxsToUpdate=[...txsToUpdateInit];groupIdsToProcess.forEach(gId=>{transactions.forEach(t=>{if(t.originalGroupId===gId&&!finalTxsToUpdate.find(ftu=>ftu.id===t.id))finalTxsToUpdate.push(t);});});const uniqueTxsToUpdate=[...new Set(finalTxsToUpdate)];uniqueTxsToUpdate.forEach(tx=>{if(tx.accountId&&tx.isPaid){if(tx.isCreditCard){const oldC=creditCards.find(c=>c.id===tx.accountId);if(oldC){if(tx.fundamentalType==='despesa')oldC.availableLimit+=tx.value;else oldC.availableLimit-=tx.value;}}else{const oldA=accounts.find(a=>a.id===tx.accountId);if(oldA){if(tx.fundamentalType==='despesa')oldA.balance+=tx.value;else oldA.balance-=tx.value;}}}tx.accountId=targetAccId;tx.isCreditCard=targetIsCC;if(tx.isPaid){if(targetIsCC){const newC=creditCards.find(c=>c.id===targetAccId);if(newC){if(tx.fundamentalType==='despesa')newC.availableLimit-=tx.value;else newC.availableLimit+=tx.value;}}else{const newA=accounts.find(a=>a.id===targetAccId);if(newA){if(newA.type==='corrente'&&newA.limitOverdraft>0&&tx.fundamentalType==='despesa'&&(newA.balance-tx.value<-newA.limitOverdraft)){showFeedback(`Vincular ${tx.description} a ${newA.name} excede limite.`,'error');}else{if(tx.fundamentalType==='despesa')newA.balance-=tx.value;else newA.balance+=tx.value;}}}}linkedCount++;});if(linkedCount>0){saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary();renderDetailedCardBills();showFeedback(`${linkedCount} transação(ões) vinculada(s).`,"success");}else showFeedback("Nenhuma transação vinculada.","info");updateSelectedTransactionsActions();});
+            if(unpaySelectedTransactionsBtn) unpaySelectedTransactionsBtn.addEventListener('click', () => { const ids=Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb=>cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{const tx=transactions.find(t=>t.id===id);if(tx&&tx.isPaid){const wasPaid=tx.isPaid;tx.isPaid=false;if(wasPaid&&tx.accountId&&!tx.isCreditCard){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa')acc.balance+=tx.value;else acc.balance-=tx.value;saveAccounts();}}count++;}}); if(count>0){saveTransactions();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();showFeedback(`${count} transação(ões) desmarcada(s) como paga(s).`,"success");}else showFeedback("Nenhuma transação paga alterada.","info");updateSelectedTransactionsActions();});
+            if(linkSelectedTransactionsBtn) linkSelectedTransactionsBtn.addEventListener('click', () => { const selCbs=Array.from(document.querySelectorAll('.transaction-checkbox:checked')); const targetAccId=linkSelectedAccountSelect.value; if(selCbs.length===0){showFeedback("Nenhuma transação selecionada.","info");return;}if(!targetAccId){showFeedback("Selecione conta/cartão para vincular.","error");return;}let linkedCount=0;const targetIsCC=creditCards.some(c=>c.id===targetAccId);const groupIdsToProc=new Set();const txsToUpdateInit=[];selCbs.forEach(cb=>{const txId=cb.dataset.id;const tx=transactions.find(t=>t.id===txId);if(tx){txsToUpdateInit.push(tx);if(tx.originalGroupId&&tx.originalGroupId!=="null"&&tx.originalGroupId!=="")groupIdsToProcess.add(tx.originalGroupId);}});const finalTxsToUpdate=[...txsToUpdateInit];groupIdsToProcess.forEach(gId=>{transactions.forEach(t=>{if(t.originalGroupId===gId&&!finalTxsToUpdate.find(ftu=>ftu.id===t.id))finalTxsToUpdate.push(t);});});const uniqueTxsToUpdate=[...new Set(finalTxsToUpdate)];uniqueTxsToUpdate.forEach(tx=>{if(tx.accountId&&tx.isPaid){if(tx.isCreditCard){const oldC=creditCards.find(c=>c.id===tx.accountId);if(oldC){if(tx.fundamentalType==='despesa')oldC.availableLimit+=tx.value;else oldC.availableLimit-=tx.value;}}else{const oldA=accounts.find(a=>a.id===tx.accountId);if(oldA){if(tx.fundamentalType==='despesa')oldA.balance+=tx.value;else oldA.balance-=tx.value;}}}tx.accountId=targetAccId;tx.isCreditCard=targetIsCC;if(tx.isPaid){if(targetIsCC){const newC=creditCards.find(c=>c.id===targetAccId);if(newC){if(tx.fundamentalType==='despesa')newC.availableLimit-=tx.value;else newC.availableLimit+=tx.value;}}else{const newA=accounts.find(a=>a.id===targetAccId);if(newA){if(newA.type==='corrente'&&newA.limitOverdraft>0&&tx.fundamentalType==='despesa'&&(newA.balance-tx.value<-newA.limitOverdraft)){showFeedback(`Vincular ${tx.description} a ${newA.name} excede limite.`,'error');}else{if(tx.fundamentalType==='despesa')newA.balance-=tx.value;else newA.balance+=tx.value;}}}}linkedCount++;});if(linkedCount>0){saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); showFeedback(`${linkedCount} transação(ões) vinculada(s).`,"success");}else showFeedback("Nenhuma transação vinculada.","info");updateSelectedTransactionsActions();});
             
-            // Novo: Vincular categoria em lote
             if(linkSelectedCategoryBtn) {
                 linkSelectedCategoryBtn.addEventListener('click', () => {
                     const selectedCheckboxes = Array.from(document.querySelectorAll('.transaction-checkbox:checked'));
@@ -1577,10 +1634,10 @@
                             if (!categories.includes(newCategory)) {
                                 categories.push(newCategory);
                                 saveCategories();
-                                populateCategorySelect(); // Atualiza o select principal
-                                populateCategorySelect(editCategorySelect); // Atualiza o select de edição
-                                populateLinkSelectedCategorySelect(); // Atualiza este select
-                                linkSelectedCategorySelect.value = newCategory; // Seleciona a nova categoria
+                                populateCategorySelect(); 
+                                populateCategorySelect(editCategorySelect); 
+                                populateLinkSelectedCategorySelect(); 
+                                linkSelectedCategorySelect.value = newCategory; 
                             }
                         } else {
                             showFeedback("Nome da nova categoria inválido. Nenhuma categoria alterada.", "info");
@@ -1605,7 +1662,7 @@
                     } else {
                         showFeedback("Nenhuma categoria de transação foi alterada.", "info");
                     }
-                    updateSelectedTransactionsActions(); // Para resetar os checkboxes e botões
+                    updateSelectedTransactionsActions(); 
                 });
             }
 
@@ -1623,13 +1680,12 @@
             function performDeleteOperation(transactionId) { const txIdx=transactions.findIndex(t=>t.id===transactionId);if(txIdx>-1){const delTx=transactions[txIdx];if(delTx.accountId){if(delTx.isCreditCard){const card=creditCards.find(c=>c.id===delTx.accountId);if(card){if(delTx.fundamentalType==='despesa')card.availableLimit+=delTx.value;else card.availableLimit-=delTx.value;}}else{const acc=accounts.find(a=>a.id===delTx.accountId);if(acc&&delTx.isPaid){if(delTx.fundamentalType==='despesa')acc.balance+=delTx.value;else acc.balance-=delTx.value;}}}transactions.splice(txIdx,1);return true;}return false;}
             function populateLinkSelectedAccountSelect() { if(!linkSelectedAccountSelect) return; linkSelectedAccountSelect.innerHTML='<option value="">Vincular Conta/Cartão...</option>';accounts.forEach(acc=>{const opt=document.createElement('option');opt.value=acc.id;let typeTxt="";if(acc.type==='corrente')typeTxt="C/C";else if(acc.type==='poupanca')typeTxt="Poupança";else typeTxt="Dinheiro";opt.textContent=`${acc.name} (${typeTxt})`;linkSelectedAccountSelect.appendChild(opt);});creditCards.forEach(card=>{const opt=document.createElement('option');opt.value=card.id;opt.textContent=`${card.name} (Cartão)`;linkSelectedAccountSelect.appendChild(opt);});}
             
-            // Novo: Popular select de categoria para vínculo em lote
             function populateLinkSelectedCategorySelect() {
                 if (!linkSelectedCategorySelect) return;
                 const currentValue = linkSelectedCategorySelect.value;
                 linkSelectedCategorySelect.innerHTML = '<option value="">Vincular Categoria...</option>';
                 categories.sort((a, b) => a.localeCompare(b)).forEach(cat => {
-                    if (cat === "Revisar Importação") return; // Não permitir vincular a esta categoria
+                    if (cat === "Revisar Importação") return; 
                     const opt = document.createElement('option');
                     opt.value = cat;
                     opt.textContent = cat;
@@ -1671,18 +1727,16 @@
                     const txIdx = transactions.findIndex(t => t.id === id);
                     if (txIdx > -1) {
                         const delTx = transactions[txIdx];
-                        // Reverter saldo se a transação estiver vinculada e paga (ou for receita)
                         if (delTx.accountId) {
                             if (delTx.isCreditCard) {
                                 const card = creditCards.find(c => c.id === delTx.accountId);
                                 if (card) {
                                     if (delTx.fundamentalType === 'despesa') card.availableLimit += delTx.value;
-                                    else card.availableLimit -= delTx.value; // Estorno de crédito no cartão
+                                    else card.availableLimit -= delTx.value; 
                                 }
                             } else {
                                 const acc = accounts.find(a => a.id === delTx.accountId);
                                 if (acc) {
-                                    // Para receitas (entradas), sempre reverter. Para despesas, só se estiver paga.
                                     if (delTx.fundamentalType === 'receita') {
                                         acc.balance -= delTx.value;
                                     } else if (delTx.fundamentalType === 'despesa' && delTx.isPaid) {
@@ -1695,14 +1749,14 @@
                         itemDeleted = true;
                         if (showIndividualFeedback) showFeedback('Transação excluída.', 'success');
                     }
-                } else if (type === 'accountEntry') { // Novo tipo para exclusão de entrada de conta
+                } else if (type === 'accountEntry') { 
                     const txIdx = transactions.findIndex(t => t.id === id && (t.type === 'receita' || t.type === 'pix_recebido'));
                     if (txIdx > -1) {
                         const entryTx = transactions[txIdx];
-                        if (entryTx.accountId && accountIdForReversal === entryTx.accountId) { // Garante que a exclusão é da conta correta
+                        if (entryTx.accountId && accountIdForReversal === entryTx.accountId) { 
                             const acc = accounts.find(a => a.id === entryTx.accountId);
                             if (acc) {
-                                acc.balance -= entryTx.value; // Reverte a entrada no saldo da conta
+                                acc.balance -= entryTx.value; 
                             }
                         }
                         transactions.splice(txIdx, 1);
@@ -1715,18 +1769,15 @@
                         const goalName = financialGoals[goalIndex].name;
                         financialGoals.splice(goalIndex, 1);
                         saveFinancialGoals();
-                        // renderFinancialGoals(); // Função removida, não precisa mais chamar
                         if (showIndividualFeedback) showFeedback(`Meta "${goalName}" excluída.`, 'info');
                         itemDeleted = true;
                     }
                 }
-                // Sempre salvar e re-renderizar após qualquer tipo de exclusão bem-sucedida
                 if (itemDeleted) {
                     saveTransactions(); saveAccounts(); saveCreditCards();
                     renderTransactions(searchTransactionsInput.value);
                     renderAccounts(); renderCreditCards();
-                    updateSummary(); renderMonthlySummary(); renderDetailedCardBills(); checkCreditCardDueDates();
-                     // Se a exclusão foi de uma entrada de conta, reabrir o modal de entradas atualizado
+                    updateSummary(); renderMonthlySummary(); checkCreditCardDueDates();
                     if (type === 'accountEntry' && accountIdForReversal) {
                         const accountForModal = accounts.find(a => a.id === accountIdForReversal);
                         if (accountForModal) openAccountEntriesModal(accountIdForReversal, accountForModal.name);
@@ -1735,13 +1786,13 @@
                 return itemDeleted;
             };
             const markTransactionAsPaid = (id, showIndividualFeedback = true) => { const tx = transactions.find(t=>t.id===id); if(tx&&!tx.isPaid){const prevPaid=tx.isPaid;tx.isPaid=true;if(!prevPaid&&tx.accountId){if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){card.availableLimit+=tx.value; 
-            saveCreditCards();}}else{const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa'){if(acc.type==='corrente'&&acc.limitOverdraft>0&&(acc.balance-tx.value<-acc.limitOverdraft)){showFeedback(`Pagamento ${formatCurrency(tx.value)} p/ ${acc.name} excede limite.`,'error');tx.isPaid=false;return false;}else acc.balance-=tx.value;}else acc.balance+=tx.value;saveAccounts();}}}saveTransactions();if(showIndividualFeedback)showFeedback('Transação paga!','success');renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();return true;}else if(tx&&tx.isPaid){if(showIndividualFeedback)showFeedback('Transação já está paga.','info');return false;}return false;};
+            saveCreditCards();}}else{const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa'){if(acc.type==='corrente'&&acc.limitOverdraft>0&&(acc.balance-tx.value<-acc.limitOverdraft)){showFeedback(`Pagamento ${formatCurrency(tx.value)} p/ ${acc.name} excede limite.`,'error');tx.isPaid=false;return false;}else acc.balance-=tx.value;}else acc.balance+=tx.value;saveAccounts();}}}saveTransactions();if(showIndividualFeedback)showFeedback('Transação paga!','success');renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();return true;}else if(tx&&tx.isPaid){if(showIndividualFeedback)showFeedback('Transação já está paga.','info');return false;}return false;};
             const openEditModal = (id) => { const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');return;}editTransactionIdInput.value=tx.id;editDateInput.value=tx.date;editDescriptionInput.value=tx.description;editValueInput.value=tx.value.toFixed(2);populateCategorySelect(editCategorySelect);editCategorySelect.value=tx.category;editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';const[paid,total]=tx.installments.split('/').map(Number);editInstallmentsTotalInput.value=total;editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsPaidInput.value=paid;editInstallmentsPaidInput.max=total;editDateInput.readOnly=false;editDescriptionInput.readOnly=false;editDescriptionInput.classList.remove('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=false;editValueInput.classList.remove('bg-gray-100','cursor-not-allowed');editTransactionModal.classList.remove('hidden');};
             if(editCategorySelect) editCategorySelect.addEventListener('change', () => { if(editCategorySelect.value==='nova-categoria'){editNewCategoryInput.classList.remove('hidden');editNewCategoryInput.focus();}else{editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';}});
             const closeEditModal = () => {editTransactionModal.classList.add('hidden');editDescriptionInput.readOnly=true;editDescriptionInput.classList.add('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=true;editValueInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editDateInput.readOnly=true;editNewCategoryInput.classList.add('hidden');};
             if(closeEditModalBtn) closeEditModalBtn.addEventListener('click',closeEditModal);
             if(cancelEditTransactionBtn) cancelEditTransactionBtn.addEventListener('click',closeEditModal);
-            if(saveEditTransactionBtn) saveEditTransactionBtn.addEventListener('click',()=>{const id=editTransactionIdInput.value;const newDate=editDateInput.value;const newDesc=editDescriptionInput.value.trim();const newVal=parseFloat(editValueInput.value);const newPaidInst=parseInt(editInstallmentsPaidInput.value);let newCat=editCategorySelect.value;if(newCat==='nova-categoria'){const typedNewCat=editNewCategoryInput.value.trim();if(typedNewCat){if(!categories.includes(typedNewCat)){categories.push(typedNewCat);saveCategories();populateCategorySelect();populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect();}newCat=typedNewCat;}else{showFeedback('Nova categoria vazia.','error');return;}}const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');closeEditModal();return;}const totalInst=parseInt(tx.installments.split('/')[1]);if(!newDate||!newDesc||isNaN(newVal)||newVal<=0||isNaN(newPaidInst)||newPaidInst<0||newPaidInst>totalInst){showFeedback('Dados inválidos.','error');return;}const oldVal=tx.value;const oldPaid=tx.isPaid;const fundType=tx.fundamentalType;if(tx.accountId){if(!tx.isCreditCard&&oldPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance+=oldVal;else acc.balance-=oldVal;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit+=oldVal;else card.availableLimit-=oldVal;}}}tx.date=newDate;tx.description=newDesc;tx.value=newVal;tx.category=newCat;tx.installments=`${newPaidInst}/${totalInst}`;tx.isPaid=newPaidInst>=totalInst;if(tx.accountId){if(!tx.isCreditCard&&tx.isPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance-=tx.value;else acc.balance+=tx.value;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit-=tx.value;else card.availableLimit+=tx.value;}}}saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary();renderDetailedCardBills();checkCreditCardDueDates();showFeedback('Transação atualizada!','success');closeEditModal();});
+            if(saveEditTransactionBtn) saveEditTransactionBtn.addEventListener('click',()=>{const id=editTransactionIdInput.value;const newDate=editDateInput.value;const newDesc=editDescriptionInput.value.trim();const newVal=parseFloat(editValueInput.value);const newPaidInst=parseInt(editInstallmentsPaidInput.value);let newCat=editCategorySelect.value;if(newCat==='nova-categoria'){const typedNewCat=editNewCategoryInput.value.trim();if(typedNewCat){if(!categories.includes(typedNewCat)){categories.push(typedNewCat);saveCategories();populateCategorySelect();populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect();}newCat=typedNewCat;}else{showFeedback('Nova categoria vazia.','error');return;}}const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');closeEditModal();return;}const totalInst=parseInt(tx.installments.split('/')[1]);if(!newDate||!newDesc||isNaN(newVal)||newVal<=0||isNaN(newPaidInst)||newPaidInst<0||newPaidInst>totalInst){showFeedback('Dados inválidos.','error');return;}const oldVal=tx.value;const oldPaid=tx.isPaid;const fundType=tx.fundamentalType;if(tx.accountId){if(!tx.isCreditCard&&oldPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance+=oldVal;else acc.balance-=oldVal;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit+=oldVal;else card.availableLimit-=oldVal;}}}tx.date=newDate;tx.description=newDesc;tx.value=newVal;tx.category=newCat;tx.installments=`${newPaidInst}/${totalInst}`;tx.isPaid=newPaidInst>=totalInst;if(tx.accountId){if(!tx.isCreditCard&&tx.isPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance-=tx.value;else acc.balance+=tx.value;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit-=tx.value;else card.availableLimit+=tx.value;}}}saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();showFeedback('Transação atualizada!','success');closeEditModal();});
 
             // --- Resumo e Cálculos ---
             const updateSummary = () => {
@@ -1776,25 +1827,12 @@
                     saldoAtualEl.textContent = formatCurrency(saldoConsolidado);
                     saldoAtualEl.className = `text-2xl font-bold ${saldoConsolidado >= 0 ? 'text-green-700' : 'text-red-700'}`;
                 }
-
-                let totalFaturasCartaoMesAtual = 0;
-                creditCards.forEach(card => {
-                    const currentMonthBill = transactions.reduce((sum, t) => {
-                        const tDate = new Date(t.date + "T00:00:00");
-                        if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
-                            tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
-                            return sum + t.value;
-                        }
-                        return sum;
-                    }, 0);
-                    totalFaturasCartaoMesAtual += currentMonthBill;
-                });
-                if(totalCardBillsEl) totalCardBillsEl.textContent = formatCurrency(totalFaturasCartaoMesAtual);
             };
             const updateMonthlyDisplay = () => { if(currentMonthDisplay) currentMonthDisplay.textContent = new Date(currentYear,currentMonth).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});};
             const renderMonthlySummary = () => { let monthExp=0;const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);transactions.forEach(t=>{const tD=new Date(t.date + "T00:00:00");if(t.fundamentalType==='despesa'&&((tD.getMonth()===currentMonth&&tD.getFullYear()===currentYear)||(tD<bom&&!t.isPaid)))monthExp+=t.value;});if(totalDespesasEl)totalDespesasEl.textContent=formatCurrency(monthExp);}; 
-            if(prevMonthBtn) prevMonthBtn.addEventListener('click',()=>{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();renderDetailedCardBills();}); // Adicionado renderDetailedCardBills
-            if(nextMonthBtn) nextMonthBtn.addEventListener('click',()=>{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();renderDetailedCardBills();}); // Adicionado renderDetailedCardBills
+            if(prevMonthBtn) prevMonthBtn.addEventListener('click',()=>{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();renderCreditCards();}); 
+            if(nextMonthBtn) nextMonthBtn.addEventListener('click',()=>{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();renderCreditCards();});
+
 
             // --- Funções de Importação Modificadas ---
             const finalizeImportProcessing = (parsedTxs) => { fileInput.value='';fileInput.disabled=false;importFileBtn.disabled=false;if(parsedTxs&&parsedTxs.length>0){importedTransactionsToReview=parsedTxs;renderImportedTransactionsForReview();importReviewSection.classList.remove('hidden');}else importReviewSection.classList.add('hidden');};
@@ -1933,7 +1971,7 @@
                                 populateCategorySelect(); 
                                 populateCategorySelect(editCategorySelect); 
                                 populateBulkEditSelects(); 
-                                populateLinkSelectedCategorySelect(); // Atualiza o select de vincular em lote
+                                populateLinkSelectedCategorySelect(); 
                             }
                             bulkEditCategorySelect.value = newCategory; 
                         } else {
@@ -2035,7 +2073,7 @@
                 if (newCategoriesAddedInReview.length > 0) { categories.push(...newCategoriesAddedInReview); saveCategories(); populateCategorySelect(); populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect(); if (!importReviewSection.classList.contains('hidden')) renderImportedTransactionsForReview(); }
                 if (importErrors.length > 0) { showFeedback(`Erro(s) importação: ${importErrors.join(' ')} ${skippedCount>0?(importedCount>0?'Outras ':'')+skippedCount+' ignoradas.':''}`, 'error'); if (importedCount===0) return; }
                 transactions.push(...transactionsToCommit); accounts = tempAccounts; creditCards = tempCreditCards; 
-                saveTransactions(); saveAccounts(); saveCreditCards(); renderTransactions(); updateSummary(); renderMonthlySummary(); renderDetailedCardBills(); checkCreditCardDueDates();
+                saveTransactions(); saveAccounts(); saveCreditCards(); renderTransactions(); updateSummary(); renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();
                 importedTransactionsToReview=[]; importedTransactionsTableBody.innerHTML=''; importReviewSection.classList.add('hidden'); 
                 let fbMsg = `Importação: ${importedCount} transação(ões) originais processada(s).`;
                 if (skippedCount > 0 && importErrors.length === 0) fbMsg += ` ${skippedCount} ignorada(s).`; else if (skippedCount > 0 && importErrors.length > 0 && importedCount > 0) fbMsg += ` ${skippedCount} adicional(is) ignorada(s).`;
@@ -2045,65 +2083,7 @@
             
             // --- Funções de Download, Faturas, Notificações, Metas ---
             if(downloadXlsxBtn) downloadXlsxBtn.addEventListener('click', () => { const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);const dataExp=transactions.filter(t=>{const td=new Date(t.date);td.setHours(0,0,0,0);return(td.getMonth()===currentMonth&&td.getFullYear()===currentYear)||(td<bom&&!t.isPaid);}).sort((a,b)=>new Date(a.date)-new Date(b.date)).map(t=>{let typeD=t.type;if(t.type==='pix_enviado')typeD='PIX Enviado';else if(t.type==='pix_recebido')typeD='PIX Recebido';else if(t.type==='saque')typeD='Saque';else if(t.type==='receita')typeD='Receita';else if(t.type==='despesa')typeD='Despesa';return{Data:new Date(t.date).toLocaleDateString('pt-BR'),Descrição:t.description,Valor:t.value,Tipo:typeD,Categoria:t.category,'Conta / Cartão':t.accountId?(t.isCreditCard?(creditCards.find(c=>c.id===t.accountId)?.name||'N/A'):(accounts.find(a=>a.id===t.accountId)?.name||'N/A')):"Não Vinculada",Parcela:t.installments,Pago:t.isPaid?'Sim':'Não'}});if(dataExp.length===0){showFeedback('Não há transações para baixar.','info');return;}const ws=XLSX.utils.json_to_sheet(dataExp);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Transacoes");const mName=new Date(currentYear,currentMonth).toLocaleDateString('pt-BR',{month:'long'});XLSX.writeFile(wb,`transacoes_${mName}_${currentYear}.xlsx`);showFeedback('Planilha baixada!','success');});
-            if(detailedCardBillsHeader) detailedCardBillsHeader.addEventListener('click',()=>{detailedCardBillsContent.classList.toggle('hidden');detailedCardBillsArrow.classList.toggle('rotated');});
             
-            const renderDetailedCardBills = () => {
-                if (!detailedCardBillsList || !noCardBillsMessage) return;
-                detailedCardBillsList.innerHTML = '';
-                let hasBills = false;
-
-                creditCards.forEach(card => {
-                    // Filtrar transações do cartão para o mês e ano CORRENTES que NÃO estão pagas
-                    const currentMonthBillTransactions = transactions.filter(t => {
-                        const tDate = new Date(t.date + "T00:00:00");
-                        return t.accountId === card.id && 
-                               t.isCreditCard && 
-                               t.fundamentalType === 'despesa' && 
-                               !t.isPaid && // Apenas transações não pagas da fatura atual
-                               tDate.getMonth() === currentMonth && 
-                               tDate.getFullYear() === currentYear;
-                    });
-                    const currentMonthBillAmount = currentMonthBillTransactions.reduce((sum, t) => sum + t.value, 0);
-
-                    if (currentMonthBillAmount > 0 || currentMonthBillTransactions.length > 0) {
-                        hasBills = true;
-                        const li = document.createElement('li');
-                        li.className = 'p-4 bg-white hover:bg-gray-50';
-                        
-                        let detailsHTML = `<div class="card-bill-item-header flex justify-between items-center w-full cursor-pointer">
-                                                <div>
-                                                    <span class="font-semibold text-gray-800">${card.name}:</span>
-                                                    <span class="text-purple-700 ml-2">${formatCurrency(currentMonthBillAmount)}</span>
-                                                    <span class="text-xs text-gray-500 ml-2">(Venc. dia ${card.dueDay} / Fech. dia ${card.closingDay || 'N/A'})</span>
-                                                </div>
-                                                <button class="view-bill-details-btn text-xs text-blue-600 hover:text-blue-800">Ver Despesas</button>
-                                            </div>
-                                            <div class="bill-details-content hidden mt-2 pl-4 border-l-2 border-gray-200">`;
-                        
-                        if (currentMonthBillTransactions.length > 0) {
-                            detailsHTML += `<ul class="list-disc list-inside text-sm text-gray-600">`;
-                            currentMonthBillTransactions.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(tx => {
-                                detailsHTML += `<li>${new Date(tx.date + "T00:00:00").toLocaleDateString('pt-BR')} - ${tx.description}: ${formatCurrency(tx.value)}</li>`;
-                            });
-                            detailsHTML += `</ul>`;
-                        } else {
-                            detailsHTML += `<p class="text-xs text-gray-500">Nenhuma despesa para esta fatura no mês.</p>`;
-                        }
-                        detailsHTML += `</div>`;
-                        li.innerHTML = detailsHTML;
-
-                        li.querySelector('.view-bill-details-btn').addEventListener('click', (e) => {
-                            e.stopPropagation(); 
-                            const content = li.querySelector('.bill-details-content');
-                            content.classList.toggle('hidden');
-                            e.target.textContent = content.classList.contains('hidden') ? 'Ver Despesas' : 'Ocultar Despesas';
-                        });
-                        detailedCardBillsList.appendChild(li);
-                    }
-                });
-                noCardBillsMessage.classList.toggle('hidden', !hasBills); // Mostra a mensagem se não houver faturas
-            };
-
             const checkCreditCardDueDates = () => { const today=new Date();today.setHours(0,0,0,0);creditCards.forEach(card=>{const dueDay=card.dueDay;let billDueDate=new Date(today.getFullYear(),today.getMonth(),dueDay);billDueDate.setHours(0,0,0,0);if(today.getDate()>dueDay)billDueDate.setMonth(today.getMonth()+1);let billClosingDate=new Date(billDueDate.getTime());billClosingDate.setDate(billDueDate.getDate()-10);if(billClosingDate.getDate() > dueDay) billClosingDate.setMonth(billClosingDate.getMonth()-1);billClosingDate.setHours(0,0,0,0);if(today.getTime()===billClosingDate.getTime()){const closingBill=transactions.reduce((s,t)=>{const tD=new Date(t.date);let cSA=new Date(billClosingDate);cSA.setDate(cSA.getDate()-(card.dueDay>10?30:28));if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&tD>=cSA&&tD<billClosingDate)return s+t.value;return s;},0);if(closingBill>0)showFeedback(`FATURA FECHADA: ${card.name} fechou! Valor: ${formatCurrency(closingBill)}. Venc.: ${billDueDate.toLocaleDateString('pt-BR')}`,'info');}const diffT=billDueDate.getTime()-today.getTime();const diffD=Math.ceil(diffT/(1000*60*60*24));const billNotify=transactions.reduce((s,t)=>{const tD=new Date(t.date);if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&!t.isPaid&&tD>=billClosingDate&&tD<billDueDate)return s+t.value;return s;},0);if(diffD<=7&&diffD>=0&&billNotify>0)showFeedback(`VENC. PRÓXIMO: ${card.name} vence ${diffD===0?'HOJE':'em '+diffD+' dia(s)'}! Valor: ${formatCurrency(billNotify)}`,'info');});};
             if(goalIdeasHeader) goalIdeasHeader.addEventListener('click',()=>{goalIdeasContent.classList.toggle('hidden');goalIdeasArrow.classList.toggle('rotated');});
             
@@ -2112,7 +2092,6 @@
                     if (goalIdeasSpinner) goalIdeasSpinner.classList.remove('hidden');
                     if (goalIdeasOutput) goalIdeasOutput.innerHTML = '<p class="text-center text-gray-500">A gerar ideias...</p>';
 
-                    // Calcular renda e despesas do último mês completo
                     const today = new Date();
                     const lastMonthDate = new Date(today.getFullYear(), today.getMonth() -1, 1);
                     const prevMonth = lastMonthDate.getMonth();
@@ -2137,7 +2116,8 @@
                     const accountBalancesSummary = accounts.map(acc => `${acc.name} (${acc.type}): ${formatCurrency(acc.balance)}`).join(', ');
                     const totalAccountBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
                     
-                    const currentMonthCardBills = parseFloat(totalCardBillsEl.textContent.replace(/[R$.\s]/g, '').replace(',', '.')) || 0;
+                    const currentMonthCardBills = parseFloat(document.getElementById('total-card-bills') ? document.getElementById('total-card-bills').textContent.replace(/[R$.\s]/g, '').replace(',', '.') : '0') || 0;
+
 
                     const spendingByCategoryLastMonth = transactions.filter(t => {
                         const tDate = new Date(t.date + "T00:00:00");
@@ -2193,10 +2173,9 @@
                             result.candidates[0].content && result.candidates[0].content.parts &&
                             result.candidates[0].content.parts.length > 0) {
                             let text = result.candidates[0].content.parts[0].text;
-                            // Simples substituição para listas markdown
                             text = text.replace(/- \*\*(.*?):\*\*/g, '<p class="mt-2"><strong>$1:</strong>');
                             text = text.replace(/\n- /g, '</p><p class="mt-2">- ');
-                            text = text.replace(/\n/g, '<br>'); // Manter quebras de linha dentro das justificativas
+                            text = text.replace(/\n/g, '<br>'); 
                             if (goalIdeasOutput) goalIdeasOutput.innerHTML = text;
                         } else {
                             if (goalIdeasOutput) goalIdeasOutput.innerHTML = '<p class="text-red-500">Não foi possível gerar ideias de metas neste momento. Tente novamente mais tarde.</p>';
@@ -2259,7 +2238,7 @@
 
             // --- Confirmação de Exclusão ---
             function requestDeleteConfirmation(id, type, isBulk = false, ids = [], accountIdForReversal = null) {
-                itemToDelete = { id, type, showFeedback: !isBulk, isBulk, ids, accountIdForReversal }; // Adicionado accountIdForReversal
+                itemToDelete = { id, type, showFeedback: !isBulk, isBulk, ids, accountIdForReversal }; 
                 let itemName = "";
                 if (isBulk) {
                     itemName = `${ids.length} transações/grupos`;
@@ -2269,7 +2248,7 @@
                 } else if (type === 'creditCard') {
                     const card = creditCards.find(c => c.id === id);
                     itemName = card ? `o cartão "${card.name}"` : "este item";
-                } else if (type === 'transaction' || type === 'accountEntry') { // Incluído accountEntry
+                } else if (type === 'transaction' || type === 'accountEntry') { 
                     const tx = transactions.find(t => t.id === id);
                     itemName = tx ? `a transação "${tx.description}"` : "este item";
                      if (tx && tx.originalGroupId && type === 'transaction') itemName += " e todas as suas parcelas";
@@ -2328,7 +2307,6 @@
                     performDelete(itemToDelete.id, itemToDelete.type, itemToDelete.showFeedback, itemToDelete.accountIdForReversal);
                 }
                 
-                // As funções de salvar e re-renderizar agora estão dentro de performDelete se itemDeleted for true
                 confirmationModal.classList.add('hidden');
                 updateSelectedTransactionsActions(); 
             });
