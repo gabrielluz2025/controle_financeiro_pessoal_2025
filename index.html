@@ -254,12 +254,24 @@
          #suggested-goals-list li strong {
             color: #312e81; /* indigo-900 */
          }
+         #clear-all-data-link { /* Estilo para o link de limpar dados */
+            font-size: 0.8rem; /* Tamanho menor */
+            color: #6b7280; /* Cor cinza */
+            text-decoration: underline;
+            cursor: pointer;
+         }
+         #clear-all-data-link:hover {
+            color: #ef4444; /* Vermelho ao passar o mouse */
+         }
 
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8 lg:p-10">
     <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8">
-        <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-8">Controle Financeiro Pessoal Completo</h1>
+        <div class="flex justify-between items-start mb-6">
+            <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 flex-grow">Controle Financeiro Pessoal Completo</h1>
+            <button id="clear-all-data-link" class="ml-4 whitespace-nowrap">Limpar Dados</button>
+        </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="bg-blue-100 p-4 rounded-lg shadow-md">
@@ -604,11 +616,13 @@
 
 
         <div class="mb-8 border-b pb-6 border-gray-200">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Baixar Planilha</h2>
-            <button id="download-xlsx-btn"
-                    class="w-full sm:w-auto px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">
-                Baixar Transações (com pendências) como Excel (.xlsx)
-            </button>
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Opções de Dados</h2>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="download-xlsx-btn"
+                        class="w-full sm:w-auto px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">
+                    Baixar Transações (Excel)
+                </button>
+                </div>
         </div>
 
         <div>
@@ -772,12 +786,11 @@
             "Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação",
             "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros", "Revisar Importação"
         ];
-        // financialGoals foi removido pois a seção de metas manuais não está mais presente.
 
         let importedTransactionsToReview = [];
         let currentMonth = new Date().getMonth(); 
         let currentYear = new Date().getFullYear();
-        let itemToDelete = { id: null, type: null, showFeedback: true, isBulk: false, ids: [], accountIdForReversal: null }; // Para confirmação de exclusão
+        let itemToDelete = { id: null, type: null, showFeedback: true, isBulk: false, ids: [], accountIdForReversal: null }; 
 
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -818,6 +831,7 @@
             const nextMonthBtn = document.getElementById('next-month-btn');
             const currentMonthDisplay = document.getElementById('current-month-display');
             const downloadXlsxBtn = document.getElementById('download-xlsx-btn');
+            const clearAllDataLink = document.getElementById('clear-all-data-link'); // Novo link
             const editTransactionModal = document.getElementById('edit-transaction-modal');
             const closeEditModalBtn = document.getElementById('close-edit-modal');
             const saveEditTransactionBtn = document.getElementById('save-edit-transaction-btn');
@@ -1044,20 +1058,18 @@
                 const storedCreditCards = localStorage.getItem('financialCreditCards'); if (storedCreditCards) creditCards = JSON.parse(storedCreditCards);
                 const storedTransactions = localStorage.getItem('financialFinancialTransactions'); if (storedTransactions) transactions = JSON.parse(storedTransactions);
                 const storedCategories = localStorage.getItem('financialCategories'); if (storedCategories) { categories = JSON.parse(storedCategories); if (!categories.includes("Revisar Importação")) categories.push("Revisar Importação"); } else { if (!categories.includes("Revisar Importação")) categories.push("Revisar Importação");}
-                // financialGoals não é mais carregado pois a funcionalidade de metas manuais foi removida.
                 renderAccounts(); renderCreditCards(); populateAccountSelects(); populateCategorySelect(); populateCategorySelect(editCategorySelect); 
                 populateLinkSelectedAccountSelect(); 
                 populateLinkSelectedCategorySelect(); 
                 populateReportSelectors(); 
                 renderTransactions(); 
                 updateSummary(); renderMonthlySummary(); checkCreditCardDueDates(); 
-                suggestFinancialGoals(); // Chamada para novas sugestões de metas
+                suggestFinancialGoals(); 
             };
             const saveAccounts = () => localStorage.setItem('financialAccounts', JSON.stringify(accounts));
             const saveCreditCards = () => localStorage.setItem('financialCreditCards', JSON.stringify(creditCards));
             const saveTransactions = () => localStorage.setItem('financialFinancialTransactions', JSON.stringify(transactions));
             const saveCategories = () => localStorage.setItem('financialCategories', JSON.stringify(categories));
-            // saveFinancialGoals removido
 
             // --- Gerenciamento de Contas e Cartões ---
             if(accountTypeSelect) {
@@ -1106,7 +1118,7 @@
                     if (initialBalanceInput) initialBalanceInput.placeholder = '0.00';
                     showFeedback('Conta adicionada com sucesso!', 'success');
                     populateLinkSelectedAccountSelect();
-                    suggestFinancialGoals(); // Atualiza sugestões
+                    suggestFinancialGoals(); 
                 });
             }
             if(addCreditCardForm) {
@@ -1135,7 +1147,7 @@
                         addCreditCardForm.reset(); 
                         showFeedback('Cartão adicionado!', 'success'); 
                         populateLinkSelectedAccountSelect(); 
-                        suggestFinancialGoals(); // Atualiza sugestões
+                        suggestFinancialGoals(); 
                     } else {
                         showFeedback('Preencha os campos do cartão.', 'error'); 
                     }
@@ -1438,8 +1450,11 @@
                             let target = newTx.isCreditCard ? tempCreditCards.find(c => c.id === newTx.accountId) : tempAccounts.find(a => a.id === newTx.accountId);
                             if (target) {
                                 if (newTx.isCreditCard) { 
-                                    if (newTx.fundamentalType === 'despesa') target.availableLimit -= newTx.value; 
-                                    // else target.availableLimit += newTx.value; // Crédito em cartão não afeta limite desta forma
+                                    if (newTx.fundamentalType === 'despesa' && newTx.isPaid) { 
+                                        // Não afeta limite ao adicionar uma despesa de cartão já paga.
+                                    } else if (newTx.fundamentalType === 'despesa' && !newTx.isPaid) {
+                                        target.availableLimit -= newTx.value; 
+                                    }
                                 } else if (newTx.isPaid || newTx.fundamentalType === 'receita') { 
                                     if (newTx.fundamentalType === 'despesa') { 
                                         if (target.type === 'corrente' && target.limitOverdraft > 0 && (target.balance - newTx.value < -target.limitOverdraft)) { 
@@ -1575,7 +1590,7 @@
             }
 
             if(paySelectedTransactionsBtn) paySelectedTransactionsBtn.addEventListener('click', () => { const ids = Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb => cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{if(markTransactionAsPaid(id,false))count++;}); if(count>0)showFeedback(`${count} transação(ões) paga(s).`,"success"); else showFeedback("Nenhuma transação pendente alterada.","info"); renderTransactions(searchTransactionsInput.value); updateSelectedTransactionsActions(); suggestFinancialGoals(); });
-            if(unpaySelectedTransactionsBtn) unpaySelectedTransactionsBtn.addEventListener('click', () => { const ids=Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb=>cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{const tx=transactions.find(t=>t.id===id);if(tx&&tx.isPaid){const wasPaid=tx.isPaid;tx.isPaid=false;if(wasPaid&&tx.accountId&&!tx.isCreditCard){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa')acc.balance+=tx.value;else acc.balance-=tx.value;saveAccounts();}}count++;}}); if(count>0){saveTransactions();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();showFeedback(`${count} transação(ões) desmarcada(s) como paga(s).`,"success");}else showFeedback("Nenhuma transação paga alterada.","info");updateSelectedTransactionsActions(); suggestFinancialGoals();});
+            if(unpaySelectedTransactionsBtn) unpaySelectedTransactionsBtn.addEventListener('click', () => { const ids=Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb=>cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{const tx=transactions.find(t=>t.id===id);if(tx&&tx.isPaid){const wasPaid=tx.isPaid;tx.isPaid=false;if(wasPaid&&tx.accountId){if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(tx.fundamentalType==='despesa')card.availableLimit-=tx.value;}}else{const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa')acc.balance+=tx.value;else acc.balance-=tx.value;}}}count++;}}); if(count>0){saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();showFeedback(`${count} transação(ões) desmarcada(s) como paga(s).`,"success");}else showFeedback("Nenhuma transação paga alterada.","info");updateSelectedTransactionsActions(); suggestFinancialGoals();});
             if(linkSelectedTransactionsBtn) linkSelectedTransactionsBtn.addEventListener('click', () => { const selCbs=Array.from(document.querySelectorAll('.transaction-checkbox:checked')); const targetAccId=linkSelectedAccountSelect.value; if(selCbs.length===0){showFeedback("Nenhuma transação selecionada.","info");return;}if(!targetAccId){showFeedback("Selecione conta/cartão para vincular.","error");return;}let linkedCount=0;const targetIsCC=creditCards.some(c=>c.id===targetAccId);const groupIdsToProc=new Set();const txsToUpdateInit=[];selCbs.forEach(cb=>{const txId=cb.dataset.id;const tx=transactions.find(t=>t.id===txId);if(tx){txsToUpdateInit.push(tx);if(tx.originalGroupId&&tx.originalGroupId!=="null"&&tx.originalGroupId!=="")groupIdsToProcess.add(tx.originalGroupId);}});const finalTxsToUpdate=[...txsToUpdateInit];groupIdsToProcess.forEach(gId=>{transactions.forEach(t=>{if(t.originalGroupId===gId&&!finalTxsToUpdate.find(ftu=>ftu.id===t.id))finalTxsToUpdate.push(t);});});const uniqueTxsToUpdate=[...new Set(finalTxsToUpdate)];uniqueTxsToUpdate.forEach(tx=>{if(tx.accountId&&tx.isPaid){if(tx.isCreditCard){const oldC=creditCards.find(c=>c.id===tx.accountId);if(oldC){if(tx.fundamentalType==='despesa')oldC.availableLimit+=tx.value;else oldC.availableLimit-=tx.value;}}else{const oldA=accounts.find(a=>a.id===tx.accountId);if(oldA){if(tx.fundamentalType==='despesa')oldA.balance+=tx.value;else oldA.balance-=tx.value;}}}tx.accountId=targetAccId;tx.isCreditCard=targetIsCC;if(tx.isPaid){if(targetIsCC){const newC=creditCards.find(c=>c.id===targetAccId);if(newC){if(tx.fundamentalType==='despesa')newC.availableLimit-=tx.value;else newC.availableLimit+=tx.value;}}else{const newA=accounts.find(a=>a.id===targetAccId);if(newA){if(newA.type==='corrente'&&newA.limitOverdraft>0&&tx.fundamentalType==='despesa'&&(newA.balance-tx.value<-newA.limitOverdraft)){showFeedback(`Vincular ${tx.description} a ${newA.name} excede limite.`,'error');}else{if(tx.fundamentalType==='despesa')newA.balance-=tx.value;else newA.balance+=tx.value;}}}}linkedCount++;});if(linkedCount>0){saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); showFeedback(`${linkedCount} transação(ões) vinculada(s).`,"success");}else showFeedback("Nenhuma transação vinculada.","info");updateSelectedTransactionsActions(); suggestFinancialGoals();});
             
             if(linkSelectedCategoryBtn) {
@@ -1671,13 +1686,20 @@
 
             const performDelete = (id, type, showIndividualFeedback = true, accountIdForReversal = null) => {
                 let itemDeleted = false;
-                if (type === 'account') {
+                if (type === 'allData') { 
+                    accounts = [];
+                    creditCards = [];
+                    transactions = [];
+                    categories = [ "Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros", "Revisar Importação"];
+                    itemDeleted = true;
+                    if (showIndividualFeedback) showFeedback('Todos os dados foram limpos!', 'success');
+                }
+                else if (type === 'account') {
                     if (transactions.some(t => t.accountId === id)) {
                         if (showIndividualFeedback) showFeedback('Exclua transações da conta primeiro.', 'error');
                         return false;
                     }
                     accounts = accounts.filter(acc => acc.id !== id);
-                    saveAccounts(); renderAccounts(); populateAccountSelects(); updateSummary(); populateLinkSelectedAccountSelect();
                     if (showIndividualFeedback) showFeedback('Conta excluída.', 'success');
                     itemDeleted = true;
                 } else if (type === 'creditCard') {
@@ -1686,7 +1708,6 @@
                         return false;
                     }
                     creditCards = creditCards.filter(card => card.id !== id);
-                    saveCreditCards(); renderCreditCards(); populateAccountSelects(); updateSummary(); populateLinkSelectedAccountSelect();
                     if (showIndividualFeedback) showFeedback('Cartão excluído.', 'success');
                     itemDeleted = true;
                 } else if (type === 'transaction') {
@@ -1697,8 +1718,10 @@
                             if (delTx.isCreditCard) {
                                 const card = creditCards.find(c => c.id === delTx.accountId);
                                 if (card) {
+                                    // Ao excluir uma despesa de cartão, o limite disponível deve ser restaurado
+                                    // independentemente de estar paga ou não, pois a compra está sendo desfeita.
                                     if (delTx.fundamentalType === 'despesa') card.availableLimit += delTx.value;
-                                    else card.availableLimit -= delTx.value; 
+                                    else if (delTx.fundamentalType === 'receita') card.availableLimit -= delTx.value; // Estorno de crédito no cartão
                                 }
                             } else {
                                 const acc = accounts.find(a => a.id === delTx.accountId);
@@ -1706,7 +1729,7 @@
                                     if (delTx.fundamentalType === 'receita') {
                                         acc.balance -= delTx.value;
                                     } else if (delTx.fundamentalType === 'despesa' && delTx.isPaid) {
-                                        acc.balance += delTx.value;
+                                        acc.balance += delTx.value; // Devolve ao saldo se estava paga
                                     }
                                 }
                             }
@@ -1731,14 +1754,20 @@
                     }
                 } 
                 if (itemDeleted) {
-                    saveTransactions(); saveAccounts(); saveCreditCards();
+                    saveTransactions(); saveAccounts(); saveCreditCards(); saveCategories();
                     renderTransactions(searchTransactionsInput.value);
                     renderAccounts(); renderCreditCards();
+                    populateAccountSelects(); populateCategorySelect(); populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect();
                     updateSummary(); renderMonthlySummary(); checkCreditCardDueDates();
                     suggestFinancialGoals(); 
                     if (type === 'accountEntry' && accountIdForReversal) {
                         const accountForModal = accounts.find(a => a.id === accountIdForReversal);
                         if (accountForModal) openAccountEntriesModal(accountIdForReversal, accountForModal.name);
+                    } else if (type === 'allData') { 
+                        currentMonth = new Date().getMonth();
+                        currentYear = new Date().getFullYear();
+                        updateMonthlyDisplay();
+                        renderTransactions(); 
                     }
                 }
                 return itemDeleted;
@@ -1752,25 +1781,25 @@
                         if (tx.isCreditCard) {
                             const card = creditCards.find(c => c.id === tx.accountId);
                             if (card) {
-                                // Ao pagar uma despesa de cartão, o limite disponível AUMENTA
                                 if (tx.fundamentalType === 'despesa') {
-                                     card.availableLimit += tx.value;
-                                     // A fatura em si (currentBillAmount) será recalculada em renderCreditCards
+                                     // Ao marcar uma despesa de cartão como paga, o limite disponível NÃO é afetado aqui.
+                                     // O limite é afetado quando a compra é feita (reduz) ou quando a fatura é paga (restaura o limite usado na fatura).
+                                     // Marcar uma compra individual como "paga" significa que ela foi quitada, mas ainda compõe a fatura.
                                 }
-                                saveCreditCards();
+                                saveCreditCards(); // Salva mesmo que não mude o limite, para o caso de outras propriedades do cartão mudarem no futuro
                             }
-                        } else {
+                        } else { 
                             const acc = accounts.find(a => a.id === tx.accountId);
                             if (acc) {
                                 if (tx.fundamentalType === 'despesa') {
                                     if (acc.type === 'corrente' && acc.limitOverdraft > 0 && (acc.balance - tx.value < -acc.limitOverdraft)) {
                                         showFeedback(`Pagamento ${formatCurrency(tx.value)} para ${acc.name} excede limite de cheque especial.`, 'error');
-                                        tx.isPaid = false; // Reverte o status
+                                        tx.isPaid = false; 
                                         return false;
                                     }
-                                    acc.balance -= tx.value;
-                                } else { // Receita
-                                    acc.balance += tx.value;
+                                    acc.balance -= tx.value; 
+                                } else { 
+                                    // Receitas já são somadas ao saldo na criação. Marcar como "paga" não altera o saldo.
                                 }
                                 saveAccounts();
                             }
@@ -1781,7 +1810,7 @@
                     renderTransactions(searchTransactionsInput.value);
                     updateSummary();
                     renderMonthlySummary();
-                    renderCreditCards(); // Crucial para atualizar a fatura e limite disponível do cartão
+                    renderCreditCards(); 
                     checkCreditCardDueDates();
                     suggestFinancialGoals();
                     return true;
@@ -2101,6 +2130,12 @@
             // --- Funções de Download, Faturas, Notificações, Metas ---
             if(downloadXlsxBtn) downloadXlsxBtn.addEventListener('click', () => { const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);const dataExp=transactions.filter(t=>{const td=new Date(t.date);td.setHours(0,0,0,0);return(td.getMonth()===currentMonth&&td.getFullYear()===currentYear)||(td<bom&&!t.isPaid);}).sort((a,b)=>new Date(a.date)-new Date(b.date)).map(t=>{let typeD=t.type;if(t.type==='pix_enviado')typeD='PIX Enviado';else if(t.type==='pix_recebido')typeD='PIX Recebido';else if(t.type==='saque')typeD='Saque';else if(t.type==='receita')typeD='Receita';else if(t.type==='despesa')typeD='Despesa';return{Data:new Date(t.date).toLocaleDateString('pt-BR'),Descrição:t.description,Valor:t.value,Tipo:typeD,Categoria:t.category,'Conta / Cartão':t.accountId?(t.isCreditCard?(creditCards.find(c=>c.id===t.accountId)?.name||'N/A'):(accounts.find(a=>a.id===t.accountId)?.name||'N/A')):"Não Vinculada",Parcela:t.installments,Pago:t.isPaid?'Sim':'Não'}});if(dataExp.length===0){showFeedback('Não há transações para baixar.','info');return;}const ws=XLSX.utils.json_to_sheet(dataExp);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Transacoes");const mName=new Date(currentYear,currentMonth).toLocaleDateString('pt-BR',{month:'long'});XLSX.writeFile(wb,`transacoes_${mName}_${currentYear}.xlsx`);showFeedback('Planilha baixada!','success');});
             
+            if(clearAllDataLink) { 
+                clearAllDataLink.addEventListener('click', () => {
+                    requestDeleteConfirmation(null, 'allData');
+                });
+            }
+
             const checkCreditCardDueDates = () => { const today=new Date();today.setHours(0,0,0,0);creditCards.forEach(card=>{const dueDay=card.dueDay;let billDueDate=new Date(today.getFullYear(),today.getMonth(),dueDay);billDueDate.setHours(0,0,0,0);if(today.getDate()>dueDay)billDueDate.setMonth(today.getMonth()+1);let billClosingDate=new Date(billDueDate.getTime());billClosingDate.setDate(billDueDate.getDate()-10);if(billClosingDate.getDate() > dueDay) billClosingDate.setMonth(billClosingDate.getMonth()-1);billClosingDate.setHours(0,0,0,0);if(today.getTime()===billClosingDate.getTime()){const closingBill=transactions.reduce((s,t)=>{const tD=new Date(t.date);let cSA=new Date(billClosingDate);cSA.setDate(cSA.getDate()-(card.dueDay>10?30:28));if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&tD>=cSA&&tD<billClosingDate)return s+t.value;return s;},0);if(closingBill>0)showFeedback(`FATURA FECHADA: ${card.name} fechou! Valor: ${formatCurrency(closingBill)}. Venc.: ${billDueDate.toLocaleDateString('pt-BR')}`,'info');}const diffT=billDueDate.getTime()-today.getTime();const diffD=Math.ceil(diffT/(1000*60*60*24));const billNotify=transactions.reduce((s,t)=>{const tD=new Date(t.date);if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&!t.isPaid&&tD>=billClosingDate&&tD<billDueDate)return s+t.value;return s;},0);if(diffD<=7&&diffD>=0&&billNotify>0)showFeedback(`VENC. PRÓXIMO: ${card.name} vence ${diffD===0?'HOJE':'em '+diffD+' dia(s)'}! Valor: ${formatCurrency(billNotify)}`,'info');});};
             
             // --- Nova Seção: Sugestões de Metas (sem IA) ---
@@ -2109,7 +2144,7 @@
                     suggestedGoalsContent.classList.toggle('hidden');
                     suggestedGoalsArrow.classList.toggle('rotated');
                     if (!suggestedGoalsContent.classList.contains('hidden')) {
-                        suggestFinancialGoals(); // Gera/atualiza as metas ao expandir
+                        suggestFinancialGoals(); 
                     }
                 });
             }
@@ -2119,29 +2154,30 @@
                 suggestedGoalsList.innerHTML = '';
                 const suggestions = [];
 
-                // 1. Reserva de Emergência
                 const totalAccountBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+                const lastMonthDate = new Date(currentYear, currentMonth, 0); 
+                const prevMonth = lastMonthDate.getMonth();
+                const prevYear = lastMonthDate.getFullYear();
+
                 const lastMonthExpenses = transactions.reduce((sum, t) => {
                     const tDate = new Date(t.date + "T00:00:00");
-                    const lastMonth = new Date(currentYear, currentMonth -1, 1); // Mês anterior
-                    if (t.fundamentalType === 'despesa' && tDate.getFullYear() === lastMonth.getFullYear() && tDate.getMonth() === lastMonth.getMonth()) {
+                    if (t.fundamentalType === 'despesa' && tDate.getFullYear() === prevYear && tDate.getMonth() === prevMonth) {
                         return sum + t.value;
                     }
                     return sum;
                 }, 0);
                 
-                const emergencyFundTarget = lastMonthExpenses * 3; // Ex: 3 meses de despesas
+                const emergencyFundTarget = lastMonthExpenses * 3; 
                 if (lastMonthExpenses > 0 && totalAccountBalance < emergencyFundTarget) {
-                    suggestions.push(`<strong>Reserva de Emergência:</strong> Aumentar sua reserva para cobrir pelo menos 3 meses de despesas (${formatCurrency(emergencyFundTarget)}). Saldo atual: ${formatCurrency(totalAccountBalance)}.`);
-                } else if (lastMonthExpenses === 0 && totalAccountBalance < 1000) { // Sugestão genérica se não há despesas
+                    suggestions.push(`<strong>Reserva de Emergência:</strong> Aumentar sua reserva para cobrir pelo menos 3 meses de despesas (${formatCurrency(emergencyFundTarget)}). Saldo atual em contas: ${formatCurrency(totalAccountBalance)}.`);
+                } else if (lastMonthExpenses === 0 && totalAccountBalance < 1000 && accounts.length > 0) { 
                      suggestions.push(`<strong>Reserva de Emergência:</strong> Comece a construir uma reserva de emergência. Tente guardar um valor fixo por mês.`);
                 }
 
 
-                // 2. Redução de Gastos com Cartão (se houver faturas altas)
-                let totalCurrentCardBills = 0;
+                let totalCurrentCardBillsUnpaid = 0;
                 creditCards.forEach(card => {
-                    totalCurrentCardBills += transactions.reduce((sum, t) => {
+                    totalCurrentCardBillsUnpaid += transactions.reduce((sum, t) => {
                         const tDate = new Date(t.date + "T00:00:00");
                         if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
                             tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
@@ -2151,18 +2187,16 @@
                     }, 0);
                 });
                 
-                if (lastMonthExpenses > 0 && totalCurrentCardBills > (lastMonthExpenses * 0.5)) { // Se faturas > 50% das despesas
-                     suggestions.push(`<strong>Gastos com Cartão:</strong> Suas faturas atuais de cartão somam ${formatCurrency(totalCurrentCardBills)}. Considere analisar e reduzir esses gastos.`);
-                } else if (totalCurrentCardBills > 0 && lastMonthExpenses === 0) { // Se há fatura mas não há despesas registradas para comparação
-                     suggestions.push(`<strong>Gastos com Cartão:</strong> Suas faturas atuais de cartão somam ${formatCurrency(totalCurrentCardBills)}. Monitore esses gastos.`);
+                if (lastMonthExpenses > 0 && totalCurrentCardBillsUnpaid > (lastMonthExpenses * 0.5)) { 
+                     suggestions.push(`<strong>Gastos com Cartão:</strong> Suas faturas de cartão não pagas para este mês somam ${formatCurrency(totalCurrentCardBillsUnpaid)}. Considere analisar e reduzir esses gastos.`);
+                } else if (totalCurrentCardBillsUnpaid > 0 && lastMonthExpenses === 0) { 
+                     suggestions.push(`<strong>Gastos com Cartão:</strong> Suas faturas de cartão não pagas para este mês somam ${formatCurrency(totalCurrentCardBillsUnpaid)}. Monitore esses gastos.`);
                 }
 
 
-                // 3. Analisar Categoria com Maior Gasto
                 const spendingByCategoryLastMonth = transactions.filter(t => {
                     const tDate = new Date(t.date + "T00:00:00");
-                     const lastMonth = new Date(currentYear, currentMonth -1, 1);
-                    return t.fundamentalType === 'despesa' && tDate.getFullYear() === lastMonth.getFullYear() && tDate.getMonth() === lastMonth.getMonth();
+                    return t.fundamentalType === 'despesa' && tDate.getFullYear() === prevYear && tDate.getMonth() === prevMonth;
                 }).reduce((acc, t) => {
                     acc[t.category] = (acc[t.category] || 0) + t.value;
                     return acc;
@@ -2171,12 +2205,11 @@
                 if (Object.keys(spendingByCategoryLastMonth).length > 0) {
                     const topSpendingCategory = Object.entries(spendingByCategoryLastMonth)
                         .sort(([,a],[,b]) => b-a)[0];
-                    if (topSpendingCategory && topSpendingCategory[1] > (lastMonthExpenses * 0.2)) { 
+                    if (topSpendingCategory && lastMonthExpenses > 0 && topSpendingCategory[1] > (lastMonthExpenses * 0.2)) { 
                         suggestions.push(`<strong>Otimizar Gastos:</strong> No último mês, sua maior despesa foi com "${topSpendingCategory[0]}" (${formatCurrency(topSpendingCategory[1])}). Avalie se é possível reduzir essa despesa.`);
                     }
                 }
 
-                // 4. Quitar Parcelamentos
                 const activeInstallments = transactions.filter(t => {
                     const installmentsParts = t.installments.split('/');
                     return installmentsParts.length === 2 && parseInt(installmentsParts[0]) < parseInt(installmentsParts[1]) && !t.isPaid;
@@ -2184,6 +2217,12 @@
 
                 if (activeInstallments > 3) { 
                     suggestions.push(`<strong>Parcelamentos:</strong> Você possui ${activeInstallments} compras parceladas em aberto. Considere focar em quitar algumas para liberar seu orçamento futuro.`);
+                }
+
+                const saldoConsolidadoAtualEl = document.getElementById('saldo-atual');
+                const saldoConsolidadoAtual = saldoConsolidadoAtualEl ? (parseFloat(saldoConsolidadoAtualEl.textContent.replace(/[R$.\s]/g, '').replace(',', '.')) || 0) : 0;
+                if (saldoConsolidadoAtual > (lastMonthExpenses * 0.2) && lastMonthExpenses > 0) { 
+                     suggestions.push(`<strong>Investir/Poupar:</strong> Seu saldo consolidado de ${formatCurrency(saldoConsolidadoAtual)} parece saudável. Considere direcionar uma parte para investimentos ou uma poupança de longo prazo.`);
                 }
 
 
@@ -2249,19 +2288,27 @@
             function requestDeleteConfirmation(id, type, isBulk = false, ids = [], accountIdForReversal = null) {
                 itemToDelete = { id, type, showFeedback: !isBulk, isBulk, ids, accountIdForReversal }; 
                 let itemName = "";
-                if (isBulk) {
+                if (type === 'allData') {
+                    itemName = "TODOS OS DADOS (contas, cartões, transações)";
+                    confirmationModalTitle.textContent = "Confirmar Limpeza Total";
+                } else if (isBulk) {
                     itemName = `${ids.length} transações/grupos`;
+                    confirmationModalTitle.textContent = "Confirmar Exclusão em Lote";
                 } else if (type === 'account') {
                     const acc = accounts.find(a => a.id === id);
                     itemName = acc ? `a conta "${acc.name}"` : "este item";
+                    confirmationModalTitle.textContent = "Confirmar Exclusão";
                 } else if (type === 'creditCard') {
                     const card = creditCards.find(c => c.id === id);
                     itemName = card ? `o cartão "${card.name}"` : "este item";
+                    confirmationModalTitle.textContent = "Confirmar Exclusão";
                 } else if (type === 'transaction' || type === 'accountEntry') { 
                     const tx = transactions.find(t => t.id === id);
                     itemName = tx ? `a transação "${tx.description}"` : "este item";
                      if (tx && tx.originalGroupId && type === 'transaction') itemName += " e todas as suas parcelas";
+                    confirmationModalTitle.textContent = "Confirmar Exclusão";
                 } 
+
                 confirmationModalMessage.textContent = `Tem a certeza que deseja excluir ${itemName}? Esta ação não pode ser desfeita.`;
                 confirmationModal.classList.remove('hidden');
             }
@@ -2270,7 +2317,18 @@
             if(cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));
 
             if(confirmDeleteBtn) confirmDeleteBtn.addEventListener('click', () => {
-                if (itemToDelete.isBulk) {
+                if (itemToDelete.type === 'allData') {
+                    accounts = [];
+                    creditCards = [];
+                    transactions = [];
+                    categories = [ "Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros", "Revisar Importação"]; 
+                    saveAccounts();
+                    saveCreditCards();
+                    saveTransactions();
+                    saveCategories();
+                    loadData(); 
+                    showFeedback('Todos os dados foram limpos com sucesso!', 'success');
+                } else if (itemToDelete.isBulk) {
                     let deletedGroupsCount = 0;
                     let deletedSingleCount = 0;
                     const groupIdsProcessed = new Set();
@@ -2308,6 +2366,11 @@
                     } else {
                         showFeedback("Nenhuma transação foi efetivamente excluída.", "info");
                     }
+                    saveTransactions(); saveAccounts(); saveCreditCards();
+                    renderTransactions(searchTransactionsInput.value);
+                    renderAccounts(); renderCreditCards();
+                    updateSummary(); renderMonthlySummary(); checkCreditCardDueDates();
+                    suggestFinancialGoals();
                 } else {
                     performDelete(itemToDelete.id, itemToDelete.type, itemToDelete.showFeedback, itemToDelete.accountIdForReversal);
                 }
