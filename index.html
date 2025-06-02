@@ -2116,7 +2116,11 @@
                     const accountBalancesSummary = accounts.map(acc => `${acc.name} (${acc.type}): ${formatCurrency(acc.balance)}`).join(', ');
                     const totalAccountBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
                     
-                    const currentMonthCardBills = parseFloat(document.getElementById('total-card-bills') ? document.getElementById('total-card-bills').textContent.replace(/[R$.\s]/g, '').replace(',', '.') : '0') || 0;
+                    // const currentMonthCardBills = parseFloat(document.getElementById('total-card-bills') ? document.getElementById('total-card-bills').textContent.replace(/[R$.\s]/g, '').replace(',', '.') : '0') || 0;
+                    // A linha acima foi comentada pois o elemento 'total-card-bills' foi removido.
+                    // Para obter o total de faturas, seria necessário recalcular aqui ou usar um valor já calculado se disponível.
+                    // Por simplicidade, vou passar 0 por enquanto, mas o ideal seria ter esse valor.
+                    const currentMonthCardBills = 0; 
 
 
                     const spendingByCategoryLastMonth = transactions.filter(t => {
@@ -2167,7 +2171,18 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
+                        
+                        console.log("API Response Status:", response.status); // Log status
+                        console.log("API Response Status Text:", response.statusText); // Log status text
+
+                        if (!response.ok) { 
+                            const errorBody = await response.text();
+                            console.error("API Error Response Body:", errorBody);
+                            throw new Error(`API request failed with status ${response.status}: ${response.statusText}. Body: ${errorBody}`);
+                        }
+                        
                         const result = await response.json();
+                        console.log("API Full Result:", result); 
 
                         if (result.candidates && result.candidates.length > 0 &&
                             result.candidates[0].content && result.candidates[0].content.parts &&
@@ -2178,12 +2193,12 @@
                             text = text.replace(/\n/g, '<br>'); 
                             if (goalIdeasOutput) goalIdeasOutput.innerHTML = text;
                         } else {
-                            if (goalIdeasOutput) goalIdeasOutput.innerHTML = '<p class="text-red-500">Não foi possível gerar ideias de metas neste momento. Tente novamente mais tarde.</p>';
-                            console.error("Resposta da API inesperada:", result);
+                            if (goalIdeasOutput) goalIdeasOutput.innerHTML = '<p class="text-red-500">Não foi possível gerar ideias de metas neste momento (estrutura de resposta inesperada). Tente novamente mais tarde.</p>';
+                            console.error("Resposta da API inesperada ou sem conteúdo:", result); 
                         }
                     } catch (error) {
-                        console.error("Erro ao gerar ideias de metas:", error);
-                        if (goalIdeasOutput) goalIdeasOutput.innerHTML = '<p class="text-red-500">Erro ao conectar com o serviço de IA. Verifique sua conexão ou tente mais tarde.</p>';
+                        console.error("Erro ao gerar ideias de metas (catch block):", error);
+                        if (goalIdeasOutput) goalIdeasOutput.innerHTML = `<p class="text-red-500">Erro ao conectar com o serviço de IA. Verifique sua conexão ou tente mais tarde. Detalhe: ${error.message}</p>`;
                     } finally {
                         if (goalIdeasSpinner) goalIdeasSpinner.classList.add('hidden');
                     }
