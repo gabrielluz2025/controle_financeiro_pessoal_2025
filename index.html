@@ -1,70 +1,2390 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle Financeiro Pessoal Completo</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
-</head>
-<body>
-  <!-- Comentários corrigidos de JSX para HTML -->
-  <ul id="suggested-goals-list" class="space-y-2">
-    <!-- Sugestões de metas serão inseridas aqui -->
-  </ul>
-  <select id="bulk-edit-category" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2">
-    <!-- Options preenchidas por JS -->
-  </select>
-  <tbody id="account-entries-list" class="bg-white divide-y divide-gray-200">
-    <!-- Entradas serão listadas aqui -->
-  </tbody>
-  <select id="link-selected-category-select" class="hidden mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-xs">
-    <!-- Options will be populated by JavaScript -->
-  </select>
-
-  <!-- Botões com acessibilidade melhorada -->
-  <button id="clear-all-data-link" title="Limpar todos os dados" class="ml-4 whitespace-nowrap">Limpar Dados</button>
-
-  <!-- Lógica para rotacionar setas (exemplo de colapsáveis) -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const suggestedGoalsHeader = document.getElementById('suggested-goals-header');
-      const suggestedGoalsArrow = document.getElementById('suggested-goals-arrow');
-      const suggestedGoalsContent = document.getElementById('suggested-goals-content');
-
-      if (suggestedGoalsHeader && suggestedGoalsArrow && suggestedGoalsContent) {
-        suggestedGoalsHeader.addEventListener('click', () => {
-          suggestedGoalsContent.classList.toggle('hidden');
-          suggestedGoalsArrow.classList.toggle('rotated');
-        });
-      }
-
-      // Botões de modais: Confirmar, Cancelar e Fechar
-      const modais = [
-        { closeBtnId: 'close-edit-modal', modalId: 'edit-transaction-modal' },
-        { closeBtnId: 'cancel-delete-btn', modalId: 'confirmation-modal' },
-        { closeBtnId: 'close-confirmation-modal', modalId: 'confirmation-modal' },
-        { closeBtnId: 'cancel-edit-account-btn', modalId: 'edit-account-modal' },
-        { closeBtnId: 'close-edit-account-modal', modalId: 'edit-account-modal' },
-        { closeBtnId: 'close-edit-credit-card-modal', modalId: 'edit-credit-card-modal' },
-        { closeBtnId: 'cancel-edit-credit-card-btn', modalId: 'edit-credit-card-modal' },
-        { closeBtnId: 'cancel-add-transaction-modal-btn', modalId: 'add-transaction-modal' },
-        { closeBtnId: 'close-add-transaction-modal', modalId: 'add-transaction-modal' },
-        { closeBtnId: 'close-account-entries-modal', modalId: 'account-entries-modal' },
-        { closeBtnId: 'close-account-entries-modal-footer', modalId: 'account-entries-modal' }
-      ];
-
-      modais.forEach(({ closeBtnId, modalId }) => {
-        const btn = document.getElementById(closeBtnId);
-        const modal = document.getElementById(modalId);
-        if (btn && modal) {
-          btn.addEventListener('click', () => modal.classList.add('hidden'));
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro Pessoal Completo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js' defer></script>
+    <style>
+        /* Define a fonte Inter para toda a página */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Cor de fundo suave */
         }
-      });
-    });
-  </script>
+
+        /* Estilos para a mensagem de feedback */
+        #feedback-message {
+            display: none;
+            padding: 12px;
+            margin-top: 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            position: fixed; /* Para sobrepor outros elementos */
+            bottom: 20px; /* Distância do fundo */
+            left: 50%; /* Centraliza horizontalmente */
+            transform: translateX(-50%); /* Ajuste fino para centralização */
+            z-index: 2000; /* Garante que fique acima de outros modais/elementos */
+            min-width: 300px; /* Largura mínima */
+            text-align: center; /* Centraliza o texto */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Sombra suave */
+        }
+
+        .feedback-success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .feedback-error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .feedback-info {
+            background-color: #e0f2fe;
+            color: #075985;
+        }
+
+        /* Estilos para ocultar/mostrar elementos */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Estilos para a seção colapsável */
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 1rem;
+        }
+
+        .collapsible-header:hover {
+            background-color: #f8fafc;
+        }
+
+        .collapsible-header h2 {
+            margin-bottom: 0;
+        }
+        .collapsible-header-inner { /* Para sub-seções colapsáveis */
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        .collapsible-header-inner:hover {
+            background-color: #f9fafb;
+        }
+
+
+        .arrow-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .arrow-icon.rotated {
+            transform: rotate(90deg);
+        }
+
+        /* Estilo para transações pagas */
+        .paid-transaction td { /* Aplicar a toda a linha */
+            text-decoration: line-through;
+            color: #9ca3af; /* gray-400, um pouco mais claro para melhor leitura */
+        }
+         /* Estilo para transações pendentes de meses anteriores */
+        .pending-previous-month td {
+            font-style: italic;
+        }
+        .pending-previous-month:not(.paid-transaction) td {
+             font-weight: 600; /* Negrito para pendentes */
+        }
+
+
+        /* Estilos para o modal */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto; 
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px; 
+            margin-top: 2rem; 
+            margin-bottom: 2rem; 
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .modal-body label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #4a5568;
+        }
+        .modal-body p { 
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+        .modal-body strong { 
+            font-weight: 600;
+            color: #1e40af; 
+        }
+        .modal-body ul { 
+            list-style-position: inside;
+            padding-left: 0.5rem;
+        }
+        .modal-body ul li {
+            margin-bottom: 0.5rem;
+        }
+
+
+        .modal-body input[type="text"],
+        .modal-body input[type="number"],
+        .modal-body input[type="date"],
+        .modal-body select {  
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            background-color: #fff; 
+        }
+
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        #imported-transactions-table-body input, 
+        #imported-transactions-table-body select,
+        #imported-transactions-table-body textarea {
+            font-size: 0.875rem; 
+            padding: 0.25rem 0.5rem; 
+        }
+        #imported-transactions-table-body textarea {
+            min-height: 40px; 
+        }
+      
+        #reports-section-content .report-table th, #reports-section-content .report-table td {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        #reports-section-content .report-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
+        #reports-section-content .report-table td:nth-child(n+2) { /* Alinhar valores à direita */
+            text-align: right;
+        }
+        .account-item-header, .card-item-header {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .account-item-header .arrow-icon, .card-item-header .arrow-icon {
+            margin-left: 0.5rem;
+        }
+        .account-details-content, .card-details-content {
+            padding-left: 1.5rem; /* Indentação para detalhes */
+            margin-top: 0.5rem;
+        }
+         .bill-details-content ul { /* Aplicado especificamente para a lista de transações da fatura */
+            padding-left: 1rem; /* Menor indentação para a lista de transações */
+            margin-top: 0.5rem;
+        }
+        .bill-details-content li {
+            margin-bottom: 0.25rem;
+        }
+        #account-entries-modal .modal-content {
+            max-height: 80vh; /* Limitar altura do modal */
+        }
+        #confirmation-modal .modal-content {
+             max-width: 400px;
+        }
+        #suggested-goals-list li {
+            background-color: #eef2ff; /* indigo-50 */
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem; /* rounded-md */
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #3730a3; /* indigo-800 */
+        }
+         #suggested-goals-list li strong {
+            color: #312e81; /* indigo-900 */
+         }
+         #clear-all-data-link { /* Estilo para o link de limpar dados */
+            font-size: 0.8rem; /* Tamanho menor */
+            color: #6b7280; /* Cor cinza */
+            text-decoration: underline;
+            cursor: pointer;
+         }
+         #clear-all-data-link:hover {
+            color: #ef4444; /* Vermelho ao passar o mouse */
+         }
+
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8 lg:p-10">
+    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8">
+        <div class="flex justify-between items-start mb-6">
+            <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 flex-grow">Controle Financeiro Pessoal Completo</h1>
+            <button id="clear-all-data-link" class="ml-4 whitespace-nowrap">Limpar Dados</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-blue-100 p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold text-blue-800">Poder de Compra Total</h2>
+                <p id="total-receitas" class="text-2xl font-bold text-blue-700">R$ 0,00</p>
+            </div>
+            <div class="bg-red-100 p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold text-red-800">Despesas do Mês</h2>
+                <p id="total-despesas" class="text-2xl font-bold text-red-700">R$ 0,00</p>
+            </div>
+            <div class="bg-green-100 p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold text-green-800">Saldo Consolidado</h2>
+                <p id="saldo-atual" class="text-2xl font-bold text-green-700">R$ 0,00</p>
+            </div>
+            <div class="bg-orange-100 p-4 rounded-lg shadow-md"> 
+                <h2 class="text-lg font-semibold text-orange-800">Gasto Cartões (Mês)</h2>
+                <p id="total-gasto-cartoes-mes" class="text-2xl font-bold text-orange-700">R$ 0,00</p>
+            </div>
+        </div>
+        
+        <div class="mb-8 border-b pb-6 border-gray-200">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Gerenciar Contas</h2>
+            <div class="p-4 bg-gray-50 rounded-lg shadow-sm mb-6">
+                <h3 class="text-xl font-semibold text-gray-700 mb-3">Adicionar Conta</h3>
+                <form id="add-account-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                    <div>
+                        <label for="account-name" class="block text-sm font-medium text-gray-700 mb-1">Nome da Conta</label>
+                        <input type="text" id="account-name" placeholder="Nome da Conta (ex: Banco X)" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="account-type" class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                        <select id="account-type"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="corrente">Conta Corrente</option>
+                            <option value="poupanca">Conta Poupança</option>
+                            <option value="cash">Dinheiro (Caixa)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="initial-balance" class="block text-sm font-medium text-gray-700 mb-1">Saldo Inicial (R$)</label>
+                        <input type="number" id="initial-balance" step="0.01" placeholder="0.00" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                     <div id="overdraft-limit-div" class="hidden"> 
+                        <label for="overdraft-limit" class="block text-sm font-medium text-gray-700 mb-1">Limite Ch. Especial (R$)</label>
+                        <input type="number" id="overdraft-limit" step="0.01" placeholder="0.00"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div class="lg:col-span-4 flex justify-end">
+                        <button type="submit"
+                                class="px-5 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 transition duration-150 ease-in-out">
+                            Adicionar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Minhas Contas</h3>
+                <ul id="accounts-list" class="bg-white rounded-md shadow-sm divide-y divide-gray-200">
+                    </ul>
+            </div>
+        </div>
+
+        <div class="mb-8 border-b pb-6 border-gray-200">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Gerenciar Cartões de Crédito</h2>
+            <div class="p-4 bg-gray-50 rounded-lg shadow-sm mb-6">
+                <h3 class="text-xl font-semibold text-gray-700 mb-3">Adicionar Cartão de Crédito</h3>
+                <form id="add-credit-card-form" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                    <div>
+                        <label for="card-name" class="block text-sm font-medium text-gray-700 mb-1">Nome do Cartão</label>
+                        <input type="text" id="card-name" placeholder="Nome do Cartão (ex: Visa, Master)" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="card-limit" class="block text-sm font-medium text-gray-700 mb-1">Limite (R$)</label>
+                        <input type="number" id="card-limit" step="0.01" placeholder="Limite (R$)" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="card-due-day" class="block text-sm font-medium text-gray-700 mb-1">Dia Venc. Fatura</label>
+                        <input type="number" id="card-due-day" min="1" max="31" placeholder="Dia Venc. Fatura" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-sm shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                    </div>
+                    <div class="sm:col-span-3 flex justify-end">
+                        <button type="submit"
+                                class="px-5 py-2 bg-purple-500 text-white font-semibold rounded-md shadow-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 transition duration-150 ease-in-out">
+                            Adicionar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Meus Cartões</h3>
+                <ul id="credit-cards-list" class="bg-white rounded-md shadow-sm divide-y divide-gray-200">
+                    </ul>
+            </div>
+        </div>
+
+        <div class="mb-8 border-b pb-6 border-gray-200">
+            <div id="suggested-goals-header" class="collapsible-header">
+                <h2 class="text-2xl font-semibold text-gray-700">Sugestões de Metas Financeiras</h2>
+                <svg id="suggested-goals-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+            <div id="suggested-goals-content" class="hidden p-4 bg-gray-50 rounded-lg shadow-sm">
+                <ul id="suggested-goals-list" class="space-y-2">
+                    {/* Sugestões de metas serão inseridas aqui */}
+                </ul>
+                <p id="no-suggested-goals-message" class="text-center text-gray-500 mt-2 hidden">Nenhuma sugestão de meta no momento. Adicione mais transações para receber sugestões.</p>
+            </div>
+        </div>
+
+
+        <div class="mb-8 border-b pb-6 border-gray-200">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Adicionar Nova Transação Manualmente</h2>
+            <form id="transaction-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                    <input type="date" id="date" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                    <input type="text" id="description" placeholder="Ex: Salário, Aluguel, Supermercado" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="value" class="block text-sm font-medium text-gray-700 mb-1">Valor da Parcela (R$)</label> 
+                    <input type="number" id="value" step="0.01" placeholder="0.00" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                    <select id="type" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="receita">Receita</option>
+                        <option value="despesa">Despesa</option>
+                        <option value="saque">Saque (da conta)</option>
+                        <option value="pix_enviado">PIX Enviado (Pagamento)</option>
+                        <option value="pix_recebido">PIX Recebido</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="category-select" class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                    <div class="flex items-center space-x-2">
+                        <select id="category-select" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </select>
+                    </div>
+                    <input type="text" id="new-category-input" placeholder="Nova Categoria"
+                           class="mt-2 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hidden">
+                </div>
+                <div>
+                    <label for="account-select" class="block text-sm font-medium text-gray-700 mb-1">Conta / Cartão (Opcional)</label>
+                    <select id="account-select"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </select>
+                </div>
+                <div class="col-span-1 sm:col-span-2 lg:col-span-1">
+                    <label for="installments" class="block text-sm font-medium text-gray-700 mb-1">Parcelas (total)</label>
+                    <input type="number" id="installments" min="1" value="1"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div class="col-span-1 sm:col-span-2 lg:col-span-1"> <label for="installments-paid" class="block text-sm font-medium text-gray-700 mb-1">Parcelas já pagas</label>
+                    <input type="number" id="installments-paid" min="0" value="0"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div class="sm:col-span-2 lg:col-span-full flex items-end justify-end">
+                    <button type="submit"
+                            class="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                        Adicionar Transação
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="mb-8 border-b pb-6 border-gray-200">
+            <div id="import-header" class="collapsible-header">
+                <h2 class="text-2xl font-semibold text-gray-700">Importar Extratos</h2>
+                <svg id="import-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </div>
+            
+            <div id="import-section-content" class="hidden">
+                <p class="text-sm text-gray-600 mb-4">
+                    Seu arquivo deve ser OFX, CSV, Excel, Word (.docx) ou Imagem (.png, .jpg) e conter informações de transação com Data, Descrição, Valor e Tipo.
+                    <span class="font-bold text-red-600">Atenção: Integração direta com bancos (Open Finance) não é possível em uma aplicação web no navegador por motivos de segurança e privacidade.</span>
+                    <span class="font-bold text-orange-600">Importação de Word e Imagem: o texto será extraído e as transações listadas para revisão. Tente usar imagens com boa qualidade e texto claro. A precisão da extração de data, valor e parcelas é limitada e exigirá revisão cuidadosa.</span>
+                </p>
+
+                <div class="p-4 bg-gray-50 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3">Carregar Arquivo de Extrato</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                        <div>
+                            <label for="file-input" class="block text-sm font-medium text-gray-700 mb-1">Selecione o Arquivo</label>
+                            <input type="file" id="file-input" accept=".ofx, .csv, .xls, .xlsx, .doc, .docx, .png, .jpg, .jpeg, .gif, .bmp, .tiff, .webp"
+                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer">
+                        </div>
+                        <div class="flex justify-end col-span-full sm:col-span-1">
+                            <button id="import-file-btn"
+                                    class="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                                Carregar para Revisão
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        <div id="feedback-message"></div> 
+        <div id="import-review-section" class="mb-8 border-b pb-6 border-gray-200 hidden">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Revisar Transações Importadas</h2>
+            <p class="text-sm text-gray-600 mb-4">
+                Selecione as transações que deseja importar. Vincule-as a uma conta ou cartão e ajuste os dados conforme necessário.
+                 <span class="font-bold text-orange-600">Para Word/Imagem, revise a descrição e complete os demais campos, especialmente data, valor e parcelas.</span>
+            </p>
+            <div id="bulk-edit-imported-controls" class="hidden mt-4 mb-4 p-4 bg-gray-100 rounded-md shadow">
+                <h4 class="text-md font-semibold text-gray-700 mb-3">Editar Selecionadas:</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label for="bulk-edit-type" class="block text-xs font-medium text-gray-700">Tipo:</label>
+                        <select id="bulk-edit-type" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2">
+                            <option value="">Manter original</option>
+                            <option value="receita">Receita</option>
+                            <option value="despesa">Despesa</option>
+                            <option value="saque">Saque</option>
+                            <option value="pix_enviado">PIX Enviado</option>
+                            <option value="pix_recebido">PIX Recebido</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="bulk-edit-category" class="block text-xs font-medium text-gray-700">Categoria:</label>
+                        <select id="bulk-edit-category" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2">
+                            {/* Options preenchidas por JS */}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="bulk-edit-account" class="block text-xs font-medium text-gray-700">Vincular a:</label>
+                        <select id="bulk-edit-account" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2">
+                            {/* Options preenchidas por JS */}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="bulk-edit-status" class="block text-xs font-medium text-gray-700">Status Pagamento:</label>
+                        <select id="bulk-edit-status" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2">
+                            <option value="">Manter original</option>
+                            <option value="true">Pago</option>
+                            <option value="false">Não Pago</option>
+                        </select>
+                    </div>
+                    <div class="lg:col-span-4 flex justify-end mt-2">
+                        <button id="apply-bulk-edit-imported-btn" class="px-4 py-2 bg-orange-500 text-white font-semibold rounded-md shadow-md hover:bg-orange-600 text-xs">Aplicar às Selecionadas</button>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto rounded-lg shadow-md mb-4">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-yellow-50">
+                        <tr>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                <input type="checkbox" id="select-all-imported-transactions" class="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out">
+                            </th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Data</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Descrição</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Valor da Parcela</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Tipo</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Categoria</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Parcelas (Tot/Pagas)</th> <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Vincular a</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="imported-transactions-table-body" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end gap-4">
+                <button id="cancel-review-btn"
+                        class="px-6 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition duration-150 ease-in-out">
+                    Cancelar Importação
+                </button>
+                <button id="confirm-import-btn"
+                        class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                    Confirmar Selecionadas
+                </button>
+            </div>
+        </div>
+
+        <div class="mb-8 border-b pb-6 border-gray-200">
+            <div id="reports-header" class="collapsible-header">
+                <h2 class="text-2xl font-semibold text-gray-700">Relatórios de Gastos</h2>
+                <svg id="reports-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </div>
+            <div id="reports-section-content" class="hidden">
+                <div class="p-4 bg-gray-50 rounded-lg shadow-sm mb-6">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3">Gerar Relatório</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-2 items-end mb-4">
+                        <div>
+                            <label for="report-type" class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                            <select id="report-type" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                                <option value="monthly">Mensal</option>
+                                <option value="annual">Anual</option>
+                                <option value="comparison_monthly">Comparativo Mensal</option>
+                                <option value="comparison_annual">Comparativo Anual</option>
+                            </select>
+                        </div>
+                        
+                        <div id="report-period1-month-div">
+                            <label for="report-month" class="block text-sm font-medium text-gray-700 mb-1">Mês (Período 1)</label>
+                            <select id="report-month" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                                </select>
+                        </div>
+                        <div id="report-period1-year-div">
+                            <label for="report-year" class="block text-sm font-medium text-gray-700 mb-1">Ano (Período 1)</label>
+                            <select id="report-year" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                                </select>
+                        </div>
+                        
+                        <div id="report-period2-month-div" class="hidden">
+                            <label for="report-month-comp" class="block text-sm font-medium text-gray-700 mb-1">Mês (Período 2)</label>
+                            <select id="report-month-comp" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                                </select>
+                        </div>
+                        <div id="report-period2-year-div" class="hidden">
+                            <label for="report-year-comp" class="block text-sm font-medium text-gray-700 mb-1">Ano (Período 2)</label>
+                            <select id="report-year-comp" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                                </select>
+                        </div>
+
+                        <div class="lg:col-span-1 flex justify-end self-end">
+                            <button id="generate-report-btn" class="w-full sm:w-auto px-6 py-2 bg-teal-500 text-white font-semibold rounded-md shadow-md hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400 transition duration-150 ease-in-out">
+                                Gerar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="report-output-area" class="mt-6 overflow-x-auto">
+                    </div>
+            </div>
+        </div>
+
+
+        <div class="mb-8 border-b pb-6 border-gray-200">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Opções de Dados</h2>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="download-xlsx-btn"
+                        class="w-full sm:w-auto px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">
+                    Baixar Transações (Excel)
+                </button>
+                </div>
+        </div>
+
+        <div>
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                <h2 class="text-2xl font-semibold text-gray-700">Minhas Transações</h2>
+                <div class="flex flex-wrap items-center gap-2">
+                     <input type="text" id="search-transactions-input" placeholder="Buscar transações..." class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm w-full sm:w-auto">
+                    <button id="pay-selected-transactions-btn" class="hidden px-3 py-2 bg-green-500 text-white font-semibold rounded-md shadow-md hover:bg-green-600 text-xs sm:text-sm">
+                        Pagar Selecionadas
+                    </button>
+                    <button id="unpay-selected-transactions-btn" class="hidden px-3 py-2 bg-yellow-500 text-white font-semibold rounded-md shadow-md hover:bg-yellow-600 text-xs sm:text-sm">
+                        Desmarcar Pagamento
+                    </button>
+                    <select id="link-selected-account-select" class="hidden mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-xs">
+                        {/* Options will be populated by JavaScript */}
+                    </select>
+                    <button id="link-selected-transactions-btn" class="hidden px-3 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 text-xs sm:text-sm">
+                        Vincular Conta/Cartão
+                    </button>
+                    <select id="link-selected-category-select" class="hidden mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-xs">
+                        {/* Options will be populated by JavaScript */}
+                    </select>
+                    <button id="link-selected-category-btn" class="hidden px-3 py-2 bg-indigo-500 text-white font-semibold rounded-md shadow-md hover:bg-indigo-600 text-xs sm:text-sm">
+                        Vincular Categoria
+                    </button>
+                    <button id="delete-selected-transactions-btn" class="hidden px-3 py-2 bg-red-500 text-white font-semibold rounded-md shadow-md hover:bg-red-600 text-xs sm:text-sm">
+                        Excluir Selecionadas
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 mb-4">
+                <button id="prev-month-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Anterior</button>
+                <span id="current-month-display" class="text-lg font-semibold text-gray-800"></span>
+                <button id="next-month-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Próximo</button>
+            </div>
+            <div class="overflow-x-auto rounded-lg shadow-md">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="select-all-transactions" class="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out">
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoria</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conta / Cartão</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parcela</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-list" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+            <p id="no-transactions-message" class="text-center text-gray-500 mt-4 hidden">Nenhuma transação registrada ainda.</p>
+        </div>
+
+    </div>
+
+    <div id="edit-transaction-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Transação</h3>
+                <button class="modal-close-btn" id="close-edit-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-transaction-id">
+                
+                <label for="edit-date">Data:</label>
+                <input type="date" id="edit-date">
+
+                <label for="edit-description">Descrição:</label>
+                <input type="text" id="edit-description">
+
+                <label for="edit-value">Valor da Parcela:</label> 
+                <input type="number" id="edit-value" step="0.01">
+                
+                <label for="edit-category">Categoria:</label>
+                <select id="edit-category" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm mb-4"></select>
+                <input type="text" id="edit-new-category" placeholder="Nova Categoria (se 'Adicionar Nova...' selecionada)" class="hidden w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm mb-4">
+
+                <label for="edit-installments-total">Parcelas (Total):</label>
+                <input type="text" id="edit-installments-total" readonly class="bg-gray-100 cursor-not-allowed">
+
+                <label for="edit-installments-paid">Parcelas já pagas:</label>
+                <input type="number" id="edit-installments-paid" min="0" required>
+            </div>
+            <div class="modal-footer">
+                <button id="save-edit-transaction-btn"
+                        class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 transition duration-150 ease-in-out">
+                    Salvar Alterações
+                </button>
+                <button id="cancel-edit-transaction-btn"
+                        class="px-4 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition duration-150 ease-in-out">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+     <div id="account-entries-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="account-entries-title">Extrato de Entradas</h3>
+                <button class="modal-close-btn" id="close-account-entries-modal">&times;</button>
+            </div>
+            <div class="modal-body overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th> </tr>
+                    </thead>
+                    <tbody id="account-entries-list" class="bg-white divide-y divide-gray-200">
+                        {/* Entradas serão listadas aqui */}
+                    </tbody>
+                </table>
+                <p id="no-account-entries-message" class="text-center text-gray-500 mt-4 hidden">Nenhuma entrada registrada para esta conta.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="close-account-entries-modal-footer"
+                        class="px-4 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="confirmation-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="confirmation-modal-title">Confirmar Exclusão</h3>
+                <button class="modal-close-btn" id="close-confirmation-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmation-modal-message">Tem a certeza que deseja excluir este item?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-delete-btn"
+                        class="px-4 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out">
+                    Confirmar Exclusão
+                </button>
+                <button id="cancel-delete-btn"
+                        class="px-4 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition duration-150 ease-in-out">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Arrays globais para armazenar dados
+        let accounts = [];
+        let creditCards = [];
+        let transactions = [];
+        let categories = [
+            "Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação",
+            "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros", "Revisar Importação"
+        ];
+
+        let importedTransactionsToReview = [];
+        let currentMonth = new Date().getMonth(); 
+        let currentYear = new Date().getFullYear();
+        let itemToDelete = { id: null, type: null, showFeedback: true, isBulk: false, ids: [], accountIdForReversal: null }; 
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const totalReceitasEl = document.getElementById('total-receitas');
+            const totalDespesasEl = document.getElementById('total-despesas');
+            const saldoAtualEl = document.getElementById('saldo-atual');
+            const totalGastoCartoesMesEl = document.getElementById('total-gasto-cartoes-mes'); 
+            const noTransactionsMessage = document.getElementById('no-transactions-message');
+            const feedbackMessageEl = document.getElementById('feedback-message');
+            const addAccountForm = document.getElementById('add-account-form');
+            const accountsList = document.getElementById('accounts-list');
+            const addCreditCardForm = document.getElementById('add-credit-card-form');
+            const creditCardsList = document.getElementById('credit-cards-list');
+            const accountSelect = document.getElementById('account-select'); 
+            const accountTypeSelect = document.getElementById('account-type'); 
+            const initialBalanceInput = document.getElementById('initial-balance');
+            const initialValueLabel = document.querySelector('label[for="initial-balance"]'); 
+            const overdraftLimitDiv = document.getElementById('overdraft-limit-div');
+            const overdraftLimitInput = document.getElementById('overdraft-limit');
+            const cardDueDayInput = document.getElementById('card-due-day');
+            const transactionForm = document.getElementById('transaction-form');
+            const transactionList = document.getElementById('transaction-list');
+            const installmentsInput = document.getElementById('installments');
+            const installmentsPaidInput = document.getElementById('installments-paid'); 
+            const transactionTypeSelect = document.getElementById('type');
+            const categorySelect = document.getElementById('category-select');
+            const newCategoryInput = document.getElementById('new-category-input');
+            const importHeader = document.getElementById('import-header');
+            const importSectionContent = document.getElementById('import-section-content');
+            const importArrow = document.getElementById('import-arrow');
+            const importReviewSection = document.getElementById('import-review-section');
+            const importedTransactionsTableBody = document.getElementById('imported-transactions-table-body');
+            const confirmImportBtn = document.getElementById('confirm-import-btn');
+            const cancelReviewBtn = document.getElementById('cancel-review-btn');
+            const fileInput = document.getElementById('file-input');
+            const importFileBtn = document.getElementById('import-file-btn');
+            const prevMonthBtn = document.getElementById('prev-month-btn');
+            const nextMonthBtn = document.getElementById('next-month-btn');
+            const currentMonthDisplay = document.getElementById('current-month-display');
+            const downloadXlsxBtn = document.getElementById('download-xlsx-btn');
+            const clearAllDataLink = document.getElementById('clear-all-data-link'); // Novo link
+            const editTransactionModal = document.getElementById('edit-transaction-modal');
+            const closeEditModalBtn = document.getElementById('close-edit-modal');
+            const saveEditTransactionBtn = document.getElementById('save-edit-transaction-btn');
+            const cancelEditTransactionBtn = document.getElementById('cancel-edit-transaction-btn');
+            const editTransactionIdInput = document.getElementById('edit-transaction-id');
+            const editDateInput = document.getElementById('edit-date'); 
+            const editDescriptionInput = document.getElementById('edit-description');
+            const editValueInput = document.getElementById('edit-value');
+            const editCategorySelect = document.getElementById('edit-category'); 
+            const editNewCategoryInput = document.getElementById('edit-new-category'); 
+            const editInstallmentsTotalInput = document.getElementById('edit-installments-total');
+            const editInstallmentsPaidInput = document.getElementById('edit-installments-paid');
+            const searchTransactionsInput = document.getElementById('search-transactions-input');
+            const selectAllTransactionsCheckbox = document.getElementById('select-all-transactions');
+            const paySelectedTransactionsBtn = document.getElementById('pay-selected-transactions-btn');
+            const unpaySelectedTransactionsBtn = document.getElementById('unpay-selected-transactions-btn');
+            const linkSelectedAccountSelect = document.getElementById('link-selected-account-select');
+            const linkSelectedTransactionsBtn = document.getElementById('link-selected-transactions-btn');
+            const linkSelectedCategorySelect = document.getElementById('link-selected-category-select'); 
+            const linkSelectedCategoryBtn = document.getElementById('link-selected-category-btn'); 
+            const deleteSelectedTransactionsBtn = document.getElementById('delete-selected-transactions-btn');
+            const selectAllImportedCheckbox = document.getElementById('select-all-imported-transactions');
+            const reportsHeader = document.getElementById('reports-header');
+            const reportsSectionContent = document.getElementById('reports-section-content');
+            const reportsArrow = document.getElementById('reports-arrow');
+            const reportTypeSelect = document.getElementById('report-type');
+            const reportMonthSelectorDiv1 = document.getElementById('report-period1-month-div'); 
+            const reportYearSelectorDiv1 = document.getElementById('report-period1-year-div');  
+            const reportMonthSelectorDiv2 = document.getElementById('report-period2-month-div'); 
+            const reportYearSelectorDiv2 = document.getElementById('report-period2-year-div');  
+            const reportMonthSelect1 = document.getElementById('report-month');
+            const reportYearSelect1 = document.getElementById('report-year');
+            const reportMonthSelect2 = document.getElementById('report-month-comp'); 
+            const reportYearSelect2 = document.getElementById('report-year-comp');  
+            const generateReportBtn = document.getElementById('generate-report-btn');
+            const reportOutputArea = document.getElementById('report-output-area');
+            const bulkEditImportedControls = document.getElementById('bulk-edit-imported-controls');
+            const bulkEditTypeSelect = document.getElementById('bulk-edit-type');
+            const bulkEditCategorySelect = document.getElementById('bulk-edit-category');
+            const bulkEditAccountSelect = document.getElementById('bulk-edit-account');
+            const bulkEditStatusSelect = document.getElementById('bulk-edit-status');
+            const applyBulkEditImportedBtn = document.getElementById('apply-bulk-edit-imported-btn');
+            const accountEntriesModal = document.getElementById('account-entries-modal');
+            const closeAccountEntriesModalBtn = document.getElementById('close-account-entries-modal');
+            const closeAccountEntriesModalFooterBtn = document.getElementById('close-account-entries-modal-footer');
+            const accountEntriesList = document.getElementById('account-entries-list');
+            const accountEntriesTitle = document.getElementById('account-entries-title');
+            const noAccountEntriesMessage = document.getElementById('no-account-entries-message');
+            const confirmationModal = document.getElementById('confirmation-modal');
+            const confirmationModalTitle = document.getElementById('confirmation-modal-title');
+            const confirmationModalMessage = document.getElementById('confirmation-modal-message');
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+            const closeConfirmationModalBtn = document.getElementById('close-confirmation-modal');
+            const suggestedGoalsHeader = document.getElementById('suggested-goals-header'); 
+            const suggestedGoalsContent = document.getElementById('suggested-goals-content'); 
+            const suggestedGoalsArrow = document.getElementById('suggested-goals-arrow'); 
+            const suggestedGoalsList = document.getElementById('suggested-goals-list'); 
+            const noSuggestedGoalsMessage = document.getElementById('no-suggested-goals-message'); 
+
+
+            // --- Funções Utilitárias ---
+            const showFeedback = (message, type) => {
+                feedbackMessageEl.textContent = message;
+                feedbackMessageEl.className = ''; 
+                feedbackMessageEl.classList.add(`feedback-${type}`, 'block'); 
+                feedbackMessageEl.style.display = 'block'; 
+                setTimeout(() => {
+                    if (feedbackMessageEl.textContent === message) { 
+                        feedbackMessageEl.style.display = 'none'; 
+                    }
+                }, 7000); 
+            };
+
+            const formatCurrency = (value) => {
+                return new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(value);
+            };
+
+            const generateUniqueId = () => '_' + Math.random().toString(36).substr(2, 9);
+
+            function formatDateFromVariousFormats(dateString, yearToAssume = new Date().getFullYear()) {
+                if (!dateString || typeof dateString !== 'string') return null;
+                let day, month, year;
+                dateString = dateString.trim();
+
+                let match = dateString.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{4})$/); 
+                if (match) {
+                    day = parseInt(match[1], 10); month = parseInt(match[2], 10); year = parseInt(match[3], 10);
+                } else {
+                    match = dateString.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{2})$/); 
+                    if (match) {
+                        day = parseInt(match[1], 10); month = parseInt(match[2], 10); year = parseInt(match[3], 10);
+                        year += (year < 70 ? 2000 : 1900);
+                    } else {
+                        match = dateString.match(/^(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})$/); 
+                        if (match) {
+                            year = parseInt(match[1], 10); month = parseInt(match[2], 10); day = parseInt(match[3], 10);
+                        } else {
+                            match = dateString.match(/^(\d{1,2})[\/\.](\d{1,2})$/); 
+                            if (match) {
+                                day = parseInt(match[1], 10); month = parseInt(match[2], 10); year = yearToAssume;
+                            } else {
+                                match = dateString.match(/^(\d{2})(\d{2})(\d{4})$/);
+                                if (match) {
+                                    day = parseInt(match[1], 10); month = parseInt(match[2], 10); year = parseInt(match[3], 10);
+                                } else {
+                                    match = dateString.match(/^(\d{2})(\d{2})(\d{2})$/);
+                                    if (match) {
+                                        day = parseInt(match[1], 10); month = parseInt(match[2], 10); year = parseInt(match[3], 10);
+                                        year += (year < 70 ? 2000 : 1900);
+                                    } else {
+                                        return null; 
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+                const dateObj = new Date(year, month - 1, day);
+                if (dateObj.getFullYear() === year && dateObj.getMonth() === month - 1 && dateObj.getDate() === day) {
+                    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                }
+                return null;
+            }
+
+            function parseCurrencyValue(valueString) {
+                if (!valueString || typeof valueString !== 'string') return { value: 0, isCredit: null, extractedString: "", lineRemainder: valueString };
+                
+                let originalMatchedString = "";
+                let lineRemainder = valueString;
+                const currencyPatterns = [
+                    /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, 
+                    /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d+(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,            
+                    /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d{1,3}(?:,\d{3})*(?:\.\d{2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, 
+                    /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d+(?:\.\d{2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,             
+                    /(?:^|\s)([\-\+]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, 
+                    /(?:^|\s)([\-\+]?\s*\d+(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,                
+                ];
+                let numericPart = "";
+                let indicator = "";
+                for (const pattern of currencyPatterns) {
+                    const match = lineRemainder.match(pattern); 
+                    if (match) {
+                        originalMatchedString = match[0].trim();
+                        numericPart = match[2] ? match[2].trim() : (match[1] && !match[1].toUpperCase().includes("R$") ? match[1].trim() : "");
+                        indicator = match[3] ? match[3].trim().toUpperCase() : "";
+                        const startIndex = lineRemainder.indexOf(originalMatchedString);
+                        if (startIndex !== -1) {
+                            lineRemainder = lineRemainder.substring(0, startIndex) + lineRemainder.substring(startIndex + originalMatchedString.length);
+                            lineRemainder = lineRemainder.trim();
+                        }
+                        break;
+                    }
+                }
+                if (!numericPart) return { value: 0, isCredit: null, extractedString: "", lineRemainder: valueString };
+                let cleanedNumericPart = numericPart.replace("R$", "").replace("+", "").trim();
+                const hasMinus = cleanedNumericPart.startsWith('-');
+                if (hasMinus) cleanedNumericPart = cleanedNumericPart.substring(1);
+                let numberValue;
+                if (cleanedNumericPart.includes(',')) { 
+                    if (cleanedNumericPart.match(/\.\d{3},\d{1,2}$/)) { 
+                        numberValue = parseFloat(cleanedNumericPart.replace(/\./g, '').replace(',', '.'));
+                    } else if (cleanedNumericPart.match(/,\d{1,2}$/)) { 
+                        numberValue = parseFloat(cleanedNumericPart.replace(',', '.'));
+                    } else if (cleanedNumericPart.match(/,\d{3}(?:\.\d{2})?$/)) { 
+                         numberValue = parseFloat(cleanedNumericPart.replace(/,/g, ''));
+                    } else { 
+                        numberValue = parseFloat(cleanedNumericPart.replace(',', '.'));
+                    }
+                } else {
+                    numberValue = parseFloat(cleanedNumericPart); 
+                }
+                if (isNaN(numberValue)) return { value: 0, isCredit: null, extractedString: "", lineRemainder: valueString };
+                let finalIsCredit = null;
+                if (indicator.startsWith("C")) finalIsCredit = true;
+                else if (indicator.startsWith("D")) finalIsCredit = false;
+                else if (hasMinus) finalIsCredit = false;
+                return { value: Math.abs(numberValue), isCredit: finalIsCredit, extractedString: originalMatchedString, lineRemainder: lineRemainder };
+            }
+
+            function extractInstallmentInfo(text) {
+                if (!text || typeof text !== 'string') return { paid: 1, total: 1, matchedText: "", lineRemainder: text };
+                let paid = 1;
+                let total = 1;
+                let matchedText = "";
+                let lineRemainder = text;
+                const patterns = [
+                    /(\d{1,2})\s*\/\s*(\d{1,2})/, 
+                    /parc(?:ela)?\.?\s*(\d{1,2})\s*(?:de|\/)\s*(\d{1,2})/i, 
+                    /inst\s*(\d{1,2})\s*\/\s*(\d{1,2})/i 
+                ];
+                for (const pattern of patterns) {
+                    const match = lineRemainder.match(pattern);
+                    if (match) {
+                        paid = parseInt(match[1], 10);
+                        total = parseInt(match[2], 10);
+                        matchedText = match[0];
+                        const startIndex = lineRemainder.indexOf(matchedText);
+                        if (startIndex !== -1) {
+                            lineRemainder = lineRemainder.substring(0, startIndex) + lineRemainder.substring(startIndex + matchedText.length);
+                            lineRemainder = lineRemainder.trim();
+                        }
+                        break; 
+                    }
+                }
+                if (total < paid || total <= 0 || paid <= 0) { // Basic validation
+                    return { paid: 1, total: 1, matchedText: "", lineRemainder: text };
+                }
+                return { paid, total, matchedText, lineRemainder };
+            }
+
+            // --- Event Listeners ---
+            const addDeleteListeners = () => { document.querySelectorAll('.delete-btn').forEach(b => { b.onclick = (e) => { requestDeleteConfirmation(e.currentTarget.dataset.id, e.currentTarget.dataset.type); }; }); };
+            const addPayTransactionListeners = () => { document.querySelectorAll('.pay-transaction-btn').forEach(b => { b.onclick = (e) => { markTransactionAsPaid(e.currentTarget.dataset.id, true); }; }); }; 
+            const addEditTransactionListeners = () => { document.querySelectorAll('.edit-transaction-btn').forEach(b => { b.onclick = (e) => { openEditModal(e.currentTarget.dataset.id); }; }); };
+
+            // --- Persistência de Dados ---
+            const loadData = () => {
+                const storedAccounts = localStorage.getItem('financialAccounts'); if (storedAccounts) accounts = JSON.parse(storedAccounts);
+                const storedCreditCards = localStorage.getItem('financialCreditCards'); if (storedCreditCards) creditCards = JSON.parse(storedCreditCards);
+                const storedTransactions = localStorage.getItem('financialFinancialTransactions'); if (storedTransactions) transactions = JSON.parse(storedTransactions);
+                const storedCategories = localStorage.getItem('financialCategories'); if (storedCategories) { categories = JSON.parse(storedCategories); if (!categories.includes("Revisar Importação")) categories.push("Revisar Importação"); } else { if (!categories.includes("Revisar Importação")) categories.push("Revisar Importação");}
+                renderAccounts(); renderCreditCards(); populateAccountSelects(); populateCategorySelect(); populateCategorySelect(editCategorySelect); 
+                populateLinkSelectedAccountSelect(); 
+                populateLinkSelectedCategorySelect(); 
+                populateReportSelectors(); 
+                renderTransactions(); 
+                updateSummary(); renderMonthlySummary(); checkCreditCardDueDates(); 
+                suggestFinancialGoals(); 
+            };
+            const saveAccounts = () => localStorage.setItem('financialAccounts', JSON.stringify(accounts));
+            const saveCreditCards = () => localStorage.setItem('financialCreditCards', JSON.stringify(creditCards));
+            const saveTransactions = () => localStorage.setItem('financialFinancialTransactions', JSON.stringify(transactions));
+            const saveCategories = () => localStorage.setItem('financialCategories', JSON.stringify(categories));
+
+            // --- Gerenciamento de Contas e Cartões ---
+            if(accountTypeSelect) {
+                accountTypeSelect.addEventListener('change', () => {
+                    if (initialValueLabel) initialValueLabel.textContent = 'Saldo Inicial (R$)'; 
+                    if (initialBalanceInput) initialBalanceInput.placeholder = '0.00'; 
+                    if (overdraftLimitDiv) overdraftLimitDiv.classList.toggle('hidden', accountTypeSelect.value !== 'corrente');
+                    if (accountTypeSelect.value === 'corrente' && initialBalanceInput) {
+                        initialBalanceInput.placeholder = '0.00 (Pode ser negativo se usando cheque especial)';
+                    }
+                });
+                if (overdraftLimitDiv && accountTypeSelect.value === 'corrente') {
+                    overdraftLimitDiv.classList.remove('hidden');
+                }
+            }
+
+            if(addAccountForm) {
+                addAccountForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const name = document.getElementById('account-name').value.trim();
+                    const type = accountTypeSelect.value; 
+                    const initialBalance = parseFloat(initialBalanceInput.value) || 0; 
+                    const overdraftLimit = type === 'corrente' && overdraftLimitInput ? (parseFloat(overdraftLimitInput.value) || 0) : 0;
+
+                    if (!name) {
+                        showFeedback('Por favor, insira um nome para a conta.', 'error');
+                        return;
+                    }
+                    
+                    const newAccount = { 
+                        id: generateUniqueId(), 
+                        name, 
+                        type, 
+                        balance: initialBalance, 
+                        limitOverdraft: overdraftLimit 
+                    };
+                    
+                    accounts.push(newAccount);
+                    saveAccounts();
+                    renderAccounts();
+                    populateAccountSelects();
+                    updateSummary();
+                    addAccountForm.reset();
+                    if (overdraftLimitDiv) overdraftLimitDiv.classList.add('hidden'); 
+                    if (initialValueLabel) initialValueLabel.textContent = 'Saldo Inicial (R$)';
+                    if (initialBalanceInput) initialBalanceInput.placeholder = '0.00';
+                    showFeedback('Conta adicionada com sucesso!', 'success');
+                    populateLinkSelectedAccountSelect();
+                    suggestFinancialGoals(); 
+                });
+            }
+            if(addCreditCardForm) {
+                addCreditCardForm.addEventListener('submit', (e) => { 
+                    e.preventDefault(); 
+                    const name = document.getElementById('card-name').value.trim(); 
+                    const limit = parseFloat(document.getElementById('card-limit').value) || 0; 
+                    const dueDay = parseInt(cardDueDayInput.value); 
+                    
+                    let closingDay = dueDay - 10;
+                    if (closingDay <= 0) { 
+                        const tempDate = new Date();
+                        tempDate.setDate(dueDay); 
+                        tempDate.setMonth(tempDate.getMonth() -1); 
+                        tempDate.setDate(tempDate.getDate() -10 + (dueDay <=10 ? 0 : 1)); 
+                        closingDay = tempDate.getDate();
+                    }
+
+
+                    if (name && limit > 0 && dueDay >= 1 && dueDay <= 31) { 
+                        const newCard = { id:generateUniqueId(), name, limit, availableLimit:limit, currentBillAmount:0, dueDay, closingDay }; 
+                        creditCards.push(newCard); 
+                        saveCreditCards(); 
+                        renderCreditCards(); 
+                        populateAccountSelects(); 
+                        addCreditCardForm.reset(); 
+                        showFeedback('Cartão adicionado!', 'success'); 
+                        populateLinkSelectedAccountSelect(); 
+                        suggestFinancialGoals(); 
+                    } else {
+                        showFeedback('Preencha os campos do cartão.', 'error'); 
+                    }
+                });
+            }
+            
+            const renderAccounts = () => {
+                if (!accountsList) return;
+                accountsList.innerHTML = '';
+                if (accounts.length === 0) {
+                    accountsList.innerHTML = '<li class="p-4 text-gray-500 text-center">Nenhuma conta adicionada ainda.</li>';
+                    return;
+                }
+                accounts.forEach(account => {
+                    const li = document.createElement('li');
+                    li.className = 'p-3 border-b border-gray-200 flex justify-between items-start'; 
+
+                    let typeText = "";
+                    if (account.type === 'corrente') typeText = "Conta Corrente";
+                    else if (account.type === 'poupanca') typeText = "Conta Poupança";
+                    else typeText = "Dinheiro (Caixa)";
+
+                    let accountDetailsHtml = `<div class="account-item-header flex justify-between items-center w-full">
+                                                <div>
+                                                    <span class="font-semibold text-gray-800">${account.name}</span>
+                                                    <span class="text-sm text-gray-500 ml-2">(${typeText})</span>
+                                                </div>
+                                                <svg class="arrow-icon w-5 h-5 text-gray-500 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                            </div>
+                                            <div class="account-details-content hidden mt-2 pl-4 text-sm text-gray-600">`;
+
+                    if (account.type === 'corrente') {
+                        accountDetailsHtml += `<p>Saldo em Conta: <span class="font-bold">${formatCurrency(account.balance)}</span></p>`;
+                        if (account.limitOverdraft > 0) {
+                            accountDetailsHtml += `<p>Limite Ch. Especial: <span class="font-bold">${formatCurrency(account.limitOverdraft)}</span></p>`;
+                            const availableOverdraft = account.balance + account.limitOverdraft;
+                            accountDetailsHtml += `<p>Disponível Total (c/ Limite): <span class="font-bold ${availableOverdraft >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(availableOverdraft)}</span></p>`;
+                        }
+                    } else { 
+                        accountDetailsHtml += `<p>Saldo: <span class="font-bold ${account.balance >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(account.balance)}</span></p>`;
+                    }
+                     accountDetailsHtml += `<button data-account-id="${account.id}" class="view-account-entries-btn text-xs text-blue-600 hover:text-blue-800 mt-1">Ver Entradas</button>`;
+                    accountDetailsHtml += `</div>`;
+                    
+                    li.innerHTML = `<div class="flex-grow">${accountDetailsHtml}</div>
+                        <button data-id="${account.id}" data-type="account" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 ml-2 self-start">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        </button>`;
+                    
+                    const headerDiv = li.querySelector('.account-item-header');
+                    const detailsDiv = li.querySelector('.account-details-content');
+                    const arrowIcon = headerDiv.querySelector('.arrow-icon');
+
+                    headerDiv.addEventListener('click', () => {
+                        detailsDiv.classList.toggle('hidden');
+                        arrowIcon.classList.toggle('rotated');
+                    });
+                     li.querySelector('.view-account-entries-btn').addEventListener('click', (e) => {
+                        e.stopPropagation(); 
+                        openAccountEntriesModal(account.id, account.name);
+                    });
+
+
+                    accountsList.appendChild(li);
+                });
+                addDeleteListeners();
+            };
+            
+            const renderCardBillDetails = (cardId, targetListElement, noTransactionsMessageElement) => {
+                if (!targetListElement || !noTransactionsMessageElement) return;
+                targetListElement.innerHTML = '';
+                let hasTransactionsForBill = false;
+
+                const billTransactions = transactions.filter(t => {
+                    const tDate = new Date(t.date + "T00:00:00");
+                    return t.accountId === cardId &&
+                           t.isCreditCard &&
+                           t.fundamentalType === 'despesa' &&
+                           !t.isPaid && 
+                           tDate.getMonth() === currentMonth && 
+                           tDate.getFullYear() === currentYear;
+                }).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                if (billTransactions.length > 0) {
+                    hasTransactionsForBill = true;
+                    billTransactions.forEach(tx => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `${new Date(tx.date + "T00:00:00").toLocaleDateString('pt-BR')} - ${tx.description}: ${formatCurrency(tx.value)}`;
+                        targetListElement.appendChild(listItem);
+                    });
+                }
+                noTransactionsMessageElement.classList.toggle('hidden', !hasTransactionsForBill);
+            };
+
+            const renderCreditCards = () => {
+                if (!creditCardsList) return;
+                creditCardsList.innerHTML = '';
+                if (creditCards.length === 0) {
+                    creditCardsList.innerHTML = '<li class="p-4 text-gray-500 text-center">Nenhum cartão de crédito adicionado.</li>';
+                    return;
+                }
+                creditCards.forEach(card => {
+                    const li = document.createElement('li');
+                    li.className = 'p-3 border-b border-gray-200'; 
+
+                    const currentBillAmountForCard = transactions.reduce((sum, t) => {
+                        const tDate = new Date(t.date + "T00:00:00");
+                        if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
+                            tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
+                            return sum + t.value;
+                        }
+                        return sum;
+                    }, 0);
+
+                    li.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex-grow">
+                                <div class="card-item-header flex justify-between items-center w-full cursor-pointer">
+                                    <div>
+                                        <span class="font-semibold text-gray-800">${card.name}</span>
+                                        <span class="text-sm text-gray-500 ml-2">(Crédito)</span>
+                                    </div>
+                                    <svg class="arrow-icon-card-details w-5 h-5 text-gray-500 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                </div>
+                                <div class="card-details-content hidden mt-2 pl-4 text-sm text-gray-600">
+                                    <p>Limite: <span class="font-bold">${formatCurrency(card.limit)}</span></p>
+                                    <p>Disponível: <span class="font-bold">${formatCurrency(card.availableLimit)}</span></p>
+                                    <p>Fatura Atual (Mês ${new Date(currentYear, currentMonth).toLocaleDateString('pt-BR', {month: 'long'})}): <span class="font-bold">${formatCurrency(currentBillAmountForCard)}</span></p>
+                                    <p>Vencimento: Dia ${card.dueDay} (Fechamento aprox. dia ${card.closingDay || 'N/A'})</p>
+                                    
+                                    <div class="mt-3 pt-2 border-t border-gray-200">
+                                        <div id="card-bill-details-header-${card.id}" class="collapsible-header-inner flex justify-between items-center cursor-pointer">
+                                            <h4 class="text-md font-semibold text-purple-700">Detalhes da Fatura Atual</h4>
+                                            <svg id="card-bill-arrow-${card.id}" class="arrow-icon w-5 h-5 text-purple-600 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                        </div>
+                                        <div id="card-bill-content-${card.id}" class="bill-details-content hidden mt-1">
+                                            <ul id="detailed-bill-list-${card.id}" class="text-sm text-gray-600 list-disc list-inside">
+                                                </ul>
+                                            <p id="no-bill-transactions-${card.id}" class="text-xs text-gray-500 mt-1 hidden">Nenhuma transação nesta fatura para o mês atual.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button data-id="${card.id}" data-type="creditCard" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 ml-2 self-start">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            </button>
+                        </div>`;
+                    creditCardsList.appendChild(li);
+
+                    const cardItemHeader = li.querySelector('.card-item-header');
+                    const cardDetailsContent = li.querySelector('.card-details-content');
+                    const cardDetailsArrow = cardItemHeader.querySelector('.arrow-icon-card-details');
+
+                    cardItemHeader.addEventListener('click', () => {
+                        cardDetailsContent.classList.toggle('hidden');
+                        cardDetailsArrow.classList.toggle('rotated');
+                    });
+
+                    const billDetailsHeader = li.querySelector(`#card-bill-details-header-${card.id}`);
+                    const billDetailsContent = li.querySelector(`#card-bill-content-${card.id}`);
+                    const billDetailsArrow = billDetailsHeader.querySelector(`#card-bill-arrow-${card.id}`);
+                    const billListUl = li.querySelector(`#detailed-bill-list-${card.id}`);
+                    const noBillMessageP = li.querySelector(`#no-bill-transactions-${card.id}`);
+
+                    billDetailsHeader.addEventListener('click', (e) => {
+                        e.stopPropagation(); 
+                        billDetailsContent.classList.toggle('hidden');
+                        billDetailsArrow.classList.toggle('rotated');
+                        if (!billDetailsContent.classList.contains('hidden')) {
+                            renderCardBillDetails(card.id, billListUl, noBillMessageP);
+                        }
+                    });
+                });
+                addDeleteListeners();
+            };
+
+
+            const populateAccountSelects = (targetSelect = accountSelect, forRevenue = false) => {
+                if (!targetSelect) return;
+                targetSelect.innerHTML = '';
+                const noLinkOpt = document.createElement('option');
+                noLinkOpt.value = "";
+                noLinkOpt.textContent = targetSelect === accountSelect ? (forRevenue ? "Selecione uma Conta" : "Não Vincular / Geral") : "Selecione";
+                if (forRevenue) noLinkOpt.disabled = true; 
+                targetSelect.appendChild(noLinkOpt);
+
+                accounts.forEach(acc => {
+                    const opt = document.createElement('option');
+                    opt.value = acc.id;
+                    let typeText = "";
+                    if (acc.type === 'corrente') typeText = "C/C";
+                    else if (acc.type === 'poupanca') typeText = "Poupança";
+                    else typeText = "Dinheiro";
+                    opt.textContent = `${acc.name} (${typeText})`;
+                    targetSelect.appendChild(opt);
+                });
+
+                if (!forRevenue) { 
+                    creditCards.forEach(card => {
+                        const opt = document.createElement('option');
+                        opt.value = card.id;
+                        opt.textContent = `${card.name} (Cartão)`;
+                        targetSelect.appendChild(opt);
+                    });
+                }
+                if (!targetSelect.value && targetSelect === accountSelect && !forRevenue) targetSelect.value = "";
+                else if (!targetSelect.value && forRevenue && accounts.length > 0) targetSelect.value = ""; 
+            };
+             
+            const populateCategorySelect = (selectElement = categorySelect) => { if(!selectElement) return; const currVal = selectElement.value; selectElement.innerHTML = ''; if (selectElement === categorySelect) { const phOpt = document.createElement('option'); phOpt.value = ""; phOpt.textContent = "Selecione categoria"; phOpt.disabled = true; phOpt.selected = !currVal; selectElement.appendChild(phOpt); } categories.sort((a,b) => a.localeCompare(b)).forEach(cat => { const opt = document.createElement('option'); opt.value = cat; opt.textContent = cat; selectElement.appendChild(opt); }); const newOpt = document.createElement('option'); newOpt.value = 'nova-categoria'; newOpt.textContent = 'Adicionar Nova...'; selectElement.appendChild(newOpt); if (categories.includes(currVal)) selectElement.value = currVal; else if (currVal === 'nova-categoria' && selectElement === categorySelect) selectElement.value = 'nova-categoria'; else if (!currVal && selectElement !== categorySelect && categories.length > 0 && selectElement.options.length > (selectElement === categorySelect ? 1:0) ) selectElement.value = categories[0]; };
+            
+            if(categorySelect) {
+                categorySelect.addEventListener('change', () => { if (categorySelect.value === 'nova-categoria') { newCategoryInput.classList.remove('hidden'); newCategoryInput.focus(); newCategoryInput.value = ''; } else { newCategoryInput.classList.add('hidden'); newCategoryInput.value = ''; }});
+            }
+             if (transactionTypeSelect) {
+                transactionTypeSelect.addEventListener('change', (e) => {
+                    const isRevenueType = e.target.value === 'receita' || e.target.value === 'pix_recebido';
+                    populateAccountSelects(accountSelect, isRevenueType);
+                    if (isRevenueType) {
+                        accountSelect.required = true;
+                        if (creditCards.some(card => card.id === accountSelect.value)) {
+                            accountSelect.value = "";
+                        }
+                    } else {
+                        accountSelect.required = false;
+                    }
+                });
+            }
+
+
+            // --- Gerenciamento de Transações ---
+            if(transactionForm) {
+                transactionForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const baseDateString = document.getElementById('date').value;
+                    const description = document.getElementById('description').value.trim();
+                    const valuePerInstallment = parseFloat(document.getElementById('value').value); 
+                    let type = document.getElementById('type').value; 
+                    const accountId = document.getElementById('account-select').value; 
+                    const totalInstallments = parseInt(installmentsInput.value) || 1;
+                    const installmentsPaidCount = parseInt(installmentsPaidInput.value) || 0; 
+                    let fundamentalType = (type === 'receita' || type === 'pix_recebido') ? 'receita' : 'despesa'; 
+
+                    if (fundamentalType === 'receita' && !accountId) {
+                        showFeedback('Para receitas, é obrigatório vincular a uma conta.', 'error');
+                        return;
+                    }
+                     if (fundamentalType === 'receita' && creditCards.some(card => card.id === accountId)) {
+                        showFeedback('Receitas não podem ser vinculadas a cartões de crédito.', 'error');
+                        return;
+                    }
+
+
+                    let category;
+                    if (categorySelect.value === 'nova-categoria') {
+                        category = newCategoryInput.value.trim();
+                        if (category && !categories.includes(category)) { categories.push(category); saveCategories(); populateCategorySelect(); populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect(); categorySelect.value = category; } 
+                        else if (categories.includes(category)) { categorySelect.value = category; newCategoryInput.classList.add('hidden'); newCategoryInput.value = ''; } 
+                        else if (!category) { showFeedback('Insira nome para nova categoria.','error'); return; }
+                    } else { category = categorySelect.value; }
+
+                    if (!baseDateString || !description || isNaN(valuePerInstallment) || valuePerInstallment <= 0 || !type || !category ) { showFeedback('Preencha todos os campos obrigatórios.','error'); return; }
+                    if (installmentsPaidCount > totalInstallments || installmentsPaidCount < 0) { showFeedback('Parcelas pagas inválido.','error'); return; }
+
+                    const account = accountId ? accounts.find(acc => acc.id === accountId) : null;
+                    const creditCard = accountId ? creditCards.find(card => card.id === accountId) : null;
+                    const isCreditCardTransaction = !!creditCard;
+                    let transactionsToAdd = [];
+                    const originalGroupId = generateUniqueId(); 
+                    
+                    for (let k = 1; k <= totalInstallments; k++) {
+                        const transactionDateObject = new Date(baseDateString + "T00:00:00"); 
+                        const monthOffset = k - (installmentsPaidCount + 1);
+                        transactionDateObject.setMonth(transactionDateObject.getMonth() + monthOffset);
+                        const originalDay = new Date(baseDateString + "T00:00:00").getDate();
+                        if (transactionDateObject.getDate() !== originalDay) {
+                            transactionDateObject.setDate(0); 
+                        }
+                        transactionsToAdd.push({
+                            id: generateUniqueId(), 
+                            date: transactionDateObject.toISOString().split('T')[0], 
+                            description: `${description} (${k}/${totalInstallments})`, 
+                            value: valuePerInstallment, 
+                            type: type, 
+                            fundamentalType: fundamentalType, 
+                            category, 
+                            accountId: accountId || null, 
+                            isCreditCard: isCreditCardTransaction,
+                            installments: `${k}/${totalInstallments}`, 
+                            isPaid: k <= installmentsPaidCount,
+                            originalGroupId 
+                        });
+                    }
+                    
+                    let transactionAddedSuccessfully = true;
+                    const tempAccounts = JSON.parse(JSON.stringify(accounts)); 
+                    const tempCreditCards = JSON.parse(JSON.stringify(creditCards));
+                    for (const newTx of transactionsToAdd) {
+                        if (newTx.accountId) { 
+                            let target = newTx.isCreditCard ? tempCreditCards.find(c => c.id === newTx.accountId) : tempAccounts.find(a => a.id === newTx.accountId);
+                            if (target) {
+                                if (newTx.isCreditCard) { 
+                                    if (newTx.fundamentalType === 'despesa' && newTx.isPaid) { 
+                                        // Não afeta limite ao adicionar uma despesa de cartão já paga.
+                                    } else if (newTx.fundamentalType === 'despesa' && !newTx.isPaid) {
+                                        target.availableLimit -= newTx.value; 
+                                    }
+                                } else if (newTx.isPaid || newTx.fundamentalType === 'receita') { 
+                                    if (newTx.fundamentalType === 'despesa') { 
+                                        if (target.type === 'corrente' && target.limitOverdraft > 0 && (target.balance - newTx.value < -target.limitOverdraft)) { 
+                                            showFeedback(`Transação ${formatCurrency(newTx.value)} para ${target.name} excede limite de cheque especial.`, 'error'); 
+                                            transactionAddedSuccessfully = false; break; 
+                                        } 
+                                        target.balance -= newTx.value; 
+                                    } else { 
+                                        target.balance += newTx.value; 
+                                    }
+                                }
+                            } else { showFeedback('Conta/Cartão não encontrado.', 'info'); newTx.accountId = null; newTx.isCreditCard = false; }
+                        }
+                    }
+                    if (!transactionAddedSuccessfully) return; 
+                    if (accountId) { accounts = tempAccounts; creditCards = tempCreditCards; }
+                    transactions.push(...transactionsToAdd); 
+                    saveTransactions(); saveAccounts(); saveCreditCards();
+                    renderTransactions(); updateSummary(); renderCreditCards(); checkCreditCardDueDates(); 
+                    transactionForm.reset(); installmentsInput.value = 1; installmentsPaidInput.value = 0; accountSelect.value = ""; newCategoryInput.classList.add('hidden'); populateCategorySelect(); 
+                    showFeedback('Transação(ões) adicionada(s)!', 'success');
+                    suggestFinancialGoals(); 
+                });
+            }
+
+            // --- Renderização e Lógica de Exclusão/Pagamento/Edição de Transações ---
+            const renderTransactions = (searchTerm = "", filterType = "all_except_revenue") => {
+                if (!transactionList) return;
+                transactionList.innerHTML = '';
+                const beginningOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+                beginningOfCurrentMonth.setHours(0, 0, 0, 0);
+                const lowerSearchTerm = searchTerm.toLowerCase().trim();
+                let overdueAlerts = new Set(); 
+
+                const filteredTransactions = transactions.filter(t => {
+                    const transactionDate = new Date(t.date + "T00:00:00"); 
+                    const isInCurrentMonthAndYear = transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth;
+                    const isPendingFromPreviousMonth = transactionDate < beginningOfCurrentMonth && !t.isPaid;
+                    
+                    if (!t.isCreditCard && !t.isPaid && transactionDate < beginningOfCurrentMonth && !overdueAlerts.has(t.id) && t.fundamentalType === 'despesa') {
+                        showFeedback(`Atenção: A despesa "${t.description}" de ${transactionDate.toLocaleDateString('pt-BR')} está em atraso!`, 'error');
+                        overdueAlerts.add(t.id);
+                    }
+
+                    const matchesSearch = lowerSearchTerm === "" ||
+                        t.description.toLowerCase().includes(lowerSearchTerm) ||
+                        t.category.toLowerCase().includes(lowerSearchTerm) ||
+                        formatCurrency(t.value).toLowerCase().includes(lowerSearchTerm) ||
+                        (t.accountId && (accounts.find(a=>a.id === t.accountId)?.name.toLowerCase().includes(lowerSearchTerm) || creditCards.find(c=>c.id === t.accountId)?.name.toLowerCase().includes(lowerSearchTerm)));
+                    
+                    let typeMatch = false;
+                    if (filterType === "all_except_revenue") {
+                        typeMatch = t.fundamentalType !== 'receita';
+                    } else if (filterType === "revenue_only") {
+                        typeMatch = t.fundamentalType === 'receita';
+                    } else if (filterType === "expenses_only") {
+                        typeMatch = t.fundamentalType === 'despesa';
+                    }
+
+
+                    return (isInCurrentMonthAndYear || isPendingFromPreviousMonth) && matchesSearch && typeMatch;
+                }).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                if (filteredTransactions.length === 0) {
+                    if(noTransactionsMessage) noTransactionsMessage.classList.remove('hidden');
+                    if(selectAllTransactionsCheckbox) selectAllTransactionsCheckbox.checked = false; 
+                    updateSelectedTransactionsActions(); 
+                    return;
+                } else {
+                    if(noTransactionsMessage) noTransactionsMessage.classList.add('hidden');
+                }
+
+                filteredTransactions.forEach(transaction => {
+                    const tr = document.createElement('tr');
+                    let rowClass = 'bg-white hover:bg-gray-50';
+                    const transactionDate = new Date(transaction.date + "T00:00:00"); 
+                    if (transaction.isPaid) rowClass += ' paid-transaction';
+                    else if (transactionDate < beginningOfCurrentMonth) rowClass += ' pending-previous-month'; 
+                    tr.className = rowClass;
+
+                    const accountOrCardName = transaction.accountId 
+                        ? (transaction.isCreditCard
+                            ? creditCards.find(card => card.id === transaction.accountId)?.name || 'Cartão Desc.'
+                            : accounts.find(acc => acc.id === transaction.accountId)?.name || 'Conta Desc.')
+                        : 'Não Vinculada'; 
+                    const textStyle = transaction.isPaid ? 'text-gray-500' : (transactionDate < beginningOfCurrentMonth ? 'text-gray-900 font-semibold' : 'text-gray-900 font-semibold');
+                    let typeDisplay = transaction.type, valueColorClass = 'text-gray-800'; 
+                    if (transaction.fundamentalType === 'receita') { valueColorClass = 'text-green-600'; if (transaction.type === 'pix_recebido') typeDisplay = 'PIX Recebido'; else if (transaction.type === 'receita') typeDisplay = 'Receita'; } 
+                    else if (transaction.fundamentalType === 'despesa') { valueColorClass = transaction.isPaid ? 'text-red-500' : 'text-red-700 font-bold'; if (transaction.type === 'saque') typeDisplay = 'Saque'; else if (transaction.type === 'pix_enviado') typeDisplay = 'PIX Enviado'; else if (transaction.type === 'despesa') typeDisplay = 'Despesa'; }
+                    const statusStyle = transaction.isPaid ? 'text-green-600' : 'text-red-700 font-bold';
+                    
+                    tr.innerHTML = `
+                        <td class="px-2 py-4 text-center">
+                            <input type="checkbox" class="transaction-checkbox form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out" data-id="${transaction.id}" data-group-id="${transaction.originalGroupId || ''}">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${new Date(transaction.date + "T00:00:00").toLocaleDateString('pt-BR')}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${transaction.description}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${valueColorClass}">${formatCurrency(transaction.value)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${typeDisplay}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${transaction.category}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${accountOrCardName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${textStyle}">${transaction.installments}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${statusStyle}">${transaction.isPaid ? 'Pago' : 'Não Pago'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            ${!transaction.isPaid ? `<button data-id="${transaction.id}" class="pay-transaction-btn text-blue-600 hover:text-blue-900 mr-2 p-2 rounded-full hover:bg-blue-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>` : ''}
+                            <button data-id="${transaction.id}" class="edit-transaction-btn text-yellow-600 hover:text-yellow-900 mr-2 p-2 rounded-full hover:bg-yellow-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                            <button data-id="${transaction.id}" data-type="transaction" class="delete-btn text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </td>`;
+                    transactionList.appendChild(tr);
+                });
+                addDeleteListeners(); addPayTransactionListeners(); addEditTransactionListeners();
+                updateSelectedTransactionsActions(); 
+            };
+
+            if(searchTransactionsInput) searchTransactionsInput.addEventListener('input', (e) => renderTransactions(e.target.value));
+            if(selectAllTransactionsCheckbox) selectAllTransactionsCheckbox.addEventListener('change', (e) => { document.querySelectorAll('.transaction-checkbox').forEach(cb => { cb.checked = e.target.checked; }); updateSelectedTransactionsActions(); });
+            if(transactionList) transactionList.addEventListener('change', (e) => { if (e.target.classList.contains('transaction-checkbox')) updateSelectedTransactionsActions(); });
+            
+            function updateSelectedTransactionsActions() {
+                const selectedCheckboxes = document.querySelectorAll('.transaction-checkbox:checked');
+                const hasSelected = selectedCheckboxes.length > 0;
+
+                if(paySelectedTransactionsBtn) paySelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
+                if(unpaySelectedTransactionsBtn) unpaySelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
+                if(linkSelectedAccountSelect) linkSelectedAccountSelect.classList.toggle('hidden', !hasSelected);
+                if(linkSelectedTransactionsBtn) linkSelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
+                if(linkSelectedCategorySelect) linkSelectedCategorySelect.classList.toggle('hidden', !hasSelected); 
+                if(linkSelectedCategoryBtn) linkSelectedCategoryBtn.classList.toggle('hidden', !hasSelected); 
+                if(deleteSelectedTransactionsBtn) deleteSelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
+                
+                const allVisibleCheckboxes = document.querySelectorAll('.transaction-checkbox');
+                if(selectAllTransactionsCheckbox) selectAllTransactionsCheckbox.checked = allVisibleCheckboxes.length > 0 && selectedCheckboxes.length === allVisibleCheckboxes.length;
+            }
+
+            if(paySelectedTransactionsBtn) paySelectedTransactionsBtn.addEventListener('click', () => { const ids = Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb => cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{if(markTransactionAsPaid(id,false))count++;}); if(count>0)showFeedback(`${count} transação(ões) paga(s).`,"success"); else showFeedback("Nenhuma transação pendente alterada.","info"); renderTransactions(searchTransactionsInput.value); updateSelectedTransactionsActions(); suggestFinancialGoals(); });
+            if(unpaySelectedTransactionsBtn) unpaySelectedTransactionsBtn.addEventListener('click', () => { const ids=Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb=>cb.dataset.id); if(ids.length===0){showFeedback("Nenhuma transação selecionada.","info");return;} let count=0; ids.forEach(id=>{const tx=transactions.find(t=>t.id===id);if(tx&&tx.isPaid){const wasPaid=tx.isPaid;tx.isPaid=false;if(wasPaid&&tx.accountId){if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(tx.fundamentalType==='despesa')card.availableLimit-=tx.value;}}else{const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(tx.fundamentalType==='despesa')acc.balance+=tx.value;else acc.balance-=tx.value;}}}count++;}}); if(count>0){saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();showFeedback(`${count} transação(ões) desmarcada(s) como paga(s).`,"success");}else showFeedback("Nenhuma transação paga alterada.","info");updateSelectedTransactionsActions(); suggestFinancialGoals();});
+            if(linkSelectedTransactionsBtn) linkSelectedTransactionsBtn.addEventListener('click', () => { const selCbs=Array.from(document.querySelectorAll('.transaction-checkbox:checked')); const targetAccId=linkSelectedAccountSelect.value; if(selCbs.length===0){showFeedback("Nenhuma transação selecionada.","info");return;}if(!targetAccId){showFeedback("Selecione conta/cartão para vincular.","error");return;}let linkedCount=0;const targetIsCC=creditCards.some(c=>c.id===targetAccId);const groupIdsToProc=new Set();const txsToUpdateInit=[];selCbs.forEach(cb=>{const txId=cb.dataset.id;const tx=transactions.find(t=>t.id===txId);if(tx){txsToUpdateInit.push(tx);if(tx.originalGroupId&&tx.originalGroupId!=="null"&&tx.originalGroupId!=="")groupIdsToProcess.add(tx.originalGroupId);}});const finalTxsToUpdate=[...txsToUpdateInit];groupIdsToProcess.forEach(gId=>{transactions.forEach(t=>{if(t.originalGroupId===gId&&!finalTxsToUpdate.find(ftu=>ftu.id===t.id))finalTxsToUpdate.push(t);});});const uniqueTxsToUpdate=[...new Set(finalTxsToUpdate)];uniqueTxsToUpdate.forEach(tx=>{if(tx.accountId&&tx.isPaid){if(tx.isCreditCard){const oldC=creditCards.find(c=>c.id===tx.accountId);if(oldC){if(tx.fundamentalType==='despesa')oldC.availableLimit+=tx.value;else oldC.availableLimit-=tx.value;}}else{const oldA=accounts.find(a=>a.id===tx.accountId);if(oldA){if(tx.fundamentalType==='despesa')oldA.balance+=tx.value;else oldA.balance-=tx.value;}}}tx.accountId=targetAccId;tx.isCreditCard=targetIsCC;if(tx.isPaid){if(targetIsCC){const newC=creditCards.find(c=>c.id===targetAccId);if(newC){if(tx.fundamentalType==='despesa')newC.availableLimit-=tx.value;else newC.availableLimit+=tx.value;}}else{const newA=accounts.find(a=>a.id===targetAccId);if(newA){if(newA.type==='corrente'&&newA.limitOverdraft>0&&tx.fundamentalType==='despesa'&&(newA.balance-tx.value<-newA.limitOverdraft)){showFeedback(`Vincular ${tx.description} a ${newA.name} excede limite.`,'error');}else{if(tx.fundamentalType==='despesa')newA.balance-=tx.value;else newA.balance+=tx.value;}}}}linkedCount++;});if(linkedCount>0){saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); showFeedback(`${linkedCount} transação(ões) vinculada(s).`,"success");}else showFeedback("Nenhuma transação vinculada.","info");updateSelectedTransactionsActions(); suggestFinancialGoals();});
+            
+            if(linkSelectedCategoryBtn) {
+                linkSelectedCategoryBtn.addEventListener('click', () => {
+                    const selectedCheckboxes = Array.from(document.querySelectorAll('.transaction-checkbox:checked'));
+                    let newCategory = linkSelectedCategorySelect.value;
+
+                    if (selectedCheckboxes.length === 0) {
+                        showFeedback("Nenhuma transação selecionada.", "info");
+                        return;
+                    }
+                    if (!newCategory) {
+                        showFeedback("Selecione uma categoria para vincular.", "error");
+                        return;
+                    }
+
+                    if (newCategory === 'nova-categoria-lote') {
+                        const typedNewCategory = prompt("Digite o nome da nova categoria para vincular em lote:");
+                        if (typedNewCategory && typedNewCategory.trim()) {
+                            newCategory = typedNewCategory.trim();
+                            if (!categories.includes(newCategory)) {
+                                categories.push(newCategory);
+                                saveCategories();
+                                populateCategorySelect(); 
+                                populateCategorySelect(editCategorySelect); 
+                                populateLinkSelectedCategorySelect(); 
+                                linkSelectedCategorySelect.value = newCategory; 
+                            }
+                        } else {
+                            showFeedback("Nome da nova categoria inválido. Nenhuma categoria alterada.", "info");
+                            return;
+                        }
+                    }
+                    
+                    let updatedCount = 0;
+                    selectedCheckboxes.forEach(checkbox => {
+                        const transactionId = checkbox.dataset.id;
+                        const transaction = transactions.find(t => t.id === transactionId);
+                        if (transaction) {
+                            transaction.category = newCategory;
+                            updatedCount++;
+                        }
+                    });
+
+                    if (updatedCount > 0) {
+                        saveTransactions();
+                        renderTransactions(searchTransactionsInput.value);
+                        showFeedback(`${updatedCount} transação(ões) tiveram a categoria atualizada.`, "success");
+                    } else {
+                        showFeedback("Nenhuma categoria de transação foi alterada.", "info");
+                    }
+                    updateSelectedTransactionsActions(); 
+                    suggestFinancialGoals(); 
+                });
+            }
+
+
+            if(deleteSelectedTransactionsBtn) deleteSelectedTransactionsBtn.addEventListener('click', () => { 
+                const selectedCheckboxes = document.querySelectorAll('.transaction-checkbox:checked');
+                if (selectedCheckboxes.length === 0) {
+                    showFeedback("Nenhuma transação selecionada para excluir.", "info");
+                    return;
+                }
+                const idsToBulkDelete = Array.from(selectedCheckboxes).map(cb => cb.dataset.id);
+                requestDeleteConfirmation(null, 'transaction', true, idsToBulkDelete);
+            });
+
+            function performDeleteOperation(transactionId) { const txIdx=transactions.findIndex(t=>t.id===transactionId);if(txIdx>-1){const delTx=transactions[txIdx];if(delTx.accountId){if(delTx.isCreditCard){const card=creditCards.find(c=>c.id===delTx.accountId);if(card){if(delTx.fundamentalType==='despesa')card.availableLimit+=delTx.value;else card.availableLimit-=delTx.value;}}else{const acc=accounts.find(a=>a.id===delTx.accountId);if(acc&&delTx.isPaid){if(delTx.fundamentalType==='despesa')acc.balance+=delTx.value;else acc.balance-=delTx.value;}}}transactions.splice(txIdx,1);return true;}return false;}
+            function populateLinkSelectedAccountSelect() { if(!linkSelectedAccountSelect) return; linkSelectedAccountSelect.innerHTML='<option value="">Vincular Conta/Cartão...</option>';accounts.forEach(acc=>{const opt=document.createElement('option');opt.value=acc.id;let typeTxt="";if(acc.type==='corrente')typeTxt="C/C";else if(acc.type==='poupanca')typeTxt="Poupança";else typeTxt="Dinheiro";opt.textContent=`${acc.name} (${typeTxt})`;linkSelectedAccountSelect.appendChild(opt);});creditCards.forEach(card=>{const opt=document.createElement('option');opt.value=card.id;opt.textContent=`${card.name} (Cartão)`;linkSelectedAccountSelect.appendChild(opt);});}
+            
+            function populateLinkSelectedCategorySelect() {
+                if (!linkSelectedCategorySelect) return;
+                const currentValue = linkSelectedCategorySelect.value;
+                linkSelectedCategorySelect.innerHTML = '<option value="">Vincular Categoria...</option>';
+                categories.sort((a, b) => a.localeCompare(b)).forEach(cat => {
+                    if (cat === "Revisar Importação") return; 
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.textContent = cat;
+                    linkSelectedCategorySelect.appendChild(opt);
+                });
+                const newOpt = document.createElement('option');
+                newOpt.value = 'nova-categoria-lote';
+                newOpt.textContent = 'Adicionar Nova Categoria...';
+                linkSelectedCategorySelect.appendChild(newOpt);
+
+                if (currentValue && categories.includes(currentValue)) {
+                    linkSelectedCategorySelect.value = currentValue;
+                } else if (currentValue === 'nova-categoria-lote') {
+                    linkSelectedCategorySelect.value = 'nova-categoria-lote';
+                }
+            }
+
+            const performDelete = (id, type, showIndividualFeedback = true, accountIdForReversal = null) => {
+                let itemDeleted = false;
+                if (type === 'allData') { 
+                    accounts = [];
+                    creditCards = [];
+                    transactions = [];
+                    categories = [ "Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros", "Revisar Importação"];
+                    itemDeleted = true;
+                    if (showIndividualFeedback) showFeedback('Todos os dados foram limpos!', 'success');
+                }
+                else if (type === 'account') {
+                    if (transactions.some(t => t.accountId === id)) {
+                        if (showIndividualFeedback) showFeedback('Exclua transações da conta primeiro.', 'error');
+                        return false;
+                    }
+                    accounts = accounts.filter(acc => acc.id !== id);
+                    if (showIndividualFeedback) showFeedback('Conta excluída.', 'success');
+                    itemDeleted = true;
+                } else if (type === 'creditCard') {
+                    if (transactions.some(t => t.accountId === id)) {
+                        if (showIndividualFeedback) showFeedback('Exclua transações do cartão primeiro.', 'error');
+                        return false;
+                    }
+                    creditCards = creditCards.filter(card => card.id !== id);
+                    if (showIndividualFeedback) showFeedback('Cartão excluído.', 'success');
+                    itemDeleted = true;
+                } else if (type === 'transaction') {
+                    const txIdx = transactions.findIndex(t => t.id === id);
+                    if (txIdx > -1) {
+                        const delTx = transactions[txIdx];
+                        if (delTx.accountId) {
+                            if (delTx.isCreditCard) {
+                                const card = creditCards.find(c => c.id === delTx.accountId);
+                                if (card) {
+                                    // Ao excluir uma despesa de cartão, o limite disponível deve ser restaurado
+                                    // independentemente de estar paga ou não, pois a compra está sendo desfeita.
+                                    if (delTx.fundamentalType === 'despesa') card.availableLimit += delTx.value;
+                                    else if (delTx.fundamentalType === 'receita') card.availableLimit -= delTx.value; // Estorno de crédito no cartão
+                                }
+                            } else {
+                                const acc = accounts.find(a => a.id === delTx.accountId);
+                                if (acc) {
+                                    if (delTx.fundamentalType === 'receita') {
+                                        acc.balance -= delTx.value;
+                                    } else if (delTx.fundamentalType === 'despesa' && delTx.isPaid) {
+                                        acc.balance += delTx.value; // Devolve ao saldo se estava paga
+                                    }
+                                }
+                            }
+                        }
+                        transactions.splice(txIdx, 1);
+                        itemDeleted = true;
+                        if (showIndividualFeedback) showFeedback('Transação excluída.', 'success');
+                    }
+                } else if (type === 'accountEntry') { 
+                    const txIdx = transactions.findIndex(t => t.id === id && (t.type === 'receita' || t.type === 'pix_recebido'));
+                    if (txIdx > -1) {
+                        const entryTx = transactions[txIdx];
+                        if (entryTx.accountId && accountIdForReversal === entryTx.accountId) { 
+                            const acc = accounts.find(a => a.id === entryTx.accountId);
+                            if (acc) {
+                                acc.balance -= entryTx.value; 
+                            }
+                        }
+                        transactions.splice(txIdx, 1);
+                        itemDeleted = true;
+                        if (showIndividualFeedback) showFeedback('Entrada da conta excluída.', 'success');
+                    }
+                } 
+                if (itemDeleted) {
+                    saveTransactions(); saveAccounts(); saveCreditCards(); saveCategories();
+                    renderTransactions(searchTransactionsInput.value);
+                    renderAccounts(); renderCreditCards();
+                    populateAccountSelects(); populateCategorySelect(); populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect();
+                    updateSummary(); renderMonthlySummary(); checkCreditCardDueDates();
+                    suggestFinancialGoals(); 
+                    if (type === 'accountEntry' && accountIdForReversal) {
+                        const accountForModal = accounts.find(a => a.id === accountIdForReversal);
+                        if (accountForModal) openAccountEntriesModal(accountIdForReversal, accountForModal.name);
+                    } else if (type === 'allData') { 
+                        currentMonth = new Date().getMonth();
+                        currentYear = new Date().getFullYear();
+                        updateMonthlyDisplay();
+                        renderTransactions(); 
+                    }
+                }
+                return itemDeleted;
+            };
+            const markTransactionAsPaid = (id, showIndividualFeedback = true) => {
+                const tx = transactions.find(t => t.id === id);
+                if (tx && !tx.isPaid) {
+                    const wasPaid = tx.isPaid;
+                    tx.isPaid = true;
+                    if (!wasPaid && tx.accountId) {
+                        if (tx.isCreditCard) {
+                            const card = creditCards.find(c => c.id === tx.accountId);
+                            if (card) {
+                                if (tx.fundamentalType === 'despesa') {
+                                     // Ao marcar uma despesa de cartão como paga, o limite disponível NÃO é afetado aqui.
+                                     // O limite é afetado quando a compra é feita (reduz) ou quando a fatura é paga (restaura o limite usado na fatura).
+                                     // Marcar uma compra individual como "paga" significa que ela foi quitada, mas ainda compõe a fatura.
+                                }
+                                saveCreditCards(); // Salva mesmo que não mude o limite, para o caso de outras propriedades do cartão mudarem no futuro
+                            }
+                        } else { 
+                            const acc = accounts.find(a => a.id === tx.accountId);
+                            if (acc) {
+                                if (tx.fundamentalType === 'despesa') {
+                                    if (acc.type === 'corrente' && acc.limitOverdraft > 0 && (acc.balance - tx.value < -acc.limitOverdraft)) {
+                                        showFeedback(`Pagamento ${formatCurrency(tx.value)} para ${acc.name} excede limite de cheque especial.`, 'error');
+                                        tx.isPaid = false; 
+                                        return false;
+                                    }
+                                    acc.balance -= tx.value; 
+                                } else { 
+                                    // Receitas já são somadas ao saldo na criação. Marcar como "paga" não altera o saldo.
+                                }
+                                saveAccounts();
+                            }
+                        }
+                    }
+                    saveTransactions();
+                    if (showIndividualFeedback) showFeedback('Transação paga!', 'success');
+                    renderTransactions(searchTransactionsInput.value);
+                    updateSummary();
+                    renderMonthlySummary();
+                    renderCreditCards(); 
+                    checkCreditCardDueDates();
+                    suggestFinancialGoals();
+                    return true;
+                } else if (tx && tx.isPaid) {
+                    if (showIndividualFeedback) showFeedback('Transação já está paga.', 'info');
+                    return false;
+                }
+                return false;
+            };
+
+            const openEditModal = (id) => { const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');return;}editTransactionIdInput.value=tx.id;editDateInput.value=tx.date;editDescriptionInput.value=tx.description;editValueInput.value=tx.value.toFixed(2);populateCategorySelect(editCategorySelect);editCategorySelect.value=tx.category;editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';const[paid,total]=tx.installments.split('/').map(Number);editInstallmentsTotalInput.value=total;editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsPaidInput.value=paid;editInstallmentsPaidInput.max=total;editDateInput.readOnly=false;editDescriptionInput.readOnly=false;editDescriptionInput.classList.remove('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=false;editValueInput.classList.remove('bg-gray-100','cursor-not-allowed');editTransactionModal.classList.remove('hidden');};
+            if(editCategorySelect) editCategorySelect.addEventListener('change', () => { if(editCategorySelect.value==='nova-categoria'){editNewCategoryInput.classList.remove('hidden');editNewCategoryInput.focus();}else{editNewCategoryInput.classList.add('hidden');editNewCategoryInput.value='';}});
+            const closeEditModal = () => {editTransactionModal.classList.add('hidden');editDescriptionInput.readOnly=true;editDescriptionInput.classList.add('bg-gray-100','cursor-not-allowed');editValueInput.readOnly=true;editValueInput.classList.add('bg-gray-100','cursor-not-allowed');editInstallmentsTotalInput.readOnly=true;editInstallmentsTotalInput.classList.add('bg-gray-100','cursor-not-allowed');editDateInput.readOnly=true;editNewCategoryInput.classList.add('hidden');};
+            if(closeEditModalBtn) closeEditModalBtn.addEventListener('click',closeEditModal);
+            if(cancelEditTransactionBtn) cancelEditTransactionBtn.addEventListener('click',closeEditModal);
+            if(saveEditTransactionBtn) saveEditTransactionBtn.addEventListener('click',()=>{const id=editTransactionIdInput.value;const newDate=editDateInput.value;const newDesc=editDescriptionInput.value.trim();const newVal=parseFloat(editValueInput.value);const newPaidInst=parseInt(editInstallmentsPaidInput.value);let newCat=editCategorySelect.value;if(newCat==='nova-categoria'){const typedNewCat=editNewCategoryInput.value.trim();if(typedNewCat){if(!categories.includes(typedNewCat)){categories.push(typedNewCat);saveCategories();populateCategorySelect();populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect();}newCat=typedNewCat;}else{showFeedback('Nova categoria vazia.','error');return;}}const tx=transactions.find(t=>t.id===id);if(!tx){showFeedback('Transação não encontrada.','error');closeEditModal();return;}const totalInst=parseInt(tx.installments.split('/')[1]);if(!newDate||!newDesc||isNaN(newVal)||newVal<=0||isNaN(newPaidInst)||newPaidInst<0||newPaidInst>totalInst){showFeedback('Dados inválidos.','error');return;}const oldVal=tx.value;const oldPaid=tx.isPaid;const fundType=tx.fundamentalType;if(tx.accountId){if(!tx.isCreditCard&&oldPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance+=oldVal;else acc.balance-=oldVal;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit+=oldVal;else card.availableLimit-=oldVal;}}}tx.date=newDate;tx.description=newDesc;tx.value=newVal;tx.category=newCat;tx.installments=`${newPaidInst}/${totalInst}`;tx.isPaid=newPaidInst>=totalInst;if(tx.accountId){if(!tx.isCreditCard&&tx.isPaid){const acc=accounts.find(a=>a.id===tx.accountId);if(acc){if(fundType==='despesa')acc.balance-=tx.value;else acc.balance+=tx.value;}}if(tx.isCreditCard){const card=creditCards.find(c=>c.id===tx.accountId);if(card){if(fundType==='despesa')card.availableLimit-=tx.value;else card.availableLimit+=tx.value;}}}saveTransactions();saveAccounts();saveCreditCards();renderTransactions(searchTransactionsInput.value);updateSummary();renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();showFeedback('Transação atualizada!','success');closeEditModal(); suggestFinancialGoals();});
+
+            // --- Resumo e Cálculos ---
+            const updateSummary = () => {
+                let totalPoderDeCompra = 0;
+                accounts.forEach(account => {
+                    if (account.type === 'cash' || account.type === 'poupanca') {
+                        totalPoderDeCompra += account.balance;
+                    } else if (account.type === 'corrente') {
+                        totalPoderDeCompra += account.balance + (account.limitOverdraft || 0);
+                    }
+                });
+                creditCards.forEach(card => totalPoderDeCompra += card.availableLimit);
+                if(totalReceitasEl) totalReceitasEl.textContent = formatCurrency(totalPoderDeCompra);
+
+                let despesasDoMesTotal = 0;
+                const beginningOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+                beginningOfCurrentMonth.setHours(0,0,0,0); 
+
+                transactions.forEach(t => {
+                    const transactionDate = new Date(t.date + "T00:00:00");
+                    const isInCurrentMonthAndYear = transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth;
+                    const isPendingFromPreviousMonthForExpenseSummary = transactionDate < beginningOfCurrentMonth && !t.isPaid;
+
+                    if (t.fundamentalType === 'despesa' && (isInCurrentMonthAndYear || isPendingFromPreviousMonthForExpenseSummary)) {
+                        despesasDoMesTotal += t.value;
+                    }
+                });
+                if(totalDespesasEl) totalDespesasEl.textContent = formatCurrency(despesasDoMesTotal);
+                
+                const saldoConsolidado = totalPoderDeCompra - despesasDoMesTotal; 
+                if(saldoAtualEl) {
+                    saldoAtualEl.textContent = formatCurrency(saldoConsolidado);
+                    saldoAtualEl.className = `text-2xl font-bold ${saldoConsolidado >= 0 ? 'text-green-700' : 'text-red-700'}`;
+                }
+
+                let totalGastoCartoesMesAtual = 0;
+                transactions.forEach(t => {
+                    const tDate = new Date(t.date + "T00:00:00");
+                    if (t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
+                        tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
+                        totalGastoCartoesMesAtual += t.value;
+                    }
+                });
+                if (totalGastoCartoesMesEl) totalGastoCartoesMesEl.textContent = formatCurrency(totalGastoCartoesMesAtual);
+
+            };
+            const updateMonthlyDisplay = () => { if(currentMonthDisplay) currentMonthDisplay.textContent = new Date(currentYear,currentMonth).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});};
+            const renderMonthlySummary = () => { let monthExp=0;const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);transactions.forEach(t=>{const tD=new Date(t.date + "T00:00:00");if(t.fundamentalType==='despesa'&&((tD.getMonth()===currentMonth&&tD.getFullYear()===currentYear)||(tD<bom&&!t.isPaid)))monthExp+=t.value;});if(totalDespesasEl)totalDespesasEl.textContent=formatCurrency(monthExp);}; 
+            if(prevMonthBtn) prevMonthBtn.addEventListener('click',()=>{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();renderCreditCards(); suggestFinancialGoals();}); 
+            if(nextMonthBtn) nextMonthBtn.addEventListener('click',()=>{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}updateMonthlyDisplay();renderTransactions(searchTransactionsInput.value);updateSummary();renderCreditCards(); suggestFinancialGoals();});
+
+
+            // --- Funções de Importação Modificadas ---
+            const finalizeImportProcessing = (parsedTxs) => { fileInput.value='';fileInput.disabled=false;importFileBtn.disabled=false;if(parsedTxs&&parsedTxs.length>0){importedTransactionsToReview=parsedTxs;renderImportedTransactionsForReview();importReviewSection.classList.remove('hidden');}else importReviewSection.classList.add('hidden');};
+            const handleImportError = (err,fileType) => { console.error(`Erro ${fileType}:`,err);showFeedback(`Erro ao processar ${fileType}.`,'error');importReviewSection.classList.add('hidden');fileInput.value='';fileInput.disabled=false;importFileBtn.disabled=false;};
+            const parseOFX = (content) => { const pTxs=[];const rgx=/<STMTTRN>([\s\S]*?)<\/STMTTRN>/g;let m;while((m=rgx.exec(content))!==null){const blk=m[1];const dM=/<DTPOSTED>(\d{8})/.exec(blk);const deM=/<MEMO>([\s\S]*?)<\/(MEMO|NAME)>/.exec(blk);const vM=/<TRNAMT>([+\-]?[\d,.]+)/.exec(blk);const tyM=/<TRNTYPE>(DEBIT|CREDIT)/i.exec(blk);if(dM&&deM&&vM){const dS=dM[1];const fD=`${dS.substring(0,4)}-${dS.substring(4,6)}-${dS.substring(6,8)}`;const de=deM[1].trim();const v=parseFloat(vM[1].replace(',','.'));let type=v<0?'despesa':'receita';if(tyM)type=tyM[1].toUpperCase()==='CREDIT'?'receita':'despesa';if(!isNaN(v))pTxs.push({id:generateUniqueId(),date:fD,description:de,value:Math.abs(v),type,fundamentalType:type,category:'Importado OFX',accountId:'',isCreditCard:false,installments:'1/1',isPaid:true,fundamentalTypeOriginalSignal:v>=0?1:-1});}}if(pTxs.length===0&&content.length>100)showFeedback("Nenhuma transação OFX.",'info');else if(pTxs.length>0)showFeedback(`${pTxs.length} transações OFX.`,'success');return pTxs;};
+            const parseExcelCsv = (data,ext,isTxt) => { const pTxs=[];try{const wb=XLSX.read(data,{type:isTxt?'string':'binary',cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const json=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:""});if(json.length===0){showFeedback(`Arquivo ${ext} vazio.`,'info');return pTxs;}let hR=-1,dC=-1,dsC=-1,vC=-1,tC=-1;const kw={date:['data','date','dt.'],desc:['descricao','descrição','description','histórico','historico','memo','lançamento','lancamento'],value:['valor','value','montante','amount','crédito','credito','débito','debito'],type:['tipo','type','natureza','t']};for(let i=0;i<Math.min(json.length,15);i++){const r=json[i];if(Array.isArray(r)&&r.some(c=>String(c||'').trim()!=='')){const lcR=r.map(c=>String(c||'').toLowerCase().trim());if(dC===-1)dC=lcR.findIndex(h=>kw.date.some(k=>h.includes(k)));if(dsC===-1)dsC=lcR.findIndex(h=>kw.desc.some(k=>h.includes(k)));if(vC===-1)vC=lcR.findIndex(h=>kw.value.some(k=>h.includes(k)));if(tC===-1)tC=lcR.findIndex(h=>kw.type.some(k=>h.includes(k)));if(dC!==-1&&dsC!==-1&&vC!==-1){hR=i;break;}}}if(dC===-1||dsC===-1||vC===-1){showFeedback(`Colunas (Data, Descrição, Valor) não encontradas no ${ext}.`,'error');return pTxs;}const sIdx=hR===-1?0:hR+1;for(let i=sIdx;i<json.length;i++){const r=json[i];if(!Array.isArray(r)||r.every(c=>String(c||'').trim()===''))continue;const dR=r[dC],de=String(r[dsC]||'').trim(),vR=String(r[vC]||'0').trim(),tyR=tC!==-1?String(r[tC]||'').toLowerCase().trim():'';if(!de&&!vR)continue;const fD=formatDateFromVariousFormats(dR,currentYear)||new Date().toISOString().split('T')[0];const vRes=parseCurrencyValue(vR);const val=vRes.value;let type='despesa',fundT='despesa',origSig=-1;if(vRes.isCredit===true){type='receita';fundT='receita';origSig=1;}else if(vRes.isCredit===false){type='despesa';fundT='despesa';origSig=-1;}else{const dL=de.toLowerCase();if(val>0&&(dL.includes('crédito')||dL.includes('recebimento')||dL.includes('salário'))){type='receita';fundT='receita';origSig=1;}else if(val>0&&(tyR.includes('receita')||tyR.includes('credit')||tyR.includes('crédito')||tyR.includes('c')||tyR.startsWith('r'))){type='receita';fundT='receita';origSig=1;}else if(val>0&&(tyR.includes('despesa')||tyR.includes('debit')||tyR.includes('débito')||tyR.includes('d')||tyR.startsWith('d'))){type='despesa';fundT='despesa';origSig=-1;}else if(val<0){type='despesa';fundT='despesa';origSig=-1;}if(val>0&&type!=='receita'){type='despesa';fundT='despesa';origSig=-1;}}if(val===0&&tyR){if(tyR.includes('receita')||tyR.includes('credit')||tyR.includes('crédito')||tyR.includes('c')||tyR.startsWith('r')){type='receita';fundT='receita';origSig=1;}}if(!isNaN(val)&&de)pTxs.push({id:generateUniqueId(),date:fD,description:de,value:Math.abs(val),type,fundamentalType:fundT,category:`Importado ${ext.toUpperCase()}`,accountId:'',isCreditCard:false,installments:'1/1',isPaid:true,fundamentalTypeOriginalSignal:origSig});}}catch(e){console.error(`Erro parseExcelCsv (${ext}):`,e);showFeedback(`Erro ao ler ${ext}.`,'error');return[];}if(pTxs.length===0&&data.length>10)showFeedback(`Nenhuma transação ${ext} encontrada.`,'info');else if(pTxs.length>0)showFeedback(`${pTxs.length} transações ${ext} carregadas.`,'success');return pTxs;};
+            const processAndStructureTextLines = (text, fileName) => { const lines = text.split('\n').filter(line => line.trim().length > 3); return lines.map(originalLine => { let line = originalLine.trim(); let extractedDateStr = null; let valueResult = { value: 0, isCredit: null, extractedString: "", lineRemainder: line }; let installmentResult = { paid: 1, total: 1, matchedText: "", lineRemainder: line }; let dueDateText = ""; const datePatterns = [ /(\d{1,2}[\/\.]\d{1,2}[\/\.]\d{4})/g, /(\d{1,2}[\/\.]\d{1,2}[\/\.]\d{2})/g, /(\d{4}-\d{1,2}-\d{1,2})/g, /(\d{1,2}[\/\.]\d{1,2})/g ]; let bestDateMatch = null; for (const pattern of datePatterns) { const matches = Array.from(line.matchAll(pattern)); if (matches.length > 0) { for (const match of matches) { const potentialDate = formatDateFromVariousFormats(match[0], currentYear); if (potentialDate) { bestDateMatch = { date: potentialDate, text: match[0] }; break; } } if (bestDateMatch) break; } } if (bestDateMatch) { extractedDateStr = bestDateMatch.date; line = line.replace(bestDateMatch.text, '').trim(); } else { extractedDateStr = new Date().toISOString().split('T')[0]; } valueResult = parseCurrencyValue(line); line = valueResult.lineRemainder; installmentResult = extractInstallmentInfo(line); line = installmentResult.lineRemainder; let remainingLineForDueDateSearch = line; const dueDateMatches = []; for (const pattern of datePatterns) { const matches = Array.from(remainingLineForDueDateSearch.matchAll(pattern)); matches.forEach(match => { const potentialDueDate = formatDateFromVariousFormats(match[0], currentYear); if (potentialDueDate && potentialDueDate !== extractedDateStr) { dueDateMatches.push({ date: potentialDueDate, text: match[0] }); remainingLineForDueDateSearch = remainingLineForDueDateSearch.replace(match[0], '').trim(); } }); } if (dueDateMatches.length > 0) { dueDateText = ` (Venc. ${new Date(dueDateMatches[0].date).toLocaleDateString('pt-BR')})`; line = remainingLineForDueDateSearch; } let finalDescription = line.trim() || "Revisar descrição"; if (dueDateText) { finalDescription += dueDateText; } let extractedValue = valueResult.value; let extractedType = 'despesa'; let fundamentalType = 'despesa'; let originalSignal = -1; if (valueResult.isCredit === true) { extractedType = 'receita'; fundamentalType = 'receita'; originalSignal = 1; } else if (valueResult.isCredit === false) { extractedType = 'despesa'; fundamentalType = 'despesa'; originalSignal = -1; } else { const descLower = finalDescription.toLowerCase(); if (extractedValue > 0 && (descLower.includes('crédito') || descLower.includes('receb') || descLower.includes('salário'))) { extractedType = 'receita'; fundamentalType = 'receita'; originalSignal = 1;} else if (extractedValue > 0) {extractedType = 'receita'; fundamentalType = 'receita'; originalSignal = 1;} else {extractedType = 'despesa'; fundamentalType = 'despesa'; originalSignal = -1;} } return { id: generateUniqueId(), date: extractedDateStr, description: finalDescription.replace(/\s+/g, ' ').trim(), value: extractedValue, type: extractedType, fundamentalType: fundamentalType, category: 'Revisar Importação', accountId: '', isCreditCard: false, installments: `${installmentResult.paid}/${installmentResult.total}`, isPaid: false, fundamentalTypeOriginalSignal: originalSignal, installmentsTotal: installmentResult.total, installmentsPaid: installmentResult.paid }; }).filter(tx => tx.description.toLowerCase() !== "revisar descrição" || tx.value > 0); };
+            const parseWord = async (file) => { if (typeof mammoth === 'undefined') { showFeedback('Biblioteca Word não carregada.', 'error'); finalizeImportProcessing([]); return []; } showFeedback("Extraindo texto do Word...", 'info'); try { const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() }); if (value && value.trim()) { const parsed = processAndStructureTextLines(value, file.name); showFeedback(`${parsed.length} linhas do Word para revisão.`, "info"); return parsed; } else { showFeedback("Nenhum texto no Word.", 'info'); return []; } } catch (err) { console.error("Erro Word:", err); showFeedback("Erro ao extrair do Word.", 'error'); return []; } };
+            const parseImage = async (file) => { if (typeof Tesseract === 'undefined' || typeof Tesseract.createWorker !== 'function') { showFeedback('Biblioteca OCR não carregada.', 'error'); finalizeImportProcessing([]); return []; } showFeedback("Processando imagem OCR...", 'info'); try { const worker = await Tesseract.createWorker('por', 1, { logger: m => { if (m.status === 'recognizing text') showFeedback(`OCR: ${m.status} ${Math.round(m.progress * 100)}%`, 'info'); } }); const { data: { text } } = await worker.recognize(file); await worker.terminate(); if (text && text.trim()) { const parsed = processAndStructureTextLines(text, file.name); showFeedback(`${parsed.length} linhas da Imagem (OCR) para revisão.`, "info"); return parsed; } else { showFeedback("Nenhum texto OCR na imagem.", 'info'); return []; } } catch (err) { console.error("Erro OCR:", err); showFeedback("Erro OCR imagem.", 'error'); return []; } };
+            if(importHeader) importHeader.addEventListener('click', () => { importSectionContent.classList.toggle('hidden'); importArrow.classList.toggle('rotated'); });
+            if(importFileBtn) importFileBtn.addEventListener('click', async () => { const file = fileInput.files[0]; if (!file) { showFeedback('Selecione um arquivo.', 'error'); return; } importedTransactionsToReview = []; importedTransactionsTableBody.innerHTML = ''; importReviewSection.classList.add('hidden'); fileInput.disabled = true; importFileBtn.disabled = true; const reader = new FileReader(); const fileExt = file.name.split('.').pop().toLowerCase(); let parsedData = []; try { if (fileExt==='ofx'){reader.onload=(e)=>{try{parsedData=parseOFX(e.target.result);finalizeImportProcessing(parsedData);}catch(err){handleImportError(err,"OFX");}};reader.onerror=()=>handleImportError(new Error("Erro OFX."),"OFX");reader.readAsText(file);} else if(fileExt==='csv'){reader.onload=(e)=>{try{parsedData=parseExcelCsv(e.target.result,fileExt,true);finalizeImportProcessing(parsedData);}catch(err){handleImportError(err,"CSV");}};reader.onerror=()=>handleImportError(new Error("Erro CSV."),"CSV");reader.readAsText(file,'ISO-8859-1');} else if(['xls','xlsx'].includes(fileExt)){reader.onload=(e)=>{try{parsedData=parseExcelCsv(e.target.result,fileExt,false);finalizeImportProcessing(parsedData);}catch(err){handleImportError(err,"Excel");}};reader.onerror=()=>handleImportError(new Error("Erro Excel."),"Excel");reader.readAsBinaryString(file);} else if(['doc','docx'].includes(fileExt)){if(fileExt==='doc'&&(typeof mammoth==='undefined'||!mammoth.extractRawText)){showFeedback('.doc não suportado. Tente .docx.','info');finalizeImportProcessing([]);return;}parsedData=await parseWord(file);finalizeImportProcessing(parsedData);} else if(['png','jpg','jpeg','gif','bmp','tiff','webp'].includes(fileExt)){parsedData=await parseImage(file);finalizeImportProcessing(parsedData);} else{showFeedback(`Formato .${fileExt} não suportado.`,'error');finalizeImportProcessing([]);}} catch (error) { handleImportError(error, `arquivo ${fileExt}`); }});
+            renderImportedTransactionsForReview = () => { 
+                if(!importedTransactionsTableBody) return;
+                importedTransactionsTableBody.innerHTML = ''; 
+                if (!importedTransactionsToReview || importedTransactionsToReview.length === 0) { 
+                    importReviewSection.classList.add('hidden'); 
+                    if(selectAllImportedCheckbox) selectAllImportedCheckbox.checked = false; 
+                    updateBulkEditControlsVisibility(); 
+                    return; 
+                }
+                importedTransactionsToReview.forEach((tx, idx) => { 
+                    const tr = document.createElement('tr'); tr.className = 'bg-white hover:bg-gray-50'; 
+                    let accOpts = accounts.map(a=>`<option value="${a.id}" ${tx.accountId===a.id?'selected':''}>${a.name} (${a.type==='corrente'?'C/C':(a.type==='poupanca'?'Poupança':'Dinheiro')})</option>`).join(''); 
+                    let cardOpts = creditCards.map(c=>`<option value="${c.id}" ${tx.accountId===c.id?'selected':''}>${c.name} (Cartão)</option>`).join(''); 
+                    const valFmt = typeof tx.value==='number'?tx.value.toFixed(2):'0.00'; 
+                    const instTotal=tx.installmentsTotal||(tx.installments?parseInt(tx.installments.split('/')[1]):1)||1; 
+                    const instPaid=tx.installmentsPaid||(tx.installments?parseInt(tx.installments.split('/')[0]):(tx.isPaid?1:0))||0; 
+                    tr.innerHTML = `
+                        <td class="px-2 py-2 text-center"><input type="checkbox" class="imported-transaction-checkbox form-checkbox h-4 w-4 text-blue-600" data-index="${idx}" checked></td>
+                        <td class="px-2 py-2"><input type="date" class="date-input w-full border rdd px-1 py-0.5 text-xs" value="${tx.date||new Date().toISOString().split('T')[0]}" data-index="${idx}"></td> 
+                        <td class="px-2 py-2"><textarea class="description-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}" rows="2">${tx.description||''}</textarea></td> 
+                        <td class="px-2 py-2"><input type="number" step="0.01" class="value-input w-24 border rdd px-1 py-0.5 text-xs" value="${valFmt}" data-index="${idx}"></td> 
+                        <td class="px-2 py-2"><select class="type-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}"><option value="receita" ${tx.type==='receita'?'selected':''}>Receita</option><option value="despesa" ${tx.type==='despesa'?'selected':''}>Despesa</option><option value="saque" ${tx.type==='saque'?'selected':''}>Saque</option><option value="pix_enviado" ${tx.type==='pix_enviado'?'selected':''}>PIX Enviado</option><option value="pix_recebido" ${tx.type==='pix_recebido'?'selected':''}>PIX Recebido</option></select></td> 
+                        <td class="px-2 py-2"><select class="category-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}">${categories.sort((a,b)=>a.localeCompare(b)).map(c=>`<option value="${c}" ${tx.category===c?'selected':''}>${c}</option>`).join('')}<option value="nova-categoria-review">Adicionar Nova...</option></select><input type="text" class="new-category-input-review hidden w-full border rdd px-1 py-0.5 text-xs mt-1" placeholder="Nova Cat." data-index="${idx}" value="${!categories.includes(tx.category)&&tx.category&&tx.category!=='Outros'&&!tx.category?.startsWith('Importado')?tx.category:''}"></td> 
+                        <td class="px-2 py-2"><div class="flex space-x-1"><input type="number" min="1" value="${instTotal}" class="installments-total-review w-16 border rdd px-1 py-0.5 text-xs" data-index="${idx}" title="Total Parcelas"><input type="number" min="0" value="${instPaid}" class="installments-paid-review w-16 border rdd px-1 py-0.5 text-xs" data-index="${idx}" title="Parcelas Pagas"></div></td> 
+                        <td class="px-2 py-2"><select class="account-select-review w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}"><option value="">Não Vincular</option>${accOpts}${cardOpts}</select></td> 
+                        <td class="px-2 py-2"><select class="paid-status-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idx}"><option value="false" ${!tx.isPaid?'selected':''}>Não Pago</option><option value="true" ${tx.isPaid?'selected':''}>Pago</option></select></td>`; 
+                    importedTransactionsTableBody.appendChild(tr); 
+                    const accSelEl=tr.querySelector('.account-select-review');if(tx.accountId)accSelEl.value=tx.accountId;
+                    const catInEl=tr.querySelector('.category-input');const newCatInEl=tr.querySelector('.new-category-input-review');if(!categories.includes(tx.category)&&tx.category&&tx.category!=='Outros'&&!tx.category?.startsWith('Importado')){catInEl.value='nova-categoria-review';newCatInEl.classList.remove('hidden');}
+                    tr.querySelector('.date-input').addEventListener('change',(e)=>importedTransactionsToReview[idx].date=e.target.value);
+                    tr.querySelector('.description-input').addEventListener('input',(e)=>importedTransactionsToReview[idx].description=e.target.value);
+                    tr.querySelector('.value-input').addEventListener('change',(e)=>{const v=parseFloat(e.target.value)||0;const s=importedTransactionsToReview[idx].fundamentalTypeOriginalSignal||(v>=0?1:-1);importedTransactionsToReview[idx].value=Math.abs(v);if(v!==0)importedTransactionsToReview[idx].fundamentalType=v*s>=0?'receita':'despesa';else importedTransactionsToReview[idx].fundamentalType=s>0?'receita':'despesa';if(['receita','despesa'].includes(importedTransactionsToReview[idx].type)||!importedTransactionsToReview[idx].type){importedTransactionsToReview[idx].type=importedTransactionsToReview[idx].fundamentalType;tr.querySelector('.type-input').value=importedTransactionsToReview[idx].type;}});
+                    tr.querySelector('.type-input').addEventListener('change',(e)=>{const nT=e.target.value;importedTransactionsToReview[idx].type=nT;if(nT==='receita'||nT==='pix_recebido'){importedTransactionsToReview[idx].fundamentalType='receita';importedTransactionsToReview[idx].fundamentalTypeOriginalSignal=1;}else{importedTransactionsToReview[idx].fundamentalType='despesa';importedTransactionsToReview[idx].fundamentalTypeOriginalSignal=-1;}});
+                    catInEl.addEventListener('change',(e)=>{if(e.target.value==='nova-categoria-review'){newCatInEl.classList.remove('hidden');newCatInEl.focus();importedTransactionsToReview[idx].category='';}else{newCatInEl.classList.add('hidden');newCatInEl.value='';importedTransactionsToReview[idx].category=e.target.value;}});
+                    newCatInEl.addEventListener('blur',(e)=>{if(e.target.value.trim()&&catInEl.value==='nova-categoria-review')importedTransactionsToReview[idx].category=e.target.value.trim();});
+                    accSelEl.addEventListener('change',(e)=>{importedTransactionsToReview[idx].accountId=e.target.value;importedTransactionsToReview[idx].isCreditCard=e.target.value?creditCards.some(c=>c.id===e.target.value):false;});
+                    tr.querySelector('.paid-status-input').addEventListener('change',(e)=>importedTransactionsToReview[idx].isPaid=e.target.value==='true');
+                    const instTotEl=tr.querySelector('.installments-total-review');const instPaidEl=tr.querySelector('.installments-paid-review');
+                    instTotEl.addEventListener('change',(e)=>{let t=parseInt(e.target.value)||1;if(t<1)t=1;e.target.value=t;importedTransactionsToReview[idx].installmentsTotal=t;if(parseInt(instPaidEl.value)>t){instPaidEl.value=t;importedTransactionsToReview[idx].installmentsPaid=t;}});
+                    instPaidEl.addEventListener('change',(e)=>{const t=parseInt(instTotEl.value)||1;let p=parseInt(e.target.value)||0;if(p<0)p=0;if(p>t)p=t;e.target.value=p;importedTransactionsToReview[idx].installmentsPaid=p;});
+                    tr.querySelector('.imported-transaction-checkbox').addEventListener('change', updateBulkEditControlsVisibility);
+                });
+                if(selectAllImportedCheckbox) selectAllImportedCheckbox.checked = true; 
+                updateBulkEditControlsVisibility();
+                populateBulkEditSelects();
+            };
+            if (selectAllImportedCheckbox) {
+                selectAllImportedCheckbox.addEventListener('change', (e) => {
+                    document.querySelectorAll('.imported-transaction-checkbox').forEach(checkbox => {
+                        checkbox.checked = e.target.checked;
+                    });
+                    updateBulkEditControlsVisibility();
+                });
+            }
+            if(importedTransactionsTableBody) { 
+                importedTransactionsTableBody.addEventListener('change', (e) => {
+                    if (e.target.classList.contains('imported-transaction-checkbox')) {
+                        updateBulkEditControlsVisibility();
+                    }
+                });
+            }
+
+            function updateBulkEditControlsVisibility() {
+                if (!bulkEditImportedControls) return;
+                const anySelected = document.querySelectorAll('.imported-transaction-checkbox:checked').length > 0;
+                bulkEditImportedControls.classList.toggle('hidden', !anySelected);
+            }
+
+            function populateBulkEditSelects() {
+                if (bulkEditCategorySelect) {
+                    bulkEditCategorySelect.innerHTML = '<option value="">Manter original</option>';
+                    categories.sort((a,b) => a.localeCompare(b)).forEach(cat => {
+                        const option = document.createElement('option');
+                        option.value = cat;
+                        option.textContent = cat;
+                        bulkEditCategorySelect.appendChild(option);
+                    });
+                    const newCatOpt = document.createElement('option');
+                    newCatOpt.value = 'nova-categoria-bulk';
+                    newCatOpt.textContent = 'Adicionar Nova Categoria...';
+                    bulkEditCategorySelect.appendChild(newCatOpt);
+                }
+                if (bulkEditAccountSelect) {
+                    bulkEditAccountSelect.innerHTML = '<option value="">Manter original</option><option value="DESVINCULAR">Desvincular</option>';
+                    accounts.forEach(acc => {
+                        const opt = document.createElement('option');
+                        opt.value = acc.id;
+                        let typeText = "";
+                        if(acc.type === 'corrente') typeText = "C/C";
+                        else if (acc.type === 'poupanca') typeText = "Poupança";
+                        else typeText = "Dinheiro";
+                        opt.textContent = `${acc.name} (${typeText})`;
+                        bulkEditAccountSelect.appendChild(opt);
+                    });
+                    creditCards.forEach(card => {
+                        const opt = document.createElement('option');
+                        opt.value = card.id;
+                        opt.textContent = `${card.name} (Cartão)`;
+                        bulkEditAccountSelect.appendChild(opt);
+                    });
+                }
+            }
+            
+            if(applyBulkEditImportedBtn) {
+                applyBulkEditImportedBtn.addEventListener('click', () => {
+                    const selectedIndexes = Array.from(document.querySelectorAll('.imported-transaction-checkbox:checked'))
+                                                .map(cb => parseInt(cb.dataset.index));
+                    if (selectedIndexes.length === 0) {
+                        showFeedback("Nenhuma transação selecionada na tabela de revisão.", "info");
+                        return;
+                    }
+
+                    const newType = bulkEditTypeSelect.value;
+                    let newCategory = bulkEditCategorySelect.value;
+                    const newAccountId = bulkEditAccountSelect.value;
+                    const newStatus = bulkEditStatusSelect.value;
+
+                    if (newCategory === 'nova-categoria-bulk') {
+                        const typedNewCategory = prompt("Digite o nome da nova categoria:");
+                        if (typedNewCategory && typedNewCategory.trim()) {
+                            newCategory = typedNewCategory.trim();
+                            if (!categories.includes(newCategory)) {
+                                categories.push(newCategory);
+                                saveCategories();
+                                populateCategorySelect(); 
+                                populateCategorySelect(editCategorySelect); 
+                                populateBulkEditSelects(); 
+                                populateLinkSelectedCategorySelect(); 
+                            }
+                            bulkEditCategorySelect.value = newCategory; 
+                        } else {
+                            showFeedback("Nome da nova categoria inválido. Alteração de categoria não aplicada.", "info");
+                            newCategory = ""; 
+                        }
+                    }
+
+
+                    selectedIndexes.forEach(index => {
+                        const tx = importedTransactionsToReview[index];
+                        if (newType) {
+                            tx.type = newType;
+                            tx.fundamentalType = (newType === 'receita' || newType === 'pix_recebido') ? 'receita' : 'despesa';
+                        }
+                        if (newCategory) tx.category = newCategory;
+                        if (newAccountId === "DESVINCULAR") {
+                            tx.accountId = null;
+                            tx.isCreditCard = false;
+                        } else if (newAccountId) {
+                            tx.accountId = newAccountId;
+                            tx.isCreditCard = creditCards.some(c => c.id === newAccountId);
+                        }
+                        if (newStatus !== "") tx.isPaid = newStatus === 'true';
+                    });
+
+                    renderImportedTransactionsForReview(); 
+                    showFeedback("Alterações em lote aplicadas às transações selecionadas para revisão.", "success");
+                });
+            }
+            
+            // --- Confirmação de Importação ---
+            if(confirmImportBtn) confirmImportBtn.addEventListener('click', () => {
+                let importedCount = 0; let skippedCount = 0; let importErrors = [];
+                const transactionsToCommit = []; const tempAccounts = JSON.parse(JSON.stringify(accounts)); const tempCreditCards = JSON.parse(JSON.stringify(creditCards)); let newCategoriesAddedInReview = [];
+                
+                document.querySelectorAll('#imported-transactions-table-body tr').forEach((row, index) => {
+                    const checkbox = row.querySelector('.imported-transaction-checkbox');
+                    if (!checkbox || !checkbox.checked) {
+                        skippedCount++;
+                        return; 
+                    }
+
+                    const reviewedTx = importedTransactionsToReview[index]; 
+                    if (!reviewedTx) return; 
+
+                    reviewedTx.date = row.querySelector('.date-input').value;
+                    reviewedTx.description = row.querySelector('.description-input').value;
+                    reviewedTx.value = parseFloat(row.querySelector('.value-input').value) || 0; 
+                    reviewedTx.type = row.querySelector('.type-input').value;
+                    const categoryInputEl = row.querySelector('.category-input');
+                    const newCategoryInputEl = row.querySelector('.new-category-input-review');
+                    if (categoryInputEl.value === 'nova-categoria-review' && newCategoryInputEl && newCategoryInputEl.value.trim()) { const ncName = newCategoryInputEl.value.trim(); if (ncName && !categories.includes(ncName) && !newCategoriesAddedInReview.includes(ncName)) newCategoriesAddedInReview.push(ncName); reviewedTx.category = ncName || 'Outros'; } 
+                    else if (categoryInputEl) reviewedTx.category = categoryInputEl.value || 'Outros';
+                    
+                    reviewedTx.installmentsTotal = parseInt(row.querySelector('.installments-total-review').value) || 1;
+                    reviewedTx.installmentsPaid = parseInt(row.querySelector('.installments-paid-review').value) || 0;
+                    reviewedTx.accountId = row.querySelector('.account-select-review').value || null;
+                    reviewedTx.isCreditCard = reviewedTx.accountId ? creditCards.some(c => c.id === reviewedTx.accountId) : false;
+                    reviewedTx.isPaid = row.querySelector('.paid-status-input').value === 'true';
+                    
+                    if (!reviewedTx.fundamentalType) reviewedTx.fundamentalType = (reviewedTx.type === 'receita' || reviewedTx.type === 'pix_recebido') ? 'receita' : 'despesa';
+                    if (!reviewedTx.description || isNaN(reviewedTx.value) || reviewedTx.value <= 0) { skippedCount++; return; }
+
+                    const baseDateForInstallment = reviewedTx.date; 
+                    const totalInstallmentsFromReview = reviewedTx.installmentsTotal;
+                    const installmentsPaidCountFromReview = reviewedTx.installmentsPaid;
+                    const valuePerInstallment = reviewedTx.value;
+
+                    for (let k = 1; k <= totalInstallmentsFromReview; k++) {
+                        const transactionDateObject = new Date(baseDateForInstallment + "T00:00:00");
+                        const monthOffset = k - (installmentsPaidCountFromReview + 1);
+                        transactionDateObject.setMonth(transactionDateObject.getMonth() + monthOffset);
+                        const originalDay = new Date(baseDateForInstallment + "T00:00:00").getDate();
+                        if (transactionDateObject.getDate() !== originalDay) transactionDateObject.setDate(0); 
+
+                        const installmentTransaction = {
+                            ...reviewedTx, id: generateUniqueId(),
+                            date: transactionDateObject.toISOString().split('T')[0],
+                            description: `${reviewedTx.description.replace(/\s*\(Venc\..*\)/i, '')} (${k}/${totalInstallmentsFromReview})`,
+                            value: valuePerInstallment, 
+                            installments: `${k}/${totalInstallmentsFromReview}`,
+                            isPaid: k <= installmentsPaidCountFromReview,
+                            originalGroupId: reviewedTx.id 
+                        };
+                        
+                        let installmentValid = true;
+                        if (installmentTransaction.accountId) { 
+                            const acc = tempAccounts.find(a => a.id === installmentTransaction.accountId); 
+                            const card = tempCreditCards.find(c => c.id === installmentTransaction.accountId); 
+                            if (installmentTransaction.isCreditCard && card) { if (installmentTransaction.fundamentalType === 'despesa') card.availableLimit -= installmentTransaction.value; else card.availableLimit += installmentTransaction.value; } 
+                            else if (acc) { if (installmentTransaction.isPaid || installmentTransaction.fundamentalType === 'receita') { if (installmentTransaction.fundamentalType === 'despesa') { if (acc.type === 'corrente' && acc.limitOverdraft > 0 && (acc.balance - installmentTransaction.value < -acc.limitOverdraft)) { importErrors.push(`Parcela ${formatCurrency(installmentTransaction.value)} p/ ${acc.name} excede limite.`); installmentValid = false; } else if (installmentValid) acc.balance -= installmentTransaction.value; } else if (installmentValid) acc.balance += installmentTransaction.value; }} 
+                            else { importErrors.push(`Conta/Cartão ID ${installmentTransaction.accountId} não encontrado.`); installmentValid = false; }
+                        }
+                        if (installmentValid) transactionsToCommit.push(installmentTransaction); else skippedCount++;
+                    }
+                    if (totalInstallmentsFromReview > 0) importedCount++; 
+                });
+                if (newCategoriesAddedInReview.length > 0) { categories.push(...newCategoriesAddedInReview); saveCategories(); populateCategorySelect(); populateCategorySelect(editCategorySelect); populateLinkSelectedCategorySelect(); if (!importReviewSection.classList.contains('hidden')) renderImportedTransactionsForReview(); }
+                if (importErrors.length > 0) { showFeedback(`Erro(s) importação: ${importErrors.join(' ')} ${skippedCount>0?(importedCount>0?'Outras ':'')+skippedCount+' ignoradas.':''}`, 'error'); if (importedCount===0) return; }
+                transactions.push(...transactionsToCommit); accounts = tempAccounts; creditCards = tempCreditCards; 
+                saveTransactions(); saveAccounts(); saveCreditCards(); renderTransactions(); updateSummary(); renderMonthlySummary(); renderCreditCards(); checkCreditCardDueDates();
+                importedTransactionsToReview=[]; importedTransactionsTableBody.innerHTML=''; importReviewSection.classList.add('hidden'); 
+                let fbMsg = `Importação: ${importedCount} transação(ões) originais processada(s).`;
+                if (skippedCount > 0 && importErrors.length === 0) fbMsg += ` ${skippedCount} ignorada(s).`; else if (skippedCount > 0 && importErrors.length > 0 && importedCount > 0) fbMsg += ` ${skippedCount} adicional(is) ignorada(s).`;
+                showFeedback(fbMsg,importedCount > 0 ? 'success' : (importErrors.length > 0 ? 'error' : 'info') );
+                suggestFinancialGoals(); 
+            });
+            if(cancelReviewBtn) cancelReviewBtn.addEventListener('click', () => { importedTransactionsToReview = []; importedTransactionsTableBody.innerHTML = ''; importReviewSection.classList.add('hidden'); fileInput.value = ''; showFeedback('Importação cancelada.', 'info'); fileInput.disabled = false; importFileBtn.disabled = false; });
+            
+            // --- Funções de Download, Faturas, Notificações, Metas ---
+            if(downloadXlsxBtn) downloadXlsxBtn.addEventListener('click', () => { const bom=new Date(currentYear,currentMonth,1);bom.setHours(0,0,0,0);const dataExp=transactions.filter(t=>{const td=new Date(t.date);td.setHours(0,0,0,0);return(td.getMonth()===currentMonth&&td.getFullYear()===currentYear)||(td<bom&&!t.isPaid);}).sort((a,b)=>new Date(a.date)-new Date(b.date)).map(t=>{let typeD=t.type;if(t.type==='pix_enviado')typeD='PIX Enviado';else if(t.type==='pix_recebido')typeD='PIX Recebido';else if(t.type==='saque')typeD='Saque';else if(t.type==='receita')typeD='Receita';else if(t.type==='despesa')typeD='Despesa';return{Data:new Date(t.date).toLocaleDateString('pt-BR'),Descrição:t.description,Valor:t.value,Tipo:typeD,Categoria:t.category,'Conta / Cartão':t.accountId?(t.isCreditCard?(creditCards.find(c=>c.id===t.accountId)?.name||'N/A'):(accounts.find(a=>a.id===t.accountId)?.name||'N/A')):"Não Vinculada",Parcela:t.installments,Pago:t.isPaid?'Sim':'Não'}});if(dataExp.length===0){showFeedback('Não há transações para baixar.','info');return;}const ws=XLSX.utils.json_to_sheet(dataExp);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Transacoes");const mName=new Date(currentYear,currentMonth).toLocaleDateString('pt-BR',{month:'long'});XLSX.writeFile(wb,`transacoes_${mName}_${currentYear}.xlsx`);showFeedback('Planilha baixada!','success');});
+            
+            if(clearAllDataLink) { 
+                clearAllDataLink.addEventListener('click', () => {
+                    requestDeleteConfirmation(null, 'allData');
+                });
+            }
+
+            const checkCreditCardDueDates = () => { const today=new Date();today.setHours(0,0,0,0);creditCards.forEach(card=>{const dueDay=card.dueDay;let billDueDate=new Date(today.getFullYear(),today.getMonth(),dueDay);billDueDate.setHours(0,0,0,0);if(today.getDate()>dueDay)billDueDate.setMonth(today.getMonth()+1);let billClosingDate=new Date(billDueDate.getTime());billClosingDate.setDate(billDueDate.getDate()-10);if(billClosingDate.getDate() > dueDay) billClosingDate.setMonth(billClosingDate.getMonth()-1);billClosingDate.setHours(0,0,0,0);if(today.getTime()===billClosingDate.getTime()){const closingBill=transactions.reduce((s,t)=>{const tD=new Date(t.date);let cSA=new Date(billClosingDate);cSA.setDate(cSA.getDate()-(card.dueDay>10?30:28));if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&tD>=cSA&&tD<billClosingDate)return s+t.value;return s;},0);if(closingBill>0)showFeedback(`FATURA FECHADA: ${card.name} fechou! Valor: ${formatCurrency(closingBill)}. Venc.: ${billDueDate.toLocaleDateString('pt-BR')}`,'info');}const diffT=billDueDate.getTime()-today.getTime();const diffD=Math.ceil(diffT/(1000*60*60*24));const billNotify=transactions.reduce((s,t)=>{const tD=new Date(t.date);if(t.accountId===card.id&&t.isCreditCard&&t.fundamentalType==='despesa'&&!t.isPaid&&tD>=billClosingDate&&tD<billDueDate)return s+t.value;return s;},0);if(diffD<=7&&diffD>=0&&billNotify>0)showFeedback(`VENC. PRÓXIMO: ${card.name} vence ${diffD===0?'HOJE':'em '+diffD+' dia(s)'}! Valor: ${formatCurrency(billNotify)}`,'info');});};
+            
+            // --- Nova Seção: Sugestões de Metas (sem IA) ---
+            if(suggestedGoalsHeader) {
+                suggestedGoalsHeader.addEventListener('click', () => {
+                    suggestedGoalsContent.classList.toggle('hidden');
+                    suggestedGoalsArrow.classList.toggle('rotated');
+                    if (!suggestedGoalsContent.classList.contains('hidden')) {
+                        suggestFinancialGoals(); 
+                    }
+                });
+            }
+
+            const suggestFinancialGoals = () => {
+                if (!suggestedGoalsList || !noSuggestedGoalsMessage) return;
+                suggestedGoalsList.innerHTML = '';
+                const suggestions = [];
+
+                const totalAccountBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+                const lastMonthDate = new Date(currentYear, currentMonth, 0); 
+                const prevMonth = lastMonthDate.getMonth();
+                const prevYear = lastMonthDate.getFullYear();
+
+                const lastMonthExpenses = transactions.reduce((sum, t) => {
+                    const tDate = new Date(t.date + "T00:00:00");
+                    if (t.fundamentalType === 'despesa' && tDate.getFullYear() === prevYear && tDate.getMonth() === prevMonth) {
+                        return sum + t.value;
+                    }
+                    return sum;
+                }, 0);
+                
+                const emergencyFundTarget = lastMonthExpenses * 3; 
+                if (lastMonthExpenses > 0 && totalAccountBalance < emergencyFundTarget) {
+                    suggestions.push(`<strong>Reserva de Emergência:</strong> Aumentar sua reserva para cobrir pelo menos 3 meses de despesas (${formatCurrency(emergencyFundTarget)}). Saldo atual em contas: ${formatCurrency(totalAccountBalance)}.`);
+                } else if (lastMonthExpenses === 0 && totalAccountBalance < 1000 && accounts.length > 0) { 
+                     suggestions.push(`<strong>Reserva de Emergência:</strong> Comece a construir uma reserva de emergência. Tente guardar um valor fixo por mês.`);
+                }
+
+
+                let totalCurrentCardBillsUnpaid = 0;
+                creditCards.forEach(card => {
+                    totalCurrentCardBillsUnpaid += transactions.reduce((sum, t) => {
+                        const tDate = new Date(t.date + "T00:00:00");
+                        if (t.accountId === card.id && t.isCreditCard && t.fundamentalType === 'despesa' && !t.isPaid &&
+                            tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
+                            return sum + t.value;
+                        }
+                        return sum;
+                    }, 0);
+                });
+                
+                if (lastMonthExpenses > 0 && totalCurrentCardBillsUnpaid > (lastMonthExpenses * 0.5)) { 
+                     suggestions.push(`<strong>Gastos com Cartão:</strong> Suas faturas de cartão não pagas para este mês somam ${formatCurrency(totalCurrentCardBillsUnpaid)}. Considere analisar e reduzir esses gastos.`);
+                } else if (totalCurrentCardBillsUnpaid > 0 && lastMonthExpenses === 0) { 
+                     suggestions.push(`<strong>Gastos com Cartão:</strong> Suas faturas de cartão não pagas para este mês somam ${formatCurrency(totalCurrentCardBillsUnpaid)}. Monitore esses gastos.`);
+                }
+
+
+                const spendingByCategoryLastMonth = transactions.filter(t => {
+                    const tDate = new Date(t.date + "T00:00:00");
+                    return t.fundamentalType === 'despesa' && tDate.getFullYear() === prevYear && tDate.getMonth() === prevMonth;
+                }).reduce((acc, t) => {
+                    acc[t.category] = (acc[t.category] || 0) + t.value;
+                    return acc;
+                }, {});
+
+                if (Object.keys(spendingByCategoryLastMonth).length > 0) {
+                    const topSpendingCategory = Object.entries(spendingByCategoryLastMonth)
+                        .sort(([,a],[,b]) => b-a)[0];
+                    if (topSpendingCategory && lastMonthExpenses > 0 && topSpendingCategory[1] > (lastMonthExpenses * 0.2)) { 
+                        suggestions.push(`<strong>Otimizar Gastos:</strong> No último mês, sua maior despesa foi com "${topSpendingCategory[0]}" (${formatCurrency(topSpendingCategory[1])}). Avalie se é possível reduzir essa despesa.`);
+                    }
+                }
+
+                const activeInstallments = transactions.filter(t => {
+                    const installmentsParts = t.installments.split('/');
+                    return installmentsParts.length === 2 && parseInt(installmentsParts[0]) < parseInt(installmentsParts[1]) && !t.isPaid;
+                }).length;
+
+                if (activeInstallments > 3) { 
+                    suggestions.push(`<strong>Parcelamentos:</strong> Você possui ${activeInstallments} compras parceladas em aberto. Considere focar em quitar algumas para liberar seu orçamento futuro.`);
+                }
+
+                const saldoConsolidadoAtualEl = document.getElementById('saldo-atual');
+                const saldoConsolidadoAtual = saldoConsolidadoAtualEl ? (parseFloat(saldoConsolidadoAtualEl.textContent.replace(/[R$.\s]/g, '').replace(',', '.')) || 0) : 0;
+                if (saldoConsolidadoAtual > (lastMonthExpenses * 0.2) && lastMonthExpenses > 0) { 
+                     suggestions.push(`<strong>Investir/Poupar:</strong> Seu saldo consolidado de ${formatCurrency(saldoConsolidadoAtual)} parece saudável. Considere direcionar uma parte para investimentos ou uma poupança de longo prazo.`);
+                }
+
+
+                if (suggestions.length > 0) {
+                    noSuggestedGoalsMessage.classList.add('hidden');
+                    suggestions.forEach(suggestionText => {
+                        const li = document.createElement('li');
+                        li.innerHTML = suggestionText; 
+                        suggestedGoalsList.appendChild(li);
+                    });
+                } else {
+                    noSuggestedGoalsMessage.classList.remove('hidden');
+                }
+            };
+
+
+            // --- Relatórios ---
+            if(reportsHeader) reportsHeader.addEventListener('click', () => { reportsSectionContent.classList.toggle('hidden'); reportsArrow.classList.toggle('rotated'); });
+            if(reportTypeSelect) reportTypeSelect.addEventListener('change', () => { const isComparison = reportTypeSelect.value.startsWith('comparison_'); const isMonthly = reportTypeSelect.value.includes('monthly'); if(reportMonthSelectorDiv1) reportMonthSelectorDiv1.classList.toggle('hidden', !isMonthly && reportTypeSelect.value !== 'monthly' && !reportTypeSelect.value.startsWith('comparison_monthly')); if(reportYearSelectorDiv1) reportYearSelectorDiv1.classList.toggle('hidden', false); if(reportMonthSelectorDiv2) reportMonthSelectorDiv2.classList.toggle('hidden', !isComparison || !reportTypeSelect.value.includes('monthly')); if(reportYearSelectorDiv2) reportYearSelectorDiv2.classList.toggle('hidden', !isComparison); });
+            function populateReportSelectors() { const currentYr = new Date().getFullYear(); const currentMth = new Date().getMonth(); const populateYearSelect = (selEl, defYr) => { if(!selEl)return; selEl.innerHTML=''; for(let y=currentYr+1;y>=currentYr-10;y--){const opt=document.createElement('option');opt.value=y;opt.textContent=y;if(y===defYr)opt.selected=true;selEl.appendChild(opt);}}; const populateMonthSelect = (selEl, defMth) => { if(!selEl)return; selEl.innerHTML='';const mNames=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];mNames.forEach((name,idx)=>{const opt=document.createElement('option');opt.value=idx;opt.textContent=name;if(idx===defMth)opt.selected=true;selEl.appendChild(opt);});}; populateYearSelect(reportYearSelect1,currentYr); populateMonthSelect(reportMonthSelect1,currentMth); populateYearSelect(reportYearSelect2,currentYr-1); populateMonthSelect(reportMonthSelect2,currentMth); }
+            if(generateReportBtn) generateReportBtn.addEventListener('click', () => { const type=reportTypeSelect.value; const year1=parseInt(reportYearSelect1.value); const month1=parseInt(reportMonthSelect1.value); const year2=parseInt(reportYearSelect2.value); const month2=parseInt(reportMonthSelect2.value); reportOutputArea.innerHTML=''; let reportTxsP1=[],reportTxsP2=[]; let reportTitle="",p1Label="",p2Label=""; const getTxsForPeriod=(targetYr,targetMth,isAnnual)=>{const startDt=isAnnual?new Date(targetYr,0,1):new Date(targetYr,targetMth,1);startDt.setHours(0,0,0,0);const endDt=isAnnual?new Date(targetYr,11,31,23,59,59,999):new Date(targetYr,targetMth+1,0,23,59,59,999);return transactions.filter(t=>{if(t.fundamentalType!=='despesa')return false;const txDate=new Date(t.date+"T00:00:00");const isInPer=txDate>=startDt&&txDate<=endDt;const isPendPrev=txDate<startDt&&!t.isPaid;return isInPer||isPendPrev;});}; const calcExpByCat=(txs)=>txs.reduce((acc,t)=>{acc[t.category]=(acc[t.category]||0)+t.value;return acc;},{}); if(type==='monthly'||type==='annual'){reportTxsP1=getTxsForPeriod(year1,month1,type==='annual');reportTitle=type==='monthly'?`Relatório Gastos - ${reportMonthSelect1.options[reportMonthSelect1.selectedIndex].text} de ${year1}`:`Relatório Gastos - ${year1}`;if(reportTxsP1.length===0){reportOutputArea.innerHTML=`<p class="text-center">Nenhuma despesa para ${reportTitle.toLowerCase()}.</p>`;return;}const expsP1=calcExpByCat(reportTxsP1);const sortedCatsP1=Object.entries(expsP1).sort(([,a],[,b])=>b-a);let tblHTML=`<h3 class="text-xl font-semibold mb-3">${reportTitle}</h3><table class="min-w-full report-table mb-6"><thead><tr><th>Categoria</th><th>Total Gasto</th></tr></thead><tbody>`;let totalExpsP1=0;sortedCatsP1.forEach(([cat,total])=>{tblHTML+=`<tr><td>${cat}</td><td>${formatCurrency(total)}</td></tr>`;totalExpsP1+=total;});tblHTML+=`<tr class="font-bold bg-gray-50"><td>TOTAL GERAL</td><td>${formatCurrency(totalExpsP1)}</td></tr></tbody></table>`;reportOutputArea.innerHTML=tblHTML;}else{p1Label=type==='comparison_monthly'?`${reportMonthSelect1.options[reportMonthSelect1.selectedIndex].text}/${year1}`:`${year1}`;p2Label=type==='comparison_monthly'?`${reportMonthSelect2.options[reportMonthSelect2.selectedIndex].text}/${year2}`:`${year2}`;reportTitle=`Comparativo de Gastos: ${p1Label} vs ${p2Label}`;reportTxsP1=getTxsForPeriod(year1,month1,type==='comparison_annual');reportTxsP2=getTxsForPeriod(year2,month2,type==='comparison_annual');const expsP1=calcExpByCat(reportTxsP1);const expsP2=calcExpByCat(reportTxsP2);const allCats=new Set([...Object.keys(expsP1),...Object.keys(expsP2)]);if(allCats.size===0){reportOutputArea.innerHTML=`<p class="text-center">Nenhuma despesa para os períodos.</p>`;return;}const repData=Array.from(allCats).map(cat=>{const amt1=expsP1[cat]||0;const amt2=expsP2[cat]||0;const diff=amt1-amt2;let percTxt="N/A";if(amt2!==0)percTxt=(((amt1-amt2)/amt2)*100).toFixed(1)+"%";else if(amt1>0)percTxt="Novo Gasto";else if(amt1===0&&amt2===0)percTxt="0.0%";return{category:cat,amount1:amt1,amount2:amt2,difference:diff,percentageChangeText:percTxt};}).sort((a,b)=>b.amount1-a.amount1);let tblHTML=`<h3 class="text-xl font-semibold mb-3">${reportTitle}</h3><table class="min-w-full report-table mb-6"><thead class="bg-gray-100"><tr><th>Categoria</th><th>Gasto (${p1Label})</th><th>Gasto (${p2Label})</th><th>Diferença (R$)</th><th>Diferença (%)</th></tr></thead><tbody>`;let totP1=0,totP2=0,totDiff=0;repData.forEach(item=>{tblHTML+=`<tr><td>${item.category}</td><td>${formatCurrency(item.amount1)}</td><td>${formatCurrency(item.amount2)}</td><td>${formatCurrency(item.difference)}</td><td>${item.percentageChangeText}</td></tr>`;totP1+=item.amount1;totP2+=item.amount2;totDiff+=item.difference;});let totPercTxt="N/A";if(totP2!==0)totPercTxt=(((totP1-totP2)/totP2)*100).toFixed(1)+"%";else if(totP1>0)totPercTxt="Novo Gasto";else if(totP1===0&&totP2===0)totPercTxt="0.0%";tblHTML+=`<tr class="font-bold bg-gray-50"><td>TOTAL GERAL</td><td>${formatCurrency(totP1)}</td><td>${formatCurrency(totP2)}</td><td>${formatCurrency(totDiff)}</td><td>${totPercTxt}</td></tr></tbody></table>`;reportOutputArea.innerHTML=tblHTML;}showFeedback("Relatório gerado!","success");});
+            
+            // --- Modal de Entradas da Conta ---
+            function openAccountEntriesModal(accountId, accountName) {
+                if (!accountEntriesModal || !accountEntriesList || !noAccountEntriesMessage || !accountEntriesTitle) return;
+
+                accountEntriesTitle.textContent = `Extrato de Entradas - ${accountName}`;
+                accountEntriesList.innerHTML = '';
+                const entries = transactions.filter(t => t.accountId === accountId && (t.type === 'receita' || t.type === 'pix_recebido'))
+                                            .sort((a,b) => new Date(b.date) - new Date(a.date)); 
+
+                if (entries.length === 0) {
+                    noAccountEntriesMessage.classList.remove('hidden');
+                } else {
+                    noAccountEntriesMessage.classList.add('hidden');
+                    entries.forEach(entry => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${new Date(entry.date + "T00:00:00").toLocaleDateString('pt-BR')}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${entry.description}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-green-600 text-right">${formatCurrency(entry.value)}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-right text-sm">
+                                <button data-id="${entry.id}" data-account-id="${accountId}" class="delete-account-entry-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                                </button>
+                            </td>
+                        `;
+                        accountEntriesList.appendChild(tr);
+                        tr.querySelector('.delete-account-entry-btn').addEventListener('click', (e) => {
+                            const entryId = e.currentTarget.dataset.id;
+                            const accIdForReversal = e.currentTarget.dataset.accountId;
+                            requestDeleteConfirmation(entryId, 'accountEntry', false, [], accIdForReversal);
+                        });
+                    });
+                }
+                accountEntriesModal.classList.remove('hidden');
+            }
+
+            if(closeAccountEntriesModalBtn) closeAccountEntriesModalBtn.addEventListener('click', () => accountEntriesModal.classList.add('hidden'));
+            if(closeAccountEntriesModalFooterBtn) closeAccountEntriesModalFooterBtn.addEventListener('click', () => accountEntriesModal.classList.add('hidden'));
+
+            // --- Confirmação de Exclusão ---
+            function requestDeleteConfirmation(id, type, isBulk = false, ids = [], accountIdForReversal = null) {
+                itemToDelete = { id, type, showFeedback: !isBulk, isBulk, ids, accountIdForReversal }; 
+                let itemName = "";
+                if (type === 'allData') {
+                    itemName = "TODOS OS DADOS (contas, cartões, transações)";
+                    confirmationModalTitle.textContent = "Confirmar Limpeza Total";
+                } else if (isBulk) {
+                    itemName = `${ids.length} transações/grupos`;
+                    confirmationModalTitle.textContent = "Confirmar Exclusão em Lote";
+                } else if (type === 'account') {
+                    const acc = accounts.find(a => a.id === id);
+                    itemName = acc ? `a conta "${acc.name}"` : "este item";
+                    confirmationModalTitle.textContent = "Confirmar Exclusão";
+                } else if (type === 'creditCard') {
+                    const card = creditCards.find(c => c.id === id);
+                    itemName = card ? `o cartão "${card.name}"` : "este item";
+                    confirmationModalTitle.textContent = "Confirmar Exclusão";
+                } else if (type === 'transaction' || type === 'accountEntry') { 
+                    const tx = transactions.find(t => t.id === id);
+                    itemName = tx ? `a transação "${tx.description}"` : "este item";
+                     if (tx && tx.originalGroupId && type === 'transaction') itemName += " e todas as suas parcelas";
+                    confirmationModalTitle.textContent = "Confirmar Exclusão";
+                } 
+
+                confirmationModalMessage.textContent = `Tem a certeza que deseja excluir ${itemName}? Esta ação não pode ser desfeita.`;
+                confirmationModal.classList.remove('hidden');
+            }
+
+            if(closeConfirmationModalBtn) closeConfirmationModalBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));
+            if(cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));
+
+            if(confirmDeleteBtn) confirmDeleteBtn.addEventListener('click', () => {
+                if (itemToDelete.type === 'allData') {
+                    accounts = [];
+                    creditCards = [];
+                    transactions = [];
+                    categories = [ "Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros", "Revisar Importação"]; 
+                    saveAccounts();
+                    saveCreditCards();
+                    saveTransactions();
+                    saveCategories();
+                    loadData(); 
+                    showFeedback('Todos os dados foram limpos com sucesso!', 'success');
+                } else if (itemToDelete.isBulk) {
+                    let deletedGroupsCount = 0;
+                    let deletedSingleCount = 0;
+                    const groupIdsProcessed = new Set();
+                    const idsToDeleteDirectly = [];
+
+                    itemToDelete.ids.forEach(itemId => {
+                        const transaction = transactions.find(t => t.id === itemId);
+                        if (transaction) {
+                             const groupId = transaction.originalGroupId;
+                             if (groupId && groupId !== "null" && groupId !== "" && !groupIdsProcessed.has(groupId)) {
+                                transactions.filter(t => t.originalGroupId === groupId).forEach(tInGroup => {
+                                    performDeleteOperation(tInGroup.id);
+                                });
+                                groupIdsProcessed.add(groupId);
+                                deletedGroupsCount++;
+                            } else if (!groupId || groupId === "null" || groupId === "") {
+                                idsToDeleteDirectly.push(transaction.id); 
+                            }
+                        }
+                    });
+                     idsToDeleteDirectly.forEach(id => {
+                        const tx = transactions.find(t => t.id === id);
+                        if (tx && (!tx.originalGroupId || !groupIdsProcessed.has(tx.originalGroupId))) {
+                           if(performDeleteOperation(id)) deletedSingleCount++;
+                        }
+                    });
+
+
+                    let feedbackMsg = "";
+                    if (deletedGroupsCount > 0) feedbackMsg += `${deletedGroupsCount} grupo(s) de parcelas excluído(s). `;
+                    if (deletedSingleCount > 0) feedbackMsg += `${deletedSingleCount} transação(ões) única(s) excluída(s).`;
+
+                    if (deletedGroupsCount > 0 || deletedSingleCount > 0) {
+                         showFeedback(feedbackMsg.trim() || "Transações selecionadas excluídas.", "success");
+                    } else {
+                        showFeedback("Nenhuma transação foi efetivamente excluída.", "info");
+                    }
+                    saveTransactions(); saveAccounts(); saveCreditCards();
+                    renderTransactions(searchTransactionsInput.value);
+                    renderAccounts(); renderCreditCards();
+                    updateSummary(); renderMonthlySummary(); checkCreditCardDueDates();
+                    suggestFinancialGoals();
+                } else {
+                    performDelete(itemToDelete.id, itemToDelete.type, itemToDelete.showFeedback, itemToDelete.accountIdForReversal);
+                }
+                
+                confirmationModal.classList.add('hidden');
+                updateSelectedTransactionsActions(); 
+            });
+
+
+            // Carregamento inicial
+            loadData(); 
+            updateMonthlyDisplay(); 
+        });
+    </script>
 </body>
 </html>
+```
