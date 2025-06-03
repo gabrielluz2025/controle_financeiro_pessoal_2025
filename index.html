@@ -1218,7 +1218,7 @@
                         initialBalanceInput.placeholder = '0.00 (Pode ser negativo se usando cheque especial)';
                     }
                 });
-                if (overdraftLimitDiv && accountTypeSelect.value === 'corrente') { // Garante que apareça no load se for corrente
+                if (overdraftLimitDiv && accountTypeSelect.value === 'corrente') { 
                     overdraftLimitDiv.classList.remove('hidden');
                 }
             }
@@ -1250,8 +1250,7 @@
                     populateAccountSelects(modalAccountSelect);
                     updateSummary();
                     addAccountForm.reset();
-                    // Manter o campo de cheque especial visível se o tipo for corrente
-                    if (accountTypeSelect.value === 'corrente') {
+                    if (accountTypeSelect.value === 'corrente') { // Manter visível se for conta corrente
                         overdraftLimitDiv.classList.remove('hidden');
                     } else {
                         overdraftLimitDiv.classList.add('hidden');
@@ -1359,7 +1358,7 @@
 
                     accountsList.appendChild(li);
                 });
-                addDeleteListeners(); // Certifique-se que os listeners de delete e edit são chamados aqui
+                addDeleteListeners(); 
             };
             
             const renderCardBillDetails = (cardId, targetListElement, noTransactionsMessageElement) => {
@@ -1881,7 +1880,7 @@
                 requestDeleteConfirmation(null, 'transaction', true, idsToBulkDelete);
             });
 
-            function performDeleteOperation(transactionId) { const txIdx=transactions.findIndex(t=>t.id===transactionId);if(txIdx>-1){const delTx=transactions[txIdx];if(delTx.accountId){if(delTx.isCreditCard){const card=creditCards.find(c=>c.id===delTx.accountId);if(card){if(delTx.fundamentalType==='despesa')card.availableLimit+=delTx.value;else card.availableLimit-=delTx.value;}}else{const acc=accounts.find(a=>a.id===delTx.accountId);if(acc&&delTx.isPaid){if(delTx.fundamentalType==='despesa')acc.balance+=delTx.value;else acc.balance-=delTx.value;}}}transactions.splice(txIdx,1);return true;}return false;}
+            function performDeleteOperation(transactionId) { const txIdx=transactions.findIndex(t=>t.id===transactionId);if(txIdx>-1){const delTx=transactions[txIdx];if(delTx.accountId){if(delTx.isCreditCard){const card=creditCards.find(c=>c.id===delTx.accountId);if(card){if(delTx.fundamentalType==='despesa' && !delTx.isPaid)card.availableLimit+=delTx.value;else if(delTx.fundamentalType==='receita')card.availableLimit-=delTx.value;}}else{const acc=accounts.find(a=>a.id===delTx.accountId);if(acc&&delTx.isPaid){if(delTx.fundamentalType==='despesa')acc.balance+=delTx.value;else acc.balance-=delTx.value;}}}transactions.splice(txIdx,1);return true;}return false;}
             function populateLinkSelectedAccountSelect() { if(!linkSelectedAccountSelect) return; linkSelectedAccountSelect.innerHTML='<option value="">Vincular Conta/Cartão...</option>';accounts.forEach(acc=>{const opt=document.createElement('option');opt.value=acc.id;let typeTxt="";if(acc.type==='corrente')typeTxt="C/C";else if(acc.type==='poupanca')typeTxt="Poupança";else typeTxt="Dinheiro";opt.textContent=`${acc.name} (${typeTxt})`;linkSelectedAccountSelect.appendChild(opt);});creditCards.forEach(card=>{const opt=document.createElement('option');opt.value=card.id;opt.textContent=`${card.name} (Cartão)`;linkSelectedAccountSelect.appendChild(opt);});}
             
             function populateLinkSelectedCategorySelect() {
@@ -2000,14 +1999,8 @@
                     tx.isPaid = true;
                     if (!wasPaid && tx.accountId) {
                         if (tx.isCreditCard) {
-                            const card = creditCards.find(c => c.id === tx.accountId);
-                            if (card) {
-                                if (tx.fundamentalType === 'despesa') {
-                                     // Não altera o limite disponível aqui, pois isso é feito ao pagar a fatura.
-                                     // Apenas marca a compra como paga na lista de transações.
-                                }
-                                // saveCreditCards(); // Não é necessário salvar o cartão aqui se apenas o status 'isPaid' da transação mudou
-                            }
+                            // Marcar uma despesa individual de cartão como paga NÃO afeta o limite disponível.
+                            // O limite é afetado na compra e no pagamento da FATURA.
                         } else { 
                             const acc = accounts.find(a => a.id === tx.accountId);
                             if (acc) {
@@ -2665,14 +2658,11 @@
                     return;
                 }
 
-                // Recalcular limite disponível se o limite total mudou
                 const oldLimit = card.limit;
                 card.name = newName;
                 card.limit = newLimit;
                 card.dueDay = newDueDay;
 
-                // Recalcular availableLimit: Novo Limite - (Limite Antigo - Limite Disponível Antigo)
-                // Isso mantém o valor gasto constante, ajustando o disponível ao novo limite.
                 const spentAmount = oldLimit - card.availableLimit;
                 card.availableLimit = newLimit - spentAmount;
 
