@@ -9,6 +9,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js' defer></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script>
+        // Define o caminho do worker para PDF.js
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+        }
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -59,8 +67,9 @@
         #confirmation-modal .modal-content { max-width: 400px; }
         #suggested-goals-list li { background-color: #eef2ff; padding: 0.75rem 1rem; border-radius: 0.375rem; margin-bottom: 0.5rem; font-size: 0.9rem; color: #3730a3; }
         #suggested-goals-list li strong { color: #312e81; }
-        #clear-all-data-link { font-size: 0.8rem; color: #6b7280; text-decoration: underline; cursor: pointer; }
-        #clear-all-data-link:hover { color: #ef4444; }
+        #clear-all-data-link, #save-all-data-link { font-size: 0.8rem; color: #6b7280; text-decoration: underline; cursor: pointer; }
+        #clear-all-data-link:hover, #save-all-data-link:hover { color: #ef4444; }
+        #save-all-data-link:hover { color: #16a34a; } /* Cor verde para o link de salvar */
         .add-transaction-type-btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.2s ease-in-out; }
         .sub-section-form { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem; background-color: #f9fafb;}
         .sub-section-form h4 { font-size: 1rem; font-weight: 600; color: #4b5563; margin-bottom: 0.75rem; }
@@ -175,13 +184,14 @@
             </div>
         </div>
 
+        <!-- Importar Extratos (Outros Formatos) -->
         <div class="mb-8 border-b pb-6 border-gray-200">
             <div id="import-header" class="collapsible-header">
-                <h2 class="text-2xl font-semibold text-gray-700">Importar Extratos</h2>
+                <h2 class="text-2xl font-semibold text-gray-700">Importar Extratos (OFX, CSV, Excel, Word, Imagem)</h2>
                 <svg id="import-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
             </div>
             <div id="import-section-content" class="hidden">
-                <p class="text-sm text-gray-600 mb-4">Seu arquivo deve ser OFX, CSV, Excel, Word (.docx) ou Imagem (.png, .jpg). <span class="font-bold text-red-600">Atenção: Integração direta com bancos (Open Finance) não é possível.</span> <span class="font-bold text-orange-600">Importação de Word e Imagem: revise dados cuidadosamente.</span></p>
+                <p class="text-sm text-gray-600 mb-4">Seu arquivo deve ser OFX, CSV, Excel, Word (.docx) ou Imagem (.png, .jpg). Para extratos em PDF, utilize a secção "Importar Extrato PDF" abaixo. <span class="font-bold text-red-600">Atenção: Integração direta com bancos (Open Finance) não é possível.</span> <span class="font-bold text-orange-600">Importação de Word e Imagem: revise dados cuidadosamente.</span></p>
                 <div class="p-4 bg-gray-50 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold text-gray-700 mb-3">Carregar Arquivo de Extrato</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
@@ -191,6 +201,25 @@
                 </div>
             </div>
         </div>
+
+        <!-- Importar Extrato PDF -->
+        <div class="mb-8 border-b pb-6 border-gray-200">
+            <div id="import-pdf-header" class="collapsible-header">
+                <h2 class="text-2xl font-semibold text-gray-700">Importar Extrato PDF</h2>
+                <svg id="import-pdf-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+            <div id="import-pdf-section-content" class="hidden">
+                <p class="text-sm text-gray-600 mb-4">Selecione um arquivo de extrato no formato PDF. <span class="font-bold text-orange-600">A qualidade da extração pode variar. Revise os dados cuidadosamente.</span></p>
+                <div class="p-4 bg-gray-50 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3">Carregar Arquivo PDF</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                        <div><label for="file-input-pdf" class="block text-sm font-medium text-gray-700 mb-1">Selecione o Arquivo PDF</label><input type="file" id="file-input-pdf" accept=".pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"></div>
+                        <div class="flex justify-end col-span-full sm:col-span-1"><button id="import-pdf-file-btn" class="w-full sm:w-auto px-6 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-md hover:bg-purple-700">Carregar PDF para Revisão</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="feedback-message"></div>
         <div id="import-review-section" class="mb-8 border-b pb-6 border-gray-200 hidden">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Revisar Transações Importadas</h2>
@@ -251,7 +280,10 @@
 
         <div class="mb-8 border-b pb-6 border-gray-200">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Opções de Dados</h2>
-            <div class="flex flex-col sm:flex-row gap-4"><button id="download-xlsx-btn" class="w-full sm:w-auto px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md hover:bg-gray-700">Baixar Transações (Excel)</button></div>
+            <div class="flex flex-col sm:flex-row gap-4 items-center">
+                <button id="download-xlsx-btn" class="w-full sm:w-auto px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md hover:bg-gray-700">Baixar Transações (Excel)</button>
+                <a href="#" id="save-all-data-link" class="text-sm text-green-600 hover:text-green-800 underline">Salvar Todos os Dados (JSON)</a>
+            </div>
         </div>
 
         <!-- Minhas Transações -->
@@ -583,15 +615,25 @@
         const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
         const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
         const closeConfirmationModalBtn = document.getElementById('close-confirmation-modal');
+        
+        // Elementos de Importação Geral
         const importHeader = document.getElementById('import-header');
         const importSectionContent = document.getElementById('import-section-content');
         const importArrow = document.getElementById('import-arrow');
+        const fileInput = document.getElementById('file-input');
+        const importFileBtn = document.getElementById('import-file-btn');
+
+        // Elementos de Importação PDF (reintroduzidos)
+        const importPdfHeader = document.getElementById('import-pdf-header');
+        const importPdfSectionContent = document.getElementById('import-pdf-section-content');
+        const importPdfArrow = document.getElementById('import-pdf-arrow');
+        const fileInputPdf = document.getElementById('file-input-pdf');
+        const importPdfFileBtn = document.getElementById('import-pdf-file-btn');
+        
         const importReviewSection = document.getElementById('import-review-section');
         const importedTransactionsTableBody = document.getElementById('imported-transactions-table-body');
         const confirmImportBtn = document.getElementById('confirm-import-btn');
         const cancelReviewBtn = document.getElementById('cancel-review-btn');
-        const fileInput = document.getElementById('file-input');
-        const importFileBtn = document.getElementById('import-file-btn');
         const selectAllImportedCheckbox = document.getElementById('select-all-imported-transactions');
         const bulkEditImportedControls = document.getElementById('bulk-edit-imported-controls');
         const bulkEditTypeSelect = document.getElementById('bulk-edit-type');
@@ -638,6 +680,7 @@
         const filterImportCategorySelect = document.getElementById('filter-import-category');
         const filterImportAccountSelect = document.getElementById('filter-import-account');
         const filterImportStatusSelect = document.getElementById('filter-import-status');
+        const saveAllDataLink = document.getElementById('save-all-data-link'); // Alterado de botão para link
 
 
         // --- Utility Functions ---
@@ -660,19 +703,28 @@
             if (!dateString || typeof dateString !== 'string') return null;
             let day, month, year;
             dateString = dateString.trim();
+            // Tenta DD/MM/YYYY ou DD.MM.YYYY
             let match = dateString.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{4})$/);
             if (match) { [ , day, month, year] = match.map(Number); }
-            else { match = dateString.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{2})$/);
+            else { 
+                // Tenta DD/MM/YY ou DD.MM.YY
+                match = dateString.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{2})$/);
                 if (match) { [ , day, month, year] = match.map(Number); year += (year < 70 ? 2000 : 1900); }
-                else { match = dateString.match(/^(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})$/);
+                else { 
+                    // Tenta YYYY-MM-DD ou YYYY/MM/DD
+                    match = dateString.match(/^(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})$/);
                     if (match) { [ , year, month, day] = match.map(Number); }
-                    else { match = dateString.match(/^(\d{1,2})[\/\.](\d{1,2})$/);
+                    else { 
+                        // Tenta DD/MM ou DD.MM (assume ano atual)
+                        match = dateString.match(/^(\d{1,2})[\/\.](\d{1,2})$/);
                         if (match) { [ , day, month] = match.map(Number); year = yearToAssume; }
+                        // Tenta DDMMAAAA (sem separador)
                         else { match = dateString.match(/^(\d{2})(\d{2})(\d{4})$/);
                             if (match) { day = parseInt(match[1]); month = parseInt(match[2]); year = parseInt(match[3]); }
+                            // Tenta DDMMAA (sem separador)
                             else { match = dateString.match(/^(\d{2})(\d{2})(\d{2})$/);
                                 if (match) { day = parseInt(match[1]); month = parseInt(match[2]); year = parseInt(match[3]); year += (year < 70 ? 2000 : 1900); }
-                                else return null;
+                                else return null; // Formato não reconhecido
                             }
                         }
                     }
@@ -688,37 +740,73 @@
 
         const parseCurrencyValue = (valueString) => {
             if (!valueString || typeof valueString !== 'string') return { value: 0, isCredit: null, extractedString: "", lineRemainder: valueString };
-            let originalMatchedString = "";
+            
             let lineRemainder = valueString;
-            const currencyPatterns = [/(?:^|\s)(R\$\s*)?([\-\+]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d+(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d{1,3}(?:,\d{3})*(?:\.\d{2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d+(?:\.\d{2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, /(?:^|\s)([\-\+]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, /(?:^|\s)([\-\+]?\s*\d+(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, ];
-            let numericPart = ""; let indicator = "";
+            // Padrões tentam capturar valores com R$, pontos como separador de milhar, vírgula como decimal, e indicadores C/D ou CR/DB
+            // A ordem é importante: dos mais específicos para os mais genéricos.
+            const currencyPatterns = [
+                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, // Ex: R$ 1.234,56 C
+                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d+(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,          // Ex: R$ 1234,56
+                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d{1,3}(?:,\d{3})*(?:\.\d{2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, // Ex: R$ 1.234.56 (ponto como decimal)
+                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d+(?:\.\d{2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,            // Ex: R$ 1234.56
+                /(?:^|\s)([\-\+]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,   // Ex: 1.234,56 D
+                /(?:^|\s)([\-\+]?\s*\d+(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,                    // Ex: 1234,56
+            ];
+            
+            let numericPart = ""; 
+            let indicator = "";
+            let originalMatchedString = "";
+
             for (const pattern of currencyPatterns) {
                 const match = lineRemainder.match(pattern);
                 if (match) {
                     originalMatchedString = match[0].trim();
-                    numericPart = match[2] ? match[2].trim() : (match[1] && !match[1].toUpperCase().includes("R$") ? match[1].trim() : "");
-                    indicator = match[3] ? match[3].trim().toUpperCase() : "";
+                    numericPart = match[2] ? match[2].trim() : (match[1] && !match[1].toUpperCase().includes("R$") ? match[1].trim() : ""); // Pega o número
+                    indicator = match[3] ? match[3].trim().toUpperCase() : ""; // Pega C/D/CR/DB
+                    
+                    // Remove o valor encontrado da linha para facilitar a extração da descrição
                     const startIndex = lineRemainder.indexOf(originalMatchedString);
-                    if (startIndex !== -1) { lineRemainder = lineRemainder.substring(0, startIndex) + lineRemainder.substring(startIndex + originalMatchedString.length); lineRemainder = lineRemainder.trim(); }
-                    break;
+                    if (startIndex !== -1) {
+                        lineRemainder = lineRemainder.substring(0, startIndex) + lineRemainder.substring(startIndex + originalMatchedString.length);
+                        lineRemainder = lineRemainder.trim();
+                    }
+                    break; 
                 }
             }
+
             if (!numericPart) return { value: 0, isCredit: null, extractedString: "", lineRemainder: valueString };
+
             let cleanedNumericPart = numericPart.replace("R$", "").replace("+", "").trim();
             const hasMinus = cleanedNumericPart.startsWith('-');
             if (hasMinus) cleanedNumericPart = cleanedNumericPart.substring(1);
+            
             let numberValue;
-            if (cleanedNumericPart.includes(',')) {
-                if (cleanedNumericPart.match(/\.\d{3},\d{1,2}$/)) { numberValue = parseFloat(cleanedNumericPart.replace(/\./g, '').replace(',', '.')); }
-                else if (cleanedNumericPart.match(/,\d{1,2}$/)) { numberValue = parseFloat(cleanedNumericPart.replace(',', '.')); }
-                else if (cleanedNumericPart.match(/,\d{3}(?:\.\d{2})?$/)) { numberValue = parseFloat(cleanedNumericPart.replace(/,/g, ''));}
-                else { numberValue = parseFloat(cleanedNumericPart.replace(',', '.'));}
-            } else { numberValue = parseFloat(cleanedNumericPart); }
+            // Lógica para tratar ponto como separador de milhar e vírgula como decimal
+            if (cleanedNumericPart.includes(',')) { // Assume vírgula como decimal
+                if (cleanedNumericPart.match(/\.\d{3},\d{1,2}$/)) { // Formato 1.234,56
+                    numberValue = parseFloat(cleanedNumericPart.replace(/\./g, '').replace(',', '.'));
+                } else { // Formato 1234,56 ou ,56
+                    numberValue = parseFloat(cleanedNumericPart.replace(',', '.'));
+                }
+            } else if (cleanedNumericPart.includes('.')) { // Se não tem vírgula, mas tem ponto, pode ser 1234.56
+                 if (cleanedNumericPart.match(/\.\d{2}$/) && !cleanedNumericPart.match(/\.\d{3}/) ) { // Apenas um ponto e dois decimais
+                    numberValue = parseFloat(cleanedNumericPart);
+                 } else { // Pode ser 1.234 (sem decimais) ou formato americano 1,234.56 (que não é o foco aqui)
+                    numberValue = parseFloat(cleanedNumericPart.replace(/\./g, '')); // Remove pontos como milhar
+                 }
+            }
+             else { // Sem ponto nem vírgula
+                numberValue = parseFloat(cleanedNumericPart);
+            }
+
             if (isNaN(numberValue)) return { value: 0, isCredit: null, extractedString: "", lineRemainder: valueString };
+
             let finalIsCredit = null;
             if (indicator.startsWith("C")) finalIsCredit = true;
             else if (indicator.startsWith("D")) finalIsCredit = false;
             else if (hasMinus) finalIsCredit = false;
+            // Se não houver indicador C/D nem sinal de menos, pode ser necessário inferir de outra forma (ex: palavras-chave na descrição)
+
             return { value: Math.abs(numberValue), isCredit: finalIsCredit, extractedString: originalMatchedString, lineRemainder: lineRemainder };
         };
         const extractInstallmentInfo = (text) => {
@@ -767,9 +855,9 @@
             populateLinkSelectedAccountSelect();
             populateLinkSelectedCategorySelect();
             populateReportSelectors();
-            populateMainFilters(); // New
-            populateImportFilters(); // New
-            renderTransactions(); // Will now use filters
+            populateMainFilters(); 
+            populateImportFilters(); 
+            renderTransactions(); 
             updateSummary();
             updateMonthlyDisplay();
             checkCreditCardDueDates();
@@ -781,15 +869,24 @@
         const addCardInputFields = (container, cardData = null, isEditMode = false) => {
             cardFieldCounter++;
             const cardDiv = document.createElement('div');
-            cardDiv.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 border border-purple-200 rounded-md relative';
+            cardDiv.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 border border-purple-200 rounded-md relative';
             const cardId = cardData ? cardData.cardId : `newCard_${cardFieldCounter}`;
             cardDiv.dataset.cardId = cardId;
+
+            const cardBrands = ["Visa", "Mastercard", "Elo", "American Express", "Hipercard", "Outra"];
+            let brandOptions = cardBrands.map(brand => `<option value="${brand}" ${cardData && cardData.cardBrand === brand ? 'selected' : ''}>${brand}</option>`).join('');
 
             cardDiv.innerHTML = `
                 <input type="hidden" class="card-id-field" value="${cardId}">
                 <div>
-                    <label for="card-name-${cardId}" class="block text-xs font-medium text-gray-600 mb-0.5">Nome do Cartão</label>
-                    <input type="text" id="card-name-${cardId}" value="${cardData ? cardData.cardName : ''}" placeholder="Ex: Visa Gold" required class="w-full input-xs card-name-input">
+                    <label for="card-brand-${cardId}" class="block text-xs font-medium text-gray-600 mb-0.5">Bandeira</label>
+                    <select id="card-brand-${cardId}" class="w-full input-xs card-brand-select">
+                        ${brandOptions}
+                    </select>
+                </div>
+                <div>
+                    <label for="card-name-${cardId}" class="block text-xs font-medium text-gray-600 mb-0.5">Nome Personalizado/Outra</label>
+                    <input type="text" id="card-name-${cardId}" value="${cardData ? cardData.customCardName || '' : ''}" placeholder="Ex: Meu Cartão Azul" class="w-full input-xs card-name-input" ${cardData && cardData.cardBrand !== 'Outra' ? 'disabled' : ''}>
                 </div>
                 <div>
                     <label for="card-limit-${cardId}" class="block text-xs font-medium text-gray-600 mb-0.5">Limite (R$)</label>
@@ -801,9 +898,19 @@
                 </div>
                 ${isEditMode && cardData ? `<button type="button" class="absolute top-1 right-1 text-red-500 hover:text-red-700 remove-card-btn-edit p-0.5" data-card-id-to-remove="${cardId}">&times;</button>` : ''}
                  ${!isEditMode ? `<button type="button" class="absolute top-1 right-1 text-red-500 hover:text-red-700 remove-card-btn-new p-0.5">&times;</button>` : ''}
-
             `;
             container.appendChild(cardDiv);
+
+            const brandSelect = cardDiv.querySelector('.card-brand-select');
+            const nameInput = cardDiv.querySelector('.card-name-input');
+            brandSelect.addEventListener('change', () => {
+                nameInput.disabled = brandSelect.value !== 'Outra';
+                if (brandSelect.value !== 'Outra') {
+                    nameInput.value = ''; // Limpa se não for 'Outra'
+                }
+            });
+
+
             if (!isEditMode) {
                  cardDiv.querySelector('.remove-card-btn-new').addEventListener('click', () => cardDiv.remove());
             } else if (cardData) {
@@ -813,7 +920,7 @@
                     const cardToRemoveEl = container.querySelector(`div[data-card-id="${cardIdToRemove}"]`);
                     if (cardToRemoveEl) {
                         cardToRemoveEl.classList.add('hidden', 'marked-for-deletion');
-                        showFeedback(`Cartão ${cardData.cardName} será removido ao salvar.`, 'info');
+                        showFeedback(`Cartão ${cardData.cardBrand} ${cardData.customCardName || ''} será removido ao salvar.`, 'info');
                     }
                 });
             }
@@ -865,15 +972,20 @@
 
                 if (type === 'corrente') {
                     linkedCardsContainer.querySelectorAll('div[data-card-id]').forEach(cardDiv => {
-                        const cardName = cardDiv.querySelector('.card-name-input').value.trim();
+                        const cardBrand = cardDiv.querySelector('.card-brand-select').value;
+                        const customCardName = cardDiv.querySelector('.card-name-input').value.trim();
                         const cardLimit = parseFloat(cardDiv.querySelector('.card-limit-input').value) || 0;
                         const cardDueDay = parseInt(cardDiv.querySelector('.card-due-day-input').value) || 0;
 
-                        if (cardName && cardLimit > 0 && cardDueDay >= 1 && cardDueDay <= 31) {
-                            const cardId = cardDiv.dataset.cardId.startsWith('newCard_') ? generateUniqueId() : cardDiv.dataset.cardId; 
+                        if (cardBrand && cardLimit > 0 && cardDueDay >= 1 && cardDueDay <= 31) {
+                            if (cardBrand === 'Outra' && !customCardName) {
+                                showFeedback('Por favor, insira um nome para o cartão "Outra".', 'error');
+                                return; // Pula este cartão
+                            }
                             newAccount.creditCards.push({
-                                cardId: cardId,
-                                cardName,
+                                cardId: generateUniqueId(),
+                                cardBrand,
+                                customCardName: cardBrand === 'Outra' ? customCardName : '',
                                 cardLimit,
                                 cardAvailableLimit: cardLimit, 
                                 cardDueDay,
@@ -934,6 +1046,7 @@
                 if (account.creditCards && account.creditCards.length > 0) {
                     detailsHtml += `<h5 class="text-sm font-semibold mt-2 mb-1 text-purple-700">Cartões Vinculados:</h5><ul class="list-disc list-inside pl-2 text-xs">`;
                     account.creditCards.forEach(card => {
+                        const cardDisplayName = card.cardBrand === 'Outra' ? card.customCardName : card.cardBrand;
                         const billForThisCardThisMonth = transactions.reduce((sum, t) => {
                             const tDate = new Date(t.date + "T00:00:00");
                              if (t.fundSource === `credit_card_${card.cardId}` && t.fundamentalType === 'despesa' && !t.isPaid && tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
@@ -942,7 +1055,7 @@
                             return sum;
                         },0);
 
-                        detailsHtml += `<li>${card.cardName}: Limite ${formatCurrency(card.cardLimit)}, Disp. ${formatCurrency(card.cardAvailableLimit)}, Fatura Atual ${formatCurrency(billForThisCardThisMonth)}, Venc. dia ${card.cardDueDay} (Fech. dia ${card.cardClosingDay || 'N/A'})</li>`;
+                        detailsHtml += `<li>${cardDisplayName || 'Cartão'}: Limite ${formatCurrency(card.cardLimit)}, Disp. ${formatCurrency(card.cardAvailableLimit)}, Fatura Atual ${formatCurrency(billForThisCardThisMonth)}, Venc. dia ${card.cardDueDay} (Fech. dia ${card.cardClosingDay || 'N/A'})</li>`;
                     });
                     detailsHtml += `</ul>`;
                 }
@@ -1067,9 +1180,10 @@
                 }
                 if (account.creditCards && account.creditCards.length > 0) {
                     account.creditCards.forEach(card => {
+                        const cardDisplayName = card.cardBrand === 'Outra' ? card.customCardName : card.cardBrand;
                         const cardOpt = document.createElement('option');
                         cardOpt.value = `credit_card_${card.cardId}`;
-                        cardOpt.textContent = `Cartão: ${card.cardName}`;
+                        cardOpt.textContent = `Cartão: ${cardDisplayName || 'Cartão'}`;
                         modalFundSourceSelect.appendChild(cardOpt);
                         hasOptions = true;
                     });
@@ -1325,7 +1439,8 @@
                     const mainAccountForCard = accounts.find(acc => acc.creditCards && acc.creditCards.some(c => c.cardId === cardId));
                     if (mainAccountForCard) {
                         const card = mainAccountForCard.creditCards.find(c => c.cardId === cardId);
-                        fundSourceText = card ? `Cartão: ${card.cardName}` : 'Cartão Desc.';
+                        const cardDisplayName = card ? (card.cardBrand === 'Outra' ? card.customCardName : card.cardBrand) : 'Cartão Desc.';
+                        fundSourceText = `Cartão: ${cardDisplayName || 'Cartão'}`;
                     } else {
                         fundSourceText = 'Cartão Desc. (Conta não encontrada)';
                     }
@@ -1537,27 +1652,36 @@
                     }
 
                     const cardId = cardDiv.dataset.cardId;
-                    const cardName = cardDiv.querySelector('.card-name-input').value.trim();
+                    const cardBrand = cardDiv.querySelector('.card-brand-select').value;
+                    const customCardName = cardDiv.querySelector('.card-name-input').value.trim();
                     const cardLimit = parseFloat(cardDiv.querySelector('.card-limit-input').value) || 0;
                     const cardDueDay = parseInt(cardDiv.querySelector('.card-due-day-input').value) || 0;
 
-                    if (cardName && cardLimit > 0 && cardDueDay >= 1 && cardDueDay <= 31) {
+                    if (cardBrand && cardLimit > 0 && cardDueDay >= 1 && cardDueDay <= 31) {
+                         if (cardBrand === 'Outra' && !customCardName) {
+                            showFeedback('Por favor, insira um nome para o cartão "Outra" ao editar.', 'error');
+                            return; // Pula este cartão
+                        }
                         const existingCard = account.creditCards.find(c => c.cardId === cardId);
                         if (existingCard) { 
                             const oldCardLimit = existingCard.cardLimit;
-                            existingCard.cardName = cardName;
+                            existingCard.cardBrand = cardBrand;
+                            existingCard.customCardName = cardBrand === 'Outra' ? customCardName : '';
                             existingCard.cardLimit = cardLimit;
                             existingCard.cardDueDay = cardDueDay;
                             existingCard.cardClosingDay = calculateClosingDay(cardDueDay);
                             const spentAmount = oldCardLimit - existingCard.cardAvailableLimit;
                             existingCard.cardAvailableLimit = cardLimit - spentAmount;
-
                             updatedCards.push(existingCard);
                         } else { 
-                             const newCardId = generateUniqueId();
                              updatedCards.push({
-                                cardId: newCardId, cardName, cardLimit, cardDueDay,
-                                cardAvailableLimit: cardLimit, currentBillAmount: 0,
+                                cardId: generateUniqueId(), 
+                                cardBrand, 
+                                customCardName: cardBrand === 'Outra' ? customCardName : '', 
+                                cardLimit, 
+                                cardDueDay,
+                                cardAvailableLimit: cardLimit, 
+                                currentBillAmount: 0,
                                 cardClosingDay: calculateClosingDay(cardDueDay)
                             });
                         }
@@ -1593,9 +1717,10 @@
 
             if (account.creditCards) {
                 account.creditCards.forEach(card => {
+                    const cardDisplayName = card.cardBrand === 'Outra' ? card.customCardName : card.cardBrand;
                     const cardOpt = document.createElement('option');
                     cardOpt.value = `credit_card_${card.cardId}`;
-                    cardOpt.textContent = `Fatura Cartão: ${card.cardName}`;
+                    cardOpt.textContent = `Fatura Cartão: ${cardDisplayName || 'Cartão'}`;
                     statementSourceSelect.appendChild(cardOpt);
                 });
             }
@@ -1923,34 +2048,237 @@
 
         };
 
-        const finalizeImportProcessing = (parsedTxs) => { 
-            fileInput.value = ''; fileInput.disabled = false; importFileBtn.disabled = false;
+        const finalizeImportProcessing = (parsedTxs, sourceFileName = "Arquivo Importado") => { 
+            // Limpa ambos os inputs de ficheiro, caso existam
+            if(fileInput) fileInput.value = ''; 
+            if(fileInputPdf) fileInputPdf.value = '';
+            
+            // Reativa ambos os botões de importação
+            if(importFileBtn) importFileBtn.disabled = false;
+            if(importPdfFileBtn) importPdfFileBtn.disabled = false;
+
             if (parsedTxs && parsedTxs.length > 0) {
-                importedTransactionsToReview = parsedTxs;
-                renderImportedTransactionsForReview(); // Initial render without filters
+                importedTransactionsToReview = parsedTxs.map(tx => ({
+                    ...tx,
+                    id: generateUniqueId(), // ID temporário para a revisão
+                    sourceFile: sourceFileName 
+                }));
+                renderImportedTransactionsForReview();
                 importReviewSection.classList.remove('hidden');
+                showFeedback(`${parsedTxs.length} transações carregadas de "${sourceFileName}" para revisão.`, "info");
             } else {
                 importReviewSection.classList.add('hidden');
+                showFeedback(`Nenhuma transação encontrada ou erro ao processar "${sourceFileName}".`, "info");
             }
         };
-        const handleImportError = (err,fileType) => { console.error(`Erro ao processar ${fileType}:`, err); showFeedback(`Erro ao processar ${fileType}. Verifique console.`, 'error'); importReviewSection.classList.add('hidden'); fileInput.value=''; fileInput.disabled=false; importFileBtn.disabled=false;};
-        const parseOFX = (content) => { /* ... (kept for brevity) ... */ return []; };
-        const parseExcelCsv = (data,ext,isTxt) => { /* ... (kept for brevity) ... */ return []; };
-        const processAndStructureTextLines = (text, fileName) => { /* ... (kept for brevity) ... */ return []; };
-        const parseWord = async (file) => { /* ... (kept for brevity) ... */ return []; };
-        const parseImage = async (file) => { /* ... (kept for brevity) ... */ return []; };
+        const handleImportError = (err,fileType, fileName = "arquivo") => { 
+            console.error(`Erro ao processar ${fileType} (${fileName}):`, err); 
+            showFeedback(`Erro ao processar ${fileType} "${fileName}". Verifique console.`, 'error'); 
+            importReviewSection.classList.add('hidden'); 
+            if(fileInput) fileInput.value=''; 
+            if(fileInputPdf) fileInputPdf.value='';
+            if(importFileBtn) importFileBtn.disabled=false; 
+            if(importPdfFileBtn) importPdfFileBtn.disabled=false;
+        };
+        
+        // --- Funções de Parsing (Placeholders Melhorados) ---
+        const parseOFX = async (file) => {
+            showFeedback(`Processando OFX: ${file.name}... (Lógica de parsing não implementada)`, "info", 10000);
+            console.log("Tentando processar OFX (lógica de parsing real necessária aqui).");
+            const parsedTransactions = []; 
+            finalizeImportProcessing(parsedTransactions, file.name);
+        };
+
+        const parseExcelCsv = async (file, extension) => {
+            showFeedback(`Processando ${extension.toUpperCase()}: ${file.name}... (Lógica de parsing não implementada)`, "info", 10000);
+            console.log(`Tentando processar ${extension.toUpperCase()} (lógica de parsing real necessária aqui).`);
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = e.target.result;
+                let workbook;
+                if (extension === '.csv') {
+                    console.warn("Parsing de CSV precisa de tratamento específico para delimitadores e encoding.");
+                    finalizeImportProcessing([], file.name); 
+                    return;
+                } else {
+                    workbook = XLSX.read(data, {type: 'array'});
+                }
+
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false, dateNF:'yyyy-mm-dd'}); 
+
+                console.log("Dados brutos do Excel/CSV:", jsonData);
+                const parsedTransactions = []; 
+                finalizeImportProcessing(parsedTransactions, file.name);
+            };
+            reader.onerror = function(err) {
+                handleImportError(err, extension.toUpperCase(), file.name);
+            };
+
+            if (extension === '.csv') {
+                reader.readAsArrayBuffer(file); 
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
+        };
+
+        const processAndStructureTextLines = (text, fileName) => {
+            console.log(`Processando texto extraído de ${fileName}. Conteúdo abaixo (primeiros 1000 caracteres):`);
+            console.log(text.substring(0, 1000) + (text.length > 1000 ? "..." : ""));
+            
+            const transactions = [];
+            const lines = text.split('\n');
+            
+            // Padrões de data mais abrangentes
+            const datePatterns = [
+                /\b(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4})\b/g, // DD/MM/YYYY, DD.MM.YYYY, DD/MM/YY, DD.MM.YY
+                /\b(\d{4}[-\/\.]\d{1,2}[-\/\.]\d{1,2})\b/g,    // YYYY-MM-DD, YYYY/MM/DD
+                /\b(\d{1,2}\s+(?:Jan|Fev|Mar|Abr|Mai|Jun|Jul|Ago|Set|Out|Nov|Dez)\.?\s+\d{2,4})\b/gi // 01 Jan 2023
+            ];
+            
+            lines.forEach(line => {
+                line = line.trim();
+                if (line.length < 5) return; 
+
+                let extractedDate = null;
+                for (const pattern of datePatterns) {
+                    // Resetar lastIndex para cada padrão, pois são globais
+                    pattern.lastIndex = 0; 
+                    const dateMatch = pattern.exec(line);
+                    if (dateMatch) {
+                        extractedDate = formatDateFromVariousFormats(dateMatch[0]);
+                        if (extractedDate) break; // Usa a primeira data válida encontrada
+                    }
+                }
+
+                const valueInfo = parseCurrencyValue(line); 
+                
+                if (extractedDate && valueInfo.value > 0) {
+                    let description = line;
+                    // Remover a data e o valor da linha para obter a descrição
+                    datePatterns.forEach(pattern => { // Tenta remover todos os formatos de data
+                        pattern.lastIndex = 0; // Resetar
+                        description = description.replace(pattern, "").trim();
+                    });
+                    if (valueInfo.extractedString) {
+                        description = description.replace(valueInfo.extractedString, "").trim();
+                    }
+                    description = description.replace(/\s\s+/g, ' ').trim(); // Remove espaços extras
+
+                    let type = 'despesa'; 
+                    if (valueInfo.isCredit === true) {
+                        type = 'receita';
+                    } else if (valueInfo.isCredit === false) {
+                        type = 'despesa';
+                    } else { 
+                        if (/(crédito|cred|recebimento|depósito|rendimento|entrada|valor creditado)/i.test(description) || /(crédito|cred|recebimento|depósito|rendimento|entrada|valor creditado)/i.test(line)) type = 'receita';
+                        else if (/(débito|deb|pagamento|compra|saque|saída|valor debitado)/i.test(description) || /(débito|deb|pagamento|compra|saque|saída|valor debitado)/i.test(line)) type = 'despesa';
+                    }
+                    
+                    if (description.length < 3 || /^\d+$/.test(description) || description.toLowerCase() === "saldo anterior" || description.toLowerCase().startsWith("saldo ")) {
+                         description = `Transação importada (${fileName})`;
+                    }
+                    // Remove palavras comuns de extrato que não são parte da descrição útil
+                    description = description.replace(/\b(SALDO ANTERIOR|SALDO DO DIA|SALDO FINAL|HISTORICO|LANÇAMENTOS|EXTRATO)\b/gi, "").trim();
+                    description = description.replace(/\s\s+/g, ' ').trim();
+
+
+                    transactions.push({
+                        id: generateUniqueId(), 
+                        date: extractedDate,
+                        description: description || `Importado de ${fileName}`,
+                        value: valueInfo.value,
+                        type: type,
+                        fundamentalType: type === 'receita' || type === 'transferencia_entrada' ? 'receita' : 'despesa',
+                        category: 'Revisar Importação', 
+                        installments: '1/1',
+                        isPaid: false, 
+                        accountId: null, 
+                        fundSource: 'account_balance', 
+                        isCreditCardTransaction: false,
+                        sourceFile: fileName,
+                        fundamentalTypeOriginalSignal: valueInfo.isCredit === null ? (type === 'receita' ? 1 : -1) : (valueInfo.isCredit ? 1 : -1)
+                    });
+                }
+            });
+
+            if (transactions.length === 0) {
+                console.warn(`Nenhuma transação estruturada pôde ser extraída de ${fileName} com a lógica atual.`);
+                showFeedback(`Nenhuma transação estruturada encontrada em ${fileName}. Verifique o conteúdo e a lógica de parsing.`, "info");
+            }
+            return transactions;
+        };
+
+        const parseWord = async (file) => { 
+            showFeedback(`Processando Word: ${file.name}...`, "info", 15000);
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({ arrayBuffer });
+                const text = result.value;
+                const structuredTxs = processAndStructureTextLines(text, file.name);
+                finalizeImportProcessing(structuredTxs, file.name);
+            } catch (err) {
+                handleImportError(err, "Word", file.name);
+            }
+        };
+
+        const parseImage = async (file) => {
+            showFeedback(`Processando Imagem com OCR: ${file.name}... (Pode demorar)`, "info", 30000);
+            try {
+                const { data: { text } } = await Tesseract.recognize(file, 'por', { logger: m => console.log(m.status, Math.round(m.progress * 100) + '%') });
+                const structuredTxs = processAndStructureTextLines(text, file.name);
+                finalizeImportProcessing(structuredTxs, file.name);
+            } catch (err) {
+                handleImportError(err, "Imagem", file.name);
+            }
+        };
+
+        const parsePDF = async (file) => {
+            if (typeof pdfjsLib === 'undefined') {
+                handleImportError(new Error("Biblioteca PDF.js não carregada."), "PDF", file.name);
+                return;
+            }
+            showFeedback(`Processando PDF: ${file.name}...`, "info", 20000);
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = "";
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    fullText += textContent.items.map(item => item.str).join(" ") + "\n"; 
+                }
+                const structuredTxs = processAndStructureTextLines(fullText, file.name);
+                finalizeImportProcessing(structuredTxs, file.name);
+            } catch (err) {
+                handleImportError(err, "PDF", file.name);
+            }
+        };
         
         // --- Filter Population Functions ---
         const populateMainFilters = () => {
             populateCategorySelect(filterMainCategorySelect, "filter");
-            populateAccountSelects(filterMainAccountSelect, false, true, true); // includeNoLink=true for "Todas as Contas"
-            // Fund source is static for now
+            populateAccountSelects(filterMainAccountSelect, false, true, true); 
         };
 
         const populateImportFilters = () => {
             populateCategorySelect(filterImportCategorySelect, "filter");
-            populateAccountSelects(filterImportAccountSelect, false, true, true); // includeNoLink=true for "Todas as Contas"
+            populateAccountSelects(filterImportAccountSelect, false, true, true); 
         };
+        
+        // --- Função para controlar visibilidade dos controlos de edição em lote ---
+        const updateBulkEditControlsVisibility = () => {
+            if (!bulkEditImportedControls || !selectAllImportedCheckbox) return;
+            const selectedCheckboxes = document.querySelectorAll('#imported-transactions-table-body .imported-transaction-checkbox:checked');
+            const hasSelected = selectedCheckboxes.length > 0;
+            bulkEditImportedControls.classList.toggle('hidden', !hasSelected);
+
+            const allVisibleCheckboxes = document.querySelectorAll('#imported-transactions-table-body .imported-transaction-checkbox');
+            selectAllImportedCheckbox.checked = allVisibleCheckboxes.length > 0 && selectedCheckboxes.length === allVisibleCheckboxes.length;
+        };
+
 
         // --- Render Imported Transactions with Filters ---
         const renderImportedTransactionsForReview = (filters = {}) => {
@@ -1975,23 +2303,13 @@
             });
 
 
-            filteredForReview.forEach((tx, originalIndex) => { // Use originalIndex if you need to map back to importedTransactionsToReview
+            filteredForReview.forEach((tx) => { 
                 const tr = document.createElement('tr'); tr.className = 'bg-white hover:bg-gray-50';
-                // ... (rest of the row generation logic from the previous version, using 'tx' from filteredForReview)
-                // Ensure data-index still refers to the index in the *original* importedTransactionsToReview if direct modification is done
-                // For simplicity, if direct modification of importedTransactionsToReview is done via inputs,
-                // the filtering should re-apply to the main array.
-                // Let's assume for now that edits in the table directly modify importedTransactionsToReview[originalIndex]
-                // and filtering is just for display. A better approach might be to filter a copy.
-                // For this iteration, we'll use the index from the filtered array for checkbox data-index,
-                // and rely on re-filtering if data changes.
                 const idxInMainArray = importedTransactionsToReview.findIndex(item => item.id === tx.id);
 
 
                 let accOpts = accounts.map(a=>`<option value="${a.id}" ${tx.accountId===a.id?'selected':''}>${a.name} (${a.type==='corrente'?'C/C':(a.type==='poupanca'?'Poupança':'Dinheiro')})</option>`).join('');
-                // Note: Imported transactions won't have cards linked initially, so fundSource for card is less relevant here.
-                // It's more about linking to a primary account.
-
+                
                 const valFmt = typeof tx.value==='number'?tx.value.toFixed(2):'0.00';
                 const instTotal=tx.installmentsTotal||(tx.installments?parseInt(tx.installments.split('/')[1]):1)||1;
                 const instPaid=tx.installmentsPaid||(tx.installments?parseInt(tx.installments.split('/')[0]):(tx.isPaid?1:0))||0;
@@ -2009,12 +2327,12 @@
                     <td class="px-2 py-2"><select class="paid-status-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idxInMainArray}"><option value="false" ${!tx.isPaid?'selected':''}>Não Pago</option><option value="true" ${tx.isPaid?'selected':''}>Pago</option></select></td>`;
                 importedTransactionsTableBody.appendChild(tr);
                 
-                const currentIdx = idxInMainArray; // Use the index from the main array for event listeners
+                const currentIdx = idxInMainArray; 
                 const accSelEl=tr.querySelector('.account-select-review');
                 const fundSourceSelEl = tr.querySelector('.fund-source-select-review');
 
                 if(tx.accountId) accSelEl.value=tx.accountId;
-                // Populate and set fund source if account is selected
+                
                 if (tx.accountId && importedTransactionsToReview[currentIdx].type === 'despesa') {
                     populateFundSourceSelectForImportRow(fundSourceSelEl, tx.accountId);
                     fundSourceSelEl.value = importedTransactionsToReview[currentIdx].fundSource || 'account_balance';
@@ -2027,10 +2345,10 @@
                 tr.querySelector('.date-input').addEventListener('change',(e)=>importedTransactionsToReview[currentIdx].date=e.target.value);
                 tr.querySelector('.description-input').addEventListener('input',(e)=>importedTransactionsToReview[currentIdx].description=e.target.value);
                 tr.querySelector('.value-input').addEventListener('change',(e)=>{const v=parseFloat(e.target.value)||0; const s=importedTransactionsToReview[currentIdx].fundamentalTypeOriginalSignal||(v>=0?1:-1); importedTransactionsToReview[currentIdx].value=Math.abs(v); if(v!==0)importedTransactionsToReview[currentIdx].fundamentalType=v*s>=0?'receita':'despesa'; else importedTransactionsToReview[currentIdx].fundamentalType=s>0?'receita':'despesa'; if(['receita','despesa'].includes(importedTransactionsToReview[currentIdx].type)||!importedTransactionsToReview[currentIdx].type){importedTransactionsToReview[currentIdx].type=importedTransactionsToReview[currentIdx].fundamentalType;tr.querySelector('.type-input').value=importedTransactionsToReview[currentIdx].type;}});
-                tr.querySelector('.type-input').addEventListener('change',(e)=>{const nT=e.target.value; importedTransactionsToReview[currentIdx].type=nT; if(nT==='receita'||nT==='transferencia_entrada'){importedTransactionsToReview[currentIdx].fundamentalType='receita';importedTransactionsToReview[currentIdx].fundamentalTypeOriginalSignal=1;}else{importedTransactionsToReview[currentIdx].fundamentalType='despesa';importedTransactionsToReview[currentIdx].fundamentalTypeOriginalSignal=-1;} if(nT === 'despesa' && accSelEl.value) { populateFundSourceSelectForImportRow(fundSourceSelEl, accSelEl.value); fundSourceSelEl.classList.remove('hidden');} else {fundSourceSelEl.classList.add('hidden'); fundSourceSelEl.innerHTML = ''; importedTransactionsToReview[currentIdx].fundSource = 'account_balance';}});
+                tr.querySelector('.type-input').addEventListener('change',(e)=>{const nT=e.target.value; importedTransactionsToReview[currentIdx].type=nT; if(nT==='receita'||nT==='transferencia_entrada'){importedTransactionsToReview[currentIdx].fundamentalType='receita';importedTransactionsToReview[currentIdx].fundamentalTypeOriginalSignal=1;}else{importedTransactionsToReview[currentIdx].fundamentalType='despesa';importedTransactionsToReview[currentIdx].fundamentalTypeOriginalSignal=-1;} if(nT === 'despesa' && accSelEl.value) { populateFundSourceSelectForImportRow(fundSourceSelEl, accSelEl.value); fundSourceSelEl.classList.remove('hidden'); importedTransactionsToReview[currentIdx].fundSource = fundSourceSelEl.value || 'account_balance';} else {fundSourceSelEl.classList.add('hidden'); fundSourceSelEl.innerHTML = ''; importedTransactionsToReview[currentIdx].fundSource = 'account_balance';}});
                 catInEl.addEventListener('change',(e)=>{if(e.target.value==='nova-categoria-review'){newCatInEl.classList.remove('hidden');newCatInEl.focus();importedTransactionsToReview[currentIdx].category='';}else{newCatInEl.classList.add('hidden');newCatInEl.value='';importedTransactionsToReview[currentIdx].category=e.target.value;}});
                 newCatInEl.addEventListener('blur',(e)=>{if(e.target.value.trim()&&catInEl.value==='nova-categoria-review')importedTransactionsToReview[currentIdx].category=e.target.value.trim();});
-                accSelEl.addEventListener('change',(e)=>{importedTransactionsToReview[currentIdx].accountId=e.target.value; importedTransactionsToReview[currentIdx].isCreditCardTransaction=false; /* Reset, will be set by fundSource if card */ if(importedTransactionsToReview[currentIdx].type === 'despesa' && e.target.value) { populateFundSourceSelectForImportRow(fundSourceSelEl, e.target.value); fundSourceSelEl.classList.remove('hidden'); importedTransactionsToReview[currentIdx].fundSource = fundSourceSelEl.value || 'account_balance';} else {fundSourceSelEl.classList.add('hidden'); fundSourceSelEl.innerHTML = ''; importedTransactionsToReview[currentIdx].fundSource = 'account_balance';}});
+                accSelEl.addEventListener('change',(e)=>{importedTransactionsToReview[currentIdx].accountId=e.target.value; importedTransactionsToReview[currentIdx].isCreditCardTransaction=false; if(importedTransactionsToReview[currentIdx].type === 'despesa' && e.target.value) { populateFundSourceSelectForImportRow(fundSourceSelEl, e.target.value); fundSourceSelEl.classList.remove('hidden'); importedTransactionsToReview[currentIdx].fundSource = fundSourceSelEl.value || 'account_balance';} else {fundSourceSelEl.classList.add('hidden'); fundSourceSelEl.innerHTML = ''; importedTransactionsToReview[currentIdx].fundSource = 'account_balance';}});
                 fundSourceSelEl.addEventListener('change', (e) => { importedTransactionsToReview[currentIdx].fundSource = e.target.value; importedTransactionsToReview[currentIdx].isCreditCardTransaction = e.target.value.startsWith('credit_card_');});
                 tr.querySelector('.paid-status-input').addEventListener('change',(e)=>importedTransactionsToReview[currentIdx].isPaid=e.target.value==='true');
                 const instTotEl=tr.querySelector('.installments-total-review');const instPaidEl=tr.querySelector('.installments-paid-review');
@@ -2038,12 +2356,9 @@
                 instPaidEl.addEventListener('change',(e)=>{const t=parseInt(instTotEl.value)||1;let p=parseInt(e.target.value)||0;if(p<0)p=0;if(p>t)p=t;e.target.value=p;importedTransactionsToReview[currentIdx].installmentsPaid=p;});
                 tr.querySelector('.imported-transaction-checkbox').addEventListener('change', updateBulkEditControlsVisibility);
             });
-            if(selectAllImportedCheckbox) selectAllImportedCheckbox.checked = filteredForReview.length > 0 && filteredForReview.every(tx => document.querySelector(`.imported-transaction-checkbox[data-index="${importedTransactionsToReview.findIndex(item => item.id === tx.id)}"]`)?.checked);
-            updateBulkEditControlsVisibility(); 
-            // populateBulkEditSelects(); // Already called in renderAll or when data loaded
+            updateBulkEditControlsVisibility(); // Chamada inicial após renderizar
         };
         
-        // Helper to populate fund source for a specific row in import table
         function populateFundSourceSelectForImportRow(selectEl, accountId) {
             selectEl.innerHTML = '';
             const account = accounts.find(acc => acc.id === accountId);
@@ -2063,9 +2378,10 @@
                 }
                 if (account.creditCards && account.creditCards.length > 0) {
                     account.creditCards.forEach(card => {
+                        const cardDisplayName = card.cardBrand === 'Outra' ? card.customCardName : card.cardBrand;
                         const cardOpt = document.createElement('option');
                         cardOpt.value = `credit_card_${card.cardId}`;
-                        cardOpt.textContent = `Cartão: ${card.cardName.substring(0,10)}..`;
+                        cardOpt.textContent = `Cartão: ${(cardDisplayName || 'Cartão').substring(0,10)}..`;
                         selectEl.appendChild(cardOpt);
                     });
                 }
@@ -2073,7 +2389,6 @@
         }
 
 
-        // Event listeners for import filters
         document.querySelectorAll('.filter-import-select').forEach(sel => sel.addEventListener('change', () => {
             const filters = {
                 type: filterImportTypeSelect.value,
@@ -2087,15 +2402,26 @@
 
         // --- Event Listeners (Collapsible sections, etc.) ---
         if(importHeader) importHeader.addEventListener('click', () => { importSectionContent.classList.toggle('hidden'); importArrow.classList.toggle('rotated'); });
+        if(importPdfHeader) importPdfHeader.addEventListener('click', () => { importPdfSectionContent.classList.toggle('hidden'); importPdfArrow.classList.toggle('rotated'); });
+
         if(reportsHeader) reportsHeader.addEventListener('click', () => { reportsSectionContent.classList.toggle('hidden'); reportsArrow.classList.toggle('rotated'); });
         if(suggestedGoalsHeader) suggestedGoalsHeader.addEventListener('click', () => { suggestedGoalsContent.classList.toggle('hidden'); suggestedGoalsArrow.classList.toggle('rotated'); if(!suggestedGoalsContent.classList.contains('hidden')) suggestFinancialGoals(); });
         if(clearAllDataLink) clearAllDataLink.addEventListener('click', () => requestDeleteConfirmation(null, 'allData'));
         if(transactionList) transactionList.addEventListener('change', (e) => { if (e.target.classList.contains('transaction-checkbox')) updateSelectedTransactionsActions(); });
-        if(selectAllTransactionsCheckbox) selectAllTransactionsCheckbox.addEventListener('change', (e) => { document.querySelectorAll('.transaction-checkbox').forEach(cb => { cb.checked = e.target.checked; }); updateSelectedTransactionsActions(); });
+        if(selectAllTransactionsCheckbox) selectAllTransactionsCheckbox.addEventListener('change', (e) => { document.querySelectorAll('#transaction-list .transaction-checkbox').forEach(cb => { cb.checked = e.target.checked; }); updateSelectedTransactionsActions(); });
+        // Listener para selectAllImportedCheckbox
+        if(selectAllImportedCheckbox) {
+            selectAllImportedCheckbox.addEventListener('change', (e) => {
+                document.querySelectorAll('#imported-transactions-table-body .imported-transaction-checkbox').forEach(cb => {
+                    cb.checked = e.target.checked;
+                });
+                updateBulkEditControlsVisibility();
+            });
+        }
 
 
         function updateSelectedTransactionsActions() {
-            const selectedCheckboxes = document.querySelectorAll('#transaction-list .transaction-checkbox:checked'); // Scope to main list
+            const selectedCheckboxes = document.querySelectorAll('#transaction-list .transaction-checkbox:checked'); 
             const hasSelected = selectedCheckboxes.length > 0;
             if(paySelectedTransactionsBtn) paySelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
             if(unpaySelectedTransactionsBtn) unpaySelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
@@ -2110,6 +2436,77 @@
         if(paySelectedTransactionsBtn) paySelectedTransactionsBtn.addEventListener('click', () => { const ids = Array.from(document.querySelectorAll('#transaction-list .transaction-checkbox:checked')).map(cb=>cb.dataset.id); let c=0; ids.forEach(id => {if(markTransactionAsPaid(id,false))c++;}); if(c>0)showFeedback(`${c} transações pagas.`,'success'); renderAll();});
         if(deleteSelectedTransactionsBtn) deleteSelectedTransactionsBtn.addEventListener('click', () => { const ids=Array.from(document.querySelectorAll('#transaction-list .transaction-checkbox:checked')).map(cb=>cb.dataset.id); if(ids.length>0) requestDeleteConfirmation(null,'transaction',true,ids);});
         
+        // --- Event Listener para Salvar Todos os Dados ---
+        if (saveAllDataLink) { // Alterado de saveAllDataBtn para saveAllDataLink
+            saveAllDataLink.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevenir comportamento padrão de link
+                try {
+                    const dataToSave = {
+                        accounts: accounts,
+                        transactions: transactions,
+                        categories: categories,
+                        savedAt: new Date().toISOString()
+                    };
+                    const jsonData = JSON.stringify(dataToSave, null, 2);
+                    const blob = new Blob([jsonData], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                    a.download = `controle_financeiro_backup_${timestamp}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showFeedback('Todos os dados foram salvos com sucesso!', 'success');
+                } catch (error) {
+                    console.error("Erro ao salvar dados:", error);
+                    showFeedback('Erro ao salvar os dados. Verifique o console.', 'error');
+                }
+            });
+        }
+        
+        // --- Event Listener para Importação de Arquivo (Geral) ---
+        if (importFileBtn) {
+            importFileBtn.addEventListener('click', async () => {
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    showFeedback('Nenhum arquivo selecionado.', 'error'); return;
+                }
+                const file = fileInput.files[0];
+                const fileName = file.name.toLowerCase();
+                importFileBtn.disabled = true; 
+
+                // Não processa PDF aqui, pois tem sua própria seção
+                if (fileName.endsWith('.ofx')) {
+                    await parseOFX(file);
+                } else if (fileName.endsWith('.csv')) {
+                    await parseExcelCsv(file, '.csv');
+                } else if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+                    await parseExcelCsv(file, fileName.endsWith('.xls') ? '.xls' : '.xlsx');
+                } else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+                    await parseWord(file);
+                } else if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.gif') || fileName.endsWith('.bmp') || fileName.endsWith('.tiff') || fileName.endsWith('.webp')) {
+                    await parseImage(file);
+                } else {
+                    showFeedback('Formato de arquivo não suportado nesta seção. Para PDF, use a seção específica.', 'error');
+                    importFileBtn.disabled = false; 
+                    fileInput.value = ''; 
+                }
+            });
+        }
+        
+        // --- Event Listener para Importação de Arquivo PDF ---
+        if (importPdfFileBtn) {
+            importPdfFileBtn.addEventListener('click', async () => {
+                if (!fileInputPdf.files || fileInputPdf.files.length === 0) {
+                    showFeedback('Nenhum arquivo PDF selecionado.', 'error'); return;
+                }
+                const file = fileInputPdf.files[0];
+                importPdfFileBtn.disabled = true;
+                await parsePDF(file);
+            });
+        }
+
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -2118,7 +2515,7 @@
                 creditCardSection.classList.remove('hidden');
                 if (linkedCardsContainer.children.length === 0) addCardInputFields(linkedCardsContainer);
             }
-            loadData(); // This now calls renderAll, which populates filters
+            loadData(); 
         });
 
     </script>
