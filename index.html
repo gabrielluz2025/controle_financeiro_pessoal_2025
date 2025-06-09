@@ -7,20 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js' defer></script>
-    <!-- PDF.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-    <script>
-        // Define o caminho do worker para PDF.js
-        if (typeof pdfjsLib !== 'undefined') {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
-        }
-    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8;
+            background-color: #f0f4f8; /* Azul acinzentado claro */
         }
         #feedback-message {
             display: none; padding: 12px; margin-top: 16px; border-radius: 8px; font-weight: 500;
@@ -34,60 +24,92 @@
         .collapsible-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 1rem; }
         .collapsible-header:hover { background-color: #f8fafc; }
         .collapsible-header h2 { margin-bottom: 0; }
-        .collapsible-header-inner { cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; padding-bottom: 0.5rem; }
-        .collapsible-header-inner:hover { background-color: #f9fafb; }
         .arrow-icon { transition: transform 0.3s ease; }
         .arrow-icon.rotated { transform: rotate(90deg); }
         .paid-transaction td { text-decoration: line-through; color: #9ca3af; }
         .pending-previous-month td { font-style: italic; }
-        .pending-previous-month:not(.paid-transaction) td { font-weight: 600; }
+        .pending-previous-month:not(.paid-transaction) td { font-weight: 600; color: #b91c1c; /* Vermelho mais escuro para pendentes antigos */ }
         .modal { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; overflow-y: auto; }
-        .modal-content { background-color: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); width: 90%; max-width: 700px; margin-top: 2rem; margin-bottom: 2rem; max-height: 90vh; overflow-y: auto;}
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .modal-header h3 { font-size: 1.5rem; font-weight: 600; color: #333; }
-        .modal-close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666; }
-        .modal-body label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #4a5568; }
-        .modal-body p { margin-bottom: 0.75rem; line-height: 1.6; }
-        .modal-body strong { font-weight: 600; color: #1e40af; }
-        .modal-body ul { list-style-position: inside; padding-left: 0.5rem; }
-        .modal-body ul li { margin-bottom: 0.5rem; }
-        .modal-body input[type="text"], .modal-body input[type="number"], .modal-body input[type="date"], .modal-body select { width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; margin-bottom: 1rem; background-color: #fff; }
-        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
-        #imported-transactions-table-body input, #imported-transactions-table-body select, #imported-transactions-table-body textarea { font-size: 0.875rem; padding: 0.25rem 0.5rem; }
-        #imported-transactions-table-body textarea { min-height: 40px; }
+        .modal-content { background-color: #fff; padding: 2rem; border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); width: 90%; max-width: 700px; margin-top: 2rem; margin-bottom: 2rem; max-height: 90vh; overflow-y: auto;}
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb; }
+        .modal-header h3 { font-size: 1.5rem; font-weight: 600; color: #1f2937; }
+        .modal-close-btn { background: none; border: none; font-size: 1.75rem; cursor: pointer; color: #6b7280; transition: color 0.2s; }
+        .modal-close-btn:hover { color: #1f2937; }
+        .modal-body label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #4b5563; }
+        .modal-body input[type="text"], .modal-body input[type="number"], .modal-body input[type="date"], .modal-body select, .modal-body textarea { 
+            width: 100%; padding: 0.625rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; margin-bottom: 1rem; background-color: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .modal-body input:focus, .modal-body select:focus, .modal-body textarea:focus {
+            border-color: #4f46e5; /* Indigo-500 */
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3);
+            outline: none;
+        }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;}
+        
+        .transaction-type-tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid #e5e7eb; }
+        .transaction-type-tab {
+            padding: 0.75rem 1.25rem; cursor: pointer; font-weight: 500; color: #6b7280;
+            border-bottom: 2px solid transparent; margin-bottom: -2px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .transaction-type-tab:hover { color: #374151; }
+        .transaction-type-tab.active { color: #4f46e5; border-color: #4f46e5; }
+
         #reports-section-content .report-table th, #reports-section-content .report-table td { padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; text-align: left; }
         #reports-section-content .report-table th { background-color: #f8fafc; font-weight: 600; }
         #reports-section-content .report-table td:nth-child(n+2) { text-align: right; }
-        .account-item-header, .card-item-header { cursor: pointer; display: flex; align-items: center; }
-        .account-item-header .arrow-icon, .card-item-header .arrow-icon { margin-left: 0.5rem; }
-        .account-details-content, .card-details-content-unified { padding-left: 1.5rem; margin-top: 0.5rem; }
-        .bill-details-content ul { padding-left: 1rem; margin-top: 0.5rem; }
-        .bill-details-content li { margin-bottom: 0.25rem; }
+        .account-item-header { cursor: pointer; display: flex; align-items: center; }
+        .account-item-header .arrow-icon { margin-left: 0.5rem; }
+        .account-details-content { padding-left: 1.5rem; margin-top: 0.5rem; }
         #detailed-statement-modal .modal-content, #edit-account-modal .modal-content { max-height: 80vh; }
         #confirmation-modal .modal-content { max-width: 400px; }
-        #suggested-goals-list li { background-color: #eef2ff; padding: 0.75rem 1rem; border-radius: 0.375rem; margin-bottom: 0.5rem; font-size: 0.9rem; color: #3730a3; }
-        #suggested-goals-list li strong { color: #312e81; }
-        #clear-all-data-link, #save-all-data-link { font-size: 0.8rem; color: #6b7280; text-decoration: underline; cursor: pointer; }
-        #clear-all-data-link:hover, #save-all-data-link:hover { color: #ef4444; }
-        #save-all-data-link:hover { color: #16a34a; } /* Cor verde para o link de salvar */
-        .add-transaction-type-btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.2s ease-in-out; }
+        
+        #suggested-goals-list .goal-card { 
+            background-color: #eef2ff;
+            padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem; 
+            border: 1px solid #c7d2fe;
+        }
+        #suggested-goals-list .goal-card strong { color: #4338ca; }
+        #suggested-goals-list .goal-card p { font-size: 0.9rem; color: #374151; }
+
+        #clear-all-data-link, #save-all-data-link, #load-saved-data-btn { font-size: 0.8rem; color: #6b7280; text-decoration: underline; cursor: pointer; }
+        #clear-all-data-link:hover, #save-all-data-link:hover, #load-saved-data-btn:hover { color: #ef4444; }
+        #save-all-data-link:hover { color: #16a34a; } 
+        #load-saved-data-btn:hover { color: #4f46e5; }
+
+
+        .add-transaction-main-btn {
+            padding: 0.625rem 1.25rem; border-radius: 0.375rem; font-weight: 500;
+            background-color: #4f46e5; color: white;
+            transition: background-color 0.2s;
+        }
+        .add-transaction-main-btn:hover { background-color: #4338ca; }
+
         .sub-section-form { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem; background-color: #f9fafb;}
         .sub-section-form h4 { font-size: 1rem; font-weight: 600; color: #4b5563; margin-bottom: 0.75rem; }
-        .input-xs { font-size: 0.875rem; padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; } /* Tailwind-like small input */
-        .btn-xs { padding: 0.25rem 0.75rem; font-size: 0.875rem; border-radius: 0.375rem; font-weight: 500; color: white; } /* Tailwind-like small button */
-        .th-xs { padding: 0.5rem 0.75rem; text-align: left; font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: #4b5563;} /* Tailwind-like small table header */
+        .input-xs { font-size: 0.875rem; padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; } 
+        .btn-xs { padding: 0.25rem 0.75rem; font-size: 0.875rem; border-radius: 0.375rem; font-weight: 500; color: white; } 
+        .th-xs { padding: 0.5rem 0.75rem; text-align: left; font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: #4b5563;} 
+        .table-action-btn { padding: 0.25rem; border-radius: 0.25rem; transition: background-color 0.2s; }
+        .table-action-btn:hover { background-color: #e5e7eb; }
+        .filters-collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; }
+        .filters-collapsible-content.expanded { max-height: 500px; }
+
 
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8 lg:p-10">
-    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8">
-        <div class="flex justify-between items-start mb-6">
-            <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 flex-grow">Controle Financeiro Pessoal Unificado</h1>
-            <button id="clear-all-data-link" class="ml-4 whitespace-nowrap">Limpar Dados</button>
+    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-xl p-6 sm:p-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 flex-grow text-center">Controle Financeiro Pessoal Unificado</h1>
+            <div class="flex items-center space-x-3 ml-4 whitespace-nowrap">
+                <button id="clear-all-data-link">Limpar Dados</button>
+            </div>
         </div>
 
         <!-- Painel de Resumo -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
             <div class="bg-blue-100 p-4 rounded-lg shadow-md">
                 <h2 class="text-lg font-semibold text-blue-800">Poder de Compra Total</h2>
                 <p id="total-poder-compra" class="text-2xl font-bold text-blue-700">R$ 0,00</p>
@@ -106,11 +128,11 @@
             </div>
         </div>
 
-        <!-- Gerenciar Contas (Unificado) -->
-        <div class="mb-8 border-b pb-6 border-gray-200">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Gerenciar Contas</h2>
-            <div class="p-4 bg-gray-50 rounded-lg shadow-sm mb-6">
-                <h3 class="text-xl font-semibold text-gray-700 mb-3">Adicionar Nova Conta</h3>
+        <!-- Gerenciar Contas -->
+        <div class="mb-10 border-b pb-8 border-gray-200">
+             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Gerenciar Contas</h2>
+            <div class="p-6 bg-gray-50 rounded-lg shadow-sm mb-6">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Adicionar Nova Conta</h3>
                 <form id="add-account-form" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
@@ -133,7 +155,6 @@
                         </div>
                     </div>
 
-                    <!-- Seção Cheque Especial (para Conta Corrente) -->
                     <div id="overdraft-section" class="hidden sub-section-form">
                         <h4>Cheque Especial</h4>
                         <div>
@@ -142,219 +163,182 @@
                         </div>
                     </div>
 
-                    <!-- Seção Cartões de Crédito (para Conta Corrente) -->
                     <div id="credit-card-section" class="hidden sub-section-form">
                         <h4>Cartões de Crédito Vinculados a esta Conta</h4>
-                        <div id="linked-cards-container" class="space-y-3">
-                            <!-- Campos para cartões serão adicionados aqui por JS -->
-                        </div>
+                        <div id="linked-cards-container" class="space-y-3"></div>
                         <button type="button" id="add-another-card-btn" class="mt-3 px-4 py-1.5 bg-purple-500 text-white text-xs font-semibold rounded-md hover:bg-purple-600">Adicionar Cartão a esta Conta</button>
                     </div>
                      <div class="flex justify-end pt-3">
-                        <button type="submit" class="px-5 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600">Adicionar Conta</button>
+                        <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition duration-150">Adicionar Conta</button>
                     </div>
                 </form>
             </div>
             <div>
-                <h3 class="text-lg font-semibold text-gray-700 mb-2">Minhas Contas</h3>
-                <ul id="accounts-list" class="bg-white rounded-md shadow-sm divide-y divide-gray-200">
-                    <!-- Lista de contas unificadas será preenchida aqui -->
-                </ul>
+                <h3 class="text-xl font-semibold text-gray-700 mb-3">Minhas Contas</h3>
+                <ul id="accounts-list" class="bg-white rounded-lg shadow divide-y divide-gray-200"></ul>
             </div>
         </div>
-
-        <!-- Seções de Metas, Adicionar Transação, Importar, Relatórios, Opções de Dados (mantidas como antes, mas a lógica interna pode mudar) -->
-        <div class="mb-8 border-b pb-6 border-gray-200">
+        
+        <div class="mb-10 border-b pb-8 border-gray-200">
             <div id="suggested-goals-header" class="collapsible-header">
                 <h2 class="text-2xl font-semibold text-gray-700">Sugestões de Metas Financeiras</h2>
                 <svg id="suggested-goals-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
             </div>
-            <div id="suggested-goals-content" class="hidden p-4 bg-gray-50 rounded-lg shadow-sm">
-                <ul id="suggested-goals-list" class="space-y-2"></ul>
+            <div id="suggested-goals-content" class="hidden p-4 bg-gray-50 rounded-lg shadow-sm mt-4">
+                <ul id="suggested-goals-list" class="space-y-3"></ul>
                 <p id="no-suggested-goals-message" class="text-center text-gray-500 mt-2 hidden">Nenhuma sugestão de meta no momento.</p>
             </div>
         </div>
 
-        <div class="mb-8 border-b pb-6 border-gray-200">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Adicionar Nova Transação</h2>
-            <div class="flex flex-wrap gap-3">
-                <button id="open-add-receita-modal-btn" data-type="receita" class="add-transaction-type-btn bg-green-500 hover:bg-green-600 text-white">Nova Receita</button>
-                <button id="open-add-despesa-modal-btn" data-type="despesa" class="add-transaction-type-btn bg-red-500 hover:bg-red-600 text-white">Nova Despesa</button>
-                <button id="open-add-transferencia-modal-btn" data-type="transferencia" class="add-transaction-type-btn bg-sky-500 hover:bg-sky-600 text-white">Nova Transferência</button>
+        <div class="mb-10 border-b pb-8 border-gray-200">
+            <div class="flex justify-between items-center mb-4">
+                 <h2 class="text-2xl font-semibold text-gray-700">Transações</h2>
+                 <button id="open-add-transaction-modal-main-btn" class="add-transaction-main-btn flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Adicionar Transação
+                </button>
             </div>
         </div>
 
-        <!-- Importar Extratos (Outros Formatos) -->
-        <div class="mb-8 border-b pb-6 border-gray-200">
-            <div id="import-header" class="collapsible-header">
-                <h2 class="text-2xl font-semibold text-gray-700">Importar Extratos (OFX, CSV, Excel, Word, Imagem)</h2>
-                <svg id="import-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-            </div>
-            <div id="import-section-content" class="hidden">
-                <p class="text-sm text-gray-600 mb-4">Seu arquivo deve ser OFX, CSV, Excel, Word (.docx) ou Imagem (.png, .jpg). Para extratos em PDF, utilize a secção "Importar Extrato PDF" abaixo. <span class="font-bold text-red-600">Atenção: Integração direta com bancos (Open Finance) não é possível.</span> <span class="font-bold text-orange-600">Importação de Word e Imagem: revise dados cuidadosamente.</span></p>
-                <div class="p-4 bg-gray-50 rounded-lg shadow-sm">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-3">Carregar Arquivo de Extrato</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-                        <div><label for="file-input" class="block text-sm font-medium text-gray-700 mb-1">Selecione o Arquivo</label><input type="file" id="file-input" accept=".ofx,.csv,.xls,.xlsx,.doc,.docx,.png,.jpg,.jpeg,.gif,.bmp,.tiff,.webp" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"></div>
-                        <div class="flex justify-end col-span-full sm:col-span-1"><button id="import-file-btn" class="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-md hover:bg-indigo-700">Carregar para Revisão</button></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Importar Extrato PDF -->
-        <div class="mb-8 border-b pb-6 border-gray-200">
-            <div id="import-pdf-header" class="collapsible-header">
-                <h2 class="text-2xl font-semibold text-gray-700">Importar Extrato PDF</h2>
-                <svg id="import-pdf-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-            </div>
-            <div id="import-pdf-section-content" class="hidden">
-                <p class="text-sm text-gray-600 mb-4">Selecione um arquivo de extrato no formato PDF. <span class="font-bold text-orange-600">A qualidade da extração pode variar. Revise os dados cuidadosamente.</span></p>
-                <div class="p-4 bg-gray-50 rounded-lg shadow-sm">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-3">Carregar Arquivo PDF</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-                        <div><label for="file-input-pdf" class="block text-sm font-medium text-gray-700 mb-1">Selecione o Arquivo PDF</label><input type="file" id="file-input-pdf" accept=".pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"></div>
-                        <div class="flex justify-end col-span-full sm:col-span-1"><button id="import-pdf-file-btn" class="w-full sm:w-auto px-6 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-md hover:bg-purple-700">Carregar PDF para Revisão</button></div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div id="feedback-message"></div>
-        <div id="import-review-section" class="mb-8 border-b pb-6 border-gray-200 hidden">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Revisar Transações Importadas</h2>
-            <p class="text-sm text-gray-600 mb-4">Selecione as transações. Vincule-as a uma conta e ajuste os dados. <span class="font-bold text-orange-600">Para Word/Imagem, revise tudo.</span></p>
-            
-            <!-- Filtros para Revisão de Importação -->
-            <div id="import-filters-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4 p-3 bg-gray-50 rounded-md">
-                <div>
-                    <label for="filter-import-type" class="text-xs font-medium text-gray-700">Tipo:</label>
-                    <select id="filter-import-type" class="filter-import-select mt-1 block w-full input-xs">
-                        <option value="all">Todos os Tipos</option>
-                        <option value="receita">Receita</option>
-                        <option value="despesa">Despesa</option>
-                        <option value="transferencia_entrada">Transferência (Entrada)</option>
-                        <option value="transferencia_saida">Transferência (Saída)</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="filter-import-category" class="text-xs font-medium text-gray-700">Categoria:</label>
-                    <select id="filter-import-category" class="filter-import-select mt-1 block w-full input-xs">
-                        <!-- Options populated by JS -->
-                    </select>
-                </div>
-                <div>
-                    <label for="filter-import-account" class="text-xs font-medium text-gray-700">Conta Vinculada:</label>
-                    <select id="filter-import-account" class="filter-import-select mt-1 block w-full input-xs">
-                        <!-- Options populated by JS -->
-                    </select>
-                </div>
-                <div>
-                    <label for="filter-import-status" class="text-xs font-medium text-gray-700">Status Pagamento:</label>
-                    <select id="filter-import-status" class="filter-import-select mt-1 block w-full input-xs">
-                        <option value="all">Todos os Status</option>
-                        <option value="true">Pago</option>
-                        <option value="false">Não Pago</option>
-                    </select>
-                </div>
-            </div>
 
-            <div id="bulk-edit-imported-controls" class="hidden mt-4 mb-4 p-4 bg-gray-100 rounded-md shadow">
-                <h4 class="text-md font-semibold text-gray-700 mb-3">Editar Selecionadas:</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                    <div><label for="bulk-edit-type" class="block text-xs font-medium text-gray-700">Tipo:</label><select id="bulk-edit-type" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2"><option value="">Manter original</option><option value="receita">Receita</option><option value="despesa">Despesa</option><option value="transferencia_entrada">Transferência (Entrada)</option><option value="transferencia_saida">Transferência (Saída)</option></select></div>
-                    <div><label for="bulk-edit-category" class="block text-xs font-medium text-gray-700">Categoria:</label><select id="bulk-edit-category" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2"></select></div>
-                    <div><label for="bulk-edit-account" class="block text-xs font-medium text-gray-700">Vincular a Conta:</label><select id="bulk-edit-account" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2"></select></div>
-                    <div><label for="bulk-edit-status" class="block text-xs font-medium text-gray-700">Status Pagamento:</label><select id="bulk-edit-status" class="mt-1 block w-full text-xs border-gray-300 rounded-md shadow-sm py-1.5 px-2"><option value="">Manter original</option><option value="true">Pago</option><option value="false">Não Pago</option></select></div>
-                    <div class="lg:col-span-4 flex justify-end mt-2"><button id="apply-bulk-edit-imported-btn" class="px-4 py-2 bg-orange-500 text-white font-semibold rounded-md shadow-md hover:bg-orange-600 text-xs">Aplicar</button></div>
-                </div>
-            </div>
-            <div class="overflow-x-auto rounded-lg shadow-md mb-4"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-yellow-50"><tr><th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"><input type="checkbox" id="select-all-imported-transactions"></th><th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Data</th><th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Descrição</th><th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Valor</th><th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Tipo</th><th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Categoria</th><th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Parcelas</th><th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Vincular a Conta</th><th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Fonte Pagamento (se despesa)</th><th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th></tr></thead><tbody id="imported-transactions-table-body" class="bg-white divide-y divide-gray-200"></tbody></table></div>
-            <div class="flex justify-end gap-4"><button id="cancel-review-btn" class="px-6 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500">Cancelar</button><button id="confirm-import-btn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700">Confirmar Selecionadas</button></div>
-        </div>
-
-        <div class="mb-8 border-b pb-6 border-gray-200">
+        <div class="mb-10 border-b pb-8 border-gray-200">
             <div id="reports-header" class="collapsible-header"><h2 class="text-2xl font-semibold text-gray-700">Relatórios de Gastos</h2><svg id="reports-arrow" class="arrow-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div>
-            <div id="reports-section-content" class="hidden"><div class="p-4 bg-gray-50 rounded-lg shadow-sm mb-6"><h3 class="text-xl font-semibold text-gray-700 mb-3">Gerar Relatório</h3><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-2 items-end mb-4"><div><label for="report-type" class="block text-sm font-medium text-gray-700 mb-1">Tipo</label><select id="report-type" class="mt-1 block w-full input-sm"><option value="monthly">Mensal</option><option value="annual">Anual</option><option value="comparison_monthly">Comparativo Mensal</option><option value="comparison_annual">Comparativo Anual</option></select></div><div id="report-period1-month-div"><label for="report-month" class="block text-sm font-medium text-gray-700 mb-1">Mês (Período 1)</label><select id="report-month" class="mt-1 block w-full input-sm"></select></div><div id="report-period1-year-div"><label for="report-year" class="block text-sm font-medium text-gray-700 mb-1">Ano (Período 1)</label><select id="report-year" class="mt-1 block w-full input-sm"></select></div><div id="report-period2-month-div" class="hidden"><label for="report-month-comp" class="block text-sm font-medium text-gray-700 mb-1">Mês (Período 2)</label><select id="report-month-comp" class="mt-1 block w-full input-sm"></select></div><div id="report-period2-year-div" class="hidden"><label for="report-year-comp" class="block text-sm font-medium text-gray-700 mb-1">Ano (Período 2)</label><select id="report-year-comp" class="mt-1 block w-full input-sm"></select></div><div class="lg:col-span-1 flex justify-end self-end"><button id="generate-report-btn" class="w-full sm:w-auto px-6 py-2 bg-teal-500 text-white font-semibold rounded-md shadow-md hover:bg-teal-600">Gerar</button></div></div></div><div id="report-output-area" class="mt-6 overflow-x-auto"></div></div>
+            <div id="reports-section-content" class="hidden mt-4">
+                <div class="p-6 bg-gray-50 rounded-lg shadow-sm mb-6">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Configurar Relatório</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 items-end mb-6">
+                        <div>
+                            <label for="report-type" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Relatório</label>
+                            <select id="report-type" class="mt-1 block w-full input-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="monthly">Gastos Mensais por Categoria</option>
+                                <option value="annual">Gastos Anuais por Categoria</option>
+                                <option value="comparison_monthly">Comparativo Mensal (Categorias)</option>
+                                <option value="comparison_annual">Comparativo Anual (Categorias)</option>
+                            </select>
+                        </div>
+                        <div id="report-period1-month-div">
+                            <label for="report-month" class="block text-sm font-medium text-gray-700 mb-1">Mês (Período 1)</label>
+                            <select id="report-month" class="mt-1 block w-full input-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></select>
+                        </div>
+                        <div id="report-period1-year-div">
+                            <label for="report-year" class="block text-sm font-medium text-gray-700 mb-1">Ano (Período 1)</label>
+                            <select id="report-year" class="mt-1 block w-full input-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></select>
+                        </div>
+                        <div id="report-period2-month-div" class="hidden">
+                            <label for="report-month-comp" class="block text-sm font-medium text-gray-700 mb-1">Mês (Período 2)</label>
+                            <select id="report-month-comp" class="mt-1 block w-full input-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></select>
+                        </div>
+                        <div id="report-period2-year-div" class="hidden">
+                            <label for="report-year-comp" class="block text-sm font-medium text-gray-700 mb-1">Ano (Período 2)</label>
+                            <select id="report-year-comp" class="mt-1 block w-full input-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></select>
+                        </div>
+                        <div class="md:col-span-3 flex justify-end mt-2">
+                             <button id="generate-report-btn" class="px-6 py-2.5 bg-teal-600 text-white font-semibold rounded-md shadow-md hover:bg-teal-700 transition duration-150">Gerar Relatório</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="report-output-area" class="mt-6 p-4 bg-white rounded-lg shadow">
+                     <p class="text-center text-gray-500 italic">Selecione os filtros e clique em "Gerar Relatório" para visualizar os dados.</p>
+                </div>
+            </div>
         </div>
 
-        <div class="mb-8 border-b pb-6 border-gray-200">
+        <div class="mb-10 border-b pb-8 border-gray-200">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Opções de Dados</h2>
             <div class="flex flex-col sm:flex-row gap-4 items-center">
-                <button id="download-xlsx-btn" class="w-full sm:w-auto px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md hover:bg-gray-700">Baixar Transações (Excel)</button>
+                <button id="download-xlsx-btn" class="w-full sm:w-auto px-6 py-2.5 bg-gray-600 text-white font-semibold rounded-md shadow-md hover:bg-gray-700 transition duration-150">Baixar Transações (Excel)</button>
                 <a href="#" id="save-all-data-link" class="text-sm text-green-600 hover:text-green-800 underline">Salvar Todos os Dados (JSON)</a>
+                <button id="load-saved-data-btn" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition duration-150">Carregar Dados Salvos (JSON)</button>
+                <input type="file" id="load-json-input" class="hidden" accept=".json">
             </div>
         </div>
 
-        <!-- Minhas Transações -->
+        <!-- Minhas Transações (Reformulado) -->
         <div>
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <h2 class="text-2xl font-semibold text-gray-700">Minhas Transações</h2>
-                <div class="flex flex-wrap items-center gap-2">
-                    <input type="text" id="search-transactions-input" placeholder="Buscar transações..." class="input-sm w-full sm:w-auto">
-                    <button id="pay-selected-transactions-btn" class="hidden btn-xs bg-green-500">Pagar Selecionadas</button>
-                    <button id="unpay-selected-transactions-btn" class="hidden btn-xs bg-yellow-500">Desmarcar Pagamento</button>
-                    <select id="link-selected-account-select" class="hidden input-xs"></select>
-                    <button id="link-selected-transactions-btn" class="hidden btn-xs bg-blue-500">Vincular Conta</button>
-                    <select id="link-selected-category-select" class="hidden input-xs"></select>
-                    <button id="link-selected-category-btn" class="hidden btn-xs bg-indigo-500">Vincular Categoria</button>
-                    <button id="delete-selected-transactions-btn" class="hidden btn-xs bg-red-500">Excluir Selecionadas</button>
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <h2 class="text-2xl font-semibold text-gray-700">Histórico de Transações</h2>
+                <div class="flex items-center w-full md:w-auto">
+                     <input type="text" id="search-transactions-input" placeholder="Buscar por descrição, categoria..." class="input-sm w-full md:w-64 px-4 py-2 border border-gray-300 rounded-l-md focus:ring-indigo-500 focus:border-indigo-500">
+                    <button id="toggle-filters-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-r-md hover:bg-gray-300 transition ml-[-1px]">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 12h9.75m-9.75 6h9.75M3.75 6H7.5m3 12V6.75M3.75 12h3.75m-3.75 6h3.75M3.75 6.75A.75.75 0 013 6V4.5a.75.75 0 01.75-.75H7.5a.75.75 0 01.75.75V6a.75.75 0 01-.75.75H3.75z" />
+                        </svg>
+                    </button>
                 </div>
             </div>
 
-            <!-- Filtros para Minhas Transações -->
-            <div id="main-filters-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-4 p-3 bg-gray-100 rounded-md">
-                <div>
-                    <label for="filter-main-type" class="text-xs font-medium text-gray-700">Tipo:</label>
-                    <select id="filter-main-type" class="filter-main-select mt-1 block w-full input-xs">
-                        <option value="all">Todos os Tipos</option>
-                        <option value="receita">Receita</option>
-                        <option value="despesa">Despesa</option>
-                        <option value="transferencia_entrada">Transferência (Entrada)</option>
-                        <option value="transferencia_saida">Transferência (Saída)</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="filter-main-category" class="text-xs font-medium text-gray-700">Categoria:</label>
-                    <select id="filter-main-category" class="filter-main-select mt-1 block w-full input-xs">
-                        <!-- Options populated by JS -->
-                    </select>
-                </div>
-                <div>
-                    <label for="filter-main-account" class="text-xs font-medium text-gray-700">Conta Principal:</label>
-                    <select id="filter-main-account" class="filter-main-select mt-1 block w-full input-xs">
-                        <!-- Options populated by JS -->
-                    </select>
-                </div>
-                <div>
-                    <label for="filter-main-fund-source" class="text-xs font-medium text-gray-700">Fonte Pagamento:</label>
-                    <select id="filter-main-fund-source" class="filter-main-select mt-1 block w-full input-xs">
-                        <option value="all">Todas as Fontes</option>
-                        <option value="account_balance">Saldo da Conta</option>
-                        <option value="overdraft">Cheque Especial</option>
-                        <option value="credit_card_any">Cartão de Crédito (Qualquer)</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="filter-main-status" class="text-xs font-medium text-gray-700">Status:</label>
-                    <select id="filter-main-status" class="filter-main-select mt-1 block w-full input-xs">
-                        <option value="all">Todos os Status</option>
-                        <option value="paid">Realizado</option>
-                        <option value="pending">Pendente</option>
-                    </select>
+            <!-- Filtros Avançados (Colapsáveis) -->
+            <div id="main-filters-collapsible-content" class="filters-collapsible-content mb-6">
+                 <div class="p-4 bg-gray-100 rounded-lg">
+                    <div id="main-filters-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                        <div>
+                            <label for="filter-main-type" class="text-xs font-medium text-gray-700">Tipo:</label>
+                            <select id="filter-main-type" class="filter-main-select mt-1 block w-full input-xs">
+                                <option value="all">Todos os Tipos</option>
+                                <option value="receita">Receita</option>
+                                <option value="despesa">Despesa</option>
+                                <option value="transferencia_entrada">Transferência (Entrada)</option>
+                                <option value="transferencia_saida">Transferência (Saída)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="filter-main-category" class="text-xs font-medium text-gray-700">Categoria:</label>
+                            <select id="filter-main-category" class="filter-main-select mt-1 block w-full input-xs"> </select>
+                        </div>
+                        <div>
+                            <label for="filter-main-account" class="text-xs font-medium text-gray-700">Conta:</label>
+                            <select id="filter-main-account" class="filter-main-select mt-1 block w-full input-xs"> </select>
+                        </div>
+                        <div>
+                            <label for="filter-main-fund-source" class="text-xs font-medium text-gray-700">Fonte Pag.:</label>
+                            <select id="filter-main-fund-source" class="filter-main-select mt-1 block w-full input-xs">
+                                <option value="all">Todas as Fontes</option>
+                                <option value="account_balance">Saldo da Conta</option>
+                                <option value="overdraft">Cheque Especial</option>
+                                <option value="credit_card_any">Cartão de Crédito (Qualquer)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="filter-main-status" class="text-xs font-medium text-gray-700">Status:</label>
+                            <select id="filter-main-status" class="filter-main-select mt-1 block w-full input-xs">
+                                <option value="all">Todos os Status</option>
+                                <option value="paid">Realizado</option>
+                                <option value="pending">Pendente</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Ações em Lote (aparecem quando transações são selecionadas) -->
+            <div id="bulk-actions-container" class="mb-4 hidden">
+                <span class="text-sm font-medium text-gray-700 mr-3"><span id="selected-transactions-count">0</span> transações selecionadas:</span>
+                <div class="inline-flex rounded-md shadow-sm" role="group">
+                    <button id="pay-selected-transactions-btn" type="button" class="btn-xs bg-green-500 hover:bg-green-600 rounded-l-md">Pagar</button>
+                    <button id="unpay-selected-transactions-btn" type="button" class="btn-xs bg-yellow-500 hover:bg-yellow-600">Desm. Pagar</button>
+                    <select id="link-selected-account-select" class="input-xs border-l-0 border-r-0"></select>
+                    <button id="link-selected-transactions-btn" type="button" class="btn-xs bg-blue-500 hover:bg-blue-600">Vinc. Conta</button>
+                    <select id="link-selected-category-select" class="input-xs border-l-0 border-r-0"></select>
+                    <button id="link-selected-category-btn" type="button" class="btn-xs bg-indigo-500 hover:bg-indigo-600">Vinc. Cat.</button>
+                    <button id="delete-selected-transactions-btn" type="button" class="btn-xs bg-red-500 hover:bg-red-600 rounded-r-md">Excluir</button>
+                </div>
+            </div>
+
 
             <div class="flex items-center space-x-4 mb-4">
-                <button id="prev-month-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Anterior</button>
+                <button id="prev-month-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 text-sm">Mês Anterior</button>
                 <span id="current-month-display" class="text-lg font-semibold text-gray-800"></span>
-                <button id="next-month-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Próximo</button>
+                <button id="next-month-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 text-sm">Próximo Mês</button>
             </div>
             <div class="overflow-x-auto rounded-lg shadow-md">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                    <thead class="bg-gray-100">
                         <tr>
-                            <th class="px-2 py-3 text-center th-xs"><input type="checkbox" id="select-all-transactions"></th>
+                            <th class="px-2 py-3 text-center th-xs"><input type="checkbox" id="select-all-transactions" class="form-checkbox h-4 w-4 text-indigo-600"></th>
                             <th class="px-6 py-3 text-left th-xs">Data</th>
                             <th class="px-6 py-3 text-left th-xs">Status</th>
                             <th class="px-6 py-3 text-left th-xs">Descrição</th>
@@ -370,11 +354,14 @@
                     <tbody id="transaction-list" class="bg-white divide-y divide-gray-200"></tbody>
                 </table>
             </div>
-            <p id="no-transactions-message" class="text-center text-gray-500 mt-4 hidden">Nenhuma transação registrada ainda.</p>
+            <p id="no-transactions-message" class="text-center text-gray-500 mt-6 hidden">Nenhuma transação registrada para este período ou filtro.</p>
         </div>
     </div>
 
-    <!-- Modal para Adicionar/Editar Transação -->
+    <!-- Modais -->
+    <!-- ... (Todo o código HTML dos modais é mantido igual) ... -->
+    
+    <!-- Modal: Adicionar/Editar Transação -->
     <div id="add-transaction-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -382,74 +369,75 @@
                 <button class="modal-close-btn" id="close-add-transaction-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="transaction-form-modal" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input type="hidden" id="modal-transaction-id"> <!-- Para edição -->
+                 <!-- Abas para tipo de transação -->
+                <div class="transaction-type-tabs mb-6">
+                    <button data-type="receita" class="transaction-type-tab active">Receita</button>
+                    <button data-type="despesa" class="transaction-type-tab">Despesa</button>
+                    <button data-type="transferencia" class="transaction-type-tab">Transferência</button>
+                </div>
+                <form id="transaction-form-modal" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    <input type="hidden" id="modal-transaction-id"> 
+                    <input type="hidden" id="modal-transaction-type-hidden" value="receita"> <!-- Valor inicial, atualizado pelas abas -->
                     <div>
                         <label for="modal-date">Data</label>
                         <input type="date" id="modal-date" required>
                     </div>
                     <div class="sm:col-span-2">
                         <label for="modal-description">Descrição</label>
-                        <input type="text" id="modal-description" placeholder="Ex: Salário, Aluguel" required>
+                        <input type="text" id="modal-description" placeholder="Ex: Salário, Aluguel da Casa" required>
                     </div>
                     <div>
                         <label for="modal-value">Valor da Parcela (R$)</label>
                         <input type="number" id="modal-value" step="0.01" placeholder="0.00" required>
                     </div>
-                    <div>
-                        <label for="modal-type">Tipo</label>
-                        <select id="modal-type" required>
-                            <option value="receita">Receita</option>
-                            <option value="despesa">Despesa</option>
-                            <option value="transferencia_saida">Transferência (Saída)</option>
-                            <option value="transferencia_entrada">Transferência (Entrada)</option>
-                        </select>
-                    </div>
-                    <div class="sm:col-span-2">
+                    
+                    <div id="modal-category-section" class="sm:col-span-2"> <!-- Visível para Receita/Despesa -->
                         <label for="modal-category-select">Categoria</label>
                         <div class="flex items-center space-x-2">
-                            <select id="modal-category-select" required></select>
+                            <select id="modal-category-select"></select> <!-- required será tratado por JS -->
                         </div>
-                        <input type="text" id="modal-new-category-input" placeholder="Nova Categoria" class="mt-2 hidden">
+                        <input type="text" id="modal-new-category-input" placeholder="Nome da Nova Categoria" class="mt-2 hidden">
                     </div>
-                    <div>
+
+                    <div id="modal-account-section"> <!-- Conta Principal -->
                         <label for="modal-account-select">Conta Principal</label>
-                        <select id="modal-account-select"></select> <!-- Será populado com contas principais -->
+                        <select id="modal-account-select"></select> 
                     </div>
-                    <!-- Novo campo para Fonte de Pagamento (para despesas) -->
-                    <div id="modal-fund-source-div" class="hidden">
-                        <label for="modal-fund-source-select">Fonte do Pagamento/Recebimento</label>
+                    
+                    <div id="modal-fund-source-div" class="hidden"> <!-- Fonte de Pagamento (para despesas de conta corrente) -->
+                        <label for="modal-fund-source-select">Fonte do Pagamento</label>
                         <select id="modal-fund-source-select"></select>
                     </div>
-                    <!-- Campo para conta de destino (para transferências) -->
-                    <div id="modal-destination-account-div" class="hidden">
-                        <label for="modal-destination-account-select">Conta de Destino</label>
+
+                    <div id="modal-destination-account-div" class="hidden"> <!-- Conta de Destino (para transferências) -->
+                        <label for="modal-destination-account-select">Conta de Destino/Origem</label>
                         <select id="modal-destination-account-select"></select>
                     </div>
+                    
                     <div>
-                        <label for="modal-installments">Parcelas (total)</label>
+                        <label for="modal-installments">Total de Parcelas</label>
                         <input type="number" id="modal-installments" min="1" value="1">
                     </div>
-                    <div class="sm:col-span-2">
-                        <label for="modal-installments-paid">Parcelas já pagas</label>
+                    <div id="modal-installments-paid-section">
+                        <label for="modal-installments-paid">Parcelas já pagas/recebidas</label>
                         <input type="number" id="modal-installments-paid" min="0" value="0">
                     </div>
                      <div class="sm:col-span-2">
-                        <label for="modal-paid-status" class="inline-flex items-center">
-                            <input type="checkbox" id="modal-paid-status" class="form-checkbox h-5 w-5 text-blue-600">
-                            <span class="ml-2 text-sm text-gray-700">Marcar como Paga/Recebida</span>
+                        <label for="modal-paid-status" class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="modal-paid-status" class="form-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700">Marcar como Realizada (Paga/Recebida)</span>
                         </label>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button id="save-add-transaction-modal-btn" type="submit" form="transaction-form-modal" class="btn bg-blue-600">Salvar Transação</button>
-                <button id="cancel-add-transaction-modal-btn" class="btn bg-gray-400">Cancelar</button>
+                <button id="cancel-add-transaction-modal-btn" class="px-5 py-2 bg-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-300 transition duration-150">Cancelar</button>
+                <button id="save-add-transaction-modal-btn" type="submit" form="transaction-form-modal" class="px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-md shadow-md hover:bg-indigo-700 transition duration-150">Salvar Transação</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal para Editar Conta (Unificado) -->
+    <!-- Modal: Editar Conta -->
     <div id="edit-account-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -472,7 +460,6 @@
                     <label for="edit-account-balance">Saldo Atual (R$)</label>
                     <input type="number" id="edit-account-balance" step="0.01" required>
                 </div>
-                <!-- Seção Cheque Especial para Edição -->
                 <div id="edit-overdraft-section" class="hidden sub-section-form mt-4">
                     <h4>Cheque Especial</h4>
                     <div>
@@ -480,23 +467,20 @@
                         <input type="number" id="edit-overdraft-limit" step="0.01" placeholder="0.00">
                     </div>
                 </div>
-                <!-- Seção Cartões de Crédito para Edição -->
                 <div id="edit-credit-card-section" class="hidden sub-section-form mt-4">
                     <h4>Cartões de Crédito Vinculados</h4>
-                    <div id="edit-linked-cards-container" class="space-y-3">
-                        <!-- Campos para cartões existentes e novos serão adicionados aqui -->
-                    </div>
+                    <div id="edit-linked-cards-container" class="space-y-3"></div>
                     <button type="button" id="edit-add-another-card-btn" class="mt-3 px-4 py-1.5 bg-purple-500 text-white text-xs font-semibold rounded-md hover:bg-purple-600">Adicionar Novo Cartão a esta Conta</button>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="save-edit-account-btn" class="btn bg-blue-500">Salvar Alterações</button>
-                <button id="cancel-edit-account-btn" class="btn bg-gray-400">Cancelar</button>
+                <button id="cancel-edit-account-btn" class="px-5 py-2 bg-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-400">Cancelar</button>
+                <button id="save-edit-account-btn" class="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700">Salvar Alterações</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal para Extrato Detalhado (Substitui Account Entries) -->
+    <!-- Modal: Extrato Detalhado -->
     <div id="detailed-statement-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -506,9 +490,7 @@
             <div class="modal-body overflow-y-auto">
                 <div class="mb-4">
                     <label for="statement-source-select" class="block text-sm font-medium text-gray-700 mb-1">Visualizar Extrato de:</label>
-                    <select id="statement-source-select" class="w-full input-sm">
-                        <!-- Opções serão populadas por JS: Saldo Conta, Cheque Especial, Cartão X -->
-                    </select>
+                    <select id="statement-source-select" class="w-full input-sm"></select>
                 </div>
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -525,28 +507,103 @@
                 <p id="no-detailed-statement-message" class="text-center text-gray-500 mt-4 hidden">Nenhuma transação para este extrato.</p>
             </div>
             <div class="modal-footer">
-                <button id="close-detailed-statement-modal-footer" class="btn bg-gray-400">Fechar</button>
+                <button id="close-detailed-statement-modal-footer" class="px-5 py-2 bg-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-400">Fechar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Confirmação (Mantido) -->
+    <!-- Modal: Confirmação -->
     <div id="confirmation-modal" class="modal hidden">
-        <div class="modal-content"><div class="modal-header"><h3 id="confirmation-modal-title">Confirmar</h3><button class="modal-close-btn" id="close-confirmation-modal">&times;</button></div><div class="modal-body"><p id="confirmation-modal-message">Tem certeza?</p></div><div class="modal-footer"><button id="confirm-delete-btn" class="btn bg-red-600">Confirmar</button><button id="cancel-delete-btn" class="btn bg-gray-400">Cancelar</button></div></div>
+        <div class="modal-content"><div class="modal-header"><h3 id="confirmation-modal-title">Confirmar</h3><button class="modal-close-btn" id="close-confirmation-modal">&times;</button></div><div class="modal-body"><p id="confirmation-modal-message">Tem certeza?</p></div><div class="modal-footer"><button id="confirm-delete-btn" class="px-5 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700">Confirmar</button><button id="cancel-delete-btn" class="px-5 py-2 bg-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-400">Cancelar</button></div></div>
     </div>
 
+    <!-- Modal 1: Seleção de Arquivo para Importação -->
+    <div id="file-import-selection-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Importar Extrato de Arquivo</h3>
+                <button class="modal-close-btn" id="close-file-import-selection-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-gray-600 mb-4">Selecione o arquivo de extrato (OFX, PDF, XLS, XLSX).</p>
+                <div>
+                    <label for="import-file-input-modal" class="block text-sm font-medium text-gray-700 mb-1">Selecione o Arquivo</label>
+                    <input type="file" id="import-file-input-modal" accept=".ofx,.pdf,.xls,.xlsx" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer mb-4">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-file-import-selection-btn" class="px-5 py-2 bg-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-400">Cancelar</button>
+                <button id="load-file-for-review-btn" class="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700">Carregar para Revisão</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Revisão de Transações Importadas -->
+    <div id="review-imported-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Revisar Transações Importadas</h3>
+                <button class="modal-close-btn" id="close-review-imported-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-gray-600 mb-2">Ajuste os dados abaixo. As transações selecionadas serão importadas.</p>
+                <div class="overflow-x-auto max-h-[60vh]">
+                    <table id="review-imported-table" class="min-w-full divide-y divide-gray-200">
+                        <thead class="sticky top-0 bg-gray-100 z-10">
+                            <tr>
+                                <th class="px-2 py-2 text-center"><input type="checkbox" id="select-all-review-checkbox" checked></th>
+                                <th class="text-left">Data</th>
+                                <th class="text-left">Descrição</th>
+                                <th class="text-left">Valor (R$)</th>
+                                <th class="text-left">Tipo</th>
+                                <th class="text-left">Categoria</th>
+                                <th class="text-left">Parcelas (Paga/Total)</th>
+                                <th class="text-left">Conta</th>
+                                <th class="text-left">Fonte Pag.</th>
+                                <th class="text-left">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="review-imported-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+                 <p id="no-transactions-to-review-message" class="text-center text-gray-500 mt-4 hidden">Nenhuma transação para revisar.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-review-import-btn" class="px-5 py-2 bg-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-400">Cancelar</button>
+                <button id="confirm-reviewed-import-btn" class="px-5 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700">Confirmar Importação</button>
+            </div>
+        </div>
+    </div>
+
+
     <script>
-        // --- Global Variables & Initial Setup ---
-        let accounts = []; // Unified accounts array
+        // --- Variáveis Globais & Configuração Inicial ---
+        let accounts = [];
         let transactions = [];
         let categories = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Transferências", "Outros", "Revisar Importação"];
-        let importedTransactionsToReview = [];
+        let importedTransactionsToReview = []; 
         let currentMonth = new Date().getMonth();
         let currentYear = new Date().getFullYear();
         let itemToDelete = { id: null, type: null, showFeedback: true, isBulk: false, ids: [], accountIdForReversal: null, fundSourceForReversal: null };
-        let cardFieldCounter = 0; // For dynamically adding card fields
+        let cardFieldCounter = 0;
 
-        // --- DOM Elements ---
+        // --- Elementos DOM ---
+        const openFileImportModalHeader = document.getElementById('open-file-import-modal-header');
+        const fileImportArrow = document.getElementById('file-import-arrow'); 
+        const fileImportSelectionModal = document.getElementById('file-import-selection-modal');
+        const closeFileImportSelectionModalBtn = document.getElementById('close-file-import-selection-modal');
+        const cancelFileImportSelectionBtn = document.getElementById('cancel-file-import-selection-btn');
+        const importFileInputModal = document.getElementById('import-file-input-modal');
+        const loadFileForReviewBtn = document.getElementById('load-file-for-review-btn');
+
+        const reviewImportedModal = document.getElementById('review-imported-modal');
+        const closeReviewImportedModalBtn = document.getElementById('close-review-imported-modal');
+        const reviewImportedTableBody = document.getElementById('review-imported-table-body');
+        const selectAllReviewCheckbox = document.getElementById('select-all-review-checkbox');
+        const cancelReviewImportBtn = document.getElementById('cancel-review-import-btn');
+        const confirmReviewedImportBtn = document.getElementById('confirm-reviewed-import-btn');
+        const noTransactionsToReviewMessage = document.getElementById('no-transactions-to-review-message');
+        
         const totalPoderCompraEl = document.getElementById('total-poder-compra');
         const totalDespesasEl = document.getElementById('total-despesas');
         const saldoLiquidoContasEl = document.getElementById('saldo-liquido-contas');
@@ -567,6 +624,7 @@
         const nextMonthBtn = document.getElementById('next-month-btn');
         const currentMonthDisplay = document.getElementById('current-month-display');
         const searchTransactionsInput = document.getElementById('search-transactions-input');
+        
         const addTransactionModal = document.getElementById('add-transaction-modal');
         const closeAddTransactionModalBtn = document.getElementById('close-add-transaction-modal');
         const cancelAddTransactionModalBtn = document.getElementById('cancel-add-transaction-modal-btn');
@@ -574,10 +632,10 @@
         const transactionFormModal = document.getElementById('transaction-form-modal');
         const addTransactionModalTitle = document.getElementById('add-transaction-modal-title');
         const modalTransactionIdInput = document.getElementById('modal-transaction-id');
+        const modalTransactionTypeHiddenInput = document.getElementById('modal-transaction-type-hidden'); 
         const modalDateInput = document.getElementById('modal-date');
         const modalDescriptionInput = document.getElementById('modal-description');
         const modalValueInput = document.getElementById('modal-value');
-        const modalTypeSelect = document.getElementById('modal-type');
         const modalCategorySelect = document.getElementById('modal-category-select');
         const modalNewCategoryInput = document.getElementById('modal-new-category-input');
         const modalAccountSelect = document.getElementById('modal-account-select');
@@ -588,6 +646,10 @@
         const modalInstallmentsInput = document.getElementById('modal-installments');
         const modalInstallmentsPaidInput = document.getElementById('modal-installments-paid');
         const modalPaidStatusCheckbox = document.getElementById('modal-paid-status');
+        const modalCategorySection = document.getElementById('modal-category-section');
+        const modalInstallmentsPaidSection = document.getElementById('modal-installments-paid-section');
+
+
         const editAccountModal = document.getElementById('edit-account-modal');
         const closeEditAccountModalBtn = document.getElementById('close-edit-account-modal');
         const cancelEditAccountBtn = document.getElementById('cancel-edit-account-btn');
@@ -615,32 +677,6 @@
         const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
         const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
         const closeConfirmationModalBtn = document.getElementById('close-confirmation-modal');
-        
-        // Elementos de Importação Geral
-        const importHeader = document.getElementById('import-header');
-        const importSectionContent = document.getElementById('import-section-content');
-        const importArrow = document.getElementById('import-arrow');
-        const fileInput = document.getElementById('file-input');
-        const importFileBtn = document.getElementById('import-file-btn');
-
-        // Elementos de Importação PDF (reintroduzidos)
-        const importPdfHeader = document.getElementById('import-pdf-header');
-        const importPdfSectionContent = document.getElementById('import-pdf-section-content');
-        const importPdfArrow = document.getElementById('import-pdf-arrow');
-        const fileInputPdf = document.getElementById('file-input-pdf');
-        const importPdfFileBtn = document.getElementById('import-pdf-file-btn');
-        
-        const importReviewSection = document.getElementById('import-review-section');
-        const importedTransactionsTableBody = document.getElementById('imported-transactions-table-body');
-        const confirmImportBtn = document.getElementById('confirm-import-btn');
-        const cancelReviewBtn = document.getElementById('cancel-review-btn');
-        const selectAllImportedCheckbox = document.getElementById('select-all-imported-transactions');
-        const bulkEditImportedControls = document.getElementById('bulk-edit-imported-controls');
-        const bulkEditTypeSelect = document.getElementById('bulk-edit-type');
-        const bulkEditCategorySelect = document.getElementById('bulk-edit-category');
-        const bulkEditAccountSelect = document.getElementById('bulk-edit-account');
-        const bulkEditStatusSelect = document.getElementById('bulk-edit-status');
-        const applyBulkEditImportedBtn = document.getElementById('apply-bulk-edit-imported-btn');
         const reportsHeader = document.getElementById('reports-header');
         const reportsSectionContent = document.getElementById('reports-section-content');
         const reportsArrow = document.getElementById('reports-arrow');
@@ -662,6 +698,10 @@
         const noSuggestedGoalsMessage = document.getElementById('no-suggested-goals-message');
         const downloadXlsxBtn = document.getElementById('download-xlsx-btn');
         const clearAllDataLink = document.getElementById('clear-all-data-link');
+        const loadSavedDataBtn = document.getElementById('load-saved-data-btn'); 
+        const loadJsonInput = document.getElementById('load-json-input'); 
+
+
         const selectAllTransactionsCheckbox = document.getElementById('select-all-transactions');
         const paySelectedTransactionsBtn = document.getElementById('pay-selected-transactions-btn');
         const unpaySelectedTransactionsBtn = document.getElementById('unpay-selected-transactions-btn');
@@ -670,17 +710,17 @@
         const linkSelectedCategorySelect = document.getElementById('link-selected-category-select');
         const linkSelectedCategoryBtn = document.getElementById('link-selected-category-btn');
         const deleteSelectedTransactionsBtn = document.getElementById('delete-selected-transactions-btn');
-        // Filter DOM Elements
         const filterMainTypeSelect = document.getElementById('filter-main-type');
         const filterMainCategorySelect = document.getElementById('filter-main-category');
         const filterMainAccountSelect = document.getElementById('filter-main-account');
         const filterMainFundSourceSelect = document.getElementById('filter-main-fund-source');
         const filterMainStatusSelect = document.getElementById('filter-main-status');
-        const filterImportTypeSelect = document.getElementById('filter-import-type');
-        const filterImportCategorySelect = document.getElementById('filter-import-category');
-        const filterImportAccountSelect = document.getElementById('filter-import-account');
-        const filterImportStatusSelect = document.getElementById('filter-import-status');
-        const saveAllDataLink = document.getElementById('save-all-data-link'); // Alterado de botão para link
+        const saveAllDataLink = document.getElementById('save-all-data-link');
+        const openAddTransactionMainBtn = document.getElementById('open-add-transaction-modal-main-btn');
+        const mainFiltersCollapsibleContent = document.getElementById('main-filters-collapsible-content');
+        const toggleFiltersBtn = document.getElementById('toggle-filters-btn');
+        const bulkActionsContainer = document.getElementById('bulk-actions-container');
+        const selectedTransactionsCountEl = document.getElementById('selected-transactions-count');
 
 
         // --- Utility Functions ---
@@ -703,28 +743,22 @@
             if (!dateString || typeof dateString !== 'string') return null;
             let day, month, year;
             dateString = dateString.trim();
-            // Tenta DD/MM/YYYY ou DD.MM.YYYY
             let match = dateString.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{4})$/);
             if (match) { [ , day, month, year] = match.map(Number); }
             else { 
-                // Tenta DD/MM/YY ou DD.MM.YY
                 match = dateString.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{2})$/);
                 if (match) { [ , day, month, year] = match.map(Number); year += (year < 70 ? 2000 : 1900); }
                 else { 
-                    // Tenta YYYY-MM-DD ou YYYY/MM/DD
                     match = dateString.match(/^(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})$/);
                     if (match) { [ , year, month, day] = match.map(Number); }
                     else { 
-                        // Tenta DD/MM ou DD.MM (assume ano atual)
                         match = dateString.match(/^(\d{1,2})[\/\.](\d{1,2})$/);
                         if (match) { [ , day, month] = match.map(Number); year = yearToAssume; }
-                        // Tenta DDMMAAAA (sem separador)
                         else { match = dateString.match(/^(\d{2})(\d{2})(\d{4})$/);
                             if (match) { day = parseInt(match[1]); month = parseInt(match[2]); year = parseInt(match[3]); }
-                            // Tenta DDMMAA (sem separador)
                             else { match = dateString.match(/^(\d{2})(\d{2})(\d{2})$/);
                                 if (match) { day = parseInt(match[1]); month = parseInt(match[2]); year = parseInt(match[3]); year += (year < 70 ? 2000 : 1900); }
-                                else return null; // Formato não reconhecido
+                                else return null; 
                             }
                         }
                     }
@@ -742,15 +776,13 @@
             if (!valueString || typeof valueString !== 'string') return { value: 0, isCredit: null, extractedString: "", lineRemainder: valueString };
             
             let lineRemainder = valueString;
-            // Padrões tentam capturar valores com R$, pontos como separador de milhar, vírgula como decimal, e indicadores C/D ou CR/DB
-            // A ordem é importante: dos mais específicos para os mais genéricos.
             const currencyPatterns = [
-                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, // Ex: R$ 1.234,56 C
-                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d+(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,          // Ex: R$ 1234,56
-                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d{1,3}(?:,\d{3})*(?:\.\d{2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, // Ex: R$ 1.234.56 (ponto como decimal)
-                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d+(?:\.\d{2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,            // Ex: R$ 1234.56
-                /(?:^|\s)([\-\+]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,   // Ex: 1.234,56 D
-                /(?:^|\s)([\-\+]?\s*\d+(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,                    // Ex: 1234,56
+                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, 
+                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d+(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,       
+                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d{1,3}(?:,\d{3})*(?:\.\d{2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i, 
+                /(?:^|\s)(R\$\s*)?([\-\+]?\s*\d+(?:\.\d{2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,         
+                /(?:^|\s)([\-\+]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,  
+                /(?:^|\s)([\-\+]?\s*\d+(?:,\d{1,2}))(?:\s*(C|CR|CRED|CREDITO|D|DB|DEB|DEBITO))?(?=\s|$)/i,                
             ];
             
             let numericPart = ""; 
@@ -761,10 +793,8 @@
                 const match = lineRemainder.match(pattern);
                 if (match) {
                     originalMatchedString = match[0].trim();
-                    numericPart = match[2] ? match[2].trim() : (match[1] && !match[1].toUpperCase().includes("R$") ? match[1].trim() : ""); // Pega o número
-                    indicator = match[3] ? match[3].trim().toUpperCase() : ""; // Pega C/D/CR/DB
-                    
-                    // Remove o valor encontrado da linha para facilitar a extração da descrição
+                    numericPart = match[2] ? match[2].trim() : (match[1] && !match[1].toUpperCase().includes("R$") ? match[1].trim() : ""); 
+                    indicator = match[3] ? match[3].trim().toUpperCase() : ""; 
                     const startIndex = lineRemainder.indexOf(originalMatchedString);
                     if (startIndex !== -1) {
                         lineRemainder = lineRemainder.substring(0, startIndex) + lineRemainder.substring(startIndex + originalMatchedString.length);
@@ -781,21 +811,20 @@
             if (hasMinus) cleanedNumericPart = cleanedNumericPart.substring(1);
             
             let numberValue;
-            // Lógica para tratar ponto como separador de milhar e vírgula como decimal
-            if (cleanedNumericPart.includes(',')) { // Assume vírgula como decimal
-                if (cleanedNumericPart.match(/\.\d{3},\d{1,2}$/)) { // Formato 1.234,56
+            if (cleanedNumericPart.includes(',')) { 
+                if (cleanedNumericPart.match(/\.\d{3},\d{1,2}$/)) { 
                     numberValue = parseFloat(cleanedNumericPart.replace(/\./g, '').replace(',', '.'));
-                } else { // Formato 1234,56 ou ,56
+                } else { 
                     numberValue = parseFloat(cleanedNumericPart.replace(',', '.'));
                 }
-            } else if (cleanedNumericPart.includes('.')) { // Se não tem vírgula, mas tem ponto, pode ser 1234.56
-                 if (cleanedNumericPart.match(/\.\d{2}$/) && !cleanedNumericPart.match(/\.\d{3}/) ) { // Apenas um ponto e dois decimais
+            } else if (cleanedNumericPart.includes('.')) { 
+                 if (cleanedNumericPart.match(/\.\d{2}$/) && !cleanedNumericPart.match(/\.\d{3}/) ) { 
                     numberValue = parseFloat(cleanedNumericPart);
-                 } else { // Pode ser 1.234 (sem decimais) ou formato americano 1,234.56 (que não é o foco aqui)
-                    numberValue = parseFloat(cleanedNumericPart.replace(/\./g, '')); // Remove pontos como milhar
+                 } else { 
+                    numberValue = parseFloat(cleanedNumericPart.replace(/\./g, '')); 
                  }
             }
-             else { // Sem ponto nem vírgula
+             else { 
                 numberValue = parseFloat(cleanedNumericPart);
             }
 
@@ -805,12 +834,11 @@
             if (indicator.startsWith("C")) finalIsCredit = true;
             else if (indicator.startsWith("D")) finalIsCredit = false;
             else if (hasMinus) finalIsCredit = false;
-            // Se não houver indicador C/D nem sinal de menos, pode ser necessário inferir de outra forma (ex: palavras-chave na descrição)
 
             return { value: Math.abs(numberValue), isCredit: finalIsCredit, extractedString: originalMatchedString, lineRemainder: lineRemainder };
         };
         const extractInstallmentInfo = (text) => {
-            if (!text || typeof text !== 'string') return { paid: 1, total: 1, matchedText: "", lineRemainder: text };
+             if (!text || typeof text !== 'string') return { paid: 1, total: 1, matchedText: "", lineRemainder: text };
             let paid = 1; let total = 1; let matchedText = ""; let lineRemainder = text;
             const patterns = [ /(\d{1,2})\s*\/\s*(\d{1,2})/, /parc(?:ela)?\.?\s*(\d{1,2})\s*(?:de|\/)\s*(\d{1,2})/i, /inst\s*(\d{1,2})\s*\/\s*(\d{1,2})/i ];
             for (const pattern of patterns) {
@@ -828,7 +856,7 @@
 
 
         // --- Data Persistence ---
-        const saveData = () => {
+         const saveData = () => {
             localStorage.setItem('financialUnifiedAccounts', JSON.stringify(accounts));
             localStorage.setItem('financialUnifiedTransactions', JSON.stringify(transactions));
             localStorage.setItem('financialUnifiedCategories', JSON.stringify(categories));
@@ -844,19 +872,22 @@
 
             renderAll();
         };
+        
+        // --- Filter Population Functions --- 
+        const populateMainFilters = () => {
+            if(filterMainCategorySelect) populateCategorySelect(filterMainCategorySelect, "filter");
+            if(filterMainAccountSelect) populateAccountSelects(filterMainAccountSelect, false, true, true); 
+        };
 
         const renderAll = () => {
             renderAccounts();
-            populateAccountSelects(modalAccountSelect);
-            populateAccountSelects(modalDestinationAccountSelect, true);
+            populateAccountSelects(modalAccountSelect, false, false, true); 
+            populateAccountSelects(modalDestinationAccountSelect, true, false, false); 
             populateCategorySelect(modalCategorySelect);
-            populateCategorySelect(bulkEditCategorySelect, true);
-            populateAccountSelects(bulkEditAccountSelect, true, true);
             populateLinkSelectedAccountSelect();
             populateLinkSelectedCategorySelect();
             populateReportSelectors();
             populateMainFilters(); 
-            populateImportFilters(); 
             renderTransactions(); 
             updateSummary();
             updateMonthlyDisplay();
@@ -865,7 +896,7 @@
         };
 
 
-        // --- Account Management (Unified) ---
+        // --- Account Management ---
         const addCardInputFields = (container, cardData = null, isEditMode = false) => {
             cardFieldCounter++;
             const cardDiv = document.createElement('div');
@@ -906,7 +937,7 @@
             brandSelect.addEventListener('change', () => {
                 nameInput.disabled = brandSelect.value !== 'Outra';
                 if (brandSelect.value !== 'Outra') {
-                    nameInput.value = ''; // Limpa se não for 'Outra'
+                    nameInput.value = ''; 
                 }
             });
 
@@ -980,7 +1011,7 @@
                         if (cardBrand && cardLimit > 0 && cardDueDay >= 1 && cardDueDay <= 31) {
                             if (cardBrand === 'Outra' && !customCardName) {
                                 showFeedback('Por favor, insira um nome para o cartão "Outra".', 'error');
-                                return; // Pula este cartão
+                                return; 
                             }
                             newAccount.creditCards.push({
                                 cardId: generateUniqueId(),
@@ -1107,7 +1138,7 @@
         };
 
 
-        // --- Transaction Management (Adapted for Unified Accounts) ---
+        // --- Transaction Management ---
         const populateAccountSelects = (selectElement, includeCashOnly = false, includeMaintainOriginal = false, includeNoLink = true) => {
             if (!selectElement) return;
             const currentVal = selectElement.value;
@@ -1118,17 +1149,17 @@
                 maintainOpt.value = ""; 
                 maintainOpt.textContent = "Manter original / Não Vincular";
                 selectElement.appendChild(maintainOpt);
-            } else if (includeNoLink && !includeCashOnly) {
+            } else if (includeNoLink && !includeCashOnly) { 
                  const noLinkOpt = document.createElement('option');
                  noLinkOpt.value = "";
                  noLinkOpt.textContent = "Não Vincular / Geral";
                  selectElement.appendChild(noLinkOpt);
-            } else if (includeNoLink && includeCashOnly) { // For destination account, "Select Account"
+            } else if (includeNoLink && includeCashOnly) { 
                  const selectOpt = document.createElement('option');
                  selectOpt.value = "";
                  selectOpt.textContent = "Selecione uma Conta";
-                 selectOpt.disabled = true;
-                 selectOpt.selected = true;
+                 selectOpt.disabled = true; 
+                 selectOpt.selected = true; 
                  selectElement.appendChild(selectOpt);
             }
 
@@ -1146,36 +1177,43 @@
             });
             if (currentVal && Array.from(selectElement.options).some(opt => opt.value === currentVal)) {
                  selectElement.value = currentVal;
-            } else if (selectElement.options.length > 0 && (includeMaintainOriginal || (!includeCashOnly && includeNoLink) )) {
+            } else if (selectElement.options.length > 0 && (includeMaintainOriginal || (!includeCashOnly && includeNoLink && selectElement !== modalDestinationAccountSelect && selectElement !== modalAccountSelect && modalTransactionTypeHiddenInput.value !== 'transferencia' ) )) {
                 selectElement.value = ""; 
             }
         };
         
-        const populateFundSourceSelect = (accountId) => {
-            modalFundSourceSelect.innerHTML = '';
-            modalFundSourceDiv.classList.add('hidden');
-
+        const populateFundSourceSelect = (accountId, targetSelectElement = modalFundSourceSelect) => {
+            targetSelectElement.innerHTML = '';
             const account = accounts.find(acc => acc.id === accountId);
-            if (!account || modalTypeSelect.value === 'receita' || modalTypeSelect.value === 'transferencia_entrada') { 
-                if (modalTypeSelect.value === 'receita' || modalTypeSelect.value === 'transferencia_entrada') {
-                     modalFundSourceSelect.innerHTML = `<option value="account_balance" selected>Saldo da Conta</option>`; 
-                }
+            
+            if (targetSelectElement === modalFundSourceSelect && modalFundSourceDiv) {
+                 modalFundSourceDiv.classList.add('hidden'); 
+                 const currentTransactionType = modalTransactionTypeHiddenInput.value; 
+                 if (!account || currentTransactionType === 'receita') { 
+                    if (currentTransactionType === 'receita') {
+                         targetSelectElement.innerHTML = `<option value="account_balance" selected>Saldo da Conta</option>`;
+                    }
+                    return; 
+                 }
+            } else if (!account && targetSelectElement !== modalFundSourceSelect) { 
+                targetSelectElement.innerHTML = `<option value="account_balance" selected>Saldo Conta</option>`;
                 return;
             }
+
 
             let hasOptions = false;
             const balanceOpt = document.createElement('option');
             balanceOpt.value = 'account_balance';
-            balanceOpt.textContent = 'Saldo da Conta';
-            modalFundSourceSelect.appendChild(balanceOpt);
+            balanceOpt.textContent = 'Saldo Conta';
+            targetSelectElement.appendChild(balanceOpt);
             hasOptions = true;
 
-            if (account.type === 'corrente') {
+            if (account && account.type === 'corrente') {
                 if (account.limitOverdraft > 0) {
                     const overdraftOpt = document.createElement('option');
                     overdraftOpt.value = 'overdraft';
-                    overdraftOpt.textContent = 'Cheque Especial';
-                    modalFundSourceSelect.appendChild(overdraftOpt);
+                    overdraftOpt.textContent = 'Cheque Esp.';
+                    targetSelectElement.appendChild(overdraftOpt);
                     hasOptions = true;
                 }
                 if (account.creditCards && account.creditCards.length > 0) {
@@ -1183,76 +1221,111 @@
                         const cardDisplayName = card.cardBrand === 'Outra' ? card.customCardName : card.cardBrand;
                         const cardOpt = document.createElement('option');
                         cardOpt.value = `credit_card_${card.cardId}`;
-                        cardOpt.textContent = `Cartão: ${cardDisplayName || 'Cartão'}`;
-                        modalFundSourceSelect.appendChild(cardOpt);
+                        cardOpt.textContent = `Cartão: ${(cardDisplayName || 'Cartão').substring(0,15)}${(cardDisplayName || 'Cartão').length > 15 ? '...' : ''}`;
+                        targetSelectElement.appendChild(cardOpt);
                         hasOptions = true;
                     });
                 }
             }
-            if (hasOptions) {
+             if (targetSelectElement === modalFundSourceSelect && modalFundSourceDiv && hasOptions && (modalTransactionTypeHiddenInput.value === 'despesa' || modalTransactionTypeHiddenInput.value === 'transferencia')) {
                 modalFundSourceDiv.classList.remove('hidden');
             }
         };
 
         if (modalAccountSelect) {
             modalAccountSelect.addEventListener('change', (e) => {
-                populateFundSourceSelect(e.target.value);
-            });
-        }
-        if (modalTypeSelect) {
-            modalTypeSelect.addEventListener('change', (e) => {
-                const type = e.target.value;
-                modalDestinationAccountDiv.classList.toggle('hidden', type !== 'transferencia_saida' && type !== 'transferencia_entrada');
-                modalFundSourceDiv.classList.toggle('hidden', type === 'receita' || type === 'transferencia_entrada');
-
-                if (type === 'receita' || type === 'transferencia_entrada') {
-                    modalAccountSelect.required = true; 
-                    populateAccountSelects(modalAccountSelect, true, false, true); 
-                    modalFundSourceSelect.innerHTML = `<option value="account_balance" selected>Saldo da Conta</option>`; 
-                } else if (type === 'despesa' || type === 'transferencia_saida') {
-                     modalAccountSelect.required = true; 
-                     populateAccountSelects(modalAccountSelect, false, false, true); 
-                     populateFundSourceSelect(modalAccountSelect.value); 
+                populateFundSourceSelect(e.target.value, modalFundSourceSelect);
+                const currentTransactionType = modalTransactionTypeHiddenInput.value;
+                 if (!e.target.value && modalFundSourceDiv) { 
+                    modalFundSourceDiv.classList.add('hidden');
+                } else if ((currentTransactionType === 'despesa' || currentTransactionType === 'transferencia') && e.target.value && modalFundSourceDiv) { 
+                    modalFundSourceDiv.classList.remove('hidden');
                 } else {
-                     modalAccountSelect.required = false;
-                     populateAccountSelects(modalAccountSelect, false, false, true);
-                }
-                 if (type === 'transferencia_saida' || type === 'transferencia_entrada') {
-                    populateAccountSelects(modalDestinationAccountSelect, true, false, true); // Allow any account type as destination
+                    modalFundSourceDiv.classList.add('hidden');
                 }
             });
         }
+        
+        document.querySelectorAll('.transaction-type-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const selectedType = e.currentTarget.dataset.type;
+                modalTransactionTypeHiddenInput.value = selectedType; 
+
+                document.querySelectorAll('.transaction-type-tab').forEach(t => t.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+
+                const isTransfer = selectedType === 'transferencia';
+                const isReceita = selectedType === 'receita';
+                
+                modalDestinationAccountDiv.classList.toggle('hidden', !isTransfer);
+                modalCategorySection.classList.toggle('hidden', isTransfer); 
+                if(modalInstallmentsPaidSection) modalInstallmentsPaidSection.classList.toggle('hidden', isTransfer); 
+
+                const mainAccountLabel = modalAccountSelect.previousElementSibling;
+                const destAccountLabel = modalDestinationAccountSelect.previousElementSibling;
 
 
-        document.querySelectorAll('.add-transaction-type-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const type = e.currentTarget.dataset.type;
-                addTransactionModalTitle.textContent = `Adicionar Nova ${type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}`;
+                if (isReceita) {
+                    modalFundSourceDiv.classList.add('hidden');
+                    modalAccountSelect.required = false; 
+                    populateAccountSelects(modalAccountSelect, false, false, true); 
+                    if(mainAccountLabel) mainAccountLabel.textContent = "Conta Creditada (Opcional)";
+                    if (modalFundSourceSelect) modalFundSourceSelect.innerHTML = `<option value="account_balance" selected>Saldo da Conta</option>`;
+                } else if (selectedType === 'despesa') {
+                    modalAccountSelect.required = false; 
+                    populateAccountSelects(modalAccountSelect, false, false, true); 
+                    if(mainAccountLabel) mainAccountLabel.textContent = "Conta Debitada (Opcional)";
+                    if (modalAccountSelect.value) { 
+                        populateFundSourceSelect(modalAccountSelect.value, modalFundSourceSelect);
+                        modalFundSourceDiv.classList.remove('hidden');
+                    } else {
+                        modalFundSourceDiv.classList.add('hidden');
+                    }
+                } else if (isTransfer) { 
+                    modalAccountSelect.required = true; 
+                    populateAccountSelects(modalAccountSelect, false, false, false); 
+                    if(mainAccountLabel) mainAccountLabel.textContent = "Conta de Origem";
+
+
+                    if (modalAccountSelect.value) {
+                        populateFundSourceSelect(modalAccountSelect.value, modalFundSourceSelect);
+                        modalFundSourceDiv.classList.remove('hidden'); 
+                    } else {
+                        modalFundSourceDiv.classList.add('hidden');
+                    }
+                    modalDestinationAccountSelect.required = true;
+                    populateAccountSelects(modalDestinationAccountSelect, false, false, false);
+                    if(destAccountLabel) destAccountLabel.textContent = "Conta de Destino";
+                }
+            });
+        });
+
+
+        if(openAddTransactionMainBtn) {
+            openAddTransactionMainBtn.addEventListener('click', () => {
+                addTransactionModalTitle.textContent = 'Adicionar Nova Transação';
                 transactionFormModal.reset();
                 modalTransactionIdInput.value = ''; 
-                modalTypeSelect.value = type;
+                
+                document.querySelectorAll('.transaction-type-tab').forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.type === 'receita');
+                });
+                modalTransactionTypeHiddenInput.value = 'receita'; 
+                
+                const receitaTab = document.querySelector('.transaction-type-tab[data-type="receita"]');
+                if(receitaTab) receitaTab.click();
 
-                populateAccountSelects(modalAccountSelect, false, false, true); // Standard population for source
-                populateAccountSelects(modalDestinationAccountSelect, true, false, true); // For transfers, can go to any account type
+
                 populateCategorySelect(modalCategorySelect);
                 modalNewCategoryInput.classList.add('hidden');
                 modalDateInput.value = new Date().toISOString().split('T')[0];
                 modalInstallmentsInput.value = 1;
                 modalInstallmentsPaidInput.value = 0;
-                modalPaidStatusCheckbox.checked = (type === 'receita' || type === 'transferencia_entrada'); 
-
-                modalDestinationAccountDiv.classList.toggle('hidden', type !== 'transferencia_saida' && type !== 'transferencia_entrada');
-                modalFundSourceDiv.classList.add('hidden'); 
-
-                const event = new Event('change');
-                modalTypeSelect.dispatchEvent(event);
-                if (modalAccountSelect.value) { 
-                    populateFundSourceSelect(modalAccountSelect.value);
-                }
+                modalPaidStatusCheckbox.checked = true; 
 
                 addTransactionModal.classList.remove('hidden');
             });
-        });
+        }
         
         if(closeAddTransactionModalBtn) closeAddTransactionModalBtn.addEventListener('click', () => addTransactionModal.classList.add('hidden'));
         if(cancelAddTransactionModalBtn) cancelAddTransactionModalBtn.addEventListener('click', () => addTransactionModal.classList.add('hidden'));
@@ -1264,50 +1337,80 @@
                 const baseDateString = modalDateInput.value;
                 const description = modalDescriptionInput.value.trim();
                 const valuePerInstallment = parseFloat(modalValueInput.value);
-                const type = modalTypeSelect.value;
-                const accountId = modalAccountSelect.value; 
-                const fundSource = modalFundSourceDiv.classList.contains('hidden') || !modalFundSourceSelect.value ? 'account_balance' : modalFundSourceSelect.value; 
-                const destinationAccountId = (type === 'transferencia_saida' || type === 'transferencia_entrada') ? modalDestinationAccountSelect.value : null;
+                
+                let typeFromTabs = modalTransactionTypeHiddenInput.value; 
+                let finalType = typeFromTabs; 
+                
+                let accountId = modalAccountSelect.value || null; 
+                let fundSource = (modalFundSourceDiv.classList.contains('hidden') || !modalFundSourceSelect.value || !accountId) ? null : modalFundSourceSelect.value; 
+                let destinationAccountId = null;
+
+                if (typeFromTabs === 'transferencia') {
+                    destinationAccountId = modalDestinationAccountSelect.value;
+                    if (!accountId || !destinationAccountId) {
+                        showFeedback('Para transferência, as contas de origem e destino são obrigatórias.', 'error');
+                        return;
+                    }
+                     if (accountId === destinationAccountId) { 
+                        showFeedback('Conta de origem e destino não podem ser a mesma para transferência.', 'error'); return; 
+                    }
+                    finalType = 'transferencia_saida'; 
+                } else {
+                     finalType = typeFromTabs; 
+                }
+
 
                 let category;
-                if (modalCategorySelect.value === 'nova-categoria') {
+                if(finalType.includes('transferencia')) {
+                    category = 'Transferências';
+                } else if (modalCategorySelect.value === 'nova-categoria') {
                     category = modalNewCategoryInput.value.trim();
-                    if (category && !categories.includes(category)) { categories.push(category); /*saveCategories();*/ populateCategorySelect(modalCategorySelect); populateCategorySelect(bulkEditCategorySelect); populateLinkSelectedCategorySelect(); modalCategorySelect.value = category; }
+                    if (category && !categories.includes(category)) { categories.push(category); populateCategorySelect(modalCategorySelect); populateLinkSelectedCategorySelect(); modalCategorySelect.value = category; } 
                     else if (categories.includes(category)) { modalCategorySelect.value = category; modalNewCategoryInput.classList.add('hidden'); }
                     else if (!category) { showFeedback('Insira nome para nova categoria.', 'error'); return; }
                 } else { category = modalCategorySelect.value; }
+
 
                 const totalInstallments = parseInt(modalInstallmentsInput.value) || 1;
                 const installmentsPaidCount = parseInt(modalInstallmentsPaidInput.value) || 0;
                 const isPaid = modalPaidStatusCheckbox.checked;
 
-                if (!baseDateString || !description || isNaN(valuePerInstallment) || valuePerInstallment <= 0 || !type || !category) { showFeedback('Preencha campos obrigatórios.', 'error'); return; }
+                if (!baseDateString || !description || isNaN(valuePerInstallment) || valuePerInstallment <= 0 || !finalType || !category) { showFeedback('Preencha campos obrigatórios.', 'error'); return; }
                 if (installmentsPaidCount > totalInstallments || installmentsPaidCount < 0) { showFeedback('Parcelas pagas inválido.', 'error'); return; }
-                if (!accountId && (type === 'despesa' || type === 'receita' || type === 'transferencia_saida' || type === 'transferencia_entrada')) { showFeedback('Selecione uma conta principal.', 'error'); return; }
-                if ((type === 'transferencia_saida' || type === 'transferencia_entrada') && !destinationAccountId) { showFeedback('Selecione uma conta de destino para transferência.', 'error'); return; }
-                if ((type === 'transferencia_saida' || type === 'transferencia_entrada') && accountId === destinationAccountId) { showFeedback('Conta de origem e destino não podem ser a mesma para transferência.', 'error'); return; }
-
-
-                const fundamentalType = (type === 'receita' || type === 'transferencia_entrada') ? 'receita' : 'despesa';
-                const isCreditCardTx = fundSource.startsWith('credit_card_');
+                
+                const fundamentalType = (finalType === 'receita' || finalType === 'transferencia_entrada') ? 'receita' : 'despesa';
+                const isCreditCardTx = accountId && fundSource && fundSource.startsWith('credit_card_'); 
                 
                 if (transactionIdToEdit) { 
                     const txIndex = transactions.findIndex(t => t.id === transactionIdToEdit);
                     if (txIndex === -1) { showFeedback('Erro: Transação para edição não encontrada.', 'error'); return; }
                     
-                    const oldTx = JSON.parse(JSON.stringify(transactions[txIndex])); // Deep copy for reversal
-                    updateAccountBalance(oldTx.accountId, oldTx.fundSource, oldTx.value, oldTx.fundamentalType, true, oldTx.isPaid, oldTx.destinationAccountId, oldTx.type);
+                    const oldTx = JSON.parse(JSON.stringify(transactions[txIndex])); 
+                    if (oldTx.accountId) { 
+                        updateAccountBalance(oldTx.accountId, oldTx.fundSource, oldTx.value, oldTx.fundamentalType, true, oldTx.isPaid, oldTx.destinationAccountId, oldTx.type);
+                    }
+                     if (oldTx.type === 'transferencia_saida' && oldTx.destinationAccountId) {
+                        const destAcc = accounts.find(a => a.id === oldTx.destinationAccountId);
+                        if (destAcc) updateAccountBalance(destAcc.id, 'account_balance', oldTx.value, 'receita', true, oldTx.isPaid, oldTx.accountId, 'transferencia_entrada');
+                    }
 
 
                     transactions[txIndex] = {
                         ...transactions[txIndex], 
-                        date: baseDateString, description, value: valuePerInstallment, type, fundamentalType, category, accountId,
-                        fundSource, isCreditCardTransaction: isCreditCardTx,
+                        date: baseDateString, description, value: valuePerInstallment, type: finalType, fundamentalType, category, accountId,
+                        fundSource: accountId ? fundSource : null, 
+                        isCreditCardTransaction: accountId ? isCreditCardTx : false,
                         installments: `${installmentsPaidCount + 1}/${totalInstallments}`, 
                         isPaid,
                         destinationAccountId
                     };
-                    updateAccountBalance(accountId, fundSource, valuePerInstallment, fundamentalType, false, isPaid, destinationAccountId, type);
+                    if (accountId) { 
+                        updateAccountBalance(accountId, fundSource, valuePerInstallment, fundamentalType, false, isPaid, destinationAccountId, finalType);
+                    }
+                     if (finalType === 'transferencia_saida' && destinationAccountId) {
+                        const destAcc = accounts.find(a => a.id === destinationAccountId);
+                        if (destAcc) updateAccountBalance(destAcc.id, 'account_balance', valuePerInstallment, 'receita', false, isPaid, accountId, 'transferencia_entrada');
+                    }
                     showFeedback('Transação atualizada!', 'success');
 
                 } else { 
@@ -1323,15 +1426,35 @@
                             id: generateUniqueId(),
                             date: transactionDateObject.toISOString().split('T')[0],
                             description: `${description} (${k}/${totalInstallments})`,
-                            value: valuePerInstallment, type, fundamentalType, category, accountId,
-                            fundSource, isCreditCardTransaction: isCreditCardTx,
+                            value: valuePerInstallment, type: finalType, fundamentalType, category, accountId,
+                            fundSource: accountId ? fundSource : null,
+                            isCreditCardTransaction: accountId ? isCreditCardTx : false,
                             installments: `${k}/${totalInstallments}`,
                             isPaid: (k <= installmentsPaidCount) || isPaid, 
                             originalGroupId,
                             destinationAccountId
                         };
                         transactions.push(newTx);
-                        updateAccountBalance(newTx.accountId, newTx.fundSource, newTx.value, newTx.fundamentalType, false, newTx.isPaid, newTx.destinationAccountId, newTx.type);
+                        if (newTx.accountId) { 
+                            updateAccountBalance(newTx.accountId, newTx.fundSource, newTx.value, newTx.fundamentalType, false, newTx.isPaid, newTx.destinationAccountId, newTx.type);
+                        }
+                        if (newTx.type === 'transferencia_saida' && newTx.destinationAccountId) {
+                            const destAcc = accounts.find(a => a.id === newTx.destinationAccountId);
+                            if (destAcc) {
+                                const entryTransaction = {
+                                    ...newTx, 
+                                    id: generateUniqueId(), 
+                                    type: 'transferencia_entrada',
+                                    fundamentalType: 'receita',
+                                    accountId: newTx.destinationAccountId, 
+                                    fundSource: 'account_balance', 
+                                    isCreditCardTransaction: false,
+                                    destinationAccountId: newTx.accountId 
+                                };
+                                transactions.push(entryTransaction);
+                                updateAccountBalance(entryTransaction.accountId, entryTransaction.fundSource, entryTransaction.value, entryTransaction.fundamentalType, false, entryTransaction.isPaid, entryTransaction.destinationAccountId, entryTransaction.type);
+                            }
+                        }
                     }
                     showFeedback('Transação(ões) adicionada(s)!', 'success');
                 }
@@ -1343,44 +1466,62 @@
         }
         
         const updateAccountBalance = (accountId, fundSource, value, fundamentalType, isReversal = false, isTransactionPaid = true, destinationAccountId = null, transactionType = null) => {
-            if (!accountId || !isTransactionPaid) return; 
+            if (!accountId && !(transactionType === 'transferencia_entrada' && destinationAccountId)) { 
+                 if (transactionType !== 'receita' && transactionType !== 'despesa') { 
+                    return;
+                 }
+            }
+             if (!isTransactionPaid && !(transactionType === 'transferencia_entrada' && fundamentalType === 'receita')) return; 
+
 
             const account = accounts.find(acc => acc.id === accountId);
-            if (!account) return;
+            
+            const targetAccountForEntry = transactionType === 'transferencia_entrada' ? accounts.find(acc => acc.id === accountId) : null;
 
-            const amount = isReversal ? value : -value; // if reversing, add back expense, subtract income. if applying, subtract expense, add income.
+
+            if (!account && !targetAccountForEntry) {
+                if (transactionType !== 'receita' && transactionType !== 'despesa') {
+                    console.warn(`Conta com ID ${accountId} não encontrada para atualização de saldo.`);
+                }
+                return;
+            }
+            
+            const currentAccountToUpdate = targetAccountForEntry || account; 
+
+            const amount = isReversal ? value : -value; 
 
             if (transactionType === 'transferencia_saida') {
-                if (fundSource === 'overdraft') account.balance += amount; 
-                else if (fundSource && fundSource.startsWith('credit_card_')) { /* No direct balance impact for CC transfer out */ }
-                else account.balance += amount; 
+                if (fundSource === 'overdraft') currentAccountToUpdate.balance += amount; 
+                else if (fundSource && fundSource.startsWith('credit_card_')) { /* No direct balance impact */ }
+                else currentAccountToUpdate.balance += amount; 
 
                 const destAccount = accounts.find(acc => acc.id === destinationAccountId);
-                if (destAccount) destAccount.balance -= amount; // amount is negative for source debit, so subtract to credit destination
+                if (destAccount) { 
+                     destAccount.balance -= amount; 
+                }
 
             } else if (transactionType === 'transferencia_entrada') {
-                 account.balance -= amount; // amount is positive for source credit, so subtract to debit source
-                const srcAccount = accounts.find(acc => acc.id === destinationAccountId); // destinationAccountId is the source here
-                if(srcAccount) srcAccount.balance += amount; 
-
+                 currentAccountToUpdate.balance -= amount; 
 
             } else if (fundamentalType === 'receita') {
-                account.balance -= amount; // amount is positive for income, so subtract to apply
+                if(currentAccountToUpdate) currentAccountToUpdate.balance -= amount; 
             } else if (fundamentalType === 'despesa') {
-                if (fundSource === 'overdraft') {
-                    account.balance += amount; 
-                } else if (fundSource && fundSource.startsWith('credit_card_')) {
-                    const cardId = fundSource.replace('credit_card_', '');
-                    const cardOwningAccount = accounts.find(a => a.creditCards && a.creditCards.some(c => c.cardId === cardId));
-                    if (cardOwningAccount) {
-                        const card = cardOwningAccount.creditCards.find(c => c.cardId === cardId);
-                        if (card) {
-                            card.currentBillAmount -= amount; 
-                            card.cardAvailableLimit += amount; 
+                 if(currentAccountToUpdate) { 
+                    if (fundSource === 'overdraft') {
+                        currentAccountToUpdate.balance += amount; 
+                    } else if (fundSource && fundSource.startsWith('credit_card_')) {
+                        const cardId = fundSource.replace('credit_card_', '');
+                        const cardOwningAccount = accounts.find(a => a.id === currentAccountToUpdate.id && a.creditCards && a.creditCards.some(c => c.cardId === cardId));
+                        if (cardOwningAccount) {
+                            const card = cardOwningAccount.creditCards.find(c => c.cardId === cardId);
+                            if (card) {
+                                card.currentBillAmount -= amount; 
+                                card.cardAvailableLimit += amount; 
+                            }
                         }
+                    } else { 
+                        currentAccountToUpdate.balance += amount;
                     }
-                } else { 
-                    account.balance += amount;
                 }
             }
         };
@@ -1397,12 +1538,24 @@
                 const isInCurrentMonthAndYear = transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth;
                 const isPendingFromPreviousMonth = transactionDate < beginningOfCurrentMonth && !t.isPaid && t.fundamentalType === 'despesa';
 
-                // Apply Filters
                 if (filters.type && filters.type !== "all" && t.type !== filters.type) return false;
                 if (filters.category && filters.category !== "all" && t.category !== filters.category) return false;
-                if (filters.accountId && filters.accountId !== "all" && t.accountId !== filters.accountId) return false;
+                
+                if (filters.accountId) { 
+                    if (filters.accountId === "all") {
+                        // Nenhuma ação, mostra todas
+                    } else if (filters.accountId === "") { // Queremos transações NÃO vinculadas
+                        if (t.accountId !== null && t.accountId !== undefined && t.accountId !== '') return false;
+                    } else { // Queremos transações de uma conta específica
+                        if (t.accountId !== filters.accountId) return false; 
+                    }
+                }
+
+
                 if (filters.status && filters.status !== "all" && (filters.status === "paid" ? !t.isPaid : t.isPaid) ) return false;
+                
                 if (filters.fundSource && filters.fundSource !== "all") {
+                    if(!t.accountId && filters.fundSource !== 'all') return false; 
                     if (filters.fundSource === "credit_card_any" && !t.fundSource?.startsWith("credit_card_")) return false;
                     else if (filters.fundSource !== "credit_card_any" && t.fundSource !== filters.fundSource) return false;
                 }
@@ -1413,7 +1566,10 @@
                     t.category.toLowerCase().includes(lowerSearchTerm) ||
                     formatCurrency(t.value).toLowerCase().includes(lowerSearchTerm) ||
                     (t.accountId && accounts.find(a => a.id === t.accountId)?.name.toLowerCase().includes(lowerSearchTerm)) ||
-                    (t.fundSource && t.fundSource.startsWith('credit_card_') && accounts.flatMap(a => a.creditCards || []).find(c => `credit_card_${c.cardId}` === t.fundSource)?.cardName.toLowerCase().includes(lowerSearchTerm));
+                    (t.fundSource && t.fundSource.startsWith('credit_card_') && 
+                        accounts.flatMap(a => a.creditCards || []).find(c => `credit_card_${c.cardId}` === t.fundSource)?.customCardName?.toLowerCase().includes(lowerSearchTerm)) || 
+                    (t.fundSource && t.fundSource.startsWith('credit_card_') && 
+                        accounts.flatMap(a => a.creditCards || []).find(c => `credit_card_${c.cardId}` === t.fundSource)?.cardBrand?.toLowerCase().includes(lowerSearchTerm));
                 
                 return (isInCurrentMonthAndYear || isPendingFromPreviousMonth) && matchesSearch;
             }).sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -1429,23 +1585,26 @@
                 else if (transactionDate < beginningOfCurrentMonth) rowClass += ' pending-previous-month';
                 tr.className = rowClass;
 
-                const accountName = transaction.accountId ? (accounts.find(acc => acc.id === transaction.accountId)?.name || 'Conta Desc.') : 'N/A';
+                const accountName = transaction.accountId ? (accounts.find(acc => acc.id === transaction.accountId)?.name || 'Conta Desc.') : 'Geral / N/A';
                 
-                let fundSourceText = 'Saldo Conta';
-                if (transaction.fundSource === 'overdraft') {
-                    fundSourceText = 'Cheque Especial';
-                } else if (transaction.fundSource && transaction.fundSource.startsWith('credit_card_')) {
-                    const cardId = transaction.fundSource.replace('credit_card_', '');
-                    const mainAccountForCard = accounts.find(acc => acc.creditCards && acc.creditCards.some(c => c.cardId === cardId));
-                    if (mainAccountForCard) {
-                        const card = mainAccountForCard.creditCards.find(c => c.cardId === cardId);
-                        const cardDisplayName = card ? (card.cardBrand === 'Outra' ? card.customCardName : card.cardBrand) : 'Cartão Desc.';
-                        fundSourceText = `Cartão: ${cardDisplayName || 'Cartão'}`;
-                    } else {
-                        fundSourceText = 'Cartão Desc. (Conta não encontrada)';
+                let fundSourceText = 'N/A';
+                 if (transaction.accountId) { 
+                    fundSourceText = 'Saldo Conta'; 
+                    if (transaction.fundSource === 'overdraft') {
+                        fundSourceText = 'Cheque Especial';
+                    } else if (transaction.fundSource && transaction.fundSource.startsWith('credit_card_')) {
+                        const cardId = transaction.fundSource.replace('credit_card_', '');
+                        const mainAccountForCard = accounts.find(acc => acc.creditCards && acc.creditCards.some(c => c.cardId === cardId));
+                        if (mainAccountForCard) {
+                            const card = mainAccountForCard.creditCards.find(c => c.cardId === cardId);
+                            const cardDisplayName = card ? (card.cardBrand === 'Outra' ? card.customCardName : card.cardBrand) : 'Cartão Desc.';
+                            fundSourceText = `Cartão: ${cardDisplayName || 'Cartão'}`;
+                        } else {
+                            fundSourceText = 'Cartão Desc. (Conta não encontrada)';
+                        }
+                    } else if (transaction.type === 'receita' || transaction.type === 'transferencia_entrada') {
+                        fundSourceText = 'N/A (Entrada)';
                     }
-                } else if (transaction.type === 'receita' || transaction.type === 'transferencia_entrada') {
-                    fundSourceText = 'N/A (Entrada)';
                 }
 
 
@@ -1486,7 +1645,7 @@
         };
         
         const openEditTransactionModal = (transactionId) => {
-            const tx = transactions.find(t => t.id === transactionId);
+             const tx = transactions.find(t => t.id === transactionId);
             if (!tx) { showFeedback('Transação não encontrada.', 'error'); return; }
 
             addTransactionModalTitle.textContent = 'Editar Transação';
@@ -1495,28 +1654,43 @@
             modalDateInput.value = tx.date;
             modalDescriptionInput.value = tx.description.replace(/\s\(\d+\/\d+\)$/, ''); 
             modalValueInput.value = tx.value.toFixed(2);
-            modalTypeSelect.value = tx.type;
+            
+            const activeTabType = tx.type.includes('transferencia') ? 'transferencia' : tx.type;
+            modalTransactionTypeHiddenInput.value = activeTabType;
+
+            document.querySelectorAll('.transaction-type-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.type === activeTabType);
+            });
+
+            // Simula o clique para configurar a UI corretamente
+            const activeTabElement = document.querySelector(`.transaction-type-tab[data-type="${activeTabType}"]`);
+            if (activeTabElement) activeTabElement.click();
+
 
             populateCategorySelect(modalCategorySelect);
             modalCategorySelect.value = tx.category;
             modalNewCategoryInput.classList.add('hidden');
 
-            populateAccountSelects(modalAccountSelect, false, false, true);
-            modalAccountSelect.value = tx.accountId;
+            // Preenche o select de conta principal
+            const accountSelectType = tx.type === 'receita' ? true : false;
+            const allowNoLinkForAccount = tx.type === 'despesa' || tx.type === 'receita';
+            populateAccountSelects(modalAccountSelect, false, false, allowNoLinkForAccount); 
+            modalAccountSelect.value = tx.accountId || ""; 
             
-            const typeChangeEvent = new Event('change');
-            modalTypeSelect.dispatchEvent(typeChangeEvent);
-            
-            const accountChangeEvent = new Event('change');
-            modalAccountSelect.dispatchEvent(accountChangeEvent); 
+            const accountChangeEvent = new Event('change'); 
+            modalAccountSelect.dispatchEvent(accountChangeEvent);
 
             setTimeout(() => { 
-                 if (tx.fundSource) modalFundSourceSelect.value = tx.fundSource;
+                 if (tx.accountId && tx.fundSource) {
+                    modalFundSourceSelect.value = tx.fundSource;
+                 } else if (!tx.accountId) {
+                    modalFundSourceDiv.classList.add('hidden');
+                 }
             }, 0);
 
 
             if (tx.type === 'transferencia_saida' || tx.type === 'transferencia_entrada') {
-                populateAccountSelects(modalDestinationAccountSelect, true, false, true);
+                populateAccountSelects(modalDestinationAccountSelect, false, false, false); 
                 modalDestinationAccountSelect.value = tx.destinationAccountId || "";
                 modalDestinationAccountDiv.classList.remove('hidden');
             } else {
@@ -1533,9 +1707,9 @@
         };
 
 
-        // --- Summary Calculations (Adapted) ---
-        const updateSummary = () => {
-            let totalPoderDeCompra = 0;
+        // --- Summary Calculations ---
+         const updateSummary = () => {
+             let totalPoderDeCompra = 0;
             let saldoLiquido = 0;
             accounts.forEach(acc => {
                 saldoLiquido += acc.balance; 
@@ -1605,8 +1779,7 @@
         if(searchTransactionsInput) searchTransactionsInput.addEventListener('input', applyMainFilters);
         document.querySelectorAll('.filter-main-select').forEach(sel => sel.addEventListener('change', applyMainFilters));
 
-
-        // --- Edit Account Modal (Unified) ---
+        // --- Edit Account Modal ---
         function openEditAccountModal(accountId) {
             const account = accounts.find(acc => acc.id === accountId);
             if (!account) return;
@@ -1660,7 +1833,7 @@
                     if (cardBrand && cardLimit > 0 && cardDueDay >= 1 && cardDueDay <= 31) {
                          if (cardBrand === 'Outra' && !customCardName) {
                             showFeedback('Por favor, insira um nome para o cartão "Outra" ao editar.', 'error');
-                            return; // Pula este cartão
+                            return; 
                         }
                         const existingCard = account.creditCards.find(c => c.cardId === cardId);
                         if (existingCard) { 
@@ -1741,13 +1914,13 @@
 
             if (selectedFundSource === 'account_balance') {
                 statementTransactions = transactions.filter(t => t.accountId === accountId && (t.fundSource === 'account_balance' || (!t.fundSource && !t.isCreditCardTransaction && t.type !== 'transferencia_saida' && t.type !== 'transferencia_entrada') || (t.type === 'transferencia_entrada' && t.destinationAccountId === accountId) || (t.type === 'transferencia_saida' && t.accountId === accountId && t.fundSource === 'account_balance') ))
-                                            .sort((a,b) => new Date(a.date) - new Date(b.date));
+                                                .sort((a,b) => new Date(a.date) - new Date(b.date));
             } else if (selectedFundSource === 'overdraft') {
                 statementTransactions = transactions.filter(t => t.accountId === accountId && t.fundSource === 'overdraft')
-                                            .sort((a,b) => new Date(a.date) - new Date(b.date));
+                                                .sort((a,b) => new Date(a.date) - new Date(b.date));
             } else if (selectedFundSource.startsWith('credit_card_')) {
                 statementTransactions = transactions.filter(t => t.accountId === accountId && t.fundSource === selectedFundSource)
-                                            .sort((a,b) => new Date(a.date) - new Date(b.date));
+                                                .sort((a,b) => new Date(a.date) - new Date(b.date));
             }
 
 
@@ -1778,7 +1951,7 @@
                     <td class="px-4 py-2 text-sm">${new Date(tx.date + "T00:00:00").toLocaleDateString('pt-BR')}</td>
                     <td class="px-4 py-2 text-sm">${tx.description}</td>
                     <td class="px-4 py-2 text-sm text-right ${valueClass}">${valueDisplay}</td>
-                    <td class="px-4 py-2 text-sm text-right"></td> <!-- Placeholder for running balance -->
+                    <td class="px-4 py-2 text-sm text-right"></td> 
                     <td class="px-4 py-2 text-right text-xs">
                         <button data-id="${tx.id}" class="edit-statement-tx-btn text-yellow-600 hover:text-yellow-800 mr-1 p-0.5">Editar</button>
                         <button data-id="${tx.id}" data-type="transaction" class="delete-statement-tx-btn text-red-400 hover:text-red-600 p-0.5">Excluir</button>
@@ -1798,9 +1971,9 @@
         if(closeDetailedStatementModalFooterBtn) closeDetailedStatementModalFooterBtn.addEventListener('click', () => detailedStatementModal.classList.add('hidden'));
 
 
-        // --- Delete Logic (Adapted) ---
+        // --- Delete Logic ---
         function requestDeleteConfirmation(id, type, isBulk = false, ids = [], accountIdForReversal = null, fundSourceForReversal = null) {
-            itemToDelete = { id, type, showFeedback: !isBulk, isBulk, ids, accountIdForReversal, fundSourceForReversal };
+             itemToDelete = { id, type, showFeedback: !isBulk, isBulk, ids, accountIdForReversal, fundSourceForReversal };
             let itemName = "";
             if (type === 'allData') { itemName = "TODOS OS DADOS"; confirmationModalTitle.textContent = "Confirmar Limpeza Total"; }
             else if (isBulk) { itemName = `${ids.length} transações`; confirmationModalTitle.textContent = "Confirmar Exclusão em Lote"; }
@@ -1893,11 +2066,11 @@
         });
         
         const markTransactionAsPaid = (id, showIndividualFeedback = true) => {
-            const tx = transactions.find(t => t.id === id);
+             const tx = transactions.find(t => t.id === id);
             if (tx && !tx.isPaid) {
                 if (!tx.isCreditCardTransaction && tx.fundamentalType === 'despesa') {
                     const account = accounts.find(acc => acc.id === tx.accountId);
-                    if (account) {
+                    if (account) { 
                         let tempBalance = account.balance;
                         if (tx.fundSource === 'overdraft') tempBalance += account.limitOverdraft;
 
@@ -1906,7 +2079,9 @@
                              return false; 
                         }
                     }
-                    updateAccountBalance(tx.accountId, tx.fundSource, tx.value, tx.fundamentalType, false, true, tx.destinationAccountId, tx.type); 
+                    if(tx.accountId) { 
+                        updateAccountBalance(tx.accountId, tx.fundSource, tx.value, tx.fundamentalType, false, true, tx.destinationAccountId, tx.type); 
+                    }
                 }
                 tx.isPaid = true;
                 saveData();
@@ -1919,48 +2094,55 @@
             return false;
         };
 
-        const populateCategorySelect = (selectElement, forBulkOrFilter = false) => {
+        const populateCategorySelect = (selectElement, forBulkOrFilter = false, targetNewCategoryInput = modalNewCategoryInput) => {
             if(!selectElement) return;
             const currentVal = selectElement.value;
             selectElement.innerHTML = '';
-            if (forBulkOrFilter) {
-                const opt = document.createElement('option');
-                opt.value = forBulkOrFilter === "filter" ? "all" : ""; 
-                opt.textContent = forBulkOrFilter === "filter" ? "Todas as Categorias" : "Manter original";
-                selectElement.appendChild(opt);
-            } else { // For transaction modal
-                const opt = document.createElement('option');
-                opt.value = ""; opt.textContent = "Selecione categoria"; opt.disabled = true; opt.selected = !currentVal;
-                selectElement.appendChild(opt);
+            
+            const placeholderOptionValue = forBulkOrFilter === "filter" ? "all" : "";
+            const placeholderOptionText = forBulkOrFilter === "filter" ? "Todas as Categorias" : (forBulkOrFilter ? "Manter original" : "Selecione categoria");
+
+            if (forBulkOrFilter || selectElement === modalCategorySelect) {
+                 const opt = document.createElement('option');
+                 opt.value = placeholderOptionValue;
+                 opt.textContent = placeholderOptionText;
+                 if (selectElement === modalCategorySelect && !forBulkOrFilter) {
+                    opt.disabled = true;
+                    opt.selected = !currentVal;
+                 }
+                 selectElement.appendChild(opt);
             }
-            categories.sort((a,b) => a.localeCompare(b)).forEach(cat => {
+
+
+            categories.sort((a,b)=>a.localeCompare(b)).forEach(cat => {
                 const opt = document.createElement('option'); opt.value = cat; opt.textContent = cat;
                 selectElement.appendChild(opt);
             });
+            
+            const newOptValue = selectElement === modalCategorySelect ? 'nova-categoria' : (selectElement === linkSelectedCategorySelect ? 'nova-categoria-lote' : 'nova-categoria-review'); 
             const newOpt = document.createElement('option');
-            newOpt.value = forBulkOrFilter ? 'nova-categoria-bulk' : 'nova-categoria';
+            newOpt.value = newOptValue;
             newOpt.textContent = 'Adicionar Nova...';
             selectElement.appendChild(newOpt);
 
-            if (currentVal && (categories.includes(currentVal) || currentVal === newOpt.value || (forBulkOrFilter && currentVal === opt.value))) {
+            if (currentVal && (categories.includes(currentVal) || currentVal === newOptValue || (forBulkOrFilter && currentVal === placeholderOptionValue) )) {
                 selectElement.value = currentVal;
-            } else if (!forBulkOrFilter && selectElement.options.length > 1 && !currentVal) {
+            } else if (selectElement === modalCategorySelect && !forBulkOrFilter && selectElement.options.length > 1 && !currentVal) {
                  selectElement.value = "";
             } else if (forBulkOrFilter && selectElement.options.length > 0) {
-                selectElement.value = forBulkOrFilter === "filter" ? "all" : "";
+                selectElement.value = placeholderOptionValue;
+            }
+
+            if (selectElement === modalCategorySelect) {
+                selectElement.addEventListener('change', () => { 
+                    targetNewCategoryInput.classList.toggle('hidden', selectElement.value !== 'nova-categoria'); 
+                    if(selectElement.value === 'nova-categoria') targetNewCategoryInput.focus(); 
+                });
             }
         };
         
-        if(modalCategorySelect) modalCategorySelect.addEventListener('change', () => { modalNewCategoryInput.classList.toggle('hidden', modalCategorySelect.value !== 'nova-categoria'); if(modalCategorySelect.value === 'nova-categoria') modalNewCategoryInput.focus(); });
-        if(bulkEditCategorySelect) bulkEditCategorySelect.addEventListener('change', (e) => {
-            // Assuming a similar new category input for bulk edit, though not explicitly defined in HTML snippet
-            // const newCatInputForBulk = document.getElementById('bulk-edit-new-category-input'); 
-            // if (newCatInputForBulk) newCatInputForBulk.classList.toggle('hidden', e.target.value !== 'nova-categoria-bulk');
-        });
-
-
         const populateLinkSelectedAccountSelect = () => { 
-             if(!linkSelectedAccountSelect) return;
+            if(!linkSelectedAccountSelect) return;
              linkSelectedAccountSelect.innerHTML='<option value="">Vincular Conta...</option>';
              accounts.forEach(acc => {
                 const opt = document.createElement('option');
@@ -2006,6 +2188,7 @@
                         billClosingDate.setDate(billDueDate.getDate() - (card.cardClosingDayOffset || 9)); 
                          if (billClosingDate > billDueDate) billClosingDate.setMonth(billClosingDate.getMonth() -1);
 
+                        const cardDisplayName = card.customCardName || card.cardBrand;
 
                         if (today.getTime() === billClosingDate.getTime()) {
                             const closingBill = transactions.reduce((s, t) => {
@@ -2015,7 +2198,7 @@
                                 }
                                 return s;
                             }, 0);
-                            if (closingBill > 0) showFeedback(`FATURA FECHADA: ${card.cardName} (Conta: ${account.name}) fechou! Valor: ${formatCurrency(closingBill)}. Vencimento: ${billDueDate.toLocaleDateString('pt-BR')}`, 'info');
+                            if (closingBill > 0) showFeedback(`FATURA FECHADA: ${cardDisplayName} (Conta: ${account.name}) fechou! Valor: ${formatCurrency(closingBill)}. Vencimento: ${billDueDate.toLocaleDateString('pt-BR')}`, 'info');
                         }
 
                         const diffT = billDueDate.getTime() - today.getTime();
@@ -2029,14 +2212,14 @@
                         },0);
 
                         if (diffD <= 7 && diffD >= 0 && billToNotify > 0) {
-                            showFeedback(`VENCIMENTO PRÓXIMO: Fatura ${card.cardName} (Conta: ${account.name}) vence ${diffD === 0 ? 'HOJE' : 'em ' + diffD + ' dia(s)'}! Valor atual: ${formatCurrency(billToNotify)}`, 'info');
+                            showFeedback(`VENCIMENTO PRÓXIMO: Fatura ${cardDisplayName} (Conta: ${account.name}) vence ${diffD === 0 ? 'HOJE' : 'em ' + diffD + ' dia(s)'}! Valor atual: ${formatCurrency(billToNotify)}`, 'info');
                         }
                     });
                 }
             });
         };
         const suggestFinancialGoals = () => { 
-            if (!suggestedGoalsList || !noSuggestedGoalsMessage) return;
+             if (!suggestedGoalsList || !noSuggestedGoalsMessage) return;
             suggestedGoalsList.innerHTML = ''; noSuggestedGoalsMessage.classList.add('hidden');
             const lowBalanceAccounts = accounts.filter(acc => acc.balance < 500 && acc.type !== 'investimento');
             if (lowBalanceAccounts.length > 0) {
@@ -2045,401 +2228,350 @@
                 suggestedGoalsList.appendChild(li);
             }
             if (suggestedGoalsList.children.length === 0) noSuggestedGoalsMessage.classList.remove('hidden');
-
         };
 
-        const finalizeImportProcessing = (parsedTxs, sourceFileName = "Arquivo Importado") => { 
-            // Limpa ambos os inputs de ficheiro, caso existam
-            if(fileInput) fileInput.value = ''; 
-            if(fileInputPdf) fileInputPdf.value = '';
-            
-            // Reativa ambos os botões de importação
-            if(importFileBtn) importFileBtn.disabled = false;
-            if(importPdfFileBtn) importPdfFileBtn.disabled = false;
-
-            if (parsedTxs && parsedTxs.length > 0) {
-                importedTransactionsToReview = parsedTxs.map(tx => ({
-                    ...tx,
-                    id: generateUniqueId(), // ID temporário para a revisão
-                    sourceFile: sourceFileName 
-                }));
-                renderImportedTransactionsForReview();
-                importReviewSection.classList.remove('hidden');
-                showFeedback(`${parsedTxs.length} transações carregadas de "${sourceFileName}" para revisão.`, "info");
-            } else {
-                importReviewSection.classList.add('hidden');
-                showFeedback(`Nenhuma transação encontrada ou erro ao processar "${sourceFileName}".`, "info");
-            }
-        };
-        const handleImportError = (err,fileType, fileName = "arquivo") => { 
-            console.error(`Erro ao processar ${fileType} (${fileName}):`, err); 
-            showFeedback(`Erro ao processar ${fileType} "${fileName}". Verifique console.`, 'error'); 
-            importReviewSection.classList.add('hidden'); 
-            if(fileInput) fileInput.value=''; 
-            if(fileInputPdf) fileInputPdf.value='';
-            if(importFileBtn) importFileBtn.disabled=false; 
-            if(importPdfFileBtn) importPdfFileBtn.disabled=false;
-        };
-        
-        // --- Funções de Parsing (Placeholders Melhorados) ---
-        const parseOFX = async (file) => {
-            showFeedback(`Processando OFX: ${file.name}... (Lógica de parsing não implementada)`, "info", 10000);
-            console.log("Tentando processar OFX (lógica de parsing real necessária aqui).");
-            const parsedTransactions = []; 
-            finalizeImportProcessing(parsedTransactions, file.name);
-        };
-
-        const parseExcelCsv = async (file, extension) => {
-            showFeedback(`Processando ${extension.toUpperCase()}: ${file.name}... (Lógica de parsing não implementada)`, "info", 10000);
-            console.log(`Tentando processar ${extension.toUpperCase()} (lógica de parsing real necessária aqui).`);
-            
+        // --- Funções de PARSING de arquivos ---
+        const parseFileAndOpenReviewModal = async (file) => {
+            const fileName = file.name.toLowerCase();
+            let parsedTransactionsFromFunction = []; 
+            let errorOccurred = false;
             const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = e.target.result;
-                let workbook;
-                if (extension === '.csv') {
-                    console.warn("Parsing de CSV precisa de tratamento específico para delimitadores e encoding.");
-                    finalizeImportProcessing([], file.name); 
-                    return;
-                } else {
-                    workbook = XLSX.read(data, {type: 'array'});
+
+            showFeedback(`Processando ${fileName}...`, "info", 5000);
+            
+            reader.onload = async (e) => {
+                const fileContent = e.target.result;
+                try {
+                    if (fileName.endsWith('.ofx')) {
+                        parsedTransactionsFromFunction = processOFX(fileContent, fileName);
+                    } else if (fileName.endsWith('.pdf')) {
+                        parsedTransactionsFromFunction = await processPDF(fileContent, fileName);
+                    } else if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+                        parsedTransactionsFromFunction = await processExcel(fileContent, fileName);
+                    } else {
+                        showFeedback(`Formato de arquivo "${fileName.split('.').pop()}" não suportado. Use OFX, PDF ou Excel.`, 'error');
+                        errorOccurred = true;
+                    }
+
+                    if (errorOccurred) {
+                        if(loadFileForReviewBtn) loadFileForReviewBtn.disabled = false;
+                        if(importFileInputModal) importFileInputModal.value = '';
+                        return;
+                    }
+
+                    if (parsedTransactionsFromFunction.length > 0) {
+                        importedTransactionsToReview = parsedTransactionsFromFunction.map(tx => ({...tx, id: tx.tempId || generateUniqueId() })); 
+                        renderReviewModalTable();
+                        if(fileImportSelectionModal) fileImportSelectionModal.classList.add('hidden');
+                        if(reviewImportedModal) reviewImportedModal.classList.remove('hidden');
+                    } else if (!errorOccurred) { 
+                        showFeedback(`Nenhuma transação encontrada ou erro ao processar "${fileName}".`, "info");
+                    }
+                } catch (err) {
+                     console.error("Erro no parsing do ficheiro:", err);
+                     showFeedback(`Erro detalhado ao processar ${fileName}: ${err.message}`, "error");
+                     errorOccurred = true; 
+                } finally {
+                     if(loadFileForReviewBtn) loadFileForReviewBtn.disabled = false;
+                     if(importFileInputModal) importFileInputModal.value = '';
                 }
-
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false, dateNF:'yyyy-mm-dd'}); 
-
-                console.log("Dados brutos do Excel/CSV:", jsonData);
-                const parsedTransactions = []; 
-                finalizeImportProcessing(parsedTransactions, file.name);
-            };
-            reader.onerror = function(err) {
-                handleImportError(err, extension.toUpperCase(), file.name);
             };
 
-            if (extension === '.csv') {
+            reader.onerror = () => {
+                showFeedback(`Erro ao ler o ficheiro ${fileName}.`, "error");
+                if(loadFileForReviewBtn) loadFileForReviewBtn.disabled = false;
+                if(importFileInputModal) importFileInputModal.value = '';
+            };
+
+            if (fileName.endsWith('.ofx')) {
+                reader.readAsText(file); 
+            } else if (fileName.endsWith('.pdf') || fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
                 reader.readAsArrayBuffer(file); 
             } else {
-                reader.readAsArrayBuffer(file);
-            }
-        };
-
-        const processAndStructureTextLines = (text, fileName) => {
-            console.log(`Processando texto extraído de ${fileName}. Conteúdo abaixo (primeiros 1000 caracteres):`);
-            console.log(text.substring(0, 1000) + (text.length > 1000 ? "..." : ""));
-            
-            const transactions = [];
-            const lines = text.split('\n');
-            
-            // Padrões de data mais abrangentes
-            const datePatterns = [
-                /\b(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4})\b/g, // DD/MM/YYYY, DD.MM.YYYY, DD/MM/YY, DD.MM.YY
-                /\b(\d{4}[-\/\.]\d{1,2}[-\/\.]\d{1,2})\b/g,    // YYYY-MM-DD, YYYY/MM/DD
-                /\b(\d{1,2}\s+(?:Jan|Fev|Mar|Abr|Mai|Jun|Jul|Ago|Set|Out|Nov|Dez)\.?\s+\d{2,4})\b/gi // 01 Jan 2023
-            ];
-            
-            lines.forEach(line => {
-                line = line.trim();
-                if (line.length < 5) return; 
-
-                let extractedDate = null;
-                for (const pattern of datePatterns) {
-                    // Resetar lastIndex para cada padrão, pois são globais
-                    pattern.lastIndex = 0; 
-                    const dateMatch = pattern.exec(line);
-                    if (dateMatch) {
-                        extractedDate = formatDateFromVariousFormats(dateMatch[0]);
-                        if (extractedDate) break; // Usa a primeira data válida encontrada
-                    }
-                }
-
-                const valueInfo = parseCurrencyValue(line); 
-                
-                if (extractedDate && valueInfo.value > 0) {
-                    let description = line;
-                    // Remover a data e o valor da linha para obter a descrição
-                    datePatterns.forEach(pattern => { // Tenta remover todos os formatos de data
-                        pattern.lastIndex = 0; // Resetar
-                        description = description.replace(pattern, "").trim();
-                    });
-                    if (valueInfo.extractedString) {
-                        description = description.replace(valueInfo.extractedString, "").trim();
-                    }
-                    description = description.replace(/\s\s+/g, ' ').trim(); // Remove espaços extras
-
-                    let type = 'despesa'; 
-                    if (valueInfo.isCredit === true) {
-                        type = 'receita';
-                    } else if (valueInfo.isCredit === false) {
-                        type = 'despesa';
-                    } else { 
-                        if (/(crédito|cred|recebimento|depósito|rendimento|entrada|valor creditado)/i.test(description) || /(crédito|cred|recebimento|depósito|rendimento|entrada|valor creditado)/i.test(line)) type = 'receita';
-                        else if (/(débito|deb|pagamento|compra|saque|saída|valor debitado)/i.test(description) || /(débito|deb|pagamento|compra|saque|saída|valor debitado)/i.test(line)) type = 'despesa';
-                    }
-                    
-                    if (description.length < 3 || /^\d+$/.test(description) || description.toLowerCase() === "saldo anterior" || description.toLowerCase().startsWith("saldo ")) {
-                         description = `Transação importada (${fileName})`;
-                    }
-                    // Remove palavras comuns de extrato que não são parte da descrição útil
-                    description = description.replace(/\b(SALDO ANTERIOR|SALDO DO DIA|SALDO FINAL|HISTORICO|LANÇAMENTOS|EXTRATO)\b/gi, "").trim();
-                    description = description.replace(/\s\s+/g, ' ').trim();
-
-
-                    transactions.push({
-                        id: generateUniqueId(), 
-                        date: extractedDate,
-                        description: description || `Importado de ${fileName}`,
-                        value: valueInfo.value,
-                        type: type,
-                        fundamentalType: type === 'receita' || type === 'transferencia_entrada' ? 'receita' : 'despesa',
-                        category: 'Revisar Importação', 
-                        installments: '1/1',
-                        isPaid: false, 
-                        accountId: null, 
-                        fundSource: 'account_balance', 
-                        isCreditCardTransaction: false,
-                        sourceFile: fileName,
-                        fundamentalTypeOriginalSignal: valueInfo.isCredit === null ? (type === 'receita' ? 1 : -1) : (valueInfo.isCredit ? 1 : -1)
-                    });
-                }
-            });
-
-            if (transactions.length === 0) {
-                console.warn(`Nenhuma transação estruturada pôde ser extraída de ${fileName} com a lógica atual.`);
-                showFeedback(`Nenhuma transação estruturada encontrada em ${fileName}. Verifique o conteúdo e a lógica de parsing.`, "info");
-            }
-            return transactions;
-        };
-
-        const parseWord = async (file) => { 
-            showFeedback(`Processando Word: ${file.name}...`, "info", 15000);
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const result = await mammoth.extractRawText({ arrayBuffer });
-                const text = result.value;
-                const structuredTxs = processAndStructureTextLines(text, file.name);
-                finalizeImportProcessing(structuredTxs, file.name);
-            } catch (err) {
-                handleImportError(err, "Word", file.name);
-            }
-        };
-
-        const parseImage = async (file) => {
-            showFeedback(`Processando Imagem com OCR: ${file.name}... (Pode demorar)`, "info", 30000);
-            try {
-                const { data: { text } } = await Tesseract.recognize(file, 'por', { logger: m => console.log(m.status, Math.round(m.progress * 100) + '%') });
-                const structuredTxs = processAndStructureTextLines(text, file.name);
-                finalizeImportProcessing(structuredTxs, file.name);
-            } catch (err) {
-                handleImportError(err, "Imagem", file.name);
-            }
-        };
-
-        const parsePDF = async (file) => {
-            if (typeof pdfjsLib === 'undefined') {
-                handleImportError(new Error("Biblioteca PDF.js não carregada."), "PDF", file.name);
-                return;
-            }
-            showFeedback(`Processando PDF: ${file.name}...`, "info", 20000);
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                let fullText = "";
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    fullText += textContent.items.map(item => item.str).join(" ") + "\n"; 
-                }
-                const structuredTxs = processAndStructureTextLines(fullText, file.name);
-                finalizeImportProcessing(structuredTxs, file.name);
-            } catch (err) {
-                handleImportError(err, "PDF", file.name);
+                 showFeedback(`Formato de arquivo "${fileName.split('.').pop()}" não suportado. Use OFX, PDF ou Excel.`, 'error');
+                 if(loadFileForReviewBtn) loadFileForReviewBtn.disabled = false;
+                 if(importFileInputModal) importFileInputModal.value = '';
             }
         };
         
-        // --- Filter Population Functions ---
-        const populateMainFilters = () => {
-            populateCategorySelect(filterMainCategorySelect, "filter");
-            populateAccountSelects(filterMainAccountSelect, false, true, true); 
-        };
 
-        const populateImportFilters = () => {
-            populateCategorySelect(filterImportCategorySelect, "filter");
-            populateAccountSelects(filterImportAccountSelect, false, true, true); 
-        };
-        
-        // --- Função para controlar visibilidade dos controlos de edição em lote ---
-        const updateBulkEditControlsVisibility = () => {
-            if (!bulkEditImportedControls || !selectAllImportedCheckbox) return;
-            const selectedCheckboxes = document.querySelectorAll('#imported-transactions-table-body .imported-transaction-checkbox:checked');
-            const hasSelected = selectedCheckboxes.length > 0;
-            bulkEditImportedControls.classList.toggle('hidden', !hasSelected);
-
-            const allVisibleCheckboxes = document.querySelectorAll('#imported-transactions-table-body .imported-transaction-checkbox');
-            selectAllImportedCheckbox.checked = allVisibleCheckboxes.length > 0 && selectedCheckboxes.length === allVisibleCheckboxes.length;
-        };
-
-
-        // --- Render Imported Transactions with Filters ---
-        const renderImportedTransactionsForReview = (filters = {}) => {
-            if (!importedTransactionsTableBody) return;
-            importedTransactionsTableBody.innerHTML = '';
-            if (!importedTransactionsToReview || importedTransactionsToReview.length === 0) {
-                importReviewSection.classList.add('hidden');
-                if (selectAllImportedCheckbox) selectAllImportedCheckbox.checked = false;
-                updateBulkEditControlsVisibility();
-                return;
-            }
-
-            const filteredForReview = importedTransactionsToReview.filter(tx => {
-                if (filters.type && filters.type !== "all" && tx.type !== filters.type) return false;
-                if (filters.category && filters.category !== "all" && tx.category !== filters.category) return false;
-                if (filters.accountId && filters.accountId !== "all") {
-                    if (filters.accountId === "none" && tx.accountId) return false;
-                    if (filters.accountId !== "none" && tx.accountId !== filters.accountId) return false;
-                }
-                if (filters.status && filters.status !== "all" && (filters.status === "true" ? !tx.isPaid : tx.isPaid)) return false;
-                return true;
+        // --- Nova Lógica para Importação com Modais ---
+        if (openFileImportModalHeader) {
+            openFileImportModalHeader.addEventListener('click', () => {
+                if (fileImportSelectionModal) fileImportSelectionModal.classList.remove('hidden');
+                if (fileImportArrow) fileImportArrow.classList.toggle('rotated'); 
             });
+        }
+
+        if (closeFileImportSelectionModalBtn) {
+            closeFileImportSelectionModalBtn.addEventListener('click', () => {
+                if (fileImportSelectionModal) fileImportSelectionModal.classList.add('hidden');
+                if (fileImportArrow) fileImportArrow.classList.remove('rotated'); 
+            });
+        }
+        if (cancelFileImportSelectionBtn) {
+            cancelFileImportSelectionBtn.addEventListener('click', () => {
+                if (fileImportSelectionModal) fileImportSelectionModal.classList.add('hidden');
+                 if(importFileInputModal) importFileInputModal.value = '';
+                if (fileImportArrow) fileImportArrow.classList.remove('rotated');
+            });
+        }
+
+        if (loadFileForReviewBtn) {
+            loadFileForReviewBtn.addEventListener('click', async () => {
+                if (!importFileInputModal.files || importFileInputModal.files.length === 0) {
+                    showFeedback('Nenhum arquivo selecionado.', 'error');
+                    return;
+                }
+                const file = importFileInputModal.files[0];
+                loadFileForReviewBtn.disabled = true;
+                await parseFileAndOpenReviewModal(file); 
+            });
+        }
+
+        // Funções para Modal de Revisão
+        const renderReviewModalTable = () => {
+            if (!reviewImportedTableBody || !importedTransactionsToReview) return;
+            reviewImportedTableBody.innerHTML = '';
+            noTransactionsToReviewMessage.classList.toggle('hidden', importedTransactionsToReview.length > 0);
+            if (selectAllReviewCheckbox) selectAllReviewCheckbox.checked = importedTransactionsToReview.every(tx => tx.isSelected !== false);
 
 
-            filteredForReview.forEach((tx) => { 
-                const tr = document.createElement('tr'); tr.className = 'bg-white hover:bg-gray-50';
-                const idxInMainArray = importedTransactionsToReview.findIndex(item => item.id === tx.id);
+            importedTransactionsToReview.forEach((tx, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'bg-white hover:bg-gray-50 text-sm';
 
-
-                let accOpts = accounts.map(a=>`<option value="${a.id}" ${tx.accountId===a.id?'selected':''}>${a.name} (${a.type==='corrente'?'C/C':(a.type==='poupanca'?'Poupança':'Dinheiro')})</option>`).join('');
+                const accountOptions = accounts.map(a => `<option value="${a.id}" ${tx.accountId === a.id ? 'selected' : ''}>${a.name}</option>`).join('');
+                const categoryOptions = categories.filter(c => c !== "Revisar Importação").map(c => `<option value="${c}" ${tx.category === c ? 'selected' : ''}>${c}</option>`).join('');
                 
-                const valFmt = typeof tx.value==='number'?tx.value.toFixed(2):'0.00';
-                const instTotal=tx.installmentsTotal||(tx.installments?parseInt(tx.installments.split('/')[1]):1)||1;
-                const instPaid=tx.installmentsPaid||(tx.installments?parseInt(tx.installments.split('/')[0]):(tx.isPaid?1:0))||0;
-
                 tr.innerHTML = `
-                    <td class="px-2 py-2 text-center"><input type="checkbox" class="imported-transaction-checkbox form-checkbox h-4 w-4 text-blue-600" data-index="${idxInMainArray}" checked></td>
-                    <td class="px-2 py-2"><input type="date" class="date-input w-full border rdd px-1 py-0.5 text-xs" value="${tx.date||new Date().toISOString().split('T')[0]}" data-index="${idxInMainArray}"></td>
-                    <td class="px-2 py-2"><textarea class="description-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idxInMainArray}" rows="2">${tx.description||''}</textarea></td>
-                    <td class="px-2 py-2"><input type="number" step="0.01" class="value-input w-24 border rdd px-1 py-0.5 text-xs" value="${valFmt}" data-index="${idxInMainArray}"></td>
-                    <td class="px-2 py-2"><select class="type-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idxInMainArray}"><option value="receita" ${tx.type==='receita'?'selected':''}>Receita</option><option value="despesa" ${tx.type==='despesa'?'selected':''}>Despesa</option><option value="transferencia_entrada" ${tx.type==='transferencia_entrada'?'selected':''}>Transf. Entrada</option><option value="transferencia_saida" ${tx.type==='transferencia_saida'?'selected':''}>Transf. Saída</option></select></td>
-                    <td class="px-2 py-2"><select class="category-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idxInMainArray}">${categories.sort((a,b)=>a.localeCompare(b)).map(c=>`<option value="${c}" ${tx.category===c?'selected':''}>${c}</option>`).join('')}<option value="nova-categoria-review">Adicionar Nova...</option></select><input type="text" class="new-category-input-review hidden w-full border rdd px-1 py-0.5 text-xs mt-1" placeholder="Nova Cat." data-index="${idxInMainArray}" value="${!categories.includes(tx.category)&&tx.category&&tx.category!=='Outros'&&!tx.category?.startsWith('Importado')?tx.category:''}"></td>
-                    <td class="px-2 py-2"><div class="flex space-x-1"><input type="number" min="1" value="${instTotal}" class="installments-total-review w-16 border rdd px-1 py-0.5 text-xs" data-index="${idxInMainArray}" title="Total Parcelas"><input type="number" min="0" value="${instPaid}" class="installments-paid-review w-16 border rdd px-1 py-0.5 text-xs" data-index="${idxInMainArray}" title="Parcelas Pagas"></div></td>
-                    <td class="px-2 py-2"><select class="account-select-review w-full border rdd px-1 py-0.5 text-xs" data-index="${idxInMainArray}"><option value="">Não Vincular</option>${accOpts}</select></td>
-                    <td class="px-2 py-2"><select class="fund-source-select-review hidden w-full border rdd px-1 py-0.5 text-xs" data-index="${idxInMainArray}"></select></td> <!-- Initially hidden, populated if account is selected -->
-                    <td class="px-2 py-2"><select class="paid-status-input w-full border rdd px-1 py-0.5 text-xs" data-index="${idxInMainArray}"><option value="false" ${!tx.isPaid?'selected':''}>Não Pago</option><option value="true" ${tx.isPaid?'selected':''}>Pago</option></select></td>`;
-                importedTransactionsTableBody.appendChild(tr);
-                
-                const currentIdx = idxInMainArray; 
-                const accSelEl=tr.querySelector('.account-select-review');
-                const fundSourceSelEl = tr.querySelector('.fund-source-select-review');
+                    <td class="px-2 py-2 text-center"><input type="checkbox" class="review-transaction-checkbox form-checkbox h-4 w-4 text-blue-600" data-index="${index}" ${tx.isSelected !== false ? 'checked' : ''}></td>
+                    <td class="px-2 py-2"><input type="date" class="w-full" value="${tx.date || ''}" data-field="date" data-index="${index}"></td>
+                    <td class="px-2 py-2"><textarea class="w-full" data-field="description" data-index="${index}" rows="2">${tx.description || ''}</textarea></td>
+                    <td class="px-2 py-2"><input type="number" step="0.01" class="w-24" value="${(tx.value || 0).toFixed(2)}" data-field="value" data-index="${index}"></td>
+                    <td class="px-2 py-2">
+                        <select class="w-full type-select-review" data-field="type" data-index="${index}">
+                            <option value="despesa" ${tx.type === 'despesa' ? 'selected' : ''}>Despesa</option>
+                            <option value="receita" ${tx.type === 'receita' ? 'selected' : ''}>Receita</option>
+                        </select>
+                    </td>
+                    <td class="px-2 py-2">
+                        <select class="w-full category-select-review" data-field="category" data-index="${index}">
+                            <option value="Revisar Importação" ${tx.category === 'Revisar Importação' ? 'selected' : ''}>Revisar Importação</option>
+                            ${categoryOptions}
+                            <option value="nova-categoria-review-row">Adicionar Nova...</option>
+                        </select>
+                        <input type="text" class="new-category-input-review-row hidden w-full mt-1" placeholder="Nova Cat." data-index="${index}">
+                    </td>
+                    <td class="px-2 py-2">
+                        <div class="flex items-center space-x-1">
+                            <input type="number" min="0" class="w-12 text-center" value="${tx.installmentsPaid || 0}" data-field="installmentsPaid" data-index="${index}" title="Parcelas Pagas">
+                            <span>/</span>
+                            <input type="number" min="1" class="w-12 text-center" value="${tx.installmentsTotal || 1}" data-field="installmentsTotal" data-index="${index}" title="Total Parcelas">
+                        </div>
+                    </td>
+                    <td class="px-2 py-2">
+                        <select class="w-full account-select-review" data-field="accountId" data-index="${index}">
+                            <option value="">Nenhuma</option>
+                            ${accountOptions}
+                        </select>
+                    </td>
+                    <td class="px-2 py-2">
+                        <select class="w-full fund-source-select-review" data-field="fundSource" data-index="${index}" ${tx.type !== 'despesa' ? 'disabled' : ''}>
+                            <!-- Options preenchidas por JS -->
+                        </select>
+                    </td>
+                    <td class="px-2 py-2">
+                        <select class="w-full" data-field="isPaid" data-index="${index}">
+                            <option value="false" ${!tx.isPaid ? 'selected' : ''}>Pendente</option>
+                            <option value="true" ${tx.isPaid ? 'selected' : ''}>Paga</option>
+                        </select>
+                    </td>
+                `;
+                reviewImportedTableBody.appendChild(tr);
 
-                if(tx.accountId) accSelEl.value=tx.accountId;
-                
-                if (tx.accountId && importedTransactionsToReview[currentIdx].type === 'despesa') {
-                    populateFundSourceSelectForImportRow(fundSourceSelEl, tx.accountId);
-                    fundSourceSelEl.value = importedTransactionsToReview[currentIdx].fundSource || 'account_balance';
-                    fundSourceSelEl.classList.remove('hidden');
+                const accSelect = tr.querySelector('.account-select-review');
+                const fundSelect = tr.querySelector('.fund-source-select-review');
+                if (tx.accountId && tx.type === 'despesa') {
+                    populateFundSourceSelect(tx.accountId, fundSelect);
+                    fundSelect.value = tx.fundSource || 'account_balance';
+                } else {
+                     fundSelect.innerHTML = '<option value="account_balance">Saldo Conta</option>'; 
                 }
 
+                tr.querySelectorAll('input, select, textarea').forEach(input => {
+                    const eventType = input.tagName.toLowerCase() === 'select' || input.type === 'checkbox' || input.type === 'date' ? 'change' : 'blur';
+                    input.addEventListener(eventType, (e) => {
+                        const field = e.target.dataset.field;
+                        const idx = parseInt(e.target.dataset.index);
+                        let value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+                        if (e.target.type === 'number') value = parseFloat(value) || 0;
+                        if (field === 'isPaid') value = (value === 'true');
+                        
+                        importedTransactionsToReview[idx][field] = value;
 
-                const catInEl=tr.querySelector('.category-input');const newCatInEl=tr.querySelector('.new-category-input-review');if(!categories.includes(tx.category)&&tx.category&&tx.category!=='Outros'&&!tx.category?.startsWith('Importado')){catInEl.value='nova-categoria-review';newCatInEl.classList.remove('hidden');}
-                
-                tr.querySelector('.date-input').addEventListener('change',(e)=>importedTransactionsToReview[currentIdx].date=e.target.value);
-                tr.querySelector('.description-input').addEventListener('input',(e)=>importedTransactionsToReview[currentIdx].description=e.target.value);
-                tr.querySelector('.value-input').addEventListener('change',(e)=>{const v=parseFloat(e.target.value)||0; const s=importedTransactionsToReview[currentIdx].fundamentalTypeOriginalSignal||(v>=0?1:-1); importedTransactionsToReview[currentIdx].value=Math.abs(v); if(v!==0)importedTransactionsToReview[currentIdx].fundamentalType=v*s>=0?'receita':'despesa'; else importedTransactionsToReview[currentIdx].fundamentalType=s>0?'receita':'despesa'; if(['receita','despesa'].includes(importedTransactionsToReview[currentIdx].type)||!importedTransactionsToReview[currentIdx].type){importedTransactionsToReview[currentIdx].type=importedTransactionsToReview[currentIdx].fundamentalType;tr.querySelector('.type-input').value=importedTransactionsToReview[currentIdx].type;}});
-                tr.querySelector('.type-input').addEventListener('change',(e)=>{const nT=e.target.value; importedTransactionsToReview[currentIdx].type=nT; if(nT==='receita'||nT==='transferencia_entrada'){importedTransactionsToReview[currentIdx].fundamentalType='receita';importedTransactionsToReview[currentIdx].fundamentalTypeOriginalSignal=1;}else{importedTransactionsToReview[currentIdx].fundamentalType='despesa';importedTransactionsToReview[currentIdx].fundamentalTypeOriginalSignal=-1;} if(nT === 'despesa' && accSelEl.value) { populateFundSourceSelectForImportRow(fundSourceSelEl, accSelEl.value); fundSourceSelEl.classList.remove('hidden'); importedTransactionsToReview[currentIdx].fundSource = fundSourceSelEl.value || 'account_balance';} else {fundSourceSelEl.classList.add('hidden'); fundSourceSelEl.innerHTML = ''; importedTransactionsToReview[currentIdx].fundSource = 'account_balance';}});
-                catInEl.addEventListener('change',(e)=>{if(e.target.value==='nova-categoria-review'){newCatInEl.classList.remove('hidden');newCatInEl.focus();importedTransactionsToReview[currentIdx].category='';}else{newCatInEl.classList.add('hidden');newCatInEl.value='';importedTransactionsToReview[currentIdx].category=e.target.value;}});
-                newCatInEl.addEventListener('blur',(e)=>{if(e.target.value.trim()&&catInEl.value==='nova-categoria-review')importedTransactionsToReview[currentIdx].category=e.target.value.trim();});
-                accSelEl.addEventListener('change',(e)=>{importedTransactionsToReview[currentIdx].accountId=e.target.value; importedTransactionsToReview[currentIdx].isCreditCardTransaction=false; if(importedTransactionsToReview[currentIdx].type === 'despesa' && e.target.value) { populateFundSourceSelectForImportRow(fundSourceSelEl, e.target.value); fundSourceSelEl.classList.remove('hidden'); importedTransactionsToReview[currentIdx].fundSource = fundSourceSelEl.value || 'account_balance';} else {fundSourceSelEl.classList.add('hidden'); fundSourceSelEl.innerHTML = ''; importedTransactionsToReview[currentIdx].fundSource = 'account_balance';}});
-                fundSourceSelEl.addEventListener('change', (e) => { importedTransactionsToReview[currentIdx].fundSource = e.target.value; importedTransactionsToReview[currentIdx].isCreditCardTransaction = e.target.value.startsWith('credit_card_');});
-                tr.querySelector('.paid-status-input').addEventListener('change',(e)=>importedTransactionsToReview[currentIdx].isPaid=e.target.value==='true');
-                const instTotEl=tr.querySelector('.installments-total-review');const instPaidEl=tr.querySelector('.installments-paid-review');
-                instTotEl.addEventListener('change',(e)=>{let t=parseInt(e.target.value)||1;if(t<1)t=1;e.target.value=t;importedTransactionsToReview[currentIdx].installmentsTotal=t;if(parseInt(instPaidEl.value)>t){instPaidEl.value=t;importedTransactionsToReview[currentIdx].installmentsPaid=t;}});
-                instPaidEl.addEventListener('change',(e)=>{const t=parseInt(instTotEl.value)||1;let p=parseInt(e.target.value)||0;if(p<0)p=0;if(p>t)p=t;e.target.value=p;importedTransactionsToReview[currentIdx].installmentsPaid=p;});
-                tr.querySelector('.imported-transaction-checkbox').addEventListener('change', updateBulkEditControlsVisibility);
+                        if (field === 'type' || field === 'accountId') { 
+                            const currentTx = importedTransactionsToReview[idx];
+                            const currentRow = e.target.closest('tr');
+                            const currentFundSelect = currentRow.querySelector('.fund-source-select-review');
+                            if (currentTx.type === 'despesa' && currentTx.accountId) {
+                                populateFundSourceSelect(currentTx.accountId, currentFundSelect);
+                                currentFundSelect.disabled = false;
+                                if (!Array.from(currentFundSelect.options).some(opt => opt.value === currentTx.fundSource)) {
+                                     currentTx.fundSource = 'account_balance';
+                                }
+                                currentFundSelect.value = currentTx.fundSource;
+                            } else {
+                                currentFundSelect.innerHTML = '<option value="account_balance">Saldo Conta</option>';
+                                currentFundSelect.disabled = true;
+                                currentTx.fundSource = 'account_balance';
+                            }
+                        }
+                         if (field === 'category' && value === 'nova-categoria-review-row') {
+                            const newCatInput = currentRow.querySelector('.new-category-input-review-row');
+                            newCatInput.classList.remove('hidden');
+                            newCatInput.focus();
+                        } else if (field === 'category' && value !== 'nova-categoria-review-row') {
+                             const newCatInput = currentRow.querySelector('.new-category-input-review-row');
+                             newCatInput.classList.add('hidden');
+                             newCatInput.value = '';
+                        }
+                    });
+                });
+                 tr.querySelector('.new-category-input-review-row').addEventListener('blur', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    const newCategoryName = e.target.value.trim();
+                    if (newCategoryName) {
+                        importedTransactionsToReview[idx].category = newCategoryName;
+                        const catSelect = e.target.closest('td').querySelector('.category-select-review');
+                        if(catSelect.value === 'nova-categoria-review-row') catSelect.value = newCategoryName; 
+                    }
+                 });
+
+
             });
-            updateBulkEditControlsVisibility(); // Chamada inicial após renderizar
         };
         
-        function populateFundSourceSelectForImportRow(selectEl, accountId) {
-            selectEl.innerHTML = '';
-            const account = accounts.find(acc => acc.id === accountId);
-            if (!account) return;
-
-            const balanceOpt = document.createElement('option');
-            balanceOpt.value = 'account_balance';
-            balanceOpt.textContent = 'Saldo Conta';
-            selectEl.appendChild(balanceOpt);
-
-            if (account.type === 'corrente') {
-                if (account.limitOverdraft > 0) {
-                    const overdraftOpt = document.createElement('option');
-                    overdraftOpt.value = 'overdraft';
-                    overdraftOpt.textContent = 'Cheque Esp.';
-                    selectEl.appendChild(overdraftOpt);
-                }
-                if (account.creditCards && account.creditCards.length > 0) {
-                    account.creditCards.forEach(card => {
-                        const cardDisplayName = card.cardBrand === 'Outra' ? card.customCardName : card.cardBrand;
-                        const cardOpt = document.createElement('option');
-                        cardOpt.value = `credit_card_${card.cardId}`;
-                        cardOpt.textContent = `Cartão: ${(cardDisplayName || 'Cartão').substring(0,10)}..`;
-                        selectEl.appendChild(cardOpt);
-                    });
-                }
-            }
+        if(selectAllReviewCheckbox) {
+            selectAllReviewCheckbox.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                document.querySelectorAll('.review-transaction-checkbox').forEach((checkbox, idx) => {
+                    checkbox.checked = isChecked;
+                    if(importedTransactionsToReview[idx]) importedTransactionsToReview[idx].isSelected = isChecked;
+                });
+            });
         }
 
 
-        document.querySelectorAll('.filter-import-select').forEach(sel => sel.addEventListener('change', () => {
-            const filters = {
-                type: filterImportTypeSelect.value,
-                category: filterImportCategorySelect.value,
-                accountId: filterImportAccountSelect.value,
-                status: filterImportStatusSelect.value,
-            };
-            renderImportedTransactionsForReview(filters);
-        }));
+        if (closeReviewImportedModalBtn) closeReviewImportedModalBtn.addEventListener('click', () => { if(reviewImportedModal) reviewImportedModal.classList.add('hidden'); importedTransactionsToReview = []; });
+        if (cancelReviewImportBtn) cancelReviewImportBtn.addEventListener('click', () => { if(reviewImportedModal) reviewImportedModal.classList.add('hidden'); importedTransactionsToReview = []; });
 
+        if (confirmReviewedImportBtn) {
+            confirmReviewedImportBtn.addEventListener('click', () => {
+                const transactionsToAdd = importedTransactionsToReview.filter(tx => tx.isSelected !== false);
+                let importedCount = 0;
+
+                transactionsToAdd.forEach(importedTx => {
+                    let currentAccountId = importedTx.accountId; 
+                    if (!importedTx.description || isNaN(parseFloat(importedTx.value)) || parseFloat(importedTx.value) <=0 || !currentAccountId && importedTx.type.includes('transferencia') || !importedTx.category) {
+                        showFeedback(`Transação "${importedTx.description || 'Desconhecida'}" está incompleta e não será importada. Verifique descrição, valor, categoria e conta (obrigatória para transferências).`, 'error');
+                        return; 
+                    }
+                    
+                    let finalCategory = importedTx.category;
+                    if (finalCategory === 'nova-categoria-review-row') {
+                        const rowElement = Array.from(reviewImportedTableBody.children).find(row => row.querySelector(`[data-index="${importedTransactionsToReview.indexOf(importedTx)}"]`));
+                        const newCatInputForRow = rowElement ? rowElement.querySelector('.new-category-input-review-row') : null;
+
+                        if(newCatInputForRow && newCatInputForRow.value.trim()) {
+                            finalCategory = newCatInputForRow.value.trim();
+                            if (!categories.includes(finalCategory)) {
+                                categories.push(finalCategory);
+                                populateCategorySelect(modalCategorySelect); 
+                                populateLinkSelectedCategorySelect();
+                            }
+                        } else {
+                             showFeedback(`Categoria nova para "${importedTx.description}" não foi definida. Usando "Outros".`, 'info');
+                            finalCategory = "Outros";
+                        }
+                    }
+
+
+                    const totalInstallments = parseInt(importedTx.installmentsTotal) || 1;
+                    const installmentsPaid = parseInt(importedTx.installmentsPaid) || 0;
+                    const baseDate = new Date(importedTx.date + "T00:00:00"); 
+                    const originalGroupIdForInstallments = totalInstallments > 1 ? generateUniqueId() : null;
+
+                    for (let i = 0; i < totalInstallments; i++) {
+                        const installmentDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, baseDate.getDate());
+                        
+                         if (installmentDate.getDate() !== baseDate.getDate()) {
+                            installmentDate.setDate(0); 
+                        }
+
+                        const newTransaction = {
+                            id: generateUniqueId(),
+                            date: installmentDate.toISOString().split('T')[0],
+                            description: totalInstallments > 1 ? `${importedTx.description} (${i + 1}/${totalInstallments})` : importedTx.description,
+                            value: parseFloat(importedTx.value),
+                            type: importedTx.type,
+                            fundamentalType: (importedTx.type === 'receita' || importedTx.type === 'transferencia_entrada') ? 'receita' : 'despesa',
+                            category: finalCategory,
+                            accountId: currentAccountId, 
+                            fundSource: currentAccountId ? (importedTx.fundSource || 'account_balance') : null,
+                            isCreditCardTransaction: currentAccountId ? (importedTx.fundSource || '').startsWith('credit_card_') : false,
+                            installments: `${i + 1}/${totalInstallments}`,
+                            isPaid: i < installmentsPaid || (totalInstallments === 1 && importedTx.isPaid), 
+                            originalGroupId: originalGroupIdForInstallments,
+                            destinationAccountId: importedTx.type.includes('transferencia') ? importedTx.destinationAccountId : null 
+                        };
+                        transactions.push(newTransaction);
+                        if (newTransaction.accountId) {
+                           updateAccountBalance(newTransaction.accountId, newTransaction.fundSource, newTransaction.value, newTransaction.fundamentalType, false, newTransaction.isPaid, newTransaction.destinationAccountId, newTransaction.type);
+                        }
+                    }
+                    importedCount++;
+                });
+
+                if (importedCount > 0) {
+                    saveData();
+                    renderAll();
+                    showFeedback(`${importedCount} transação(ões) importada(s) com sucesso!`, 'success');
+                } else if (transactionsToAdd.length > 0) {
+                     showFeedback('Nenhuma transação válida para importar após revisão.', 'info');
+                } else {
+                     showFeedback('Nenhuma transação selecionada ou processada para importação.', 'info');
+                }
+                
+                if(reviewImportedModal) reviewImportedModal.classList.add('hidden');
+                importedTransactionsToReview = [];
+            });
+        }
 
         // --- Event Listeners (Collapsible sections, etc.) ---
-        if(importHeader) importHeader.addEventListener('click', () => { importSectionContent.classList.toggle('hidden'); importArrow.classList.toggle('rotated'); });
-        if(importPdfHeader) importPdfHeader.addEventListener('click', () => { importPdfSectionContent.classList.toggle('hidden'); importPdfArrow.classList.toggle('rotated'); });
-
         if(reportsHeader) reportsHeader.addEventListener('click', () => { reportsSectionContent.classList.toggle('hidden'); reportsArrow.classList.toggle('rotated'); });
         if(suggestedGoalsHeader) suggestedGoalsHeader.addEventListener('click', () => { suggestedGoalsContent.classList.toggle('hidden'); suggestedGoalsArrow.classList.toggle('rotated'); if(!suggestedGoalsContent.classList.contains('hidden')) suggestFinancialGoals(); });
         if(clearAllDataLink) clearAllDataLink.addEventListener('click', () => requestDeleteConfirmation(null, 'allData'));
         if(transactionList) transactionList.addEventListener('change', (e) => { if (e.target.classList.contains('transaction-checkbox')) updateSelectedTransactionsActions(); });
         if(selectAllTransactionsCheckbox) selectAllTransactionsCheckbox.addEventListener('change', (e) => { document.querySelectorAll('#transaction-list .transaction-checkbox').forEach(cb => { cb.checked = e.target.checked; }); updateSelectedTransactionsActions(); });
-        // Listener para selectAllImportedCheckbox
-        if(selectAllImportedCheckbox) {
-            selectAllImportedCheckbox.addEventListener('change', (e) => {
-                document.querySelectorAll('#imported-transactions-table-body .imported-transaction-checkbox').forEach(cb => {
-                    cb.checked = e.target.checked;
-                });
-                updateBulkEditControlsVisibility();
-            });
-        }
-
 
         function updateSelectedTransactionsActions() {
             const selectedCheckboxes = document.querySelectorAll('#transaction-list .transaction-checkbox:checked'); 
-            const hasSelected = selectedCheckboxes.length > 0;
-            if(paySelectedTransactionsBtn) paySelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
-            if(unpaySelectedTransactionsBtn) unpaySelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
-            if(linkSelectedAccountSelect) linkSelectedAccountSelect.classList.toggle('hidden', !hasSelected);
-            if(linkSelectedTransactionsBtn) linkSelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
-            if(linkSelectedCategorySelect) linkSelectedCategorySelect.classList.toggle('hidden', !hasSelected);
-            if(linkSelectedCategoryBtn) linkSelectedCategoryBtn.classList.toggle('hidden', !hasSelected);
-            if(deleteSelectedTransactionsBtn) deleteSelectedTransactionsBtn.classList.toggle('hidden', !hasSelected);
+            const selectedCount = selectedCheckboxes.length;
+            const hasSelected = selectedCount > 0;
+
+            if(bulkActionsContainer) bulkActionsContainer.classList.toggle('hidden', !hasSelected);
+            if(selectedTransactionsCountEl) selectedTransactionsCountEl.textContent = selectedCount;
+
             const allVisibleCheckboxes = document.querySelectorAll('#transaction-list .transaction-checkbox');
             if(selectAllTransactionsCheckbox) selectAllTransactionsCheckbox.checked = allVisibleCheckboxes.length > 0 && selectedCheckboxes.length === allVisibleCheckboxes.length;
         }
         if(paySelectedTransactionsBtn) paySelectedTransactionsBtn.addEventListener('click', () => { const ids = Array.from(document.querySelectorAll('#transaction-list .transaction-checkbox:checked')).map(cb=>cb.dataset.id); let c=0; ids.forEach(id => {if(markTransactionAsPaid(id,false))c++;}); if(c>0)showFeedback(`${c} transações pagas.`,'success'); renderAll();});
         if(deleteSelectedTransactionsBtn) deleteSelectedTransactionsBtn.addEventListener('click', () => { const ids=Array.from(document.querySelectorAll('#transaction-list .transaction-checkbox:checked')).map(cb=>cb.dataset.id); if(ids.length>0) requestDeleteConfirmation(null,'transaction',true,ids);});
         
-        // --- Event Listener para Salvar Todos os Dados ---
-        if (saveAllDataLink) { // Alterado de saveAllDataBtn para saveAllDataLink
+        if (saveAllDataLink) { 
             saveAllDataLink.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevenir comportamento padrão de link
+                 e.preventDefault(); 
                 try {
                     const dataToSave = {
                         accounts: accounts,
@@ -2466,54 +2598,58 @@
             });
         }
         
-        // --- Event Listener para Importação de Arquivo (Geral) ---
-        if (importFileBtn) {
-            importFileBtn.addEventListener('click', async () => {
-                if (!fileInput.files || fileInput.files.length === 0) {
-                    showFeedback('Nenhum arquivo selecionado.', 'error'); return;
-                }
-                const file = fileInput.files[0];
-                const fileName = file.name.toLowerCase();
-                importFileBtn.disabled = true; 
-
-                // Não processa PDF aqui, pois tem sua própria seção
-                if (fileName.endsWith('.ofx')) {
-                    await parseOFX(file);
-                } else if (fileName.endsWith('.csv')) {
-                    await parseExcelCsv(file, '.csv');
-                } else if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
-                    await parseExcelCsv(file, fileName.endsWith('.xls') ? '.xls' : '.xlsx');
-                } else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
-                    await parseWord(file);
-                } else if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.gif') || fileName.endsWith('.bmp') || fileName.endsWith('.tiff') || fileName.endsWith('.webp')) {
-                    await parseImage(file);
-                } else {
-                    showFeedback('Formato de arquivo não suportado nesta seção. Para PDF, use a seção específica.', 'error');
-                    importFileBtn.disabled = false; 
-                    fileInput.value = ''; 
-                }
+        if(toggleFiltersBtn && mainFiltersCollapsibleContent) {
+            toggleFiltersBtn.addEventListener('click', () => {
+                mainFiltersCollapsibleContent.classList.toggle('expanded');
             });
         }
         
-        // --- Event Listener para Importação de Arquivo PDF ---
-        if (importPdfFileBtn) {
-            importPdfFileBtn.addEventListener('click', async () => {
-                if (!fileInputPdf.files || fileInputPdf.files.length === 0) {
-                    showFeedback('Nenhum arquivo PDF selecionado.', 'error'); return;
+        if (loadSavedDataBtn) {
+            loadSavedDataBtn.addEventListener('click', () => {
+                if (loadJsonInput) loadJsonInput.click();
+            });
+        }
+
+        if (loadJsonInput) {
+            loadJsonInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const loadedData = JSON.parse(e.target.result);
+                            if (loadedData && Array.isArray(loadedData.accounts) && Array.isArray(loadedData.transactions) && Array.isArray(loadedData.categories)) {
+                                accounts = loadedData.accounts;
+                                transactions = loadedData.transactions;
+                                categories = loadedData.categories;
+                                if (!categories.includes("Revisar Importação")) categories.push("Revisar Importação");
+                                if (!categories.includes("Transferências")) categories.push("Transferências");
+                                
+                                saveData(); 
+                                renderAll(); 
+                                showFeedback('Dados carregados com sucesso!', 'success');
+                            } else {
+                                showFeedback('Formato de arquivo JSON inválido.', 'error');
+                            }
+                        } catch (error) {
+                            console.error("Erro ao carregar dados do JSON:", error);
+                            showFeedback('Erro ao carregar o arquivo JSON. Verifique o console.', 'error');
+                        } finally {
+                            loadJsonInput.value = ''; 
+                        }
+                    };
+                    reader.readAsText(file);
                 }
-                const file = fileInputPdf.files[0];
-                importPdfFileBtn.disabled = true;
-                await parsePDF(file);
             });
         }
 
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            if (accountTypeSelect.value === 'corrente') {
-                overdraftSection.classList.remove('hidden');
-                creditCardSection.classList.remove('hidden');
-                if (linkedCardsContainer.children.length === 0) addCardInputFields(linkedCardsContainer);
+            if (accountTypeSelect && accountTypeSelect.value === 'corrente') { 
+                if(overdraftSection) overdraftSection.classList.remove('hidden');
+                if(creditCardSection) creditCardSection.classList.remove('hidden');
+                if (linkedCardsContainer && linkedCardsContainer.children.length === 0) addCardInputFields(linkedCardsContainer);
             }
             loadData(); 
         });
