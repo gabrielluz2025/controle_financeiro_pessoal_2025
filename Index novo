@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro Pessoal Unificado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* Slate-100 */
+        }
+        #feedback-message {
+            display: none; padding: 12px; margin-top: 16px; border-radius: 8px; font-weight: 500;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 2000; min-width: 300px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .feedback-success { background-color: #dcfce7; color: #166534; }
+        .feedback-error { background-color: #fee2e2; color: #991b1b; }
+        .feedback-info { background-color: #e0f2fe; color: #0369a1; }
+        .hidden { display: none !important; }
+        
+        .collapsible-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-radius: 0.5rem; transition: background-color 0.2s; }
+        .collapsible-header:hover { background-color: #f8fafc; }
+        .collapsible-header h2 { margin-bottom: 0; }
+        .arrow-icon { transition: transform 0.3s ease; }
+        .arrow-icon.rotated { transform: rotate(90deg); }
+
+        .paid-transaction td { text-decoration: line-through; color: #9ca3af; }
+        .pending-previous-month td { font-style: italic; }
+        .pending-previous-month:not(.paid-transaction) td { font-weight: 600; color: #b91c1c; }
+
+        .modal { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; overflow-y: auto; backdrop-filter: blur(4px); }
+        .modal-content { background-color: #fff; padding: 2rem; border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); width: 90%; max-width: 700px; margin-top: 2rem; margin-bottom: 2rem; max-height: 90vh; overflow-y: auto;}
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb; }
+        .modal-header h3 { font-size: 1.5rem; font-weight: 600; color: #1f2937; }
+        .modal-close-btn { background: none; border: none; font-size: 1.75rem; cursor: pointer; color: #6b7280; transition: color 0.2s; }
+        .modal-close-btn:hover { color: #1f2937; }
+        .modal-body label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #4b5563; }
+        .modal-body input, .modal-body select, .modal-body textarea { 
+            width: 100%; padding: 0.625rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; margin-bottom: 1rem; background-color: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .modal-body input:focus, .modal-body select:focus, .modal-body textarea:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3);
+            outline: none;
+        }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;}
+        
+        .transaction-type-tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid #e5e7eb; }
+        .transaction-type-tab {
+            padding: 0.75rem 1.25rem; cursor: pointer; font-weight: 500; color: #6b7280;
+            border-bottom: 2px solid transparent; margin-bottom: -2px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .transaction-type-tab:hover { color: #374151; }
+        .transaction-type-tab.active { color: #4f46e5; border-color: #4f46e5; }
+        
+        .table-action-btn { padding: 0.25rem; border-radius: 0.25rem; transition: background-color 0.2s; }
+        .table-action-btn:hover { background-color: #e5e7eb; }
+        .filters-collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; }
+        .filters-collapsible-content.expanded { max-height: 500px; }
+
+        .report-view-toggle button {
+            padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; border-radius: 0.375rem;
+            transition: all 0.2s; border: 1px solid #d1d5db;
+        }
+        .report-view-toggle button.active { background-color: #4f46e5; color: white; border-color: #4f46e5;}
+        .report-view-toggle button:not(.active) { background-color: white; color: #374151; }
+        .report-view-toggle button:not(.active):hover { background-color: #f3f4f6; }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+    <div class="max-w-7xl mx-auto space-y-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center py-4">
+            <h1 class="text-3xl font-bold text-slate-800">Painel Financeiro</h1>
+            <div class="flex items-center space-x-4">
+                <button id="clear-all-data-link" class="text-sm text-slate-500 hover:text-red-600 hover:underline">Limpar Tudo</button>
+            </div>
+        </header>
+
+        <!-- Painel de Resumo -->
+        <section id="summary-panel" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Cards de Resumo serão inseridos aqui pelo JS -->
+        </section>
+
+        <!-- Ações Rápidas -->
+        <section id="quick-actions" class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-bold text-slate-800 mb-4">Ações Rápidas</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button id="open-add-transaction-modal-main-btn" class="flex flex-col items-center justify-center p-4 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition">
+                    <div class="p-3 bg-indigo-200 rounded-full mb-2"><svg class="w-6 h-6 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></div>
+                    <span class="font-semibold text-indigo-800">Nova Transação</span>
+                </button>
+                <button id="open-report-section-btn" class="flex flex-col items-center justify-center p-4 bg-teal-50 hover:bg-teal-100 rounded-lg transition">
+                    <div class="p-3 bg-teal-200 rounded-full mb-2"><svg class="w-6 h-6 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg></div>
+                    <span class="font-semibold text-teal-800">Gerar Relatório</span>
+                </button>
+                <button id="load-saved-data-btn" class="flex flex-col items-center justify-center p-4 bg-sky-50 hover:bg-sky-100 rounded-lg transition">
+                    <div class="p-3 bg-sky-200 rounded-full mb-2"><svg class="w-6 h-6 text-sky-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></div>
+                    <span class="font-semibold text-sky-800">Carregar Dados</span>
+                </button>
+                 <button id="save-all-data-link" class="flex flex-col items-center justify-center p-4 bg-green-50 hover:bg-green-100 rounded-lg transition">
+                    <div class="p-3 bg-green-200 rounded-full mb-2"><svg class="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg></div>
+                    <span class="font-semibold text-green-800">Salvar Dados</span>
+                </button>
+            </div>
+             <input type="file" id="load-json-input" class="hidden" accept=".json">
+        </section>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Coluna Esquerda: Contas e Metas -->
+            <div class="lg:col-span-1 space-y-8">
+                <!-- Gerenciar Contas -->
+                <section id="accounts-section" class="bg-white p-6 rounded-xl shadow-lg">
+                    <div id="accounts-header" class="collapsible-header !p-0 !border-0 mb-4">
+                        <h2 class="text-xl font-bold text-slate-800">Minhas Contas</h2>
+                        <svg class="arrow-icon w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div id="accounts-content" class="space-y-4">
+                        <ul id="accounts-list" class="space-y-3"></ul>
+                        <button id="open-add-account-modal-btn" class="w-full mt-4 px-4 py-2 bg-slate-100 text-slate-700 font-semibold rounded-md hover:bg-slate-200 transition">Adicionar Conta</button>
+                    </div>
+                </section>
+
+                <!-- Sugestões de Metas -->
+                <section id="goals-section" class="bg-white p-6 rounded-xl shadow-lg">
+                    <div id="suggested-goals-header" class="collapsible-header !p-0 !border-0 mb-4">
+                        <h2 class="text-xl font-bold text-slate-800">Sugestões de Metas</h2>
+                        <svg id="suggested-goals-arrow" class="arrow-icon w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div id="suggested-goals-content" class="hidden space-y-3">
+                         <ul id="suggested-goals-list" class="space-y-3"></ul>
+                         <p id="no-suggested-goals-message" class="text-center text-gray-500 mt-2 hidden">Nenhuma sugestão de meta no momento.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Coluna Direita: Transações -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <div class="flex items-center space-x-4">
+                         <button id="prev-month-btn" class="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                         <span id="current-month-display" class="text-lg font-semibold text-gray-800 w-40 text-center"></span>
+                         <button id="next-month-btn" class="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                    </div>
+                    <div class="flex items-center w-full md:w-auto">
+                        <input type="text" id="search-transactions-input" placeholder="Buscar transações..." class="input-sm w-full md:w-56 px-4 py-2 border border-gray-300 rounded-l-md focus:ring-indigo-500 focus:border-indigo-500">
+                        <button id="toggle-filters-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-r-md hover:bg-gray-300 transition ml-[-1px]" title="Filtros Avançados">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 6h9.75M10.5 12h9.75m-9.75 6h9.75M3.75 6H7.5m3 12V6.75M3.75 12h3.75m-3.75 6h3.75M3.75 6.75A.75.75 0 013 6V4.5a.75.75 0 01.75-.75H7.5a.75.75 0 01.75.75V6a.75.75 0 01-.75.75H3.75z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="main-filters-collapsible-content" class="filters-collapsible-content mb-6">
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div id="main-filters-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                            <!-- Filtros são inseridos aqui pelo JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="bulk-actions-container" class="mb-4 hidden">
+                    <span class="text-sm font-medium text-gray-700 mr-3"><span id="selected-transactions-count">0</span> selecionada(s):</span>
+                    <div class="inline-flex rounded-md shadow-sm" role="group">
+                        <button id="pay-selected-transactions-btn" type="button" class="btn-xs bg-green-500 hover:bg-green-600 rounded-l-md">Pagar</button>
+                        <select id="link-selected-account-select" class="input-xs border-l-0 border-r-0"></select>
+                        <button id="link-selected-transactions-btn" type="button" class="btn-xs bg-blue-500 hover:bg-blue-600">Vinc. Conta</button>
+                        <button id="delete-selected-transactions-btn" type="button" class="btn-xs bg-red-500 hover:bg-red-600 rounded-r-md">Excluir</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-2 py-3 text-center th-xs"><input type="checkbox" id="select-all-transactions" class="form-checkbox h-4 w-4 text-indigo-600"></th>
+                                <th class="px-6 py-3 text-left th-xs">Data</th>
+                                <th class="px-6 py-3 text-left th-xs">Descrição</th>
+                                <th class="px-6 py-3 text-right th-xs">Valor</th>
+                                <th class="px-6 py-3 text-left th-xs">Categoria</th>
+                                <th class="px-6 py-3 text-center th-xs">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-list" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+                <p id="no-transactions-message" class="text-center text-gray-500 mt-6 hidden">Nenhuma transação registrada para este período ou filtro.</p>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Modais -->
+    <div id="add-transaction-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="add-transaction-modal-title">Adicionar Nova Transação</h3>
+                <button class="modal-close-btn" id="close-add-transaction-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                 <div class="transaction-type-tabs mb-6">
+                    <button data-type="receita" class="transaction-type-tab active">Receita</button>
+                    <button data-type="despesa" class="transaction-type-tab">Despesa</button>
+                    <button data-type="transferencia" class="transaction-type-tab">Transferência</button>
+                </div>
+                <form id="transaction-form-modal" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    <input type="hidden" id="modal-transaction-id"> 
+                    <input type="hidden" id="modal-transaction-type-hidden" value="receita">
+                    <div>
+                        <label for="modal-date">Data</label>
+                        <input type="date" id="modal-date" required>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="modal-description">Descrição</label>
+                        <input type="text" id="modal-description" placeholder="Ex: Salário, Aluguel da Casa" required>
+                    </div>
+                    <div>
+                        <label for="modal-value">Valor da Parcela (R$)</label>
+                        <input type="number" id="modal-value" step="0.01" placeholder="0.00" required>
+                    </div>
+                    
+                    <div id="modal-category-section" class="sm:col-span-2">
+                        <label for="modal-category-select">Categoria</label>
+                        <div class="flex items-center space-x-2">
+                            <select id="modal-category-select"></select>
+                        </div>
+                        <input type="text" id="modal-new-category-input" placeholder="Nome da Nova Categoria" class="mt-2 hidden">
+                    </div>
+
+                    <div id="modal-account-section">
+                        <label for="modal-account-select">Conta Principal</label>
+                        <select id="modal-account-select"></select> 
+                    </div>
+                    
+                    <div id="modal-fund-source-div" class="hidden">
+                        <label for="modal-fund-source-select">Fonte do Pagamento</label>
+                        <select id="modal-fund-source-select"></select>
+                    </div>
+
+                    <div id="modal-destination-account-div" class="hidden">
+                        <label for="modal-destination-account-select">Conta de Destino</label>
+                        <select id="modal-destination-account-select"></select>
+                    </div>
+                    
+                    <div>
+                        <label for="modal-installments">Total de Parcelas</label>
+                        <input type="number" id="modal-installments" min="1" value="1">
+                    </div>
+                    <div id="modal-installments-paid-section">
+                        <label for="modal-installments-paid">Parcelas já pagas/recebidas</label>
+                        <input type="number" id="modal-installments-paid" min="0" value="0">
+                    </div>
+                     <div class="sm:col-span-2">
+                        <label for="modal-paid-status" class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="modal-paid-status" class="form-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700">Marcar como Realizada (Paga/Recebida)</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-add-transaction-modal-btn" class="px-5 py-2 bg-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-300 transition duration-150">Cancelar</button>
+                <button id="save-add-transaction-modal-btn" type="submit" form="transaction-form-modal" class="px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-md shadow-md hover:bg-indigo-700 transition duration-150">Salvar Transação</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Adicionar/Editar Conta -->
+    <div id="add-account-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="account-modal-title">Adicionar Nova Conta</h3>
+                <button class="modal-close-btn" id="close-account-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="account-form" class="space-y-4">
+                    <input type="hidden" id="edit-account-id">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="account-name-modal">Nome da Conta</label>
+                            <input type="text" id="account-name-modal" placeholder="Ex: Banco X, Carteira" required>
+                        </div>
+                        <div>
+                            <label for="account-type-modal">Tipo de Conta</label>
+                            <select id="account-type-modal">
+                                <option value="corrente">Conta Corrente</option>
+                                <option value="poupanca">Conta Poupança</option>
+                                <option value="cash">Dinheiro (Caixa)</option>
+                                <option value="investimento">Investimento</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="initial-balance-modal" id="initial-balance-label-modal">Saldo Inicial (R$)</label>
+                        <input type="number" id="initial-balance-modal" step="0.01" placeholder="0.00" required>
+                    </div>
+
+                    <div id="overdraft-section-modal" class="hidden sub-section-form">
+                        <h4>Cheque Especial</h4>
+                        <div>
+                            <label for="overdraft-limit-modal">Limite do Cheque Especial (R$)</label>
+                            <input type="number" id="overdraft-limit-modal" step="0.01" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div id="credit-card-section-modal" class="hidden sub-section-form">
+                        <h4>Cartões de Crédito Vinculados</h4>
+                        <div id="linked-cards-container-modal" class="space-y-3"></div>
+                        <button type="button" id="add-another-card-btn-modal" class="mt-3 px-4 py-1.5 bg-purple-500 text-white text-xs font-semibold rounded-md hover:bg-purple-600">Adicionar Cartão</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-account-modal-btn" class="px-5 py-2 bg-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-300">Cancelar</button>
+                <button id="save-account-modal-btn" type="submit" form="account-form" class="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700">Salvar Conta</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmation-modal" class="modal hidden">
+        <div class="modal-content"><div class="modal-header"><h3 id="confirmation-modal-title">Confirmar</h3><button class="modal-close-btn" id="close-confirmation-modal">&times;</button></div><div class="modal-body"><p id="confirmation-modal-message">Tem certeza?</p></div><div class="modal-footer"><button id="confirm-delete-btn" class="px-5 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700">Confirmar</button><button id="cancel-delete-btn" class="px-5 py-2 bg-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-400">Cancelar</button></div></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const App = {
+                // ... (Propriedades do estado da aplicação)
+                accounts: [],
+                transactions: [],
+                categories: ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Transferências", "Outros", "Revisar Importação"],
+                currentMonth: new Date().getMonth(),
+                currentYear: new Date().getFullYear(),
+                reportChartInstance: null,
+
+                // --- Inicialização ---
+                init() {
+                    this.Cache.cacheDOM();
+                    this.Events.bindEvents();
+                    this.DataManager.loadData();
+                },
+
+                // --- Gestor de Cache de DOM ---
+                Cache: {
+                    dom: {},
+                    cacheDOM() {
+                        this.dom.summaryPanel = document.getElementById('summary-panel');
+                        this.dom.accountsList = document.getElementById('accounts-list');
+                        this.dom.transactionList = document.getElementById('transaction-list');
+                        this.dom.noTransactionsMessage = document.getElementById('no-transactions-message');
+                        this.dom.currentMonthDisplay = document.getElementById('current-month-display');
+                        this.dom.prevMonthBtn = document.getElementById('prev-month-btn');
+                        this.dom.nextMonthBtn = document.getElementById('next-month-btn');
+                        this.dom.searchTransactionsInput = document.getElementById('search-transactions-input');
+                        
+                        // Botões de ação principais
+                        this.dom.openAddTransactionMainBtn = document.getElementById('open-add-transaction-modal-main-btn');
+                        this.dom.openReportSectionBtn = document.getElementById('open-report-section-btn');
+                        this.dom.loadSavedDataBtn = document.getElementById('load-saved-data-btn');
+                        this.dom.loadJsonInput = document.getElementById('load-json-input');
+                        this.dom.saveAllDataLink = document.getElementById('save-all-data-link');
+                        this.dom.clearAllDataLink = document.getElementById('clear-all-data-link');
+
+                        // Modal de Transação
+                        this.dom.addTransactionModal = document.getElementById('add-transaction-modal');
+                        this.dom.transactionForm = document.getElementById('transaction-form-modal');
+                        this.dom.addTransactionModalTitle = document.getElementById('add-transaction-modal-title');
+                        this.dom.closeAddTransactionModalBtn = document.getElementById('close-add-transaction-modal');
+                        this.dom.cancelAddTransactionModalBtn = document.getElementById('cancel-add-transaction-modal-btn');
+                        this.dom.modalTransactionId = document.getElementById('modal-transaction-id');
+                        this.dom.modalTransactionTypeHidden = document.getElementById('modal-transaction-type-hidden');
+                        this.dom.modalDate = document.getElementById('modal-date');
+                        this.dom.modalDescription = document.getElementById('modal-description');
+                        this.dom.modalValue = document.getElementById('modal-value');
+                        this.dom.modalCategorySelect = document.getElementById('modal-category-select');
+                        this.dom.modalNewCategoryInput = document.getElementById('modal-new-category-input');
+                        this.dom.modalAccountSelect = document.getElementById('modal-account-select');
+                        this.dom.modalFundSourceDiv = document.getElementById('modal-fund-source-div');
+                        this.dom.modalFundSourceSelect = document.getElementById('modal-fund-source-select');
+                        this.dom.modalDestinationAccountDiv = document.getElementById('modal-destination-account-div');
+                        this.dom.modalDestinationAccountSelect = document.getElementById('modal-destination-account-select');
+                        this.dom.modalInstallments = document.getElementById('modal-installments');
+                        this.dom.modalInstallmentsPaid = document.getElementById('modal-installments-paid');
+                        this.dom.modalPaidStatus = document.getElementById('modal-paid-status');
+                        this.dom.transactionTypeTabs = document.querySelectorAll('.transaction-type-tab');
+                        this.dom.modalCategorySection = document.getElementById('modal-category-section');
+                        this.dom.modalInstallmentsPaidSection = document.getElementById('modal-installments-paid-section');
+
+                        // Modal de Contas
+                        this.dom.openAddAccountModalBtn = document.getElementById('open-add-account-modal-btn');
+                        this.dom.addAccountModal = document.getElementById('add-account-modal');
+                        this.dom.accountModalTitle = document.getElementById('account-modal-title');
+                        this.dom.closeAccountModalBtn = document.getElementById('close-account-modal');
+                        this.dom.cancelAccountModalBtn = document.getElementById('cancel-account-modal-btn');
+                        this.dom.accountForm = document.getElementById('account-form');
+                        this.dom.editAccountId = document.getElementById('edit-account-id');
+                        this.dom.accountNameModal = document.getElementById('account-name-modal');
+                        this.dom.accountTypeModal = document.getElementById('account-type-modal');
+                        this.dom.initialBalanceModal = document.getElementById('initial-balance-modal');
+                        this.dom.initialBalanceLabelModal = document.getElementById('initial-balance-label-modal');
+                        this.dom.overdraftSectionModal = document.getElementById('overdraft-section-modal');
+                        this.dom.overdraftLimitModal = document.getElementById('overdraft-limit-modal');
+                        this.dom.creditCardSectionModal = document.getElementById('credit-card-section-modal');
+                        this.dom.linkedCardsContainerModal = document.getElementById('linked-cards-container-modal');
+                        this.dom.addAnotherCardBtnModal = document.getElementById('add-another-card-btn-modal');
+                        
+                        // Relatórios
+                        this.dom.reportsHeader = document.getElementById('reports-header');
+                        this.dom.reportsSectionContent = document.getElementById('reports-section-content');
+                        this.dom.reportsArrow = document.getElementById('reports-arrow');
+                        this.dom.reportTypeSelect = document.getElementById('report-type');
+                        this.dom.reportMonthSelect1 = document.getElementById('report-month');
+                        this.dom.reportYearSelect1 = document.getElementById('report-year');
+                        this.dom.reportMonthSelect2 = document.getElementById('report-month-comp');
+                        this.dom.reportYearSelect2 = document.getElementById('report-year-comp');
+                        this.dom.reportPeriod1MonthDiv = document.getElementById('report-period1-month-div');
+                        this.dom.reportPeriod1YearDiv = document.getElementById('report-period1-year-div');
+                        this.dom.reportPeriod2MonthDiv = document.getElementById('report-period2-month-div');
+                        this.dom.reportPeriod2YearDiv = document.getElementById('report-period2-year-div');
+                        this.dom.generateReportBtn = document.getElementById('generate-report-btn');
+                        this.dom.reportOutputArea = document.getElementById('report-output-area');
+                        this.dom.reportChartContainer = document.getElementById('report-chart-container');
+                        this.dom.reportPlaceholder = document.getElementById('report-placeholder');
+                        this.dom.viewChartBtn = document.getElementById('view-chart-btn');
+                        this.dom.viewTableBtn = document.getElementById('view-table-btn');
+                        
+                        // Filtros de Transações
+                        this.dom.toggleFiltersBtn = document.getElementById('toggle-filters-btn');
+                        this.dom.mainFiltersCollapsibleContent = document.getElementById('main-filters-collapsible-content');
+                        this.dom.filterMainTypeSelect = document.getElementById('filter-main-type');
+                        this.dom.filterMainCategorySelect = document.getElementById('filter-main-category');
+                        this.dom.filterMainAccountSelect = document.getElementById('filter-main-account');
+                        this.dom.filterMainFundSourceSelect = document.getElementById('filter-main-fund-source');
+                        this.dom.filterMainStatusSelect = document.getElementById('filter-main-status');
+
+                        // Ações em lote
+                        this.dom.bulkActionsContainer = document.getElementById('bulk-actions-container');
+                        this.dom.selectedTransactionsCountEl = document.getElementById('selected-transactions-count');
+                        this.dom.paySelectedTransactionsBtn = document.getElementById('pay-selected-transactions-btn');
+                        this.dom.unpaySelectedTransactionsBtn = document.getElementById('unpay-selected-transactions-btn');
+                        this.dom.linkSelectedAccountSelect = document.getElementById('link-selected-account-select');
+                        this.dom.linkSelectedTransactionsBtn = document.getElementById('link-selected-transactions-btn');
+                        this.dom.linkSelectedCategorySelect = document.getElementById('link-selected-category-select');
+                        this.dom.linkSelectedCategoryBtn = document.getElementById('link-selected-category-btn');
+                        this.dom.deleteSelectedTransactionsBtn = document.getElementById('delete-selected-transactions-btn');
+                        this.dom.selectAllTransactionsCheckbox = document.getElementById('select-all-transactions');
+
+                        // Metas
+                        this.dom.suggestedGoalsHeader = document.getElementById('suggested-goals-header');
+                        this.dom.suggestedGoalsContent = document.getElementById('suggested-goals-content');
+                        this.dom.suggestedGoalsArrow = document.getElementById('suggested-goals-arrow');
+                        this.dom.suggestedGoalsList = document.getElementById('suggested-goals-list');
+                        this.dom.noSuggestedGoalsMessage = document.getElementById('no-suggested-goals-message');
+                        
+                        // Modal de Confirmação
+                        this.dom.confirmationModal = document.getElementById('confirmation-modal');
+                        this.dom.confirmationModalTitle = document.getElementById('confirmation-modal-title');
+                        this.dom.confirmationModalMessage = document.getElementById('confirmation-modal-message');
+                        this.dom.confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+                        this.dom.cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+                        this.dom.closeConfirmationModalBtn = document.getElementById('close-confirmation-modal');
+
+                    }
+                },
+
+                // --- Gestor de Eventos ---
+                Events: {
+                    bindEvents() {
+                        const dom = App.Cache.dom;
+                        // Ações Principais
+                        dom.openAddTransactionMainBtn.addEventListener('click', () => App.UIManager.openTransactionModal());
+                        dom.openReportSectionBtn.addEventListener('click', () => {
+                            reportsHeader.scrollIntoView({ behavior: 'smooth' });
+                            if (dom.reportsSectionContent.classList.contains('hidden')) {
+                                dom.reportsHeader.click();
+                            }
+                        });
+                        dom.loadSavedDataBtn.addEventListener('click', () => dom.loadJsonInput.click());
+                        dom.loadJsonInput.addEventListener('change', App.DataManager.handleLoadJSON);
+                        dom.saveAllDataLink.addEventListener('click', App.DataManager.saveDataToFile);
+                        dom.clearAllDataLink.addEventListener('click', () => App.UIManager.requestDeleteConfirmation(null, 'allData'));
+                        
+                        // Contas
+                        dom.openAddAccountModalBtn.addEventListener('click', () => App.UIManager.openAccountModal());
+                        dom.accountForm.addEventListener('submit', App.AccountManager.saveAccount);
+                        dom.closeAccountModalBtn.addEventListener('click', () => App.UIManager.closeModal(dom.addAccountModal));
+                        dom.cancelAccountModalBtn.addEventListener('click', () => App.UIManager.closeModal(dom.addAccountModal));
+                        dom.accountTypeModal.addEventListener('change', App.UIManager.toggleAccountModalSections);
+                        dom.addAnotherCardBtnModal.addEventListener('click', () => App.AccountManager.addCardInputFields(dom.linkedCardsContainerModal));
+
+                        // Transações
+                        dom.transactionForm.addEventListener('submit', App.TransactionManager.saveTransaction);
+                        dom.closeAddTransactionModalBtn.addEventListener('click', () => App.UIManager.closeModal(dom.addTransactionModal));
+                        dom.cancelAddTransactionModalBtn.addEventListener('click', () => App.UIManager.closeModal(dom.addTransactionModal));
+                        dom.transactionTypeTabs.forEach(tab => tab.addEventListener('click', App.UIManager.handleTransactionTypeTabClick));
+                        dom.modalAccountSelect.addEventListener('change', App.UIManager.handleAccountChangeInModal);
+                        dom.modalCategorySelect.addEventListener('change', App.UIManager.handleCategoryChangeInModal);
+
+                        // Navegação e Filtros
+                        dom.prevMonthBtn.addEventListener('click', () => App.UIManager.changeMonth(-1));
+                        dom.nextMonthBtn.addEventListener('click', () => App.UIManager.changeMonth(1));
+                        dom.searchTransactionsInput.addEventListener('input', () => App.UIManager.renderTransactions());
+                        dom.toggleFiltersBtn.addEventListener('click', () => dom.mainFiltersCollapsibleContent.classList.toggle('expanded'));
+                        document.querySelectorAll('.filter-main-select').forEach(sel => sel.addEventListener('change', () => App.UIManager.renderTransactions()));
+
+                        // Ações em Lote
+                        dom.selectAllTransactionsCheckbox.addEventListener('change', App.UIManager.toggleSelectAllTransactions);
+                        dom.transactionList.addEventListener('change', (e) => {
+                            if (e.target.classList.contains('transaction-checkbox')) App.UIManager.updateBulkActionsVisibility();
+                        });
+                        dom.paySelectedTransactionsBtn.addEventListener('click', () => App.TransactionManager.bulkPay(true));
+                        dom.unpaySelectedTransactionsBtn.addEventListener('click', () => App.TransactionManager.bulkPay(false));
+                        dom.linkSelectedTransactionsBtn.addEventListener('click', App.TransactionManager.bulkLinkToAccount);
+                        dom.deleteSelectedTransactionsBtn.addEventListener('click', App.TransactionManager.bulkDelete);
+
+                        // Confirmação de exclusão
+                        dom.confirmDeleteBtn.addEventListener('click', () => App.DataManager.executeDelete());
+                        dom.closeConfirmationModalBtn.addEventListener('click', () => App.UIManager.closeModal(dom.confirmationModal));
+                        dom.cancelDeleteBtn.addEventListener('click', () => App.UIManager.closeModal(dom.confirmationModal));
+
+                        // Seções Colapsáveis
+                        dom.suggestedGoalsHeader.addEventListener('click', () => App.UIManager.toggleCollapsible(dom.suggestedGoalsContent, dom.suggestedGoalsArrow));
+                        dom.reportsHeader.addEventListener('click', () => App.UIManager.toggleCollapsible(dom.reportsSectionContent, dom.reportsArrow));
+                        
+                        // Relatórios
+                        dom.generateReportBtn.addEventListener('click', () => App.ReportManager.generateReport());
+                        dom.viewChartBtn.addEventListener('click', () => App.UIManager.toggleReportView('chart'));
+                        dom.viewTableBtn.addEventListener('click', () => App.UIManager.toggleReportView('table'));
+                    }
+                },
+
+                // ... (O resto dos módulos: DataManager, UIManager, AccountManager, TransactionManager, ReportManager)
+            };
+
+            App.init(); // Inicia a aplicação
+        });
+    </script>
+</body>
+</html>
