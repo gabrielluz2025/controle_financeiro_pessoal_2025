@@ -122,7 +122,12 @@
     <main class="flex-1 flex flex-col bg-gray-50 overflow-y-auto">
         <header class="flex items-center justify-between h-20 px-8 bg-white border-b flex-shrink-0">
             <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
-            <div><button id="clear-data-btn" class="text-sm text-gray-500 hover:text-red-600">Limpar Dados</button></div>
+            <div class="flex items-center space-x-4">
+                 <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Dados</button>
+                 <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Dados</button>
+                 <input type="file" id="import-file-input" class="hidden" accept=".json">
+                 <button id="clear-data-btn" class="text-sm text-gray-500 hover:text-red-600">Limpar Dados</button>
+            </div>
         </header>
         <div id="page-container" class="flex-1 p-4 md:p-8">
             <section id="dashboard-page">
@@ -212,6 +217,48 @@ const AppState = {
         this.accounts = []; this.creditCards = []; this.transactions = [];
         this.categories = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros"];
         this.saveAll();
+    },
+
+    exportData() {
+        const dataToExport = {
+            accounts: this.accounts,
+            creditCards: this.creditCards,
+            transactions: this.transactions,
+            categories: this.categories,
+        };
+        const dataStr = JSON.stringify(dataToExport, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = 'financas_backup.json';
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    },
+
+    importData(file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const importedData = JSON.parse(event.target.result);
+                if (importedData.accounts && importedData.creditCards && importedData.transactions) {
+                    UI.showConfirmationModal('Importar Dados', 'Isto irá substituir todos os seus dados atuais. Deseja continuar?', () => {
+                        this.accounts = importedData.accounts || [];
+                        this.creditCards = importedData.creditCards || [];
+                        this.transactions = importedData.transactions || [];
+                        this.categories = importedData.categories || ["Outros"];
+                        this.saveAll();
+                        this.recalculateAllBalances();
+                        UI.render();
+                        UI.showFeedback('Dados importados com sucesso!', 'success');
+                    });
+                } else {
+                    UI.showFeedback('Ficheiro JSON inválido ou mal formatado.', 'error');
+                }
+            } catch (error) {
+                UI.showFeedback('Erro ao ler o ficheiro. Verifique se é um ficheiro JSON válido.', 'error');
+            }
+        };
+        reader.readAsText(file);
     },
 
     addTransaction(tx) { this.transactions.push(tx); },
@@ -341,7 +388,7 @@ const UI = {
             }
 
             return `
-            <tr class="bg-white ${tx.isPaid ? 'paid-transaction' : ''}">
+            <tr class="bg-white ${tx.isPaid ? '' : 'paid-transaction'}">
                 <td class="py-4 px-6">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                 <td class="py-4 px-6 font-medium text-gray-900 description">${tx.description}</td>
                 <td class="py-4 px-6 font-bold ${valueColor}">${this.formatCurrency(tx.value)}</td>
@@ -739,6 +786,18 @@ const Handlers = {
                  document.getElementById('card-fields-container').classList.toggle('hidden', !e.target.checked);
             }
         });
+
+        const importBtn = document.getElementById('import-data-btn');
+        const importInput = document.getElementById('import-file-input');
+        importBtn.addEventListener('click', () => importInput.click());
+        importInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                AppState.importData(e.target.files[0]);
+                e.target.value = null; // Reset input
+            }
+        });
+
+        document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
     },
 
     handleEditClick(button) {
