@@ -732,12 +732,22 @@ const UI = {
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="trans-value" class="block text-sm font-medium text-gray-700">Valor (R$)</label>
+                        <label for="trans-value" class="block text-sm font-medium text-gray-700">Valor da Parcela (R$)</label>
                         <input type="number" id="trans-value" value="${tx.value || ''}" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     </div>
                     <div>
                         <label for="trans-date" class="block text-sm font-medium text-gray-700">Data</label>
                         <input type="date" id="trans-date" value="${tx.date}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="trans-installments-total" class="block text-sm font-medium text-gray-700">Total de Parcelas</label>
+                        <input type="number" id="trans-installments-total" value="1" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    <div>
+                        <label for="trans-installments-paid" class="block text-sm font-medium text-gray-700">Parcelas Pagas</label>
+                        <input type="number" id="trans-installments-paid" value="0" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     </div>
                 </div>
                  <div>
@@ -752,16 +762,12 @@ const UI = {
                     <select id="trans-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
                  <div>
-                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
+                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão (Opcional para Despesas)</label>
                     <select id="trans-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="">Nenhum</option>
                         ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
                         ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
                     </select>
-                </div>
-                 <div class="flex items-center pt-2">
-                    <input id="trans-paid" type="checkbox" ${tx.isPaid ? 'checked' : ''} class="h-4 w-4 text-blue-600 border-gray-300 rounded">
-                    <label for="trans-paid" class="ml-2 block text-sm text-gray-900">Marcar como paga/recebida</label>
                 </div>
             </form>
         `;
@@ -975,9 +981,6 @@ const Handlers = {
         });
         
         document.getElementById('page-container').addEventListener('change', e => {
-            if (e.target.id === 'statement-file-input') {
-                this.handleStatementFileUpload(e.target.files[0]);
-            }
             if (e.target.id === 'report-mode') {
                 document.getElementById('period-2-filters').classList.toggle('hidden', e.target.value !== 'comparative');
             }
