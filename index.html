@@ -123,8 +123,8 @@
         <header class="flex items-center justify-between h-20 px-8 bg-white border-b flex-shrink-0">
             <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
             <div class="flex items-center space-x-4">
-                 <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Dados</button>
-                 <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Dados</button>
+                 <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Backup</button>
+                 <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
                  <input type="file" id="import-file-input" class="hidden" accept=".json">
                  <button id="clear-data-btn" class="text-sm text-gray-500 hover:text-red-600">Limpar Dados</button>
             </div>
@@ -133,18 +133,15 @@
             <section id="dashboard-page">
                 <div id="summary-cards-container" class="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 xl:grid-cols-4"></div>
                 
-                 <!-- Novas seções do Dashboard -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                     <div class="lg:col-span-2">
                         <h3 class="text-xl font-bold text-gray-700 mb-4">Faturas de Cartão de Crédito</h3>
                         <div id="card-summary-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Cards dos cartões serão inseridos aqui -->
                         </div>
                     </div>
                     <div>
                         <h3 class="text-xl font-bold text-gray-700 mb-4">Próximas Contas a Vencer</h3>
                         <div id="upcoming-bills-container" class="bg-white p-4 rounded-xl shadow-md space-y-3">
-                            <!-- Contas a vencer serão inseridas aqui -->
                         </div>
                     </div>
                 </div>
@@ -388,7 +385,7 @@ const UI = {
             }
 
             return `
-            <tr class="bg-white ${tx.isPaid ? '' : 'paid-transaction'}">
+            <tr class="bg-white ${tx.isPaid ? 'paid-transaction' : ''}">
                 <td class="py-4 px-6">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                 <td class="py-4 px-6 font-medium text-gray-900 description">${tx.description}</td>
                 <td class="py-4 px-6 font-bold ${valueColor}">${this.formatCurrency(tx.value)}</td>
@@ -407,8 +404,149 @@ const UI = {
             `;
         }).join('');
     },
+    
+    renderReportsPage() {
+        const page = document.getElementById('reports-page');
+        const now = new Date();
+        const yearOptions = Array.from({length: 5}, (_, i) => now.getFullYear() - i).map(y => `<option value="${y}" ${y === now.getFullYear() ? 'selected' : ''}>${y}</option>`).join('');
+        const monthOptions = Array.from({length: 12}, (_, i) => `<option value="${i}" ${i === now.getMonth() ? 'selected' : ''}>${new Date(0, i).toLocaleString('pt-BR', {month: 'long'})}</option>`).join('');
+        
+        page.innerHTML = `
+            <div class="bg-white p-6 rounded-xl shadow-md space-y-6">
+                 <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Relatórios Personalizados</h3>
+                    <p class="text-gray-600">Analise as suas finanças com filtros detalhados.</p>
+                </div>
+                <div id="report-filters" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end p-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <label for="report-mode" class="block text-sm font-medium text-gray-700">Tipo de Relatório</label>
+                        <select id="report-mode" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                            <option value="simple" selected>Simples</option>
+                            <option value="comparative">Comparativo</option>
+                        </select>
+                    </div>
+                    <div id="period-1-filters" class="contents">
+                        <div>
+                            <label for="report-year-1" class="block text-sm font-medium text-gray-700">Ano (Período 1)</label>
+                            <select id="report-year-1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${yearOptions}</select>
+                        </div>
+                         <div>
+                            <label for="report-month-1" class="block text-sm font-medium text-gray-700">Mês (Período 1)</label>
+                            <select id="report-month-1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${monthOptions}</select>
+                        </div>
+                    </div>
+                    <div id="period-2-filters" class="hidden contents">
+                        <div>
+                            <label for="report-year-2" class="block text-sm font-medium text-gray-700">Ano (Período 2)</label>
+                            <select id="report-year-2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${yearOptions}</select>
+                        </div>
+                         <div>
+                            <label for="report-month-2" class="block text-sm font-medium text-gray-700">Mês (Período 2)</label>
+                            <select id="report-month-2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${monthOptions}</select>
+                        </div>
+                    </div>
+                     <div>
+                        <label for="report-type" class="block text-sm font-medium text-gray-700">Tipo</label>
+                        <select id="report-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                            <option value="despesa" selected>Despesas</option>
+                            <option value="receita">Receitas</option>
+                        </select>
+                    </div>
+                    <div class="lg:col-span-full flex justify-end">
+                        <button id="generate-report-btn" class="w-full lg:w-auto px-6 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">Gerar Relatório</button>
+                    </div>
+                </div>
+                <div id="report-output" class="mt-6">
+                    <!-- O resultado do relatório (gráfico e tabela) será inserido aqui -->
+                </div>
+            </div>`;
+    },
 
-    renderReportsPage() { document.getElementById('reports-page').innerHTML = `<div class="bg-white p-8 rounded-xl shadow-md">Página de Relatórios (Em construção)</div>`; },
+    renderReportResults({data1, data2, title, p1Label, p2Label}) {
+        const container = document.getElementById('report-output');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="p-6 bg-white rounded-xl shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                     <h3 class="text-xl font-bold text-gray-700">${title}</h3>
+                     <button id="export-report-btn" class="px-3 py-1 text-sm text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50">Exportar</button>
+                </div>
+                <div class="chart-container mb-6" style="height: 400px;">
+                    <canvas id="report-chart"></canvas>
+                </div>
+                <div id="report-table-container" class="overflow-x-auto"></div>
+            </div>
+        `;
+
+        const ctx = document.getElementById('report-chart').getContext('2d');
+        if (window.reportChart) window.reportChart.destroy();
+        
+        const isComparative = !!data2;
+        const allCategories = [...new Set([...Object.keys(data1), ...(isComparative ? Object.keys(data2) : [])])];
+        
+        const datasets = [{ 
+            label: p1Label || 'Valor',
+            data: allCategories.map(cat => data1[cat] || 0),
+            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1
+        }];
+
+        if(isComparative) {
+            datasets.push({
+                label: p2Label,
+                data: allCategories.map(cat => data2[cat] || 0),
+                backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                borderColor: 'rgba(239, 68, 68, 1)',
+                borderWidth: 1
+            });
+        }
+
+        window.reportChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: allCategories, datasets },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: isComparative } } }
+        });
+        
+        const tableContainer = document.getElementById('report-table-container');
+        let tableHTML = `
+            <table class="w-full text-sm text-left text-gray-500 custom-table">
+                <thead class="text-xs text-gray-700 uppercase"><tr>
+                    <th class="py-3 px-6">Categoria</th>
+                    <th class="py-3 px-6 text-right">${p1Label || 'Valor'}</th>
+                    ${isComparative ? `<th class="py-3 px-6 text-right">${p2Label}</th><th class="py-3 px-6 text-right">Diferença (R$)</th><th class="py-3 px-6 text-right">Diferença (%)</th>` : '<th class="py-3 px-6 text-right">% do Total</th>'}
+                </tr></thead><tbody>`;
+        
+        const total1 = Object.values(data1).reduce((s, v) => s + v, 0);
+        const total2 = isComparative ? Object.values(data2).reduce((s, v) => s + v, 0) : 0;
+
+        allCategories.forEach(cat => {
+            const v1 = data1[cat] || 0;
+            if(isComparative) {
+                 const v2 = data2[cat] || 0;
+                 const diff = v1 - v2;
+                 const percChange = v2 !== 0 ? ((diff / v2) * 100).toFixed(1) + '%' : (v1 > 0 ? 'Novo' : '0.0%');
+                 tableHTML += `<tr>
+                    <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
+                    <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
+                    <td class="py-4 px-6 text-right">${this.formatCurrency(v2)}</td>
+                    <td class="py-4 px-6 text-right ${diff > 0 ? 'text-red-500' : 'text-green-500'}">${this.formatCurrency(diff)}</td>
+                    <td class="py-4 px-6 text-right ${diff > 0 ? 'text-red-500' : 'text-green-500'}">${percChange}</td>
+                 </tr>`;
+            } else {
+                 const percentage = total1 > 0 ? ((v1 / total1) * 100).toFixed(2) : 0;
+                 tableHTML += `<tr>
+                    <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
+                    <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
+                    <td class="py-4 px-6 text-right">${percentage}%</td>
+                </tr>`;
+            }
+        });
+
+        tableHTML += `</tbody></table>`;
+        tableContainer.innerHTML = tableHTML;
+    },
 
     renderAccountsPage() {
         const page = document.getElementById('accounts-page');
@@ -471,7 +609,7 @@ const UI = {
             <div class="bg-white p-4 rounded-xl shadow-sm">
                 <div class="flex justify-between items-center">
                     <div>
-                        <p class="font-semibold text-gray-800">${card.name}</p>
+                        <p class="font-semibold text-gray-800">${card.name} <span class="ml-2 text-xs font-light bg-gray-200 px-2 py-0.5 rounded-full">${card.brand || 'N/A'}</span></p>
                         <p class="text-sm text-gray-500">Venc. dia ${card.dueDay} ${linkedAcc ? `(Vinc. a ${linkedAcc.name})` : ''}</p>
                     </div>
                     <div class="text-right">
@@ -505,7 +643,7 @@ const UI = {
             }
         } else {
             accountData = { name: '', type: 'corrente', initialBalance: 0, overdraftLimit: 0 };
-            cardData = { name: '', limit: 0, dueDay: 1 };
+            cardData = { name: '', limit: 0, dueDay: 1, brand: 'Visa' };
         }
         
         const hasCard = isEditing ? (type === 'card' || !!AppState.creditCards.find(c => c.linkedAccountId === accountData.id)) : false;
@@ -550,6 +688,17 @@ const UI = {
                          <div>
                             <label for="card-name" class="block text-sm font-medium text-gray-700">Nome do Cartão</label>
                             <input type="text" id="card-name" value="${cardData.name || ''}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        </div>
+                         <div>
+                            <label for="card-brand" class="block text-sm font-medium text-gray-700">Bandeira do Cartão</label>
+                            <select id="card-brand" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                <option value="Visa" ${cardData.brand === 'Visa' ? 'selected' : ''}>Visa</option>
+                                <option value="Mastercard" ${cardData.brand === 'Mastercard' ? 'selected' : ''}>Mastercard</option>
+                                <option value="Elo" ${cardData.brand === 'Elo' ? 'selected' : ''}>Elo</option>
+                                <option value="Amex" ${cardData.brand === 'Amex' ? 'selected' : ''}>American Express</option>
+                                <option value="Hipercard" ${cardData.brand === 'Hipercard' ? 'selected' : ''}>Hipercard</option>
+                                <option value="Outra" ${cardData.brand === 'Outra' ? 'selected' : ''}>Outra</option>
+                            </select>
                         </div>
                          <div>
                             <label for="card-limit" class="block text-sm font-medium text-gray-700">Limite do Cartão (R$)</label>
@@ -729,8 +878,64 @@ const UI = {
         }
         return { labels, data };
     },
-    renderCardSummaries() { /* ... */ },
-    renderUpcomingBills() { /* ... */ },
+    renderCardSummaries() {
+        const container = document.getElementById('card-summary-container');
+        if (!container) return;
+        const cards = AppState.creditCards;
+
+        if (cards.length === 0) {
+            container.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-sm text-center text-gray-500 md:col-span-2">Nenhum cartão de crédito adicionado.</div>`;
+            return;
+        }
+
+        container.innerHTML = cards.map(card => {
+            const now = new Date();
+            const currentBill = AppState.transactions
+                .filter(t => t.accountId === card.id && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
+                .reduce((sum, t) => sum + t.value, 0);
+
+            return `
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <p class="font-semibold text-gray-800">${card.name}</p>
+                    <p class="text-sm text-gray-500">Vencimento dia ${card.dueDay}</p>
+                    <div class="mt-4">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Fatura Atual</span>
+                            <span class="font-semibold">${this.formatCurrency(currentBill)}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span>Limite Disponível</span>
+                            <span class="font-semibold">${this.formatCurrency(card.availableLimit)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+    renderUpcomingBills() {
+        const container = document.getElementById('upcoming-bills-container');
+        if (!container) return;
+        const now = new Date();
+        const upcoming = AppState.transactions
+            .filter(t => !t.isPaid && t.fundamentalType === 'despesa' && new Date(t.date).getMonth() === now.getMonth())
+            .sort((a,b) => new Date(a.date) - new Date(b.date))
+            .slice(0, 5);
+        
+        if (upcoming.length === 0) {
+            container.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhuma conta pendente para este mês.</p>`;
+            return;
+        }
+
+        container.innerHTML = upcoming.map(bill => `
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="font-medium text-gray-700">${bill.description}</p>
+                    <p class="text-xs text-gray-500">${new Date(bill.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                </div>
+                <p class="font-bold text-red-500">${this.formatCurrency(bill.value)}</p>
+            </div>
+        `).join('<hr class="my-2">');
+    },
 };
 
 // Módulo de Handlers
@@ -756,6 +961,7 @@ const Handlers = {
 
         document.getElementById('page-container').addEventListener('click', e => {
             if (e.target.id === 'add-new-account-btn') UI.renderAccountModal();
+            if (e.target.id === 'generate-report-btn') this.handleGenerateReport();
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) this.handleEditClick(editBtn);
             const deleteBtn = e.target.closest('.delete-btn');
@@ -765,6 +971,15 @@ const Handlers = {
         document.getElementById('page-container').addEventListener('input', e => {
             if (e.target.id === 'transactions-search') {
                 UI.renderTransactionsList(e.target.value);
+            }
+        });
+        
+        document.getElementById('page-container').addEventListener('change', e => {
+            if (e.target.id === 'statement-file-input') {
+                this.handleStatementFileUpload(e.target.files[0]);
+            }
+            if (e.target.id === 'report-mode') {
+                document.getElementById('period-2-filters').classList.toggle('hidden', e.target.value !== 'comparative');
             }
         });
 
@@ -871,6 +1086,7 @@ const Handlers = {
                 name: form.querySelector('#card-name').value || `${accountData.name} Card`,
                 limit: parseFloat(form.querySelector('#card-limit').value),
                 dueDay: parseInt(form.querySelector('#card-due-day').value),
+                brand: form.querySelector('#card-brand').value,
                 linkedAccountId: accountIdToUse
             };
             if(cardLinked) {
@@ -925,6 +1141,38 @@ const Handlers = {
         UI.closeModal();
         UI.render();
         UI.showFeedback(`Transação ${isEditing ? 'atualizada' : 'adicionada'}!`, 'success');
+    },
+    
+    handleGenerateReport() {
+        const mode = document.getElementById('report-mode').value;
+        const type = document.getElementById('report-type').value;
+
+        const getPeriodData = (period) => {
+            const year = document.getElementById(`report-year-${period}`).value;
+            const month = document.getElementById(`report-month-${period}`).value;
+            const txs = AppState.transactions.filter(t => {
+                const date = new Date(t.date + "T00:00:00");
+                return date.getFullYear() == year && date.getMonth() == month && t.fundamentalType === type;
+            });
+            const data = txs.reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + t.value;
+                return acc;
+            }, {});
+            return { data, year, month };
+        };
+
+        if (mode === 'simple') {
+            const { data, year, month } = getPeriodData(1);
+            const title = `Relatório de ${type === 'despesa' ? 'Despesas' : 'Receitas'} - ${new Date(year, month).toLocaleString('pt-BR', {month: 'long', year: 'numeric'})}`;
+            UI.renderReportResults({data1: data, title});
+        } else {
+            const p1 = getPeriodData(1);
+            const p2 = getPeriodData(2);
+            const p1Label = `${new Date(p1.year, p1.month).toLocaleString('pt-BR', {month: 'short'})}/${p1.year}`;
+            const p2Label = `${new Date(p2.year, p2.month).toLocaleString('pt-BR', {month: 'short'})}/${p2.year}`;
+            const title = `Comparativo: ${p1Label} vs ${p2Label}`;
+            UI.renderReportResults({data1: p1.data, data2: p2.data, title, p1Label, p2Label});
+        }
     },
 };
 
