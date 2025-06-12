@@ -98,7 +98,7 @@
                 <span class="nav-text">Transações</span>
             </a>
             <a href="#" id="nav-accounts" class="nav-link flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                 <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                 <span class="nav-text">Contas e Cartões</span>
             </a>
             <a href="#" id="nav-reports" class="nav-link flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
@@ -112,8 +112,8 @@
                 <span class="add-transaction-text">Nova Transação</span>
             </button>
             <button id="sidebar-toggle-btn" class="w-full flex items-center justify-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                 <svg class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-                 <span class="nav-text ml-3">Recolher</span>
+                <svg class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                <span class="nav-text ml-3">Recolher</span>
             </button>
         </div>
     </aside>
@@ -123,10 +123,10 @@
         <header class="flex items-center justify-between h-20 px-8 bg-white border-b flex-shrink-0">
             <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
             <div class="flex items-center space-x-4">
-                 <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Backup</button>
-                 <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
-                 <input type="file" id="import-file-input" class="hidden" accept=".json">
-                 <button id="clear-data-btn" class="text-sm text-gray-500 hover:text-red-600">Limpar Dados</button>
+                <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Backup</button>
+                <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
+                <input type="file" id="import-file-input" class="hidden" accept=".json">
+                <button id="clear-data-btn" class="text-sm text-gray-500 hover:text-red-600">Limpar Dados</button>
             </div>
         </header>
         <div id="page-container" class="flex-1 p-4 md:p-8">
@@ -187,17 +187,25 @@ const AppState = {
     recalculateAllBalances() {
         this.accounts.forEach(acc => acc.balance = acc.initialBalance || 0);
         this.creditCards.forEach(card => card.availableLimit = card.limit || 0);
+        
         const sortedTxs = [...this.transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+        
         sortedTxs.forEach(tx => {
             if (!tx.accountId) return;
+            
             if (tx.isCreditCard) {
                 const card = this.creditCards.find(c => c.id === tx.accountId);
-                if (card && tx.fundamentalType === 'despesa') card.availableLimit -= tx.value;
+                if (card && tx.fundamentalType === 'despesa') {
+                    card.availableLimit -= tx.value;
+                }
             } else {
                 const account = this.accounts.find(a => a.id === tx.accountId);
                 if (account) {
-                    if (tx.fundamentalType === 'receita') account.balance += tx.value;
-                    else if (tx.isPaid) account.balance -= tx.value;
+                    if (tx.fundamentalType === 'receita') {
+                        account.balance += tx.value;
+                    } else if (tx.isPaid) {
+                        account.balance -= tx.value;
+                    }
                 }
             }
         });
@@ -258,14 +266,67 @@ const AppState = {
         reader.readAsText(file);
     },
 
+    getFinancialAnalysis() {
+        const now = new Date();
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        const lastMonthTxs = this.transactions.filter(t => {
+            const txDate = new Date(t.date + "T00:00:00");
+            return txDate >= lastMonth && txDate <= endOfLastMonth;
+        });
+
+        if (lastMonthTxs.length === 0) {
+            return { error: "Não há dados suficientes do mês passado para gerar uma análise." };
+        }
+
+        const totalIncome = lastMonthTxs
+            .filter(t => t.fundamentalType === 'receita')
+            .reduce((sum, t) => sum + t.value, 0);
+
+        const totalExpenses = lastMonthTxs
+            .filter(t => t.fundamentalType === 'despesa')
+            .reduce((sum, t) => sum + t.value, 0);
+
+        const expensesByCategory = lastMonthTxs
+            .filter(t => t.fundamentalType === 'despesa')
+            .reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + t.value;
+                return acc;
+            }, {});
+
+        const topExpenseCategories = Object.entries(expensesByCategory)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 5)
+            .map(([category, amount]) => ({
+                category,
+                amount,
+                percentage: totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(1) : 0
+            }));
+
+        const monthlyBalance = totalIncome - totalExpenses;
+
+        return {
+            totalIncome,
+            totalExpenses,
+            monthlyBalance,
+            topExpenseCategories,
+            period: lastMonth.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
+        };
+    },
+
     addTransaction(tx) { this.transactions.push(tx); },
     updateTransaction(txId, updatedData) {
         const txIndex = this.transactions.findIndex(t => t.id === txId);
         if (txIndex > -1) this.transactions[txIndex] = { ...this.transactions[txIndex], ...updatedData };
     },
     removeTransaction(txId) {
-        const txIndex = this.transactions.findIndex(t => t.id === txId);
-        if (txIndex > -1) this.transactions.splice(txIndex, 1);
+        const tx = this.transactions.find(t => t.id === txId);
+        if (tx && tx.groupId) {
+            this.transactions = this.transactions.filter(t => t.groupId !== tx.groupId);
+        } else {
+            this.transactions = this.transactions.filter(t => t.id !== txId);
+        }
     },
     addAccount(acc) { this.accounts.push(acc); },
     updateAccount(accId, updatedData) {
@@ -309,8 +370,14 @@ const UI = {
     getPageTitle: v => ({ dashboard: 'Dashboard', transactions: 'Minhas Transações', accounts: 'Contas & Cartões', reports: 'Relatórios' }[v] || 'Dashboard'),
     
     updateNavLinks() {
-        document.querySelectorAll('aside nav a').forEach(l => l.classList.remove('bg-gray-200'));
-        document.getElementById(`nav-${AppState.currentView}`)?.classList.add('bg-gray-200');
+        document.querySelectorAll('aside nav a').forEach(l => l.classList.remove('bg-gray-200', 'text-gray-700'));
+        document.querySelectorAll('aside nav a').forEach(l => l.classList.add('text-gray-600'));
+
+        const activeLink = document.getElementById(`nav-${AppState.currentView}`);
+        if(activeLink){
+            activeLink.classList.add('bg-gray-200', 'text-gray-700');
+            activeLink.classList.remove('text-gray-600');
+        }
     },
 
     renderDashboardPage() {
@@ -383,11 +450,12 @@ const UI = {
                     if (acc) accountName = acc.name;
                 }
             }
+            const descriptionWithInstallment = tx.installments ? `${tx.description} ${tx.installments}` : tx.description;
 
             return `
             <tr class="bg-white ${tx.isPaid ? 'paid-transaction' : ''}">
                 <td class="py-4 px-6">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                <td class="py-4 px-6 font-medium text-gray-900 description">${tx.description}</td>
+                <td class="py-4 px-6 font-medium text-gray-900 description">${descriptionWithInstallment}</td>
                 <td class="py-4 px-6 font-bold ${valueColor}">${this.formatCurrency(tx.value)}</td>
                 <td class="py-4 px-6">${tx.category}</td>
                 <td class="py-4 px-6">${accountName}</td>
@@ -414,10 +482,21 @@ const UI = {
         page.innerHTML = `
             <div class="bg-white p-6 rounded-xl shadow-md space-y-6">
                  <div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Relatórios Personalizados</h3>
-                    <p class="text-gray-600">Analise as suas finanças com filtros detalhados.</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Relatórios e Análises</h3>
+                    <p class="text-gray-600">Analise suas finanças e receba sugestões para melhorar sua saúde financeira.</p>
                 </div>
-                <div id="report-filters" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end p-4 bg-gray-50 rounded-lg">
+
+                <div class="p-4 bg-gray-50 rounded-lg flex justify-between items-center">
+                     <div>
+                        <h4 class="font-semibold text-gray-700">Análise Inteligente</h4>
+                        <p class="text-sm text-gray-500">Receba dicas personalizadas com base nos seus gastos do último mês.</p>
+                    </div>
+                    <button id="get-analysis-btn" class="px-5 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform hover:scale-105">Analisar Finanças</button>
+                </div>
+                
+                <hr/>
+
+                <div id="report-filters" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                     <div>
                         <label for="report-mode" class="block text-sm font-medium text-gray-700">Tipo de Relatório</label>
                         <select id="report-mode" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
@@ -457,7 +536,6 @@ const UI = {
                     </div>
                 </div>
                 <div id="report-output" class="mt-6">
-                    <!-- O resultado do relatório (gráfico e tabela) será inserido aqui -->
                 </div>
             </div>`;
     },
@@ -528,19 +606,19 @@ const UI = {
                  const diff = v1 - v2;
                  const percChange = v2 !== 0 ? ((diff / v2) * 100).toFixed(1) + '%' : (v1 > 0 ? 'Novo' : '0.0%');
                  tableHTML += `<tr>
-                    <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
-                    <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
-                    <td class="py-4 px-6 text-right">${this.formatCurrency(v2)}</td>
-                    <td class="py-4 px-6 text-right ${diff > 0 ? 'text-red-500' : 'text-green-500'}">${this.formatCurrency(diff)}</td>
-                    <td class="py-4 px-6 text-right ${diff > 0 ? 'text-red-500' : 'text-green-500'}">${percChange}</td>
+                     <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
+                     <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
+                     <td class="py-4 px-6 text-right">${this.formatCurrency(v2)}</td>
+                     <td class="py-4 px-6 text-right ${diff > 0 ? 'text-red-500' : 'text-green-500'}">${this.formatCurrency(diff)}</td>
+                     <td class="py-4 px-6 text-right ${diff > 0 ? 'text-red-500' : 'text-green-500'}">${percChange}</td>
                  </tr>`;
             } else {
                  const percentage = total1 > 0 ? ((v1 / total1) * 100).toFixed(2) : 0;
                  tableHTML += `<tr>
-                    <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
-                    <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
-                    <td class="py-4 px-6 text-right">${percentage}%</td>
-                </tr>`;
+                     <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
+                     <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
+                     <td class="py-4 px-6 text-right">${percentage}%</td>
+                 </tr>`;
             }
         });
 
@@ -590,7 +668,7 @@ const UI = {
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                     </button>
                     <button class="delete-btn p-2 text-gray-400 hover:text-red-600" data-id="${acc.id}" data-type="account" title="Excluir">
-                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
                 </div>
             </div>
@@ -656,7 +734,7 @@ const UI = {
                 <div class="p-3 bg-gray-50 rounded-lg">
                     <h4 class="font-semibold text-gray-600 mb-2">Dados da Conta</h4>
                     <div class="space-y-4">
-                         <div>
+                        <div>
                             <label for="acc-name" class="block text-sm font-medium text-gray-700">Nome da Conta</label>
                             <input type="text" id="acc-name" value="${accountData.name || ''}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
@@ -685,11 +763,11 @@ const UI = {
                         <label for="has-card-checkbox" class="ml-2 block text-sm font-medium text-gray-700">Possui Cartão de Crédito vinculado?</label>
                     </div>
                     <div id="card-fields-container" class="space-y-4 mt-4 ${!hasCard ? 'hidden' : ''}">
-                         <div>
+                        <div>
                             <label for="card-name" class="block text-sm font-medium text-gray-700">Nome do Cartão</label>
                             <input type="text" id="card-name" value="${cardData.name || ''}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
-                         <div>
+                        <div>
                             <label for="card-brand" class="block text-sm font-medium text-gray-700">Bandeira do Cartão</label>
                             <select id="card-brand" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                                 <option value="Visa" ${cardData.brand === 'Visa' ? 'selected' : ''}>Visa</option>
@@ -700,7 +778,7 @@ const UI = {
                                 <option value="Outra" ${cardData.brand === 'Outra' ? 'selected' : ''}>Outra</option>
                             </select>
                         </div>
-                         <div>
+                        <div>
                             <label for="card-limit" class="block text-sm font-medium text-gray-700">Limite do Cartão (R$)</label>
                             <input type="number" id="card-limit" value="${cardData.limit || 0}" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
@@ -717,7 +795,7 @@ const UI = {
 
     renderNewTransactionModal(itemToEdit = null) {
         const isEditing = !!itemToEdit;
-        const tx = isEditing ? itemToEdit : { date: new Date().toISOString().slice(0,10), type: 'despesa', category: 'Outros', isPaid: true };
+        const tx = isEditing ? itemToEdit : { date: new Date().toISOString().slice(0,10), fundamentalType: 'despesa', category: 'Outros', isPaid: true, value: '' };
         
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}" ${tx.accountId === a.id ? 'selected' : ''}>${a.name}</option>`).join('');
         const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}" ${tx.accountId === c.id ? 'selected' : ''}>${c.name} (Cartão)</option>`).join('');
@@ -725,36 +803,39 @@ const UI = {
 
         const content = `
             <form id="transaction-modal-form" class="space-y-4">
-                 <input type="hidden" id="editing-id" value="${isEditing ? tx.id : ''}">
+                <input type="hidden" id="editing-id" value="${isEditing ? tx.id : ''}">
                 <div>
                     <label for="trans-description" class="block text-sm font-medium text-gray-700">Descrição</label>
                     <input type="text" id="trans-description" value="${tx.description || ''}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="trans-value" class="block text-sm font-medium text-gray-700">Valor da Parcela (R$)</label>
-                        <input type="number" id="trans-value" value="${tx.value || ''}" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label for="trans-value" class="block text-sm font-medium text-gray-700">Valor (R$)</label>
+                        <input type="number" id="trans-value" value="${tx.value}" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     </div>
                     <div>
-                        <label for="trans-date" class="block text-sm font-medium text-gray-700">Data</label>
+                        <label for="trans-date" class="block text-sm font-medium text-gray-700">Data da 1ª Parcela</label>
                         <input type="date" id="trans-date" value="${tx.date}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="trans-installments-total" class="block text-sm font-medium text-gray-700">Total de Parcelas</label>
-                        <input type="number" id="trans-installments-total" value="1" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                <div class="p-3 bg-gray-50 rounded-lg ${isEditing ? 'hidden' : ''}">
+                    <h4 class="font-semibold text-gray-600 mb-2">Parcelamento</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="trans-installments-total" class="block text-sm font-medium text-gray-700">Nº de Parcelas</label>
+                            <input type="number" id="trans-installments-total" value="1" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        </div>
+                        <div>
+                            <label for="trans-installments-paid" class="block text-sm font-medium text-gray-700">Parcelas já Pagas</label>
+                            <input type="number" id="trans-installments-paid" value="0" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        </div>
                     </div>
-                    <div>
-                        <label for="trans-installments-paid" class="block text-sm font-medium text-gray-700">Parcelas Pagas</label>
-                        <input type="number" id="trans-installments-paid" value="0" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                    </div>
-                </div>
+                 </div>
                  <div>
                     <label for="trans-type" class="block text-sm font-medium text-gray-700">Tipo</label>
                     <select id="trans-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="despesa" ${tx.type === 'despesa' ? 'selected' : ''}>Despesa</option>
-                        <option value="receita" ${tx.type === 'receita' ? 'selected' : ''}>Receita</option>
+                        <option value="despesa" ${tx.fundamentalType === 'despesa' ? 'selected' : ''}>Despesa</option>
+                        <option value="receita" ${tx.fundamentalType === 'receita' ? 'selected' : ''}>Receita</option>
                     </select>
                 </div>
                 <div>
@@ -762,12 +843,16 @@ const UI = {
                     <select id="trans-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
                  <div>
-                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão (Opcional para Despesas)</label>
+                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão (Opcional)</label>
                     <select id="trans-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="">Nenhum</option>
                         ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
                         ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
                     </select>
+                </div>
+                <div class="flex items-center ${isEditing ? '' : 'hidden'}">
+                    <input id="trans-paid" type="checkbox" ${tx.isPaid ? 'checked' : ''} class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+                    <label for="trans-paid" class="ml-2 block text-sm text-gray-900">Marcar como paga</label>
                 </div>
             </form>
         `;
@@ -791,6 +876,77 @@ const UI = {
                 </div>
             </div>`;
     },
+
+    showInfoModal(title, content) {
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.innerHTML = `
+            <div class="modal-backdrop">
+                <div class="modal-content">
+                    <div class="modal-header flex justify-between items-center">
+                        <h3 class="text-xl font-semibold">${title}</h3>
+                        <button class="modal-close-btn text-2xl hover:text-red-500">&times;</button>
+                    </div>
+                    <div class="modal-body">${content}</div>
+                    <div class="modal-footer flex justify-end">
+                        <button type="button" class="modal-close-btn px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Entendi</button>
+                    </div>
+                </div>
+            </div>`;
+    },
+
+    renderAnalysisModal(analysis) {
+        if (analysis.error) {
+            this.showFeedback(analysis.error, 'info');
+            return;
+        }
+
+        let suggestionsHTML = '';
+
+        if (analysis.monthlyBalance >= 0) {
+            suggestionsHTML += `<div class="p-4 bg-green-50 rounded-lg mb-4">
+                <h4 class="font-bold text-green-800">Parabéns!</h4>
+                <p class="text-green-700">Você fechou o mês de ${analysis.period} com um saldo positivo de <strong>${this.formatCurrency(analysis.monthlyBalance)}</strong>. Considere investir esse valor para alcançar seus objetivos mais rápido!</p>
+            </div>`;
+        } else {
+             suggestionsHTML += `<div class="p-4 bg-red-50 rounded-lg mb-4">
+                <h4 class="font-bold text-red-800">Atenção!</h4>
+                <p class="text-red-700">Seu balanço no mês de ${analysis.period} foi negativo em <strong>${this.formatCurrency(analysis.monthlyBalance)}</strong>. É um bom momento para revisar seus gastos.</p>
+            </div>`;
+        }
+
+        if (analysis.topExpenseCategories.length > 0) {
+            suggestionsHTML += `<div class="mb-4">
+                <h4 class="font-semibold text-gray-700 mb-2">Principais Despesas de ${analysis.period}</h4>
+                <ul class="space-y-2">`;
+            analysis.topExpenseCategories.forEach(cat => {
+                 suggestionsHTML += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
+                    <span>${cat.category}</span>
+                    <span class="font-semibold">${this.formatCurrency(cat.amount)} <span class="text-gray-500 font-normal">(${cat.percentage}%)</span></span>
+                 </li>`;
+            });
+            suggestionsHTML += `</ul>
+                <p class="text-xs text-gray-500 mt-3">Focar em reduzir os gastos nas suas maiores categorias pode ter um grande impacto. Já analisou se há espaço para cortar custos em <strong>${analysis.topExpenseCategories[0].category}</strong>?</p>
+            </div>`;
+        }
+
+        const nonEssentialCategories = ['Lazer', 'Compras', 'Alimentação'];
+        const topNonEssential = analysis.topExpenseCategories.find(c => nonEssentialCategories.includes(c.category));
+
+        if(topNonEssential){
+             suggestionsHTML += `<div class="p-4 bg-blue-50 rounded-lg">
+                <h4 class="font-bold text-blue-800">Dica Rápida</h4>
+                <p class="text-blue-700">Vimos que <strong>${topNonEssential.category}</strong> está entre seus maiores gastos. Que tal definir um orçamento mensal para essa categoria ou procurar por alternativas mais baratas?</p>
+            </div>`;
+        } else {
+            suggestionsHTML += `<div class="p-4 bg-blue-50 rounded-lg">
+                <h4 class="font-bold text-blue-800">Dica Rápida</h4>
+                <p class="text-blue-700">Uma boa prática é tentar economizar de 10% a 20% da sua renda mensal. Você está no caminho certo?</p>
+            </div>`;
+        }
+
+        const content = `<div>${suggestionsHTML}</div>`;
+        this.showInfoModal(`Análise de ${analysis.period}`, content);
+    },
     
     showConfirmationModal(title, message, onConfirm) {
         const modalContainer = document.getElementById('modal-container');
@@ -805,11 +961,11 @@ const UI = {
                     </div>
                     <div class="modal-footer flex justify-end gap-3">
                         <button type="button" class="modal-close-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
-                        <button id="confirm-delete-action" class="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700">Confirmar</button>
+                        <button id="confirm-action-btn" class="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700">Confirmar</button>
                     </div>
                 </div>
             </div>`;
-        document.getElementById('confirm-delete-action').onclick = () => {
+        document.getElementById('confirm-action-btn').onclick = () => {
             onConfirm();
             this.closeModal();
         };
@@ -819,7 +975,7 @@ const UI = {
     showFeedback(message, type = 'info') {
         const el = document.getElementById('feedback-message');
         const colors = { success: 'bg-green-100 text-green-800', error: 'bg-red-100 text-red-800', info: 'bg-blue-100 text-blue-800' };
-        el.innerHTML = `<div class="px-4 py-3 rounded-md shadow-lg ${colors[type]}">${message}</div>`;
+        el.innerHTML = `<div class="px-4 py-3 rounded-md shadow-lg ${colors[type] || colors['info']}">${message}</div>`;
         setTimeout(() => el.innerHTML = '', 4000);
     },
     
@@ -830,7 +986,10 @@ const UI = {
         if (!container) return;
         const now = new Date();
         const totalBalance = AppState.accounts.reduce((s, a) => s + (a.balance || 0), 0);
-        const monthTxs = AppState.transactions.filter(t => new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear());
+        const monthTxs = AppState.transactions.filter(t => {
+            const txDate = new Date(t.date + 'T00:00:00');
+            return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+        });
         const income = monthTxs.filter(t => t.fundamentalType === 'receita').reduce((s, t) => s + t.value, 0);
         const expenses = monthTxs.filter(t => t.fundamentalType === 'despesa').reduce((s, t) => s + t.value, 0);
         const monthlyBalance = income - expenses;
@@ -860,7 +1019,10 @@ const UI = {
         const noDataMsg = document.getElementById('no-expenses-msg');
         if (!ctx || !noDataMsg) return;
         if (window.expensesChart) window.expensesChart.destroy();
-        const expenses = AppState.transactions.filter(t => new Date(t.date).getMonth() === new Date().getMonth() && t.fundamentalType === 'despesa').reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.value; return acc; }, {});
+        const expenses = AppState.transactions.filter(t => {
+            const txDate = new Date(t.date + 'T00:00:00');
+            return txDate.getMonth() === new Date().getMonth() && t.fundamentalType === 'despesa';
+        }).reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.value; return acc; }, {});
         const labels = Object.keys(expenses);
         const data = Object.values(expenses);
         noDataMsg.classList.toggle('hidden', labels.length > 0);
@@ -923,7 +1085,7 @@ const UI = {
         if (!container) return;
         const now = new Date();
         const upcoming = AppState.transactions
-            .filter(t => !t.isPaid && t.fundamentalType === 'despesa' && new Date(t.date).getMonth() === now.getMonth())
+            .filter(t => !t.isPaid && t.fundamentalType === 'despesa' && new Date(t.date + 'T00:00:00').getMonth() === now.getMonth())
             .sort((a,b) => new Date(a.date) - new Date(b.date))
             .slice(0, 5);
         
@@ -935,7 +1097,7 @@ const UI = {
         container.innerHTML = upcoming.map(bill => `
             <div class="flex justify-between items-center">
                 <div>
-                    <p class="font-medium text-gray-700">${bill.description}</p>
+                    <p class="font-medium text-gray-700">${bill.description} ${bill.installments || ''}</p>
                     <p class="text-xs text-gray-500">${new Date(bill.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
                 </div>
                 <p class="font-bold text-red-500">${this.formatCurrency(bill.value)}</p>
@@ -960,7 +1122,7 @@ const Handlers = {
         document.getElementById('sidebar-toggle-btn').addEventListener('click', () => {
             AppState.isSidebarCollapsed = !AppState.isSidebarCollapsed;
             document.getElementById('sidebar-toggle-btn').querySelector('span').textContent = AppState.isSidebarCollapsed ? '' : 'Recolher';
-            UI.render();
+            document.body.classList.toggle('sidebar-collapsed', AppState.isSidebarCollapsed);
         });
 
         document.getElementById('add-new-transaction-btn').addEventListener('click', () => UI.renderNewTransactionModal());
@@ -968,6 +1130,7 @@ const Handlers = {
         document.getElementById('page-container').addEventListener('click', e => {
             if (e.target.id === 'add-new-account-btn') UI.renderAccountModal();
             if (e.target.id === 'generate-report-btn') this.handleGenerateReport();
+            if (e.target.id === 'get-analysis-btn') this.handleAnalysisClick();
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) this.handleEditClick(editBtn);
             const deleteBtn = e.target.closest('.delete-btn');
@@ -1018,12 +1181,23 @@ const Handlers = {
         document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
     },
 
+    handleAnalysisClick() {
+        const analysis = AppState.getFinancialAnalysis();
+        UI.renderAnalysisModal(analysis);
+    },
+
     handleEditClick(button) {
         const id = button.dataset.id;
         const type = button.dataset.type;
         if (type === 'transaction') {
             const item = AppState.transactions.find(i => i.id === id);
-            if (item) UI.renderNewTransactionModal(item);
+            if (item) {
+                if (item.groupId) {
+                    UI.showFeedback('Não é possível editar uma transação parcelada. Exclua a série e crie novamente.', 'info');
+                    return;
+                }
+                UI.renderNewTransactionModal(item);
+            }
         } else {
             const item = type === 'account' ? AppState.accounts.find(i => i.id === id) : AppState.creditCards.find(i => i.id === id);
             if (item) UI.renderAccountModal(item, type);
@@ -1050,14 +1224,19 @@ const Handlers = {
                  UI.showFeedback('Exclua as transações deste cartão primeiro.', 'error'); return;
             }
             UI.showConfirmationModal('Excluir Cartão', 'Tem certeza que deseja excluir este cartão?', () => {
-                const card = AppState.creditCards.find(c => c.id === id);
-                if (card && card.linkedAccountId) AppState.updateAccount(card.linkedAccountId, { cardId: null });
                 AppState.removeCreditCard(id); AppState.saveAll(); UI.render(); UI.showFeedback('Cartão excluído.', 'success');
             });
         } else if (type === 'transaction') {
-            UI.showConfirmationModal('Excluir Transação', 'Tem certeza que deseja excluir esta transação?', () => {
-                AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback('Transação excluída.', 'success');
-            });
+            const tx = AppState.transactions.find(t => t.id === id);
+            if (tx && tx.groupId) {
+                UI.showConfirmationModal('Excluir Parcelamento', 'Esta é uma transação parcelada. Deseja excluir todas as parcelas relacionadas?', () => {
+                     AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback('Parcelamento excluído.', 'success');
+                });
+            } else {
+                UI.showConfirmationModal('Excluir Transação', 'Tem certeza que deseja excluir esta transação?', () => {
+                    AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback('Transação excluída.', 'success');
+                });
+            }
         }
     },
     
@@ -1070,11 +1249,11 @@ const Handlers = {
         const accountData = {
             name: form.querySelector('#acc-name').value,
             type: form.querySelector('#acc-type').value,
-            initialBalance: parseFloat(form.querySelector('#acc-balance').value),
+            initialBalance: parseFloat(form.querySelector('#acc-balance').value) || 0,
             overdraftLimit: form.querySelector('#acc-type').value === 'corrente' ? parseFloat(form.querySelector('#acc-overdraft').value) : 0,
         };
 
-        let accountIdToUse = isEditing && editingType === 'account' ? editingId : (isEditing && editingType === 'card' ? AppState.creditCards.find(c=>c.id === editingId).linkedAccountId : `acc_${Date.now()}`);
+        let accountIdToUse = isEditing && editingType === 'account' ? editingId : (isEditing && editingType === 'card' ? AppState.creditCards.find(c=>c.id === editingId).linkedAccountId : crypto.randomUUID());
 
         if (isEditing && editingType === 'account') {
              AppState.updateAccount(accountIdToUse, accountData);
@@ -1087,22 +1266,20 @@ const Handlers = {
         if (hasCard) {
             const cardData = {
                 name: form.querySelector('#card-name').value || `${accountData.name} Card`,
-                limit: parseFloat(form.querySelector('#card-limit').value),
-                dueDay: parseInt(form.querySelector('#card-due-day').value),
+                limit: parseFloat(form.querySelector('#card-limit').value) || 0,
+                dueDay: parseInt(form.querySelector('#card-due-day').value) || 1,
                 brand: form.querySelector('#card-brand').value,
                 linkedAccountId: accountIdToUse
             };
             if(cardLinked) {
                 AppState.updateCreditCard(cardLinked.id, cardData);
             } else {
-                 cardData.id = `card_${Date.now()}`;
+                 cardData.id = crypto.randomUUID();
                  cardData.availableLimit = cardData.limit;
                  AppState.addCreditCard(cardData);
-                 AppState.updateAccount(accountIdToUse, { cardId: cardData.id });
             }
         } else if (cardLinked) {
              AppState.removeCreditCard(cardLinked.id);
-             AppState.updateAccount(accountIdToUse, { cardId: null });
         }
         
         AppState.recalculateAllBalances();
@@ -1119,24 +1296,43 @@ const Handlers = {
         const accountId = form.querySelector('#trans-account').value;
         const isCC = AppState.creditCards.some(c => c.id === accountId);
         
-        const txData = {
-            id: isEditing ? editingId : `tx_${Date.now()}`,
-            description: form.querySelector('#trans-description').value,
-            value: parseFloat(form.querySelector('#trans-value').value),
-            date: form.querySelector('#trans-date').value,
-            type: form.querySelector('#trans-type').value,
-            fundamentalType: form.querySelector('#trans-type').value,
-            category: form.querySelector('#trans-category').value,
-            isPaid: form.querySelector('#trans-paid').checked,
-            accountId: accountId || null,
-            isCreditCard: isCC,
-            installments: '1/1',
-        };
-
-        if(isEditing) {
+        if (isEditing) {
+            const txData = {
+                description: form.querySelector('#trans-description').value,
+                value: parseFloat(form.querySelector('#trans-value').value),
+                date: form.querySelector('#trans-date').value,
+                fundamentalType: form.querySelector('#trans-type').value,
+                category: form.querySelector('#trans-category').value,
+                isPaid: form.querySelector('#trans-paid').checked,
+                accountId: accountId || null,
+                isCreditCard: isCC,
+            };
             AppState.updateTransaction(editingId, txData);
         } else {
-            AppState.addTransaction(txData);
+            const totalInstallments = parseInt(form.querySelector('#trans-installments-total').value) || 1;
+            const paidInstallments = parseInt(form.querySelector('#trans-installments-paid').value) || 0;
+            const startDate = new Date(form.querySelector('#trans-date').value + 'T00:00:00');
+            const groupId = totalInstallments > 1 ? crypto.randomUUID() : null;
+
+            for (let i = 1; i <= totalInstallments; i++) {
+                const installmentDate = new Date(startDate);
+                installmentDate.setMonth(startDate.getMonth() + i - 1);
+                
+                const txData = {
+                    id: crypto.randomUUID(),
+                    description: form.querySelector('#trans-description').value,
+                    value: parseFloat(form.querySelector('#trans-value').value),
+                    date: installmentDate.toISOString().slice(0, 10),
+                    fundamentalType: form.querySelector('#trans-type').value,
+                    category: form.querySelector('#trans-category').value,
+                    isPaid: i <= paidInstallments,
+                    accountId: accountId || null,
+                    isCreditCard: isCC,
+                    installments: totalInstallments > 1 ? `(${i}/${totalInstallments})` : null,
+                    groupId: groupId
+                };
+                AppState.addTransaction(txData);
+            }
         }
 
         AppState.recalculateAllBalances();
@@ -1173,7 +1369,7 @@ const Handlers = {
             const p2 = getPeriodData(2);
             const p1Label = `${new Date(p1.year, p1.month).toLocaleString('pt-BR', {month: 'short'})}/${p1.year}`;
             const p2Label = `${new Date(p2.year, p2.month).toLocaleString('pt-BR', {month: 'short'})}/${p2.year}`;
-            const title = `Comparativo: ${p1Label} vs ${p2Label}`;
+            const title = `Comparativo de ${type === 'despesa' ? 'Despesas' : 'Receitas'}: ${p1Label} vs ${p2Label}`;
             UI.renderReportResults({data1: p1.data, data2: p2.data, title, p1Label, p2Label});
         }
     },
