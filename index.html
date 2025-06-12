@@ -22,15 +22,16 @@
         #sidebar, main { transition: all 0.3s ease-in-out; }
 
         /* Estilos da Sidebar Recolhida */
-        .sidebar-collapsed #sidebar { width: 5rem; /* 80px */ }
-        .sidebar-collapsed #sidebar .sidebar-logo-text,
-        .sidebar-collapsed #sidebar .nav-text,
-        .sidebar-collapsed #sidebar .add-transaction-text,
-        .sidebar-collapsed #sidebar #sidebar-toggle-btn .nav-text { display: none; }
-        .sidebar-collapsed #sidebar .nav-link,
-        .sidebar-collapsed #sidebar .sidebar-footer button { justify-content: center; }
-        .sidebar-collapsed #sidebar .sidebar-footer button svg { margin-right: 0; }
-        .sidebar-collapsed #sidebar #sidebar-toggle-btn svg { transform: rotate(180deg); }
+        body.sidebar-collapsed #sidebar { width: 5rem; /* 80px */ }
+        body.sidebar-collapsed main { margin-left: 5rem; }
+        body.sidebar-collapsed #sidebar .sidebar-logo-text,
+        body.sidebar-collapsed #sidebar .nav-text,
+        body.sidebar-collapsed #sidebar .add-transaction-text { display: none; }
+        body.sidebar-collapsed #sidebar .nav-link,
+        body.sidebar-collapsed #sidebar .sidebar-footer button { justify-content: center; }
+        body.sidebar-collapsed #sidebar .sidebar-footer button svg { margin-right: 0; }
+        body.sidebar-collapsed #sidebar #sidebar-toggle-btn svg { transform: rotate(180deg); }
+
 
         /* Estilo para tabelas */
         .custom-table { border-collapse: separate; border-spacing: 0 0.5rem; }
@@ -61,7 +62,7 @@
             border-radius: 0.75rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             width: 90%;
-            max-width: 500px;
+            max-width: 600px; /* Increased width for better table view */
             max-height: 90vh;
             display: flex;
             flex-direction: column;
@@ -111,9 +112,9 @@
                 <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 <span class="add-transaction-text">Nova Transação</span>
             </button>
-            <button id="sidebar-toggle-btn" class="w-full flex items-center justify-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                <svg class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-                <span class="nav-text ml-3">Recolher</span>
+            <button id="sidebar-toggle-btn" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                <svg class="w-6 h-6 mr-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                <span class="nav-text">Recolher</span>
             </button>
         </div>
     </aside>
@@ -123,10 +124,25 @@
         <header class="flex items-center justify-between h-20 px-8 bg-white border-b flex-shrink-0">
             <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
             <div class="flex items-center space-x-4">
-                <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Backup</button>
-                <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
+                 <div class="relative" id="options-menu-container">
+                    <button id="options-menu-btn" class="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center">
+                        Opções
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="options-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 hidden">
+                        <a href="#" id="import-image-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Importar Imagem</a>
+                        <a href="#" id="import-ofx-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Importar OFX</a>
+                        <a href="#" id="import-pdf-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Importar PDF</a>
+                        <hr class="my-1">
+                        <a href="#" id="import-data-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Importar Backup</a>
+                        <a href="#" id="export-data-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Exportar Backup</a>
+                    </div>
+                </div>
+                <input type="file" id="import-image-input" class="hidden" accept="image/*">
+                <input type="file" id="import-ofx-input" class="hidden" accept=".ofx, .OFX">
+                <input type="file" id="import-pdf-input" class="hidden" accept=".pdf">
                 <input type="file" id="import-file-input" class="hidden" accept=".json">
-                <button id="clear-data-btn" class="text-sm text-gray-500 hover:text-red-600">Limpar Dados</button>
+                <button id="clear-data-btn" class="text-sm text-white bg-red-500 hover:bg-red-600 rounded-lg px-3 py-2">Limpar Dados</button>
             </div>
         </header>
         <div id="page-container" class="flex-1 p-4 md:p-8">
@@ -185,25 +201,29 @@ const AppState = {
     },
     
     recalculateAllBalances() {
+        // Reset balances to initial state
         this.accounts.forEach(acc => acc.balance = acc.initialBalance || 0);
         this.creditCards.forEach(card => card.availableLimit = card.limit || 0);
         
+        // Sort transactions by date to process them chronologically
         const sortedTxs = [...this.transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
         
         sortedTxs.forEach(tx => {
             if (!tx.accountId) return;
             
             if (tx.isCreditCard) {
+                // Affects credit card limit
                 const card = this.creditCards.find(c => c.id === tx.accountId);
                 if (card && tx.fundamentalType === 'despesa') {
                     card.availableLimit -= tx.value;
                 }
             } else {
+                // Affects bank account balance
                 const account = this.accounts.find(a => a.id === tx.accountId);
                 if (account) {
                     if (tx.fundamentalType === 'receita') {
                         account.balance += tx.value;
-                    } else if (tx.isPaid) {
+                    } else if (tx.isPaid) { // Only subtract expense if it's paid
                         account.balance -= tx.value;
                     }
                 }
@@ -265,6 +285,146 @@ const AppState = {
         };
         reader.readAsText(file);
     },
+    
+    importOFX(file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const ofxContent = event.target.result;
+                // Robustly find the start of the <OFX> tag
+                const ofxStartIndex = ofxContent.toUpperCase().indexOf('<OFX>');
+                if (ofxStartIndex === -1) {
+                    throw new Error("Tag <OFX> não encontrada.");
+                }
+                const cleanOFX = ofxContent.substring(ofxStartIndex);
+
+                const transactions = [];
+                // Basic regex to find transaction blocks, less fragile than DOMParser for weird OFX files
+                const transactionBlocks = cleanOFX.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/g);
+
+                if (!transactionBlocks) {
+                    UI.showFeedback('Nenhuma transação encontrada no ficheiro OFX.', 'info');
+                    return;
+                }
+
+                transactionBlocks.forEach(block => {
+                    try {
+                        const amountMatch = block.match(/<TRNAMT>([^<]+)/);
+                        const dateMatch = block.match(/<DTPOSTED>([^<]+)/);
+                        const memoMatch = block.match(/<MEMO>([^<]+)/);
+
+                        if (!amountMatch || !dateMatch || !memoMatch) return;
+                        
+                        const amount = parseFloat(amountMatch[1]);
+                        const dateStr = dateMatch[1].substring(0, 8); // YYYYMMDD
+                        const formattedDate = `${dateStr.substring(0,4)}-${dateStr.substring(4,6)}-${dateStr.substring(6,8)}`;
+
+                        transactions.push({
+                            id: crypto.randomUUID(),
+                            description: memoMatch[1],
+                            value: Math.abs(amount),
+                            date: formattedDate,
+                            fundamentalType: amount < 0 ? 'despesa' : 'receita',
+                        });
+                    } catch (e) {
+                        console.warn("Skipping malformed transaction block:", block, e);
+                    }
+                });
+
+                if (transactions.length > 0) {
+                     UI.showImportReviewModal('Importar Transações OFX', transactions, 'ofx-import-form', 'tempOfxTransactions');
+                } else {
+                    UI.showFeedback('Nenhuma transação válida encontrada no ficheiro OFX.', 'info');
+                }
+
+            } catch (error) {
+                console.error("Error parsing OFX:", error);
+                UI.showFeedback(`Erro ao processar o ficheiro OFX: ${error.message}`, 'error');
+            }
+        };
+        reader.readAsText(file);
+    },
+
+    async importImage(file) {
+        UI.showFeedback('Analisando imagem... Por favor, aguarde.', 'info', 0); // Show persistent loading message
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            const base64ImageData = reader.result.split(',')[1];
+            
+            const prompt = `Analise a imagem deste comprovante, fatura ou extrato. Extraia todas as transações que encontrar. Para cada transação, forneça a descrição, o valor (apenas números, usando ponto como separador decimal), a data (no formato AAAA-MM-DD) e o tipo ('despesa' ou 'receita'). Responda APENAS com um array de objetos JSON, sem nenhum texto ou formatação markdown adicional. O JSON deve ter o seguinte formato: [{ "description": "...", "value": 123.45, "date": "AAAA-MM-DD", "fundamentalType": "despesa" }]`;
+
+            const payload = {
+              contents: [{
+                role: "user",
+                parts: [
+                  { text: prompt },
+                  { inlineData: { mimeType: file.type, data: base64ImageData } }
+                ]
+              }],
+            };
+
+            try {
+                const apiKey = ""; // Leave empty, will be handled by the environment
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorBody}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    
+                    let textResponse = result.candidates[0].content.parts[0].text;
+                    // Clean the response from markdown backticks and other text
+                    textResponse = textResponse.replace(/```json\n|```/g, '').trim();
+
+                    const transactions = JSON.parse(textResponse);
+                    if (transactions && Array.isArray(transactions) && transactions.length > 0) {
+                        const sanitizedTransactions = transactions.map(tx => ({
+                            description: tx.description || 'N/A',
+                            value: parseFloat(tx.value) || 0,
+                            date: tx.date || new Date().toISOString().slice(0, 10),
+                            fundamentalType: tx.fundamentalType || 'despesa'
+                        }));
+                        UI.showImportReviewModal('Confirmar Transações da Imagem', sanitizedTransactions, 'image-import-form', 'tempImageTransactions');
+                    } else {
+                        throw new Error("Nenhuma transação encontrada na imagem.");
+                    }
+                } else {
+                     let errorMessage = "A resposta da IA não continha dados válidos.";
+                     if(result.promptFeedback && result.promptFeedback.blockReason){
+                         errorMessage += ` Motivo: ${result.promptFeedback.blockReason}`;
+                     }
+                    throw new Error(errorMessage);
+                }
+            } catch (error) {
+                console.error("Erro ao importar imagem:", error);
+                UI.showFeedback(`Erro ao processar imagem: ${error.message}`, 'error');
+            } finally {
+                 UI.showFeedback('', 'info', 1); // Clear loading message
+            }
+        };
+        reader.onerror = (error) => {
+            console.error("File Reading Error:", error);
+            UI.showFeedback('Não foi possível ler o ficheiro.', 'error');
+            UI.showFeedback('', 'info', 1); // Clear loading message
+        };
+    },
+
+    importPDF(file) {
+        UI.showFeedback('A importação de PDF ainda não foi implementada.', 'info');
+    },
 
     getFinancialAnalysis() {
         const now = new Date();
@@ -272,7 +432,7 @@ const AppState = {
         const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
         const lastMonthTxs = this.transactions.filter(t => {
-            const txDate = new Date(t.date + "T00:00:00");
+            const txDate = new Date(t.date + "T00:00:00"); // Avoid timezone issues
             return txDate >= lastMonth && txDate <= endOfLastMonth;
         });
 
@@ -315,6 +475,7 @@ const AppState = {
         };
     },
 
+    // CRUD functions
     addTransaction(tx) { this.transactions.push(tx); },
     updateTransaction(txId, updatedData) {
         const txIndex = this.transactions.findIndex(t => t.id === txId);
@@ -440,7 +601,7 @@ const UI = {
             const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
             const statusText = tx.isPaid ? 'Pago' : 'Pendente';
             const statusColor = tx.isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-            let accountName = 'N/A';
+            let accountName = 'Sem Vínculo';
             if(tx.accountId) {
                 if (tx.isCreditCard) {
                     const card = AppState.creditCards.find(c => c.id === tx.accountId);
@@ -481,13 +642,13 @@ const UI = {
         
         page.innerHTML = `
             <div class="bg-white p-6 rounded-xl shadow-md space-y-6">
-                 <div>
+                <div>
                     <h3 class="text-2xl font-bold text-gray-800 mb-2">Relatórios e Análises</h3>
                     <p class="text-gray-600">Analise suas finanças e receba sugestões para melhorar sua saúde financeira.</p>
                 </div>
 
                 <div class="p-4 bg-gray-50 rounded-lg flex justify-between items-center">
-                     <div>
+                    <div>
                         <h4 class="font-semibold text-gray-700">Análise Inteligente</h4>
                         <p class="text-sm text-gray-500">Receba dicas personalizadas com base nos seus gastos do último mês.</p>
                     </div>
@@ -504,6 +665,7 @@ const UI = {
                             <option value="comparative">Comparativo</option>
                         </select>
                     </div>
+                    <!-- This div wrapper will be a grid item -->
                     <div id="period-1-filters" class="contents">
                         <div>
                             <label for="report-year-1" class="block text-sm font-medium text-gray-700">Ano (Período 1)</label>
@@ -514,6 +676,7 @@ const UI = {
                             <select id="report-month-1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${monthOptions}</select>
                         </div>
                     </div>
+                    <!-- This div wrapper will be a grid item, initially hidden -->
                     <div id="period-2-filters" class="hidden contents">
                         <div>
                             <label for="report-year-2" class="block text-sm font-medium text-gray-700">Ano (Período 2)</label>
@@ -695,13 +858,13 @@ const UI = {
                         <p class="text-xs text-gray-400">Limite: ${this.formatCurrency(card.limit)}</p>
                     </div>
                      <div class="flex items-center ml-4">
-                        <button class="edit-btn p-2 text-gray-400 hover:text-purple-600" data-id="${card.id}" data-type="card" title="Editar">
-                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                        </button>
-                         <button class="delete-btn p-2 text-gray-400 hover:text-red-600" data-id="${card.id}" data-type="card" title="Excluir">
-                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </div>
+                         <button class="edit-btn p-2 text-gray-400 hover:text-purple-600" data-id="${card.id}" data-type="card" title="Editar">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                         </button>
+                          <button class="delete-btn p-2 text-gray-400 hover:text-red-600" data-id="${card.id}" data-type="card" title="Excluir">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                         </button>
+                     </div>
                 </div>
             </div>`;
         }).join('');
@@ -712,18 +875,22 @@ const UI = {
         let accountData, cardData;
 
         if (isEditing) {
+            // Logic to handle editing either an account or a card
             if (type === 'account') {
                 accountData = itemToEdit;
+                // Find if there's a card linked to this account
                 cardData = AppState.creditCards.find(c => c.linkedAccountId === itemToEdit.id) || {};
             } else { // type === 'card'
                 cardData = itemToEdit;
                 accountData = AppState.accounts.find(a => a.id === itemToEdit.linkedAccountId) || {};
             }
         } else {
+            // Default data for a new item
             accountData = { name: '', type: 'corrente', initialBalance: 0, overdraftLimit: 0 };
             cardData = { name: '', limit: 0, dueDay: 1, brand: 'Visa' };
         }
         
+        // Determine if the 'has card' checkbox should be checked
         const hasCard = isEditing ? (type === 'card' || !!AppState.creditCards.find(c => c.linkedAccountId === accountData.id)) : false;
         
         const content = `
@@ -843,9 +1010,9 @@ const UI = {
                     <select id="trans-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
                  <div>
-                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão (Opcional)</label>
+                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
                     <select id="trans-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="">Nenhum</option>
+                        <option value="">Nenhuma / Sem Vínculo</option>
                         ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
                         ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
                     </select>
@@ -893,6 +1060,57 @@ const UI = {
                 </div>
             </div>`;
     },
+    
+    showImportReviewModal(title, transactions, formId, tempStorageKey) {
+        const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (Cartão)</option>`).join('');
+
+        let content = `
+            <p class="text-sm text-gray-600 mb-2">Encontrámos ${transactions.length} transações. Reveja os dados, selecione as que deseja importar e a conta de destino.</p>
+            <p class="text-xs text-gray-500 mb-4">Dica: você pode editar a descrição diretamente na tabela.</p>
+            <form id="${formId}">
+                <div class="mb-4">
+                    <label for="import-target-account" class="block text-sm font-medium text-gray-700">Importar para a conta (Opcional):</label>
+                    <select id="import-target-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="">Nenhuma / Sem Vínculo</option>
+                        ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
+                        ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
+                    </select>
+                </div>
+                <div class="max-h-64 overflow-y-auto border rounded-lg">
+                     <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr class="text-left">
+                                <th class="p-2 w-12"><input type="checkbox" id="import-select-all" checked></th>
+                                <th class="p-2">Descrição</th>
+                                <th class="p-2 w-32">Data</th>
+                                <th class="p-2 w-32 text-right">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="import-review-tbody">
+                            ${transactions.map((tx, index) => `
+                                <tr class="import-review-row border-t" data-index="${index}">
+                                    <td class="p-2 text-center"><input type="checkbox" class="import-checkbox" checked></td>
+                                    <td class="p-2"><input type="text" class="w-full p-1 bg-transparent focus:bg-white border-0 focus:ring-1 focus:ring-blue-500 rounded" value="${this.sanitizeHTML(tx.description)}"></td>
+                                    <td class="p-2">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                    <td class="p-2 text-right font-semibold ${tx.fundamentalType === 'despesa' ? 'text-red-500' : 'text-green-500'}">${this.formatCurrency(tx.value)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                     </table>
+                </div>
+            </form>
+        `;
+
+        this.showModal(title, content, 'Importar Selecionadas', formId);
+        window[tempStorageKey] = transactions;
+    },
+
+    sanitizeHTML(str) {
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+    },
 
     renderAnalysisModal(analysis) {
         if (analysis.error) {
@@ -922,7 +1140,7 @@ const UI = {
                  suggestionsHTML += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
                     <span>${cat.category}</span>
                     <span class="font-semibold">${this.formatCurrency(cat.amount)} <span class="text-gray-500 font-normal">(${cat.percentage}%)</span></span>
-                 </li>`;
+                </li>`;
             });
             suggestionsHTML += `</ul>
                 <p class="text-xs text-gray-500 mt-3">Focar em reduzir os gastos nas suas maiores categorias pode ter um grande impacto. Já analisou se há espaço para cortar custos em <strong>${analysis.topExpenseCategories[0].category}</strong>?</p>
@@ -938,7 +1156,7 @@ const UI = {
                 <p class="text-blue-700">Vimos que <strong>${topNonEssential.category}</strong> está entre seus maiores gastos. Que tal definir um orçamento mensal para essa categoria ou procurar por alternativas mais baratas?</p>
             </div>`;
         } else {
-            suggestionsHTML += `<div class="p-4 bg-blue-50 rounded-lg">
+             suggestionsHTML += `<div class="p-4 bg-blue-50 rounded-lg">
                 <h4 class="font-bold text-blue-800">Dica Rápida</h4>
                 <p class="text-blue-700">Uma boa prática é tentar economizar de 10% a 20% da sua renda mensal. Você está no caminho certo?</p>
             </div>`;
@@ -972,11 +1190,24 @@ const UI = {
     },
 
     closeModal() { document.getElementById('modal-container').innerHTML = ''; },
-    showFeedback(message, type = 'info') {
+    showFeedback(message, type = 'info', duration = 4000) {
         const el = document.getElementById('feedback-message');
         const colors = { success: 'bg-green-100 text-green-800', error: 'bg-red-100 text-red-800', info: 'bg-blue-100 text-blue-800' };
+        
+        // If message is empty, just clear it.
+        if (!message) {
+            el.innerHTML = '';
+            return;
+        }
+
         el.innerHTML = `<div class="px-4 py-3 rounded-md shadow-lg ${colors[type] || colors['info']}">${message}</div>`;
-        setTimeout(() => el.innerHTML = '', 4000);
+        
+        // If duration is 0 or null, it's persistent until cleared manually.
+        if (duration > 0) {
+            setTimeout(() => {
+                if(el.innerHTML.includes(message)) el.innerHTML = '';
+            }, duration);
+        }
     },
     
     formatCurrency: value => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0),
@@ -1035,9 +1266,11 @@ const UI = {
             const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
             labels.push(date.toLocaleDateString('pt-BR', { month: 'short' }));
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+            
+            // Calculate balance up to the end of that month
             let balance = AppState.accounts.reduce((s, a) => s + (a.initialBalance || 0), 0);
             AppState.transactions.filter(tx => new Date(tx.date) <= endOfMonth).forEach(tx => {
-                if(!tx.isCreditCard) {
+                if(!tx.isCreditCard) { // only consider non-credit card transactions for balance
                     if (tx.fundamentalType === 'receita') balance += tx.value;
                     else if (tx.isPaid) balance -= tx.value;
                 }
@@ -1058,6 +1291,7 @@ const UI = {
 
         container.innerHTML = cards.map(card => {
             const now = new Date();
+            // This needs a more sophisticated logic for closing/due dates
             const currentBill = AppState.transactions
                 .filter(t => t.accountId === card.id && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
                 .reduce((sum, t) => sum + t.value, 0);
@@ -1109,24 +1343,29 @@ const UI = {
 // Módulo de Handlers
 const Handlers = {
     init() {
+        // Navigation
         document.querySelectorAll('aside nav a').forEach(link => link.addEventListener('click', e => {
             e.preventDefault(); AppState.currentView = e.currentTarget.id.replace('nav-', ''); UI.render();
         }));
         
+        // Clear all data
         document.getElementById('clear-data-btn').addEventListener('click', () => {
             UI.showConfirmationModal('Limpar Todos os Dados', 'Tem certeza que deseja apagar TUDO? Esta ação não pode ser desfeita.', () => {
                 AppState.clearAllData(); UI.render(); UI.showFeedback('Todos os dados foram limpos!', 'success');
             });
         });
         
+        // Sidebar toggle
         document.getElementById('sidebar-toggle-btn').addEventListener('click', () => {
             AppState.isSidebarCollapsed = !AppState.isSidebarCollapsed;
-            document.getElementById('sidebar-toggle-btn').querySelector('span').textContent = AppState.isSidebarCollapsed ? '' : 'Recolher';
-            document.body.classList.toggle('sidebar-collapsed', AppState.isSidebarCollapsed);
+            document.querySelector('#sidebar-toggle-btn .nav-text').textContent = AppState.isSidebarCollapsed ? '' : 'Recolher';
+            UI.render(); // Re-render to apply class to body
         });
 
+        // Add new transaction
         document.getElementById('add-new-transaction-btn').addEventListener('click', () => UI.renderNewTransactionModal());
 
+        // Event delegation for dynamically created elements
         document.getElementById('page-container').addEventListener('click', e => {
             if (e.target.id === 'add-new-account-btn') UI.renderAccountModal();
             if (e.target.id === 'generate-report-btn') this.handleGenerateReport();
@@ -1145,18 +1384,26 @@ const Handlers = {
         
         document.getElementById('page-container').addEventListener('change', e => {
             if (e.target.id === 'report-mode') {
-                document.getElementById('period-2-filters').classList.toggle('hidden', e.target.value !== 'comparative');
+                const period2Filters = document.getElementById('period-2-filters');
+                document.querySelectorAll('#period-2-filters > div').forEach(div => div.classList.toggle('hidden', e.target.value !== 'comparative'));
             }
         });
 
+        // Modal event delegation
         document.getElementById('modal-container').addEventListener('click', e => {
             if (e.target.closest('.modal-close-btn')) UI.closeModal();
+            if (e.target.id === 'import-select-all') {
+                const isChecked = e.target.checked;
+                document.querySelectorAll('.import-checkbox').forEach(cb => cb.checked = isChecked);
+            }
         });
         
         document.getElementById('modal-container').addEventListener('submit', e => {
             e.preventDefault();
             if (e.target.id === 'transaction-modal-form') this.handleTransactionFormSubmit(e.target);
             if (e.target.id === 'account-modal-form') this.handleAccountFormSubmit(e.target);
+            if (e.target.id === 'ofx-import-form') this.handleGenericImportSubmit(e.target, 'tempOfxTransactions');
+            if (e.target.id === 'image-import-form') this.handleGenericImportSubmit(e.target, 'tempImageTransactions');
         });
 
         document.getElementById('modal-container').addEventListener('change', e => {
@@ -1168,22 +1415,93 @@ const Handlers = {
             }
         });
 
-        const importBtn = document.getElementById('import-data-btn');
-        const importInput = document.getElementById('import-file-input');
-        importBtn.addEventListener('click', () => importInput.click());
-        importInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                AppState.importData(e.target.files[0]);
-                e.target.value = null; // Reset input
-            }
+        // Options dropdown menu
+        const optionsMenuBtn = document.getElementById('options-menu-btn');
+        const optionsDropdown = document.getElementById('options-dropdown');
+        optionsMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            optionsDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', () => optionsDropdown.classList.add('hidden'));
+
+
+        // Import/Export buttons
+        const importImageBtn = document.getElementById('import-image-btn');
+        const importImageInput = document.getElementById('import-image-input');
+        importImageBtn.addEventListener('click', (e) => { e.preventDefault(); importImageInput.click(); });
+        importImageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) { AppState.importImage(e.target.files[0]); e.target.value = null; }
         });
 
-        document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
+        const importOfxBtn = document.getElementById('import-ofx-btn');
+        const importOfxInput = document.getElementById('import-ofx-input');
+        importOfxBtn.addEventListener('click', (e) => { e.preventDefault(); importOfxInput.click(); });
+        importOfxInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) { AppState.importOFX(e.target.files[0]); e.target.value = null; }
+        });
+
+        const importPdfBtn = document.getElementById('import-pdf-btn');
+        const importPdfInput = document.getElementById('import-pdf-input');
+        importPdfBtn.addEventListener('click', (e) => { e.preventDefault(); importPdfInput.click(); });
+        importPdfInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) { AppState.importPDF(e.target.files[0]); e.target.value = null; }
+        });
+
+        const importBtn = document.getElementById('import-data-btn');
+        const importInput = document.getElementById('import-file-input');
+        importBtn.addEventListener('click', (e) => { e.preventDefault(); importInput.click(); });
+        importInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) { AppState.importData(e.target.files[0]); e.target.value = null; }
+        });
+
+        document.getElementById('export-data-btn').addEventListener('click', (e) => { e.preventDefault(); AppState.exportData(); });
     },
 
     handleAnalysisClick() {
         const analysis = AppState.getFinancialAnalysis();
         UI.renderAnalysisModal(analysis);
+    },
+    
+    handleGenericImportSubmit(form, tempStorageKey) {
+        const targetAccountId = form.querySelector('#import-target-account').value;
+        const isCC = targetAccountId ? AppState.creditCards.some(c => c.id === targetAccountId) : false;
+        const originalTransactions = window[tempStorageKey];
+        const rows = form.querySelectorAll('.import-review-row');
+        let importedCount = 0;
+
+        rows.forEach(row => {
+            const checkbox = row.querySelector('.import-checkbox');
+            if (checkbox.checked) {
+                const index = parseInt(row.dataset.index, 10);
+                const originalTx = originalTransactions[index];
+                const newDescription = row.querySelector('input[type="text"]').value;
+                
+                const newTx = {
+                    ...originalTx, // Includes value, date, fundamentalType
+                    id: crypto.randomUUID(),
+                    description: newDescription,
+                    accountId: targetAccountId || null,
+                    isCreditCard: isCC,
+                    isPaid: true, // All imported transactions are considered paid
+                    category: 'Outros', // Default category for imports
+                };
+                AppState.addTransaction(newTx);
+                importedCount++;
+            }
+        });
+
+        delete window[tempStorageKey];
+        
+        if (importedCount > 0) {
+            AppState.recalculateAllBalances();
+            AppState.saveAll();
+            UI.render();
+            UI.showFeedback(`${importedCount} transações importadas com sucesso!`, 'success');
+        } else {
+            UI.showFeedback('Nenhuma transação foi selecionada para importação.', 'info');
+        }
+        
+        UI.closeModal();
     },
 
     handleEditClick(button) {
@@ -1255,11 +1573,11 @@ const Handlers = {
 
         let accountIdToUse = isEditing && editingType === 'account' ? editingId : (isEditing && editingType === 'card' ? AppState.creditCards.find(c=>c.id === editingId).linkedAccountId : crypto.randomUUID());
 
-        if (isEditing && editingType === 'account') {
-             AppState.updateAccount(accountIdToUse, accountData);
-        } else if (!isEditing) {
-             accountData.id = accountIdToUse;
-             AppState.addAccount(accountData);
+        if (isEditing) {
+            if (editingType === 'account') AppState.updateAccount(accountIdToUse, accountData);
+        } else {
+            accountData.id = accountIdToUse;
+            AppState.addAccount(accountData);
         }
 
         const cardLinked = AppState.creditCards.find(c => c.linkedAccountId === accountIdToUse);
@@ -1375,6 +1693,7 @@ const Handlers = {
     },
 };
 
+// Initializer
 document.addEventListener('DOMContentLoaded', () => {
     AppState.init();
     UI.init();
