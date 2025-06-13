@@ -40,6 +40,7 @@
         .custom-table td, .custom-table th { padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; }
         .custom-table tbody tr:last-child td { border-bottom: none; }
         .paid-transaction .description { text-decoration: line-through; color: #a0aec0; }
+        .installment-group-row { cursor: pointer; }
         
         .chart-container { position: relative; height: 350px; }
 
@@ -421,22 +422,52 @@ const UI = {
         const tbody = document.getElementById('transactions-table-body');
         const noResultsEl = document.getElementById('no-transactions-found');
         if(!tbody || !noResultsEl) return;
-
+        
         const lowerSearchTerm = searchTerm.toLowerCase();
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
-        const filteredTxs = AppState.transactions.filter(tx => 
+        const allTxs = AppState.transactions.filter(tx => 
             tx.description.toLowerCase().includes(lowerSearchTerm) ||
             tx.category.toLowerCase().includes(lowerSearchTerm)
-        ).sort((a,b) => new Date(b.date) - new Date(a.date));
+        );
 
-        if (filteredTxs.length === 0) {
+        const processedGroupIds = new Set();
+        const txsToDisplay = [];
+
+        allTxs.sort((a,b) => new Date(b.date) - new Date(a.date))
+              .forEach(tx => {
+                if (tx.groupId) {
+                    if (processedGroupIds.has(tx.groupId)) return;
+
+                    const group = allTxs.filter(t => t.groupId === tx.groupId);
+                    let txToShow = group.find(t => {
+                        const txDate = new Date(t.date + "T00:00:00");
+                        return txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
+                    });
+                    
+                    if (!txToShow) {
+                        txToShow = group[0]; // Show the most recent one if none in current month
+                    }
+
+                    txsToDisplay.push(txToShow);
+                    processedGroupIds.add(tx.groupId);
+                } else {
+                    txsToDisplay.push(tx);
+                }
+        });
+
+        if (txsToDisplay.length === 0) {
             tbody.innerHTML = '';
             noResultsEl.classList.remove('hidden');
             return;
         }
         
         noResultsEl.classList.add('hidden');
-        tbody.innerHTML = filteredTxs.map(tx => {
+        tbody.innerHTML = txsToDisplay.map(tx => {
+            const isGroup = !!tx.groupId;
+            const rowClass = isGroup ? 'installment-group-row' : '';
             const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
             const statusText = tx.isPaid ? 'Pago' : 'Pendente';
             const statusColor = tx.isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
@@ -453,7 +484,7 @@ const UI = {
             const descriptionWithInstallment = tx.installments ? `${tx.description} ${tx.installments}` : tx.description;
 
             return `
-            <tr class="bg-white ${tx.isPaid ? 'paid-transaction' : ''}">
+            <tr class="bg-white ${tx.isPaid ? 'paid-transaction' : ''} ${rowClass}" ${isGroup ? `data-group-id="${tx.groupId}"` : ''}>
                 <td class="py-4 px-6">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                 <td class="py-4 px-6 font-medium text-gray-900 description">${descriptionWithInstallment}</td>
                 <td class="py-4 px-6 font-bold ${valueColor}">${this.formatCurrency(tx.value)}</td>
@@ -970,6 +1001,58 @@ const UI = {
         this.showInfoModal(title, content);
     },
 
+    renderInstallmentDetailsModal(groupId) {
+        const allInstallments = AppState.transactions.filter(t => t.groupId === groupId).sort((a, b) => new Date(a.date) - new Date(b.date));
+        if (allInstallments.length === 0) return;
+
+        const description = allInstallments[0].description;
+        const installmentValue = allInstallments[0].value;
+        const totalValue = installmentValue * allInstallments.length;
+        
+        const paidInstallments = allInstallments.filter(t => t.isPaid);
+        const amountPaid = paidInstallments.reduce((sum, t) => sum + t.value, 0);
+        const amountRemaining = totalValue - amountPaid;
+        const endDate = new Date(allInstallments[allInstallments.length - 1].date + 'T00:00:00').toLocaleDateString('pt-BR');
+
+        let content = `
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div class="text-gray-500">Valor Pago:</div>
+                    <div class="font-semibold text-green-600 text-right">${this.formatCurrency(amountPaid)}</div>
+                    
+                    <div class="text-gray-500">Valor Faltante:</div>
+                    <div class="font-semibold text-red-600 text-right">${this.formatCurrency(amountRemaining)}</div>
+
+                    <div class="text-gray-500">Data de Término:</div>
+                    <div class="font-semibold text-right">${endDate}</div>
+                </div>
+                <hr/>
+                <div>
+                    <h4 class="font-semibold text-gray-700 mb-2">Todas as Parcelas</h4>
+                    <ul class="space-y-2 max-h-48 overflow-y-auto pr-2">
+        `;
+
+        allInstallments.forEach(tx => {
+            const statusColor = tx.isPaid ? 'text-green-600' : 'text-yellow-600';
+            const statusText = tx.isPaid ? 'Pago' : 'Pendente';
+            content += `
+                <li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
+                    <div>
+                        <p class="font-medium text-gray-800">${tx.installments}</p>
+                        <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold">${this.formatCurrency(tx.value)}</p>
+                        <p class="text-xs font-semibold ${statusColor}">${statusText}</p>
+                    </div>
+               </li>
+            `;
+        });
+
+        content += '</ul></div></div>';
+        this.showInfoModal(`Detalhes: ${description}`, content);
+    },
+
     renderAnalysisModal(analysis) {
         if (analysis.error) {
             this.showFeedback(analysis.error, 'info');
@@ -1221,10 +1304,11 @@ const Handlers = {
             if (deleteBtn) this.handleDeleteClick(deleteBtn);
 
             const summaryCard = e.target.closest('.summary-card');
-            if (summaryCard) {
-                const type = summaryCard.dataset.type;
-                this.handleSummaryCardClick(type);
-            }
+            if (summaryCard) this.handleSummaryCardClick(summaryCard.dataset.type);
+            
+            const installmentRow = e.target.closest('.installment-group-row');
+            if(installmentRow) this.handleInstallmentClick(installmentRow.dataset.groupId);
+
         });
 
         document.getElementById('page-container').addEventListener('input', e => {
@@ -1269,6 +1353,10 @@ const Handlers = {
         });
 
         document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
+    },
+    
+    handleInstallmentClick(groupId) {
+        UI.renderInstallmentDetailsModal(groupId);
     },
 
     handleSummaryCardClick(type) {
