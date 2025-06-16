@@ -1079,6 +1079,31 @@ const UI = {
             </div>`;
     },
 
+    showApplyToAllModal(title, message, onApplyAll, onApplyOne) {
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.innerHTML = `
+             <div class="modal-backdrop">
+                <div class="modal-content max-w-lg">
+                    <div class="modal-header">
+                        <h3 class="text-xl font-semibold text-gray-800">${title}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-gray-600">${message}</p>
+                    </div>
+                    <div class="modal-footer flex justify-end gap-3">
+                        <button id="apply-one-btn" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Apenas esta Parcela</button>
+                        <button id="apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Aplicar a Todas</button>
+                        <button type="button" class="modal-close-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
+                    </div>
+                </div>
+            </div>`;
+        document.getElementById('apply-all-btn').onclick = onApplyAll;
+        document.getElementById('apply-one-btn').onclick = onApplyOne;
+        modalContainer.querySelectorAll('.modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => UI.closeModal());
+        });
+    },
+
     showInfoModal(title, content, callback) {
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
@@ -1656,9 +1681,12 @@ const Handlers = {
     
     handleEditTransactionFormSubmit(form) {
         const txId = form.querySelector('#editing-id').value;
+        const tx = AppState.transactions.find(t => t.id === txId);
+        if (!tx) return;
+    
         const accountId = form.querySelector('#edit-trans-account').value;
         const isCC = AppState.creditCards.some(c => c.id === accountId);
-
+    
         const updatedData = {
             description: form.querySelector('#edit-trans-description').value,
             value: parseFloat(form.querySelector('#edit-trans-value').value),
@@ -1668,13 +1696,37 @@ const Handlers = {
             accountId: accountId || null,
             isCreditCard: isCC,
         };
+    
+        const descriptionChanged = tx.description !== updatedData.description;
+        const categoryChanged = tx.category !== updatedData.category;
 
-        AppState.updateTransaction(txId, updatedData);
-        AppState.recalculateAllBalances();
-        AppState.saveAll();
-        UI.closeModal();
-        UI.render();
-        UI.showFeedback('Transação atualizada com sucesso!', 'success');
+        const applyChanges = (applyToAll) => {
+            if (applyToAll && tx.groupId) {
+                AppState.transactions.forEach(t => {
+                    if (t.groupId === tx.groupId) {
+                        if (descriptionChanged) t.description = updatedData.description;
+                        if (categoryChanged) t.category = updatedData.category;
+                    }
+                });
+            }
+            AppState.updateTransaction(txId, updatedData);
+            AppState.recalculateAllBalances();
+            AppState.saveAll();
+            UI.closeModal();
+            UI.render();
+            UI.showFeedback('Transação atualizada com sucesso!', 'success');
+        };
+
+        if (tx.groupId && (descriptionChanged || categoryChanged)) {
+            UI.showApplyToAllModal(
+                'Atualizar Parcelas',
+                'Você alterou campos compartilhados. Aplicar a todas as parcelas?',
+                () => applyChanges(true),
+                () => applyChanges(false)
+            );
+        } else {
+            applyChanges(false);
+        }
     },
 
     handleCategoryFormSubmit(form) {
