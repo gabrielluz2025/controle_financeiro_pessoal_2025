@@ -400,6 +400,19 @@ const AppState = {
 
 // Módulo de UI
 const UI = {
+    banks: [
+        { name: 'Nenhum', logo: '' },
+        { name: 'Banco do Brasil', logo: 'https://logo.clearbit.com/bb.com.br' },
+        { name: 'Bradesco', logo: 'https://logo.clearbit.com/bradesco.com.br' },
+        { name: 'Itaú Unibanco', logo: 'https://logo.clearbit.com/itau.com.br' },
+        { name: 'Caixa Econômica Federal', logo: 'https://logo.clearbit.com/caixa.gov.br' },
+        { name: 'Santander', logo: 'https://logo.clearbit.com/santander.com.br' },
+        { name: 'Nubank', logo: 'https://logo.clearbit.com/nubank.com.br' },
+        { name: 'Banco Inter', logo: 'https://logo.clearbit.com/bancointer.com.br' },
+        { name: 'C6 Bank', logo: 'https://logo.clearbit.com/c6bank.com.br' },
+        { name: 'Outro', logo: '' }
+    ],
+
     init() { this.render(); },
     
     render() {
@@ -441,11 +454,12 @@ const UI = {
 
     populatePeriodSelectors() {
         const activePageId = AppState.currentView;
-        const monthSelect = document.querySelector(`#${activePageId}-page .period-month-select`);
-        const yearSelect = document.querySelector(`#${activePageId}-page .period-year-select`);
-        
-        if(!monthSelect || !yearSelect) return;
+        const container = document.querySelector(`#${activePageId}-page .period-selector-container`);
+        if (!container) return;
 
+        const monthSelect = container.querySelector('.period-month-select');
+        const yearSelect = container.querySelector('.period-year-select');
+        
         monthSelect.innerHTML = Array.from({length: 12}, (_, i) => 
             `<option value="${i}" ${i === AppState.displayMonth ? 'selected' : ''}>${new Date(0, i).toLocaleString('pt-BR', {month: 'long'})}</option>`
         ).join('');
@@ -566,6 +580,7 @@ const UI = {
             const searchMatch = tx.description.toLowerCase().includes(lowerSearchTerm) || tx.category.toLowerCase().includes(lowerSearchTerm);
             return periodMatch && searchMatch;
         }).sort((a,b) => new Date(b.date) - new Date(a.date));
+
 
         if (txsToDisplay.length === 0) {
             tbody.innerHTML = '';
@@ -795,9 +810,13 @@ const UI = {
         }
         container.innerHTML = AppState.accounts.map(acc => `
             <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
-                <div>
-                    <p class="font-semibold text-gray-800">${acc.name}</p>
-                    <p class="text-sm text-gray-500">${this.capitalize(acc.type.replace('corrente', 'Conta Corrente'))}</p>
+                <div class="flex items-center">
+                    ${acc.bankLogo ? `<img src="${acc.bankLogo}" alt="Logo do banco" class="h-8 w-8 mr-4 rounded-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">` : ''}
+                    <div class="h-8 w-8 mr-4 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold" style="${acc.bankLogo ? 'display:none' : ''}">?</div>
+                    <div>
+                        <p class="font-semibold text-gray-800">${acc.name}</p>
+                        <p class="text-sm text-gray-500">${this.capitalize(acc.type.replace('corrente', 'Conta Corrente'))}</p>
+                    </div>
                 </div>
                 <div class="text-right">
                     <p class="font-bold text-lg ${acc.balance >= 0 ? 'text-green-600' : 'text-red-600'}">${this.formatCurrency(acc.balance)}</p>
@@ -860,12 +879,14 @@ const UI = {
                 accountData = AppState.accounts.find(a => a.id === itemToEdit.linkedAccountId) || {};
             }
         } else {
-            accountData = { name: '', type: 'corrente', initialBalance: 0, overdraftLimit: 0 };
+            accountData = { name: '', type: 'corrente', initialBalance: 0, overdraftLimit: 0, bankLogo: '' };
             cardData = { name: '', limit: 0, dueDay: 1, brand: 'Visa' };
         }
         
         const hasCard = isEditing ? (type === 'card' || !!AppState.creditCards.find(c => c.linkedAccountId === accountData.id)) : false;
         
+        const bankOptions = this.banks.map(bank => `<option value="${bank.logo}" ${accountData.bankLogo === bank.logo ? 'selected' : ''}>${bank.name}</option>`).join('');
+
         const content = `
             <form id="account-modal-form" class="space-y-4">
                 <input type="hidden" id="editing-id" value="${isEditing ? itemToEdit.id : ''}">
@@ -877,6 +898,10 @@ const UI = {
                         <div>
                             <label for="acc-name" class="block text-sm font-medium text-gray-700">Nome da Conta</label>
                             <input type="text" id="acc-name" value="${accountData.name || ''}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        </div>
+                        <div>
+                            <label for="acc-bank" class="block text-sm font-medium text-gray-700">Banco</label>
+                            <select id="acc-bank" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${bankOptions}</select>
                         </div>
                         <div>
                             <label for="acc-type" class="block text-sm font-medium text-gray-700">Tipo de Conta</label>
@@ -1683,6 +1708,7 @@ const Handlers = {
             type: form.querySelector('#acc-type').value,
             initialBalance: parseFloat(form.querySelector('#acc-balance').value) || 0,
             overdraftLimit: form.querySelector('#acc-type').value === 'corrente' ? parseFloat(form.querySelector('#acc-overdraft').value) : 0,
+            bankLogo: form.querySelector('#acc-bank').value
         };
 
         let accountIdToUse = isEditing && editingType === 'account' ? editingId : (isEditing && editingType === 'card' ? AppState.creditCards.find(c=>c.id === editingId).linkedAccountId : crypto.randomUUID());
