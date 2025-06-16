@@ -41,6 +41,7 @@
         .custom-table tbody tr:last-child td { border-bottom: none; }
         .paid-transaction .description { text-decoration: line-through; color: #a0aec0; }
         .installment-group-row { cursor: pointer; }
+        .status-badge { cursor: pointer; }
         
         .chart-container { position: relative; height: 350px; }
 
@@ -142,7 +143,7 @@
                      <select class="period-month-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"></select>
                      <select class="period-year-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"></select>
                 </div>
-                <div id="summary-cards-container" class="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 xl:grid-cols-4"></div>
+                <div id="summary-cards-container" class="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 xl:grid-cols-5"></div>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                     <div class="lg:col-span-2">
@@ -593,10 +594,23 @@ const UI = {
         noResultsEl.classList.add('hidden');
         tbody.innerHTML = txsToDisplay.map(tx => {
             const isGroup = !!tx.groupId;
-            const rowClass = isGroup ? 'installment-group-row' : '';
             const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
-            const statusText = tx.isPaid ? 'Pago' : 'Pendente';
-            const statusColor = tx.isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const txDate = new Date(tx.date + "T00:00:00");
+
+            let statusText = 'Pendente';
+            let statusColor = 'bg-yellow-100 text-yellow-800';
+
+            if (tx.isPaid) {
+                statusText = 'Pago';
+                statusColor = 'bg-green-100 text-green-800';
+            } else if (txDate < today) {
+                statusText = 'Atrasado';
+                statusColor = 'bg-red-100 text-red-800';
+            }
+
             let accountName = 'N/A';
             if(tx.accountId) {
                 if (tx.isCreditCard) {
@@ -610,13 +624,17 @@ const UI = {
             const descriptionWithInstallment = tx.installments ? `${tx.description} ${tx.installments}` : tx.description;
 
             return `
-            <tr class="bg-white ${tx.isPaid ? 'paid-transaction' : ''} ${rowClass}" ${isGroup ? `data-group-id="${tx.groupId}"` : ''}>
+            <tr class="bg-white ${tx.isPaid ? 'paid-transaction' : ''}">
                 <td class="py-4 px-6">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                 <td class="py-4 px-6 font-medium text-gray-900 description">${descriptionWithInstallment}</td>
                 <td class="py-4 px-6 font-bold ${valueColor}">${this.formatCurrency(tx.value)}</td>
                 <td class="py-4 px-6">${tx.category}</td>
                 <td class="py-4 px-6">${accountName}</td>
-                <td class="py-4 px-6"><span class="px-2 py-1 text-xs font-medium rounded-full ${statusColor}">${statusText}</span></td>
+                <td class="py-4 px-6">
+                    <span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">
+                        ${statusText}
+                    </span>
+                </td>
                 <td class="py-4 px-6 text-right">
                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -1546,6 +1564,10 @@ const Handlers = {
                     this.handleInstallmentClick(installmentRow.dataset.groupId);
                 }
             }
+
+            if (e.target.classList.contains('status-badge')) {
+                this.handleStatusToggle(e.target.dataset.id);
+            }
         });
 
         document.getElementById('page-container').addEventListener('change', e => {
@@ -1608,6 +1630,16 @@ const Handlers = {
         });
 
         document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
+    },
+
+    handleStatusToggle(txId) {
+        const tx = AppState.transactions.find(t => t.id === txId);
+        if(tx) {
+            tx.isPaid = !tx.isPaid;
+            AppState.recalculateAllBalances();
+            AppState.saveAll();
+            UI.render();
+        }
     },
     
     handleModalEditClick(event) {
