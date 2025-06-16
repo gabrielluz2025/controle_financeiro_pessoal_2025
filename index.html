@@ -1221,6 +1221,8 @@ const UI = {
         let content = '';
         const month = AppState.displayMonth;
         const year = AppState.displayYear;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         const monthTxs = AppState.transactions.filter(t => {
             const txDate = new Date(t.date + 'T00:00:00');
@@ -1229,7 +1231,7 @@ const UI = {
 
         const txListBuilder = (txs) => {
             if (txs.length === 0) {
-                return `<p class="text-gray-500 text-center py-4">Nenhuma transação encontrada para este mês.</p>`;
+                return `<p class="text-gray-500 text-center py-4">Nenhuma transação encontrada.</p>`;
             }
             let listHtml = '<ul class="space-y-3">';
             txs.forEach(tx => {
@@ -1237,8 +1239,6 @@ const UI = {
                 
                 let statusHTML = '';
                 if(tx.fundamentalType === 'despesa') {
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
                     const txDate = new Date(tx.date + "T00:00:00");
                     let statusText = 'Pendente';
                     let statusColor = 'bg-yellow-100 text-yellow-800';
@@ -1309,6 +1309,15 @@ const UI = {
                  title = 'Contas a Pagar no Mês';
                 const unpaidTxs = monthTxs.filter(t => !t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(a.date) - new Date(b.date));
                 content = txListBuilder(unpaidTxs);
+                this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
+                break;
+            case 'monthly-overdue':
+                title = 'Despesas em Atraso';
+                const overdueTxs = AppState.transactions.filter(t => {
+                    const txDate = new Date(t.date + 'T00:00:00');
+                    return !t.isPaid && t.fundamentalType === 'despesa' && txDate < today;
+                }).sort((a,b) => new Date(a.date) - new Date(b.date));
+                content = txListBuilder(overdueTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
             case 'monthly-balance':
@@ -1524,6 +1533,8 @@ const UI = {
         
         const month = AppState.displayMonth;
         const year = AppState.displayYear;
+        const today = new Date();
+        today.setHours(0,0,0,0);
 
         const totalBalance = AppState.accounts.reduce((s, a) => s + (a.balance || 0), 0);
         const monthTxs = AppState.transactions.filter(t => {
@@ -1533,14 +1544,14 @@ const UI = {
         const income = monthTxs.filter(t => t.fundamentalType === 'receita').reduce((s, t) => s + t.value, 0);
         const expenses = monthTxs.filter(t => t.fundamentalType === 'despesa').reduce((s, t) => s + t.value, 0);
         const paidExpenses = monthTxs.filter(t => t.isPaid && t.fundamentalType === 'despesa').reduce((s, t) => s + t.value, 0);
-        const unpaidCount = monthTxs.filter(t => !t.isPaid && t.fundamentalType === 'despesa').length;
+        const overdueCount = AppState.transactions.filter(t => !t.isPaid && t.fundamentalType === 'despesa' && new Date(t.date + 'T00:00:00') < today).length;
 
         container.innerHTML = `
             ${this.createSummaryCard('Saldo Total', totalBalance, 'blue')}
             ${this.createSummaryCard('Receitas no Mês', income, 'green')}
             ${this.createSummaryCard('Despesas no Mês', expenses, 'red')}
             ${this.createSummaryCard('Total Pago no Mês', paidExpenses, 'yellow')}
-            ${this.createSummaryCard('Contas a Pagar', unpaidCount, 'orange', false, true)}
+            ${this.createSummaryCard('Despesas em Atraso', overdueCount, 'orange', false, true)}
         `;
     },
     createSummaryCard(title, value, color, isNegative = false, isCount = false) {
@@ -1549,14 +1560,14 @@ const UI = {
             green: 'M12 6v6m0 0v6m0-6h6m-6 0H6', 
             red: 'M18 12H6', 
             yellow: 'M9 8h6m-5 4h.01M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-            orange: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01'
+            orange: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
         };
         const typeMap = { 
             'Saldo Total': 'total-balance', 
             'Receitas no Mês': 'monthly-income', 
             'Despesas no Mês': 'monthly-expenses', 
             'Total Pago no Mês': 'monthly-paid',
-            'Contas a Pagar': 'monthly-unpaid'
+            'Despesas em Atraso': 'monthly-overdue'
         };
         const formattedValue = isCount ? `${value}` : this.formatCurrency(value);
         const valueClass = `text-2xl font-bold ${isNegative ? 'text-red-600' : 'text-gray-800'}`;
