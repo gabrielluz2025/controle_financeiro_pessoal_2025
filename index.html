@@ -189,6 +189,7 @@ const AppState = {
     currentView: 'dashboard', isSidebarCollapsed: false,
     displayMonth: new Date().getMonth(),
     displayYear: new Date().getFullYear(),
+    selectedTransactionIds: [],
     
     init() {
         this.accounts = JSON.parse(localStorage.getItem('app_accounts_v3')) || [];
@@ -478,6 +479,7 @@ const UI = {
         const page = document.getElementById('transactions-page');
         page.innerHTML = `
             <div class="bg-white p-6 rounded-xl shadow-md">
+                <div id="bulk-action-bar-container" class="mb-4"></div>
                 <div class="flex justify-between items-center mb-4">
                      <div class="flex items-center space-x-2">
                          <h3 class="text-xl font-bold text-gray-700">Histórico de Transações</h3>
@@ -492,6 +494,7 @@ const UI = {
                     <table class="w-full text-sm text-left text-gray-500 custom-table">
                         <thead class="text-xs text-gray-700 uppercase">
                             <tr>
+                                <th scope="col" class="py-3 px-6 w-10"><input type="checkbox" id="select-all-txs"></th>
                                 <th scope="col" class="py-3 px-6">Data</th>
                                 <th scope="col" class="py-3 px-6">Descrição</th>
                                 <th scope="col" class="py-3 px-6">Valor</th>
@@ -508,6 +511,7 @@ const UI = {
             </div>`;
         this.populatePeriodSelectors();
         this.renderTransactionsList();
+        this.renderBulkActionBar();
     },
     
     renderCategoriesPage() {
@@ -645,9 +649,11 @@ const UI = {
                 }
             }
             const descriptionWithInstallment = tx.installments ? `${tx.description} ${tx.installments}` : tx.description;
+            const isSelected = AppState.selectedTransactionIds.includes(tx.id);
 
             return `
             <tr class="bg-white ${tx.isPaid ? 'paid-transaction' : ''}">
+                <td class="py-4 px-6"><input type="checkbox" class="tx-select-checkbox" data-id="${tx.id}" ${isSelected ? 'checked' : ''}></td>
                 <td class="py-4 px-6">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                 <td class="py-4 px-6 font-medium text-gray-900 description">${descriptionWithInstallment}</td>
                 <td class="py-4 px-6 font-bold ${valueColor}">${this.formatCurrency(tx.value)}</td>
