@@ -42,6 +42,7 @@
         .paid-transaction .description { text-decoration: line-through; color: #a0aec0; }
         .installment-group-row { cursor: pointer; }
         .status-badge { cursor: pointer; }
+        .account-item { cursor: pointer; }
         
         .chart-container { position: relative; height: 350px; }
 
@@ -610,8 +611,19 @@ const UI = {
                     statusText = 'Pago';
                     statusColor = 'bg-green-100 text-green-800';
                 } else if (txDate < today) {
-                    statusText = 'Atrasado';
-                    statusColor = 'bg-red-100 text-red-800';
+                    let isOverdue = true;
+                    if (tx.groupId) {
+                        const anyPreviousUnpaid = AppState.transactions.some(t => 
+                            t.groupId === tx.groupId && new Date(t.date) < txDate && !t.isPaid
+                        );
+                        if (anyPreviousUnpaid) {
+                            isOverdue = false; 
+                        }
+                    }
+                    if (isOverdue) {
+                        statusText = 'Atrasado';
+                        statusColor = 'bg-red-100 text-red-800';
+                    }
                 }
                 statusHTML = `
                     <td class="py-4 px-6">
@@ -836,8 +848,8 @@ const UI = {
             container.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-sm text-center text-gray-500">Nenhuma conta adicionada.</div>`; return;
         }
         container.innerHTML = AppState.accounts.map(acc => `
-            <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
-                <div class="flex items-center">
+            <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center account-item" data-id="${acc.id}">
+                <div class="flex items-center flex-1 pointer-events-none">
                     ${acc.bankLogo ? `<img src="${acc.bankLogo}" alt="Logo do banco" class="h-8 w-8 mr-4 rounded-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">` : ''}
                     <div class="h-8 w-8 mr-4 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold" style="${acc.bankLogo ? 'display:none' : ''}">?</div>
                     <div>
@@ -845,7 +857,7 @@ const UI = {
                         <p class="text-sm text-gray-500">${this.capitalize(acc.type.replace('corrente', 'Conta Corrente'))}</p>
                     </div>
                 </div>
-                <div class="text-right">
+                <div class="text-right pointer-events-none">
                     <p class="font-bold text-lg ${acc.balance >= 0 ? 'text-green-600' : 'text-red-600'}">${this.formatCurrency(acc.balance)}</p>
                     ${acc.type === 'corrente' && acc.overdraftLimit > 0 ? `<p class="text-xs text-gray-400">Limite: ${this.formatCurrency(acc.overdraftLimit)}</p>` : ''}
                 </div>
@@ -1319,6 +1331,54 @@ const UI = {
                 break;
         }
     },
+    
+    renderAccountDetailsModal(accountId) {
+        const account = AppState.accounts.find(a => a.id === accountId);
+        if (!account) return;
+
+        const linkedTxs = AppState.transactions
+            .filter(t => t.accountId === accountId && !t.isCreditCard)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        const txListBuilder = (txs) => {
+            if (txs.length === 0) {
+                return `<p class="text-gray-500 text-center py-4">Nenhuma transação vinculada a esta conta.</p>`;
+            }
+            let listHtml = '<ul class="space-y-3">';
+            txs.forEach(tx => {
+                const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
+                listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
+                                    <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                                </div>
+                                <div class="flex items-center">
+                                     <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
+                                     <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover Vínculo">
+                                        <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536l1.101-1.102a4 4 0 000-5.656l-4-4a4 4 0 00-5.656 5.656l1.101 1.102" /></svg>
+                                    </button>
+                                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                        <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                </div>
+                           </li>`;
+            });
+            listHtml += '</ul>';
+            return listHtml;
+        }
+
+        const content = `
+            <div data-account-id="${accountId}">
+                <h4 class="font-bold text-lg mb-2 text-gray-800">Transações na Conta</h4>
+                <div class="max-h-96 overflow-y-auto">
+                    ${txListBuilder(linkedTxs)}
+                </div>
+            </div>
+        `;
+        
+        this.showInfoModal(`Detalhes da Conta: ${account.name}`, content, (e) => Handlers.handleModalClick(e, 'account-details'));
+    },
+
 
     renderInstallmentDetailsModal(groupId) {
         const allInstallments = AppState.transactions.filter(t => t.groupId === groupId).sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -1660,6 +1720,11 @@ const Handlers = {
             if (e.target.classList.contains('status-badge')) {
                 this.handleStatusToggle(e.target.dataset.id);
             }
+            
+            const accountItem = e.target.closest('.account-item');
+            if(accountItem && !e.target.closest('.edit-btn, .delete-btn')) {
+                this.handleAccountClick(accountItem.dataset.id);
+            }
         });
 
         document.getElementById('page-container').addEventListener('change', e => {
@@ -1689,6 +1754,9 @@ const Handlers = {
             if (e.target.closest('.modal-close-btn')) UI.closeModal();
             if (e.target.classList.contains('installment-status-toggle')) {
                 this.handleInstallmentStatusToggle(e.target.dataset.txId);
+            }
+            if (e.target.closest('.unlink-btn')) {
+                this.handleUnlinkTransactionClick(e.target.closest('.unlink-btn').dataset.id, e.target.closest('[data-account-id]').dataset.accountId);
             }
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) this.handleModalClick(e);
@@ -1723,6 +1791,24 @@ const Handlers = {
         });
 
         document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
+    },
+    
+    handleUnlinkTransactionClick(txId, accountId) {
+        UI.showConfirmationModal('Remover Vínculo', 'Tem certeza que deseja desvincular esta transação da conta?', () => {
+            const tx = AppState.transactions.find(t => t.id === txId);
+            if (tx) {
+                tx.accountId = null;
+                AppState.recalculateAllBalances();
+                AppState.saveAll();
+                UI.closeModal();
+                setTimeout(() => UI.renderAccountDetailsModal(accountId), 100);
+                UI.showFeedback('Vínculo removido.', 'success');
+            }
+        });
+    },
+
+    handleAccountClick(accountId) {
+        UI.renderAccountDetailsModal(accountId);
     },
 
     handleStatusToggle(txId, sourceModalType = null) {
@@ -1873,9 +1959,12 @@ const Handlers = {
 
     handleEditTransactionFormSubmit(form) {
         const txId = form.querySelector('#editing-id').value;
+        const tx = AppState.transactions.find(t => t.id === txId);
+        if (!tx) return;
+    
         const accountId = form.querySelector('#edit-trans-account').value;
         const isCC = AppState.creditCards.some(c => c.id === accountId);
-
+    
         const updatedData = {
             description: form.querySelector('#edit-trans-description').value,
             value: parseFloat(form.querySelector('#edit-trans-value').value),
@@ -1885,13 +1974,37 @@ const Handlers = {
             accountId: accountId || null,
             isCreditCard: isCC,
         };
+    
+        const descriptionChanged = tx.description !== updatedData.description;
+        const categoryChanged = tx.category !== updatedData.category;
 
-        AppState.updateTransaction(txId, updatedData);
-        AppState.recalculateAllBalances();
-        AppState.saveAll();
-        UI.closeModal();
-        UI.render();
-        UI.showFeedback('Transação atualizada com sucesso!', 'success');
+        const applyChanges = (applyToAll) => {
+            if (applyToAll && tx.groupId) {
+                AppState.transactions.forEach(t => {
+                    if (t.groupId === tx.groupId) {
+                        if (descriptionChanged) t.description = updatedData.description;
+                        if (categoryChanged) t.category = updatedData.category;
+                    }
+                });
+            }
+            AppState.updateTransaction(txId, updatedData);
+            AppState.recalculateAllBalances();
+            AppState.saveAll();
+            UI.closeModal();
+            UI.render();
+            UI.showFeedback('Transação atualizada com sucesso!', 'success');
+        };
+
+        if (tx.groupId && (descriptionChanged || categoryChanged)) {
+            UI.showApplyToAllModal(
+                'Atualizar Parcelas',
+                'Você alterou campos compartilhados. Aplicar a todas as parcelas?',
+                () => applyChanges(true),
+                () => applyChanges(false)
+            );
+        } else {
+            applyChanges(false);
+        }
     },
 
     handleCategoryFormSubmit(form) {
