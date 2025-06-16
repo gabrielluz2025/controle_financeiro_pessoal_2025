@@ -202,29 +202,37 @@ const AppState = {
     },
     
     recalculateAllBalances() {
-        this.accounts.forEach(acc => acc.balance = acc.initialBalance || 0);
-        this.creditCards.forEach(card => card.availableLimit = card.limit || 0);
-        
-        const sortedTxs = [...this.transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
-        
-        sortedTxs.forEach(tx => {
-            if (!tx.accountId) return;
-            
-            if (tx.isCreditCard) {
-                const card = this.creditCards.find(c => c.id === tx.accountId);
-                if (card && tx.fundamentalType === 'despesa') {
-                    card.availableLimit -= tx.value;
+        // --- Parte 1: Calcular Saldos das Contas Bancárias ---
+        this.accounts.forEach(account => {
+            let currentBalance = account.initialBalance || 0;
+            const accountTransactions = this.transactions.filter(
+                tx => tx.accountId === account.id && !tx.isCreditCard
+            );
+            accountTransactions.forEach(tx => {
+                if (tx.fundamentalType === 'receita') {
+                    currentBalance += tx.value;
+                } else if (tx.fundamentalType === 'despesa' && tx.isPaid) {
+                    currentBalance -= tx.value;
                 }
-            } else {
-                const account = this.accounts.find(a => a.id === tx.accountId);
-                if (account) {
-                    if (tx.fundamentalType === 'receita') {
-                        account.balance += tx.value;
-                    } else if (tx.isPaid) {
-                        account.balance -= tx.value;
-                    }
+            });
+            account.balance = currentBalance;
+        });
+
+        // --- Parte 2: Calcular Limites Disponíveis dos Cartões de Crédito ---
+        this.creditCards.forEach(card => {
+            let balanceUsed = 0;
+            const cardTransactions = this.transactions.filter(
+                tx => tx.accountId === card.id && tx.isCreditCard
+            );
+            cardTransactions.forEach(tx => {
+                if (tx.fundamentalType === 'despesa') {
+                    balanceUsed += tx.value;
+                } 
+                else if (tx.fundamentalType === 'receita') {
+                    balanceUsed -= tx.value;
                 }
-            }
+            });
+            card.availableLimit = card.limit - balanceUsed;
         });
     },
 
@@ -638,16 +646,34 @@ const UI = {
                 `;
             }
 
-            let accountName = 'N/A';
-            if(tx.accountId) {
+            let accountNameHTML = `<span class="text-gray-400">N/A</span>`;
+            if (tx.accountId) {
+                let name = 'Conta/Cartão Excluído';
+                let iconHTML = `<svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
                 if (tx.isCreditCard) {
                     const card = AppState.creditCards.find(c => c.id === tx.accountId);
-                    if (card) accountName = card.name;
+                    if (card) {
+                        name = card.name;
+                        iconHTML = `<svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>`;
+                    }
                 } else {
                     const acc = AppState.accounts.find(a => a.id === tx.accountId);
-                    if (acc) accountName = acc.name;
+                    if (acc) {
+                        name = acc.name;
+                        iconHTML = `<svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10m16-10v10M3 7h18M4 7l8 4 8-4M4 7l8 4-8 4m16-4l-8 4"></path></svg>`;
+                    }
+                }
+                accountNameHTML = `<div class="flex items-center">${iconHTML}${name}</div>`;
+            } else {
+                if (tx.fundamentalType === 'receita') {
+                    accountNameHTML = `<div class="flex items-center text-yellow-600">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="font-medium">Não Alocada</span>
+                    </div>`;
                 }
             }
+
             const descriptionWithInstallment = tx.installments ? `${tx.description} ${tx.installments}` : tx.description;
             const isSelected = AppState.selectedTransactionIds.includes(tx.id);
 
@@ -658,7 +684,7 @@ const UI = {
                 <td class="py-4 px-6 font-medium text-gray-900 description">${descriptionWithInstallment}</td>
                 <td class="py-4 px-6 font-bold ${valueColor}">${this.formatCurrency(tx.value)}</td>
                 <td class="py-4 px-6">${tx.category}</td>
-                <td class="py-4 px-6">${accountName}</td>
+                <td class="py-4 px-6">${accountNameHTML}</td>
                 ${statusHTML}
                 <td class="py-4 px-6 text-right">
                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
@@ -1051,16 +1077,26 @@ const UI = {
                     <select id="trans-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
                  <div>
-                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão (Opcional)</label>
+                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
                     <select id="trans-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="">Nenhum</option>
+                        <option value="">Nenhuma</option>
                         ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
                         ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
                     </select>
+                    <p id="income-account-helper" class="text-xs text-gray-500 mt-1 hidden">
+                        Selecione onde o dinheiro entrou. Para dinheiro em espécie, crie uma conta "Dinheiro". Deixar em branco marcará a receita como "Não Alocada".
+                    </p>
                 </div>
             </form>
         `;
         this.showModal('Nova Transação', content, 'Salvar', 'transaction-modal-form');
+        
+        // Ativar o helper se o tipo padrão for 'receita'
+        const transTypeSelect = document.getElementById('trans-type');
+        const helperText = document.getElementById('income-account-helper');
+        if (transTypeSelect && helperText) {
+            helperText.classList.toggle('hidden', transTypeSelect.value !== 'receita');
+        }
     },
     
      renderEditTransactionModal(tx) {
@@ -1128,6 +1164,43 @@ const UI = {
         this.showModal('Editar Série de Parcelas', content, 'Salvar Alterações', 'edit-series-form');
     },
 
+    renderBulkEditModal() {
+        const categoryOptions = AppState.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (Cartão)</option>`).join('');
+
+        const content = `
+            <form id="bulk-edit-modal-form" class="space-y-4">
+                <p class="text-sm text-gray-600">Altere apenas os campos que deseja aplicar a todas as transações selecionadas. Os campos deixados em "Não Alterar" não serão modificados.</p>
+                <div>
+                    <label for="bulk-edit-category" class="block text-sm font-medium text-gray-700">Nova Categoria</label>
+                    <select id="bulk-edit-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="">Não Alterar</option>
+                        ${categoryOptions}
+                    </select>
+                </div>
+                <div>
+                    <label for="bulk-edit-account" class="block text-sm font-medium text-gray-700">Nova Conta / Cartão</label>
+                    <select id="bulk-edit-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="">Não Alterar</option>
+                        <option value="null">Nenhum (Desvincular)</option>
+                        ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
+                        ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
+                    </select>
+                </div>
+                <div>
+                    <label for="bulk-edit-status" class="block text-sm font-medium text-gray-700">Novo Status</label>
+                    <select id="bulk-edit-status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="">Não Alterar</option>
+                        <option value="paid">Pago</option>
+                        <option value="unpaid">Pendente</option>
+                    </select>
+                </div>
+            </form>
+        `;
+        this.showModal('Editar Múltiplas Transações', content, 'Salvar Alterações', 'bulk-edit-modal-form');
+    },
+
     showModal(title, content, submitText, formId) {
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
@@ -1177,7 +1250,7 @@ const UI = {
         });
     },
 
-    showApplyToAllModal(title, message, onApplyAll, onApplyOne) {
+    showApplyToSeriesModal(title, message, onApplyOne, onApplyFuture, onApplyAll) {
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
              <div class="modal-backdrop">
@@ -1188,18 +1261,39 @@ const UI = {
                     <div class="modal-body">
                         <p class="text-gray-600">${message}</p>
                     </div>
-                    <div class="modal-footer flex justify-end gap-3">
-                        <button id="apply-one-btn" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Apenas esta Parcela</button>
-                        <button id="apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Aplicar a Todas</button>
-                        <button type="button" class="modal-close-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
+                    <div class="modal-footer flex flex-col sm:flex-row justify-end gap-3">
+                        <button id="apply-one-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Apenas esta</button>
+                        <button id="apply-future-btn" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Esta e as Futuras</button>
+                        <button id="apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Todas as Parcelas</button>
                     </div>
                 </div>
             </div>`;
-        document.getElementById('apply-all-btn').onclick = onApplyAll;
         document.getElementById('apply-one-btn').onclick = onApplyOne;
-        modalContainer.querySelectorAll('.modal-close-btn').forEach(btn => {
-            btn.addEventListener('click', () => UI.closeModal());
-        });
+        document.getElementById('apply-future-btn').onclick = onApplyFuture;
+        document.getElementById('apply-all-btn').onclick = onApplyAll;
+    },
+
+    showBulkApplyToSeriesModal(title, message, onApplySelected, onApplyFuture, onApplyAll) {
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.innerHTML = `
+             <div class="modal-backdrop">
+                <div class="modal-content max-w-lg">
+                    <div class="modal-header">
+                        <h3 class="text-xl font-semibold text-gray-800">${title}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-gray-600">${message}</p>
+                    </div>
+                    <div class="modal-footer flex flex-col sm:flex-row justify-end gap-3">
+                        <button id="bulk-apply-selected-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Apenas nas Selecionadas</button>
+                        <button id="bulk-apply-future-btn" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Nas Selecionadas e Futuras</button>
+                        <button id="bulk-apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Em Toda a Série</button>
+                    </div>
+                </div>
+            </div>`;
+        document.getElementById('bulk-apply-selected-btn').onclick = onApplySelected;
+        document.getElementById('bulk-apply-future-btn').onclick = onApplyFuture;
+        document.getElementById('bulk-apply-all-btn').onclick = onApplyAll;
     },
 
     showInfoModal(title, content, callback) {
@@ -1682,7 +1776,7 @@ const UI = {
             </div>
         `).join('<hr class="my-2">');
     },
-    // Adicione a função renderBulkActionBar
+    
     renderBulkActionBar() {
         const container = document.getElementById('bulk-action-bar-container');
         if (!container) return;
@@ -1698,6 +1792,7 @@ const UI = {
             <div class="bg-blue-50 p-3 rounded-lg flex justify-between items-center transition-all duration-300">
                 <span class="font-medium text-blue-800">${selectedCount} transaç${selectedCount > 1 ? 'ões' : 'ão'} selecionada${selectedCount > 1 ? 's' : ''}</span>
                 <div class="space-x-2">
+                    <button id="bulk-edit" class="px-3 py-1 text-sm text-white bg-blue-500 rounded-md hover:bg-blue-600">Editar</button>
                     <button id="bulk-mark-paid" class="px-3 py-1 text-sm text-white bg-green-500 rounded-md hover:bg-green-600">Marcar como Pago</button>
                     <button id="bulk-delete" class="px-3 py-1 text-sm text-white bg-red-500 rounded-md hover:bg-red-600">Excluir</button>
                     <button id="bulk-deselect" class="px-3 py-1 text-sm text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
@@ -1767,6 +1862,7 @@ const Handlers = {
             }
             
              // Handlers para Ações em Massa
+            if (e.target.id === 'bulk-edit') UI.renderBulkEditModal();
             if (e.target.id === 'bulk-mark-paid') this.handleBulkMarkPaid();
             if (e.target.id === 'bulk-delete') this.handleBulkDelete();
             if (e.target.id === 'bulk-deselect') this.handleBulkDeselect();
@@ -1819,6 +1915,7 @@ const Handlers = {
             if (e.target.id === 'account-modal-form') this.handleAccountFormSubmit(e.target);
             if (e.target.id === 'category-modal-form') this.handleCategoryFormSubmit(e.target);
             if (e.target.id === 'edit-series-form') this.handleEditSeriesFormSubmit(e.target);
+            if (e.target.id === 'bulk-edit-modal-form') this.handleBulkEditFormSubmit(e.target);
         });
 
         document.getElementById('modal-container').addEventListener('change', e => {
@@ -1827,6 +1924,12 @@ const Handlers = {
             }
             if (e.target.id === 'has-card-checkbox') {
                  document.getElementById('card-fields-container').classList.toggle('hidden', !e.target.checked);
+            }
+            if (e.target.id === 'trans-type') {
+                const helperText = document.getElementById('income-account-helper');
+                if (helperText) {
+                    helperText.classList.toggle('hidden', e.target.value !== 'receita');
+                }
             }
         });
 
@@ -1842,7 +1945,7 @@ const Handlers = {
 
         document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
     },
-     // Funções para Ações em Massa
+     
     handleTransactionSelection(checkbox) {
         if (checkbox.id === 'select-all-txs') {
             const allCheckboxes = document.querySelectorAll('.tx-select-checkbox');
@@ -1915,6 +2018,120 @@ const Handlers = {
             }
         );
     },
+
+    finishBulkUpdate() {
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
+        this.handleBulkDeselect();
+        UI.closeModal();
+        UI.render();
+        UI.showFeedback('Transações atualizadas com sucesso!', 'success');
+    },
+
+    applyBulkChangeToSeries(groupId, scope, changes) {
+        const allTxsInSeries = AppState.transactions.filter(t => t.groupId === groupId);
+        const selectedTxsInSeries = allTxsInSeries.filter(t => AppState.selectedTransactionIds.includes(t.id));
+        if (selectedTxsInSeries.length === 0) return;
+
+        const firstSelectedDate = new Date(selectedTxsInSeries.sort((a,b) => new Date(a.date) - new Date(b.date))[0].date);
+
+        allTxsInSeries.forEach(tx => {
+            let shouldApply = false;
+            if (scope === 'all') {
+                shouldApply = true;
+            } else if (scope === 'future') {
+                if (new Date(tx.date) >= firstSelectedDate) shouldApply = true;
+            } else if (scope === 'selected') {
+                if (AppState.selectedTransactionIds.includes(tx.id)) shouldApply = true;
+            }
+            
+            if (shouldApply) {
+                if (changes.accountId !== undefined) {
+                    tx.accountId = changes.accountId === null ? null : changes.accountId;
+                    tx.isCreditCard = changes.accountId ? changes.isCreditCard : false;
+                }
+            }
+        });
+    },
+
+    processInstallmentAccountChangeQueue(groupIds, seriesMap, changes) {
+        if (groupIds.length === 0) {
+            this.finishBulkUpdate();
+            return;
+        }
+        
+        const currentGroupId = groupIds.shift();
+        const sampleTx = seriesMap.get(currentGroupId);
+        
+        UI.showBulkApplyToSeriesModal(
+            `Editar Conta da Série`,
+            `Como aplicar a nova conta para a série "${sampleTx.description}"?`,
+            () => { // onApplySelected
+                this.applyBulkChangeToSeries(currentGroupId, 'selected', changes);
+                this.processInstallmentAccountChangeQueue(groupIds, seriesMap, changes);
+            },
+            () => { // onApplyFuture
+                this.applyBulkChangeToSeries(currentGroupId, 'future', changes);
+                this.processInstallmentAccountChangeQueue(groupIds, seriesMap, changes);
+            },
+            () => { // onApplyAll
+                this.applyBulkChangeToSeries(currentGroupId, 'all', changes);
+                this.processInstallmentAccountChangeQueue(groupIds, seriesMap, changes);
+            }
+        );
+    },
+
+    handleBulkEditFormSubmit(form) {
+        const newCategory = form.querySelector('#bulk-edit-category').value;
+        const newAccountId = form.querySelector('#bulk-edit-account').value;
+        const newStatus = form.querySelector('#bulk-edit-status').value;
+
+        const selectedIds = [...AppState.selectedTransactionIds];
+        const simpleTxs = [];
+        const installmentSeries = new Map();
+
+        selectedIds.forEach(id => {
+            const tx = AppState.transactions.find(t => t.id === id);
+            if (!tx) return;
+            if (tx.groupId && !installmentSeries.has(tx.groupId)) {
+                installmentSeries.set(tx.groupId, tx);
+            } else if (!tx.groupId) {
+                simpleTxs.push(tx);
+            }
+        });
+
+        // Aplicar mudanças que não precisam de lógica de série (categoria e status)
+        selectedIds.forEach(id => {
+            const tx = AppState.transactions.find(t => t.id === id);
+            if (newCategory) tx.category = newCategory;
+            if (newStatus && tx.fundamentalType === 'despesa') tx.isPaid = (newStatus === 'paid');
+        });
+
+        // Se não houver mudança de conta, finalizar aqui.
+        if (!newAccountId) {
+            this.finishBulkUpdate();
+            return;
+        }
+
+        const changes = {
+            accountId: newAccountId === 'null' ? null : newAccountId,
+            isCreditCard: newAccountId ? !!AppState.creditCards.find(c => c.id === newAccountId) : false,
+        };
+        
+        // Aplicar mudança de conta para transações simples
+        simpleTxs.forEach(tx => {
+            tx.accountId = changes.accountId;
+            tx.isCreditCard = changes.isCreditCard;
+        });
+
+        const groupIds = Array.from(installmentSeries.keys());
+        if (groupIds.length > 0) {
+            this.processInstallmentAccountChangeQueue(groupIds, installmentSeries, changes);
+        } else {
+            this.finishBulkUpdate();
+        }
+    },
+
 
     handleUnlinkTransactionClick(txId, accountId) {
         UI.showConfirmationModal('Remover Vínculo', 'Tem certeza que deseja desvincular esta transação da conta?', () => {
@@ -2101,16 +2318,33 @@ const Handlers = {
         const descriptionChanged = tx.description !== updatedData.description;
         const categoryChanged = tx.category !== updatedData.category;
 
-        const applyChanges = (applyToAll) => {
-            if (applyToAll && tx.groupId) {
-                AppState.transactions.forEach(t => {
-                    if (t.groupId === tx.groupId) {
-                        if (descriptionChanged) t.description = updatedData.description;
-                        if (categoryChanged) t.category = updatedData.category;
+        const applyChanges = (scope) => {
+            const originalTx = AppState.transactions.find(t => t.id === txId);
+            if (!originalTx) return;
+
+            const sharedChanges = {};
+            if (descriptionChanged) sharedChanges.description = updatedData.description;
+            if (categoryChanged) sharedChanges.category = updatedData.category;
+            
+            if (scope !== 'one' && originalTx.groupId && Object.keys(sharedChanges).length > 0) {
+                const groupTxs = AppState.transactions.filter(t => t.groupId === originalTx.groupId);
+                groupTxs.forEach(t => {
+                    let shouldApply = false;
+                    if (scope === 'all') {
+                        shouldApply = true;
+                    } else if (scope === 'future' && new Date(t.date) >= new Date(originalTx.date)) {
+                        shouldApply = true;
+                    }
+                    
+                    if (shouldApply) {
+                         if (sharedChanges.description) t.description = sharedChanges.description;
+                         if (sharedChanges.category) t.category = sharedChanges.category;
                     }
                 });
             }
+
             AppState.updateTransaction(txId, updatedData);
+
             AppState.recalculateAllBalances();
             AppState.saveAll();
             UI.closeModal();
@@ -2119,14 +2353,15 @@ const Handlers = {
         };
 
         if (tx.groupId && (descriptionChanged || categoryChanged)) {
-            UI.showApplyToAllModal(
-                'Atualizar Parcelas',
-                'Você alterou campos compartilhados. Aplicar a todas as parcelas?',
-                () => applyChanges(true),
-                () => applyChanges(false)
+            UI.showApplyToSeriesModal(
+                'Editar Parcelas',
+                'Você alterou um campo compartilhado. Como deseja aplicar esta mudança?',
+                () => applyChanges('one'),
+                () => applyChanges('future'),
+                () => applyChanges('all')
             );
         } else {
-            applyChanges(false);
+            applyChanges('one');
         }
     },
 
