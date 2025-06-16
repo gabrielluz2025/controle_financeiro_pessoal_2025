@@ -143,7 +143,7 @@
                      <select class="period-month-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"></select>
                      <select class="period-year-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"></select>
                 </div>
-                <div id="summary-cards-container" class="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 xl:grid-cols-5"></div>
+                <div id="summary-cards-container" class="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"></div>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                     <div class="lg:col-span-2">
@@ -593,22 +593,33 @@ const UI = {
         
         noResultsEl.classList.add('hidden');
         tbody.innerHTML = txsToDisplay.map(tx => {
-            const isGroup = !!tx.groupId;
             const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
             
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const txDate = new Date(tx.date + "T00:00:00");
+            let statusHTML;
+            if (tx.fundamentalType === 'receita') {
+                statusHTML = `<td class="py-4 px-6 text-center">-</td>`;
+            } else {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const txDate = new Date(tx.date + "T00:00:00");
 
-            let statusText = 'Pendente';
-            let statusColor = 'bg-yellow-100 text-yellow-800';
+                let statusText = 'Pendente';
+                let statusColor = 'bg-yellow-100 text-yellow-800';
 
-            if (tx.isPaid) {
-                statusText = 'Pago';
-                statusColor = 'bg-green-100 text-green-800';
-            } else if (txDate < today) {
-                statusText = 'Atrasado';
-                statusColor = 'bg-red-100 text-red-800';
+                if (tx.isPaid) {
+                    statusText = 'Pago';
+                    statusColor = 'bg-green-100 text-green-800';
+                } else if (txDate < today) {
+                    statusText = 'Atrasado';
+                    statusColor = 'bg-red-100 text-red-800';
+                }
+                statusHTML = `
+                    <td class="py-4 px-6">
+                        <span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">
+                            ${statusText}
+                        </span>
+                    </td>
+                `;
             }
 
             let accountName = 'N/A';
@@ -630,11 +641,7 @@ const UI = {
                 <td class="py-4 px-6 font-bold ${valueColor}">${this.formatCurrency(tx.value)}</td>
                 <td class="py-4 px-6">${tx.category}</td>
                 <td class="py-4 px-6">${accountName}</td>
-                <td class="py-4 px-6">
-                    <span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">
-                        ${statusText}
-                    </span>
-                </td>
+                ${statusHTML}
                 <td class="py-4 px-6 text-right">
                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -1080,6 +1087,28 @@ const UI = {
         `;
         this.showModal(`Editar ${tx.installments ? `Parcela` : 'Transação'}`, content, 'Salvar', 'edit-transaction-form');
     },
+    
+    renderEditSeriesModal(tx) {
+        const categoryOptions = AppState.categories.map(c => `<option value="${c}" ${tx.category === c ? 'selected' : ''}>${c}</option>`).join('');
+        const content = `
+            <form id="edit-series-form" class="space-y-4">
+                 <input type="hidden" id="editing-group-id" value="${tx.groupId}">
+                <div>
+                    <label for="edit-series-description" class="block text-sm font-medium text-gray-700">Descrição</label>
+                    <input type="text" id="edit-series-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label for="edit-series-category" class="block text-sm font-medium text-gray-700">Categoria</label>
+                    <select id="edit-series-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
+                </div>
+                 <div>
+                    <label for="edit-series-start-date" class="block text-sm font-medium text-gray-700">Alterar data de início dos pagamentos</label>
+                    <input type="date" id="edit-series-start-date" value="${tx.date}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+            </form>
+        `;
+        this.showModal('Editar Série de Parcelas', content, 'Salvar Alterações', 'edit-series-form');
+    },
 
     showModal(title, content, submitText, formId) {
         const modalContainer = document.getElementById('modal-container');
@@ -1097,6 +1126,37 @@ const UI = {
                     </div>
                 </div>
             </div>`;
+    },
+
+    showChoiceModal(title, message, buttons) {
+        const modalContainer = document.getElementById('modal-container');
+         let buttonsHTML = '';
+        buttons.forEach(btn => {
+            buttonsHTML += `<button id="${btn.id}" class="${btn.class}">${btn.text}</button>`;
+        });
+
+        modalContainer.innerHTML = `
+             <div class="modal-backdrop">
+                <div class="modal-content max-w-lg">
+                    <div class="modal-header">
+                        <h3 class="text-xl font-semibold text-gray-800">${title}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-gray-600">${message}</p>
+                    </div>
+                    <div class="modal-footer flex justify-end gap-3">
+                        ${buttonsHTML}
+                        <button type="button" class="modal-close-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
+                    </div>
+                </div>
+            </div>`;
+
+        buttons.forEach(btn => {
+             document.getElementById(btn.id).addEventListener('click', btn.onClick);
+        });
+        modalContainer.querySelectorAll('.modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => UI.closeModal());
+        });
     },
 
     showApplyToAllModal(title, message, onApplyAll, onApplyOne) {
@@ -1162,15 +1222,36 @@ const UI = {
             let listHtml = '<ul class="space-y-3">';
             txs.forEach(tx => {
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
+                
+                let statusHTML = '';
+                if(tx.fundamentalType === 'despesa') {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const txDate = new Date(tx.date + "T00:00:00");
+                    let statusText = 'Pendente';
+                    let statusColor = 'bg-yellow-100 text-yellow-800';
+                    if (tx.isPaid) {
+                        statusText = 'Pago';
+                        statusColor = 'bg-green-100 text-green-800';
+                    } else if (txDate < today) {
+                        statusText = 'Atrasado';
+                        statusColor = 'bg-red-100 text-red-800';
+                    }
+                    statusHTML = `<span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">${statusText}</span>`;
+                }
+
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
                                 <div class="flex-1">
                                     <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
                                     <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
                                 </div>
-                                <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
-                                <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                </button>
+                                <div class="flex items-center">
+                                    <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
+                                    ${statusHTML ? `<div class="w-24 text-center">${statusHTML}</div>` : ''}
+                                    <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                </div>
                            </li>`;
             });
             listHtml += '</ul>';
@@ -1198,19 +1279,25 @@ const UI = {
                 title = 'Receitas do Mês';
                 const incomeTxs = monthTxs.filter(t => t.fundamentalType === 'receita').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(incomeTxs);
-                this.showInfoModal(title, content, (e) => Handlers.handleModalEditClick(e));
+                this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
             case 'monthly-expenses':
                 title = 'Despesas do Mês';
                 const expenseTxs = monthTxs.filter(t => t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(expenseTxs);
-                this.showInfoModal(title, content, (e) => Handlers.handleModalEditClick(e));
+                this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
             case 'monthly-paid':
                  title = 'Total Pago no Mês';
                 const paidTxs = monthTxs.filter(t => t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(paidTxs);
-                this.showInfoModal(title, content, (e) => Handlers.handleModalEditClick(e));
+                this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
+                break;
+             case 'monthly-unpaid':
+                 title = 'Contas a Pagar no Mês';
+                const unpaidTxs = monthTxs.filter(t => !t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(a.date) - new Date(b.date));
+                content = txListBuilder(unpaidTxs);
+                this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
             case 'monthly-balance':
                  title = 'Balanço do Mês';
@@ -1228,7 +1315,7 @@ const UI = {
                         </div>
                     </div>
                 `;
-                this.showInfoModal(title, content, (e) => Handlers.handleModalEditClick(e));
+                this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
         }
     },
@@ -1386,32 +1473,37 @@ const UI = {
         const income = monthTxs.filter(t => t.fundamentalType === 'receita').reduce((s, t) => s + t.value, 0);
         const expenses = monthTxs.filter(t => t.fundamentalType === 'despesa').reduce((s, t) => s + t.value, 0);
         const paidExpenses = monthTxs.filter(t => t.isPaid && t.fundamentalType === 'despesa').reduce((s, t) => s + t.value, 0);
-        const monthlyBalance = income - expenses;
+        const unpaidCount = monthTxs.filter(t => !t.isPaid && t.fundamentalType === 'despesa').length;
+
         container.innerHTML = `
             ${this.createSummaryCard('Saldo Total', totalBalance, 'blue')}
             ${this.createSummaryCard('Receitas no Mês', income, 'green')}
             ${this.createSummaryCard('Despesas no Mês', expenses, 'red')}
             ${this.createSummaryCard('Total Pago no Mês', paidExpenses, 'yellow')}
+            ${this.createSummaryCard('Contas a Pagar', unpaidCount, 'orange', false, true)}
         `;
     },
-    createSummaryCard(title, value, color, isNegative = false) {
+    createSummaryCard(title, value, color, isNegative = false, isCount = false) {
         const icons = { 
             blue: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01', 
             green: 'M12 6v6m0 0v6m0-6h6m-6 0H6', 
             red: 'M18 12H6', 
             yellow: 'M9 8h6m-5 4h.01M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-            indigo: 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3' 
+            orange: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01'
         };
         const typeMap = { 
             'Saldo Total': 'total-balance', 
             'Receitas no Mês': 'monthly-income', 
             'Despesas no Mês': 'monthly-expenses', 
-            'Balanço Mensal': 'monthly-balance',
-            'Total Pago no Mês': 'monthly-paid'
+            'Total Pago no Mês': 'monthly-paid',
+            'Contas a Pagar': 'monthly-unpaid'
         };
+        const formattedValue = isCount ? `${value}` : this.formatCurrency(value);
+        const valueClass = `text-2xl font-bold ${isNegative ? 'text-red-600' : 'text-gray-800'}`;
+
         return `<div class="p-6 bg-white rounded-xl shadow-md flex items-center space-x-4 cursor-pointer summary-card" data-type="${typeMap[title]}">
             <div class="p-3 bg-${color}-100 rounded-full"><svg class="w-8 h-8 text-${color}-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${icons[color]}" /></svg></div>
-            <div><p class="text-sm font-medium text-gray-500">${title}</p><p class="text-2xl font-bold ${isNegative ? 'text-red-600' : 'text-gray-800'}">${this.formatCurrency(value)}</p></div>
+            <div><p class="text-sm font-medium text-gray-500">${title}</p><p class="${valueClass}">${formattedValue}</p></div>
         </div>`;
     },
     renderBalanceChart() {
@@ -1599,7 +1691,7 @@ const Handlers = {
                 this.handleInstallmentStatusToggle(e.target.dataset.txId);
             }
             const editBtn = e.target.closest('.edit-btn');
-            if (editBtn) this.handleModalEditClick(e);
+            if (editBtn) this.handleModalClick(e);
         });
         
         document.getElementById('modal-container').addEventListener('submit', e => {
@@ -1608,6 +1700,7 @@ const Handlers = {
             if (e.target.id === 'edit-transaction-form') this.handleEditTransactionFormSubmit(e.target);
             if (e.target.id === 'account-modal-form') this.handleAccountFormSubmit(e.target);
             if (e.target.id === 'category-modal-form') this.handleCategoryFormSubmit(e.target);
+            if (e.target.id === 'edit-series-form') this.handleEditSeriesFormSubmit(e.target);
         });
 
         document.getElementById('modal-container').addEventListener('change', e => {
@@ -1632,23 +1725,34 @@ const Handlers = {
         document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
     },
 
-    handleStatusToggle(txId) {
+    handleStatusToggle(txId, sourceModalType = null) {
         const tx = AppState.transactions.find(t => t.id === txId);
-        if(tx) {
+        if(tx && tx.fundamentalType === 'despesa') {
             tx.isPaid = !tx.isPaid;
             AppState.recalculateAllBalances();
             AppState.saveAll();
-            UI.render();
+             if (sourceModalType) {
+                UI.closeModal();
+                setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
+            } else {
+                UI.render();
+            }
         }
     },
     
-    handleModalEditClick(event) {
+    handleModalClick(event, type) {
         const editBtn = event.target.closest('.edit-btn');
         if (editBtn) {
             UI.closeModal();
             setTimeout(() => {
                 this.handleEditClick(editBtn);
             }, 100);
+            return;
+        }
+
+        const statusBadge = event.target.closest('.status-badge');
+        if (statusBadge) {
+            this.handleStatusToggle(statusBadge.dataset.id, type);
         }
     },
 
@@ -1680,7 +1784,16 @@ const Handlers = {
         if (type === 'transaction') {
             const id = button.dataset.id;
             const item = AppState.transactions.find(i => i.id === id);
-            if (item) UI.renderEditTransactionModal(item);
+            if (item) {
+                if (item.groupId) {
+                    UI.showChoiceModal('Opção de Edição', 'O que você deseja editar?', [
+                        { id: 'edit-one-btn', text: 'Apenas esta Parcela', class: 'px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700', onClick: () => { UI.closeModal(); UI.renderEditTransactionModal(item); } },
+                        { id: 'edit-all-btn', text: 'Editar a Série Inteira', class: 'px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700', onClick: () => { UI.closeModal(); UI.renderEditSeriesModal(item); } }
+                    ]);
+                } else {
+                    UI.renderEditTransactionModal(item);
+                }
+            }
         } else if (type === 'account' || type === 'card') {
             const id = button.dataset.id;
             const item = type === 'account' ? AppState.accounts.find(i => i.id === id) : AppState.creditCards.find(i => i.id === id);
@@ -1732,14 +1845,37 @@ const Handlers = {
         }
     },
     
+    handleEditSeriesFormSubmit(form) {
+        const groupId = form.querySelector('#editing-group-id').value;
+        const newDescription = form.querySelector('#edit-series-description').value;
+        const newCategory = form.querySelector('#edit-series-category').value;
+        const newStartDate = new Date(form.querySelector('#edit-series-start-date').value + "T00:00:00");
+
+        const groupTxs = AppState.transactions
+            .filter(t => t.groupId === groupId)
+            .sort((a,b) => new Date(a.date) - new Date(b.date));
+        
+        groupTxs.forEach((tx, index) => {
+            const newDate = new Date(newStartDate);
+            newDate.setMonth(newStartDate.getMonth() + index);
+            
+            tx.description = newDescription;
+            tx.category = newCategory;
+            tx.date = newDate.toISOString().slice(0,10);
+        });
+
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
+        UI.closeModal();
+        UI.render();
+        UI.showFeedback('Série de parcelas atualizada com sucesso!', 'success');
+    },
+
     handleEditTransactionFormSubmit(form) {
         const txId = form.querySelector('#editing-id').value;
-        const tx = AppState.transactions.find(t => t.id === txId);
-        if (!tx) return;
-    
         const accountId = form.querySelector('#edit-trans-account').value;
         const isCC = AppState.creditCards.some(c => c.id === accountId);
-    
+
         const updatedData = {
             description: form.querySelector('#edit-trans-description').value,
             value: parseFloat(form.querySelector('#edit-trans-value').value),
@@ -1749,37 +1885,13 @@ const Handlers = {
             accountId: accountId || null,
             isCreditCard: isCC,
         };
-    
-        const descriptionChanged = tx.description !== updatedData.description;
-        const categoryChanged = tx.category !== updatedData.category;
 
-        const applyChanges = (applyToAll) => {
-            if (applyToAll && tx.groupId) {
-                AppState.transactions.forEach(t => {
-                    if (t.groupId === tx.groupId) {
-                        if (descriptionChanged) t.description = updatedData.description;
-                        if (categoryChanged) t.category = updatedData.category;
-                    }
-                });
-            }
-            AppState.updateTransaction(txId, updatedData);
-            AppState.recalculateAllBalances();
-            AppState.saveAll();
-            UI.closeModal();
-            UI.render();
-            UI.showFeedback('Transação atualizada com sucesso!', 'success');
-        };
-
-        if (tx.groupId && (descriptionChanged || categoryChanged)) {
-            UI.showApplyToAllModal(
-                'Atualizar Parcelas',
-                'Você alterou campos compartilhados. Aplicar a todas as parcelas?',
-                () => applyChanges(true),
-                () => applyChanges(false)
-            );
-        } else {
-            applyChanges(false);
-        }
+        AppState.updateTransaction(txId, updatedData);
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
+        UI.closeModal();
+        UI.render();
+        UI.showFeedback('Transação atualizada com sucesso!', 'success');
     },
 
     handleCategoryFormSubmit(form) {
