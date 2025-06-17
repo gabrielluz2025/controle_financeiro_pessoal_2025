@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro Moderno com Firebase</title>
+    <title>Dashboard Financeiro Moderno</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -85,28 +85,9 @@
             border-top: 1px solid #e2e8f0;
             background-color: #f7fafc;
         }
-        #loading-overlay {
-             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-             background-color: rgba(255, 255, 255, 0.8);
-             display: flex; flex-direction: column; align-items: center; justify-content: center;
-             z-index: 9999; transition: opacity 0.3s;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
-            border-radius: 50%; width: 40px; height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
-    
-    <!-- Overlay de Carregamento -->
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-        <p class="mt-4 text-gray-600">A carregar os seus dados...</p>
-    </div>
 
     <!-- Sidebar de Navegação -->
     <aside id="sidebar" class="w-64 bg-white shadow-lg flex flex-col flex-shrink-0">
@@ -135,10 +116,6 @@
                 <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span class="nav-text">Relatórios</span>
             </a>
-            <a href="#" id="nav-import" class="nav-link flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <span class="nav-text">Importar com Assistente</span>
-            </a>
         </nav>
         <div class="px-4 py-6 border-t sidebar-footer">
             <button id="add-new-transaction-btn" class="w-full flex items-center justify-center px-4 py-3 mb-4 text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -159,10 +136,10 @@
                 <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
             </div>
             <div class="flex items-center space-x-4">
-                 <p id="user-id-display" class="text-xs text-gray-400"></p>
+                 <button id="import-statement-btn" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg shadow-sm">Importar Extrato</button>
                 <input type="file" id="import-file-input" class="hidden" accept=".json">
                  <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
-                 <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Backup</button>
+                <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Backup</button>
                 <button id="clear-data-btn" class="text-sm text-gray-500 hover:text-red-600">Limpar Dados</button>
             </div>
         </header>
@@ -210,94 +187,35 @@
             <section id="accounts-page" class="hidden"></section>
             <section id="categories-page" class="hidden"></section>
             <section id="reports-page" class="hidden"></section>
-            <section id="import-page" class="hidden"></section>
         </div>
     </main>
 
     <div id="modal-container"></div>
     <div id="feedback-message" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50"></div>
+    <input type="file" id="statement-file-input" class="hidden">
 
-<script type="module">
-// Importações do Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-// --- Configuração do Firebase ---
-// As variáveis __firebase_config e __app_id são injetadas pelo ambiente.
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-let userId = null;
-let unsubscribeListeners = []; // Para desligar os listeners ao deslogar
-
-// --- Módulo de Estado da Aplicação (Refatorado para Firestore) ---
+<script>
+// Módulo de Estado da Aplicação
 const AppState = {
-    accounts: [], creditCards: [], transactions: [], categories: [],
+    accounts: [], creditCards: [], transactions: [],
+    categories: ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros"],
     currentView: 'dashboard', isSidebarCollapsed: false,
     displayMonth: new Date().getMonth(),
     displayYear: new Date().getFullYear(),
     selectedTransactionIds: [],
-    isDataLoaded: { accounts: false, creditCards: false, transactions: false, categories: false },
-
-    // Inicia os listeners do Firestore para carregar dados em tempo real
-    initDataListeners() {
-        if (!userId) return;
-        this.resetLocalState();
-
-        const collectionsToListen = ['accounts', 'creditCards', 'transactions', 'categories'];
-        
-        collectionsToListen.forEach(colName => {
-            const q = query(collection(db, `/artifacts/${appId}/users/${userId}/${colName}`));
-            const unsubscribe = onSnapshot(q, (querySnapshot) => {
-                const data = [];
-                querySnapshot.forEach((doc) => {
-                    data.push({ id: doc.id, ...doc.data() });
-                });
-                
-                if (colName === 'categories') {
-                    // O documento de categorias é único e armazena um array
-                    this.categories = data[0]?.names || ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros"];
-                } else {
-                    this[colName] = data;
-                }
-                
-                this.isDataLoaded[colName] = true;
-                this.checkAllDataLoaded();
-            }, (error) => {
-                console.error(`Erro ao carregar ${colName}:`, error);
-                UI.showFeedback(`Não foi possível carregar os dados de ${colName}.`, 'error');
-            });
-            unsubscribeListeners.push(unsubscribe);
-        });
+    
+    init() {
+        this.accounts = JSON.parse(localStorage.getItem('app_accounts_v3')) || [];
+        this.creditCards = JSON.parse(localStorage.getItem('app_creditCards_v3')) || [];
+        this.transactions = JSON.parse(localStorage.getItem('app_transactions_v3')) || [];
+        const storedCategories = JSON.parse(localStorage.getItem('app_categories_v3'));
+        if (storedCategories && storedCategories.length) this.categories = storedCategories;
+        if (!this.categories.includes("Outros")) this.categories.push("Outros");
+        this.recalculateAllBalances();
     },
     
-    // Verifica se todos os dados foram carregados para poder renderizar a UI
-    checkAllDataLoaded() {
-        const allLoaded = Object.values(this.isDataLoaded).every(status => status === true);
-        if (allLoaded) {
-            this.recalculateAllBalances();
-            UI.render();
-            UI.hideLoading();
-        }
-    },
-
-    // Limpa o estado local ao trocar de utilizador ou ao recarregar
-    resetLocalState() {
-        unsubscribeListeners.forEach(unsub => unsub());
-        unsubscribeListeners = [];
-        this.accounts = [];
-        this.creditCards = [];
-        this.transactions = [];
-        this.categories = [];
-        this.isDataLoaded = { accounts: false, creditCards: false, transactions: false, categories: false };
-    },
-
     recalculateAllBalances() {
-        // A lógica de recálculo permanece a mesma, mas agora opera sobre os dados em memória vindos do Firestore.
+        // Recalcula o saldo das contas de débito/dinheiro
         this.accounts.forEach(account => {
             let currentBalance = account.initialBalance || 0;
             const accountTransactions = this.transactions.filter(
@@ -313,6 +231,7 @@ const AppState = {
             account.balance = currentBalance;
         });
 
+        // Recalcula o limite disponível dos cartões de crédito
         this.creditCards.forEach(card => {
             let usedAmount = 0;
             const cardTransactions = this.transactions.filter(
@@ -320,34 +239,32 @@ const AppState = {
             );
             
             cardTransactions.forEach(tx => {
+                // Despesas não pagas consomem o limite
                 if (tx.fundamentalType === 'despesa' && !tx.isPaid) {
                     usedAmount += tx.value;
                 }
+                // Receitas (estornos/créditos) liberam o limite
                 else if (tx.fundamentalType === 'receita') {
                     usedAmount -= tx.value;
                 }
             });
+             // Garante que o valor usado não seja negativo (em caso de mais estornos que gastos)
             usedAmount = Math.max(0, usedAmount);
             card.availableLimit = card.limit - usedAmount;
         });
     },
 
-    async clearAllData() {
-        if (!userId) return;
-        const collectionsToDelete = ['accounts', 'creditCards', 'transactions', 'categories'];
-        const batch = writeBatch(db);
-
-        for (const colName of collectionsToDelete) {
-            const colRef = collection(db, `/artifacts/${appId}/users/${userId}/${colName}`);
-            const snapshot = await getDocs(colRef);
-            snapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-        }
-        await batch.commit();
-        // Os listeners onSnapshot vão atualizar a UI automaticamente para o estado vazio.
-        // A categoria padrão será adicionada se não existir.
-        await this.addCategory("Outros", true); // Garante que a categoria padrão existe
+    saveAll() {
+        localStorage.setItem('app_accounts_v3', JSON.stringify(this.accounts));
+        localStorage.setItem('app_creditCards_v3', JSON.stringify(this.creditCards));
+        localStorage.setItem('app_transactions_v3', JSON.stringify(this.transactions));
+        localStorage.setItem('app_categories_v3', JSON.stringify(this.categories));
+    },
+    
+    clearAllData() {
+        this.accounts = []; this.creditCards = []; this.transactions = [];
+        this.categories = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros"];
+        this.saveAll();
     },
 
     exportData() {
@@ -366,81 +283,55 @@ const AppState = {
         linkElement.click();
     },
 
-    async importData(file) {
-        if (!userId) return;
+    importData(file) {
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
                 const importedData = JSON.parse(event.target.result);
                 if (importedData.accounts && importedData.creditCards && importedData.transactions) {
-                    UI.showConfirmationModal('Importar Dados', 'Isto irá substituir todos os seus dados atuais na nuvem. Deseja continuar?', async () => {
-                        UI.showLoading("A importar os seus dados...");
-                        await this.clearAllData(); // Limpa os dados antigos na nuvem
-                        
-                        const batch = writeBatch(db);
-
-                        // Importa contas
-                        (importedData.accounts || []).forEach(item => {
-                            const docRef = doc(collection(db, `/artifacts/${appId}/users/${userId}/accounts`));
-                            batch.set(docRef, { ...item, id: docRef.id }); // Adiciona o id ao objeto
-                        });
-
-                        // Importa cartões
-                        (importedData.creditCards || []).forEach(item => {
-                             const docRef = doc(collection(db, `/artifacts/${appId}/users/${userId}/creditCards`));
-                            batch.set(docRef, { ...item, id: docRef.id });
-                        });
-
-                        // Importa transações
-                        (importedData.transactions || []).forEach(item => {
-                             const docRef = doc(collection(db, `/artifacts/${appId}/users/${userId}/transactions`));
-                            batch.set(docRef, { ...item, id: docRef.id });
-                        });
-
-                        // Importa categorias
-                        const catColRef = collection(db, `/artifacts/${appId}/users/${userId}/categories`);
-                        const catDocRef = doc(catColRef, 'user_categories');
-                        batch.set(catDocRef, { names: importedData.categories || ["Outros"] });
-
-                        await batch.commit();
-                        // Os listeners onSnapshot cuidarão de recarregar e renderizar a UI.
+                    UI.showConfirmationModal('Importar Dados', 'Isto irá substituir todos os seus dados atuais. Deseja continuar?', () => {
+                        this.accounts = importedData.accounts || [];
+                        this.creditCards = importedData.creditCards || [];
+                        this.transactions = importedData.transactions || [];
+                        this.categories = importedData.categories || ["Outros"];
+                        this.saveAll();
+                        this.recalculateAllBalances();
+                        UI.render();
                         UI.showFeedback('Dados importados com sucesso!', 'success');
                     });
                 } else {
                     UI.showFeedback('Ficheiro JSON inválido ou mal formatado.', 'error');
                 }
             } catch (error) {
-                console.error("Erro na importação:", error);
                 UI.showFeedback('Erro ao ler o ficheiro. Verifique se é um ficheiro JSON válido.', 'error');
             }
         };
         reader.readAsText(file);
     },
-    
-    generateFinancialDiagnosis(year, month) {
-       // Esta função não precisa de alterações, pois opera nos dados já carregados no AppState
-       const getMonthData = (m, y) => {
-            const txs = this.transactions.filter(t => {
-                const txDate = new Date(t.date + "T00:00:00");
-                return txDate.getMonth() === m && txDate.getFullYear() === y;
-            });
-            const income = txs.filter(t => t.fundamentalType === 'receita').reduce((sum, t) => sum + t.value, 0);
-            const expenses = txs.filter(t => t.fundamentalType === 'despesa').reduce((sum, t) => sum + t.value, 0);
-            return { income, expenses, txs };
-        };
 
-        const currentPeriodData = getMonthData(month, year);
-        if (currentPeriodData.txs.length === 0) {
-            return { error: "Não há dados para o período selecionado." };
+    getFinancialAnalysis() {
+        const now = new Date();
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        const lastMonthTxs = this.transactions.filter(t => {
+            const txDate = new Date(t.date + "T00:00:00");
+            return txDate >= lastMonth && txDate <= endOfLastMonth;
+        });
+
+        if (lastMonthTxs.length === 0) {
+            return { error: "Não há dados suficientes do mês passado para gerar uma análise." };
         }
-        
-        const prevMonthDate = new Date(year, month - 1);
-        const previousPeriodData = getMonthData(prevMonthDate.getMonth(), prevMonthDate.getFullYear());
 
-        const balance = currentPeriodData.income - currentPeriodData.expenses;
-        const savingRate = currentPeriodData.income > 0 ? (balance / currentPeriodData.income) * 100 : 0;
+        const totalIncome = lastMonthTxs
+            .filter(t => t.fundamentalType === 'receita')
+            .reduce((sum, t) => sum + t.value, 0);
 
-        const expensesByCategory = currentPeriodData.txs
+        const totalExpenses = lastMonthTxs
+            .filter(t => t.fundamentalType === 'despesa')
+            .reduce((sum, t) => sum + t.value, 0);
+
+        const expensesByCategory = lastMonthTxs
             .filter(t => t.fundamentalType === 'despesa')
             .reduce((acc, t) => {
                 acc[t.category] = (acc[t.category] || 0) + t.value;
@@ -449,145 +340,96 @@ const AppState = {
 
         const topExpenseCategories = Object.entries(expensesByCategory)
             .sort(([, a], [, b]) => b - a)
-            .slice(0, 3);
+            .slice(0, 5)
+            .map(([category, amount]) => ({
+                category,
+                amount,
+                percentage: totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(1) : 0
+            }));
 
-        let incomeComparison = { change: 0, type: 'stable' };
-        if (previousPeriodData.income > 0) {
-            incomeComparison.change = ((currentPeriodData.income - previousPeriodData.income) / previousPeriodData.income) * 100;
-            incomeComparison.type = incomeComparison.change > 5 ? 'increase' : (incomeComparison.change < -5 ? 'decrease' : 'stable');
-        }
-
-        let expenseComparison = { change: 0, type: 'stable' };
-        if (previousPeriodData.expenses > 0) {
-            expenseComparison.change = ((currentPeriodData.expenses - previousPeriodData.expenses) / previousPeriodData.expenses) * 100;
-            expenseComparison.type = expenseComparison.change > 5 ? 'increase' : (expenseComparison.change < -5 ? 'decrease' : 'stable');
-        }
-
-        let smartTip = '';
-        if (savingRate < 0) {
-            smartTip = `Seu balanço foi negativo. Analise seus gastos, especialmente em <strong>${topExpenseCategories[0]?.[0] || 'sua maior categoria'}</strong>, para identificar onde cortar.`;
-        } else if (savingRate < 10) {
-            smartTip = 'Sua taxa de economia está um pouco baixa. Tente definir um orçamento para as categorias com mais gastos para melhorá-la.';
-        } else if (expenseComparison.type === 'increase' && expenseComparison.change > 10) {
-             smartTip = `Atenção: suas despesas aumentaram significativamente em relação ao mês anterior. Vale a pena revisar o que mudou.`;
-        } else {
-            smartTip = `Parabéns! Com uma taxa de economia de <strong>${savingRate.toFixed(1)}%</strong>, você está no caminho certo. Considere investir o valor economizado.`;
-        }
+        const monthlyBalance = totalIncome - totalExpenses;
 
         return {
-            periodLabel: new Date(year, month).toLocaleString('pt-BR', { month: 'long', year: 'numeric' }),
-            income: currentPeriodData.income,
-            expenses: currentPeriodData.expenses,
-            balance,
-            savingRate,
+            totalIncome,
+            totalExpenses,
+            monthlyBalance,
             topExpenseCategories,
-            incomeComparison,
-            expenseComparison,
-            smartTip
+            period: lastMonth.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
         };
     },
-    
-    // Funções de CRUD refatoradas para Firestore
-    async addTransaction(tx) { await addDoc(collection(db, `/artifacts/${appId}/users/${userId}/transactions`), tx); },
-    async updateTransaction(txId, updatedData) { await updateDoc(doc(db, `/artifacts/${appId}/users/${userId}/transactions`, txId), updatedData); },
-    async removeTransaction(txId) {
+
+    addTransaction(tx) { this.transactions.push(tx); },
+    updateTransaction(txId, updatedData) {
+        const txIndex = this.transactions.findIndex(t => t.id === txId);
+        if (txIndex > -1) {
+            this.transactions[txIndex] = { ...this.transactions[txIndex], ...updatedData };
+        }
+    },
+    removeTransaction(txId) {
         const tx = this.transactions.find(t => t.id === txId);
         if (tx && tx.groupId) {
-            const batch = writeBatch(db);
-            const groupTxs = this.transactions.filter(t => t.groupId === tx.groupId);
-            groupTxs.forEach(tInGroup => {
-                const docRef = doc(db, `/artifacts/${appId}/users/${userId}/transactions`, tInGroup.id);
-                batch.delete(docRef);
-            });
-            await batch.commit();
+            this.transactions = this.transactions.filter(t => t.groupId !== tx.groupId);
         } else {
-            await deleteDoc(doc(db, `/artifacts/${appId}/users/${userId}/transactions`, txId));
+            this.transactions = this.transactions.filter(t => t.id !== txId);
         }
     },
-
-    async addAccount(acc) { 
-        const docRef = doc(collection(db, `/artifacts/${appId}/users/${userId}/accounts`));
-        acc.id = docRef.id;
-        await setDoc(docRef, acc); 
+    addAccount(acc) { this.accounts.push(acc); },
+    updateAccount(accId, updatedData) {
+        const accIndex = this.accounts.findIndex(a => a.id === accId);
+        if (accIndex > -1) this.accounts[accIndex] = { ...this.accounts[accIndex], ...updatedData };
     },
-    async updateAccount(accId, updatedData) { await updateDoc(doc(db, `/artifacts/${appId}/users/${userId}/accounts`, accId), updatedData); },
-    async removeAccount(accId) { await deleteDoc(doc(db, `/artifacts/${appId}/users/${userId}/accounts`, accId)); },
-    
-    async addCreditCard(card) { 
-        const docRef = doc(collection(db, `/artifacts/${appId}/users/${userId}/creditCards`));
-        card.id = docRef.id;
-        await setDoc(docRef, card); 
+    removeAccount(accId) {
+        const accIndex = this.accounts.findIndex(a => a.id === accId);
+        if (accIndex > -1) this.accounts.splice(accIndex, 1);
     },
-    async updateCreditCard(cardId, updatedData) { await updateDoc(doc(db, `/artifacts/${appId}/users/${userId}/creditCards`, cardId), updatedData); },
-    async removeCreditCard(cardId) { await deleteDoc(doc(db, `/artifacts/${appId}/users/${userId}/creditCards`, cardId)); },
-
-    async updateCategories(newCategoryArray) {
-        if (!userId) return false;
-        const catDocRef = doc(db, `/artifacts/${appId}/users/${userId}/categories/user_categories`);
-        try {
-            await setDoc(catDocRef, { names: newCategoryArray });
-            return true;
-        } catch (error) {
-            console.error("Erro ao atualizar categorias:", error);
-            return false;
-        }
+    addCreditCard(card) { this.creditCards.push(card); },
+    updateCreditCard(cardId, updatedData) {
+        const cardIndex = this.creditCards.findIndex(c => c.id === cardId);
+        if (cardIndex > -1) this.creditCards[cardIndex] = { ...this.creditCards[cardIndex], ...updatedData };
     },
-
-    async addCategory(name, isDefault = false) {
+    removeCreditCard(cardId) {
+        const cardIndex = this.creditCards.findIndex(c => c.id === cardId);
+        if (cardIndex > -1) this.creditCards.splice(cardIndex, 1);
+    },
+    addCategory(name) {
         if (name && !this.categories.includes(name)) {
-            const newCategories = [...this.categories, name];
-            return await this.updateCategories(newCategories);
-        }
-        if (isDefault && this.categories.length === 0) { // Para o caso de uma base de dados vazia
-             return await this.updateCategories(this.categories);
+            this.categories.push(name);
+            return true;
         }
         return false;
     },
-    async updateCategory(oldName, newName) {
+    updateCategory(oldName, newName) {
         if (newName && oldName !== newName && !this.categories.includes(newName)) {
             const index = this.categories.indexOf(oldName);
             if (index > -1) {
-                const newCategories = [...this.categories];
-                newCategories[index] = newName;
-                const success = await this.updateCategories(newCategories);
-                if (success) {
-                    const batch = writeBatch(db);
-                    this.transactions.forEach(tx => {
-                        if (tx.category === oldName) {
-                            const docRef = doc(db, `/artifacts/${appId}/users/${userId}/transactions`, tx.id);
-                            batch.update(docRef, { category: newName });
-                        }
-                    });
-                    await batch.commit();
-                }
-                return success;
+                this.categories[index] = newName;
+                this.transactions.forEach(tx => {
+                    if (tx.category === oldName) {
+                        tx.category = newName;
+                    }
+                });
+                return true;
             }
         }
         return false;
     },
-    async removeCategory(name) {
+    removeCategory(name) {
         if (name && name !== "Outros") {
-            const newCategories = this.categories.filter(c => c !== name);
-            const success = await this.updateCategories(newCategories);
-            if (success) {
-                const batch = writeBatch(db);
-                this.transactions.forEach(tx => {
-                    if (tx.category === name) {
-                        const docRef = doc(db, `/artifacts/${appId}/users/${userId}/transactions`, tx.id);
-                        batch.update(docRef, { category: "Outros" });
-                    }
-                });
-                await batch.commit();
-            }
-            return success;
+            this.categories = this.categories.filter(c => c !== name);
+            this.transactions.forEach(tx => {
+                if (tx.category === name) {
+                    tx.category = "Outros";
+                }
+            });
+            return true;
         }
         return false;
     }
 };
 
-// --- Módulo de UI (com pequenas adições para estados de carregamento) ---
+// Módulo de UI
 const UI = {
-     banks: [
+    banks: [
         { name: 'Nenhum', logo: '' },
         { name: 'Banco do Brasil', logo: 'https://logo.clearbit.com/bb.com.br' },
         { name: 'Bradesco', logo: 'https://logo.clearbit.com/bradesco.com.br' },
@@ -601,12 +443,10 @@ const UI = {
         { name: 'Viacredi', logo: 'https://www.viacredi.coop.br/wp-content/themes/viacredi/dist/images/logo-viacredi.svg' },
         { name: 'Outro', logo: '' }
     ],
+
+    init() { this.render(); },
     
     render() {
-        if (!userId || Object.values(AppState.isDataLoaded).some(s => !s)) {
-            this.showLoading();
-            return;
-        }
         document.body.classList.toggle('sidebar-collapsed', AppState.isSidebarCollapsed);
         document.querySelectorAll('#page-container > section').forEach(s => s.classList.add('hidden'));
         
@@ -615,32 +455,13 @@ const UI = {
             activePage.classList.remove('hidden');
             document.getElementById('page-title').textContent = this.getPageTitle(AppState.currentView);
             const renderFn = `render${this.capitalize(AppState.currentView)}Page`;
-            if (typeof this[renderFn] === 'function') {
-                this[renderFn]();
-            }
+            if (typeof this[renderFn] === 'function') this[renderFn]();
         }
         this.updateNavLinks();
     },
-
-    showLoading(message = "A carregar os seus dados...") {
-        const overlay = document.getElementById('loading-overlay');
-        overlay.querySelector('p').textContent = message;
-        overlay.style.display = 'flex';
-        overlay.style.opacity = '1';
-    },
-
-    hideLoading() {
-        const overlay = document.getElementById('loading-overlay');
-        overlay.style.opacity = '0';
-        setTimeout(() => {
-            overlay.style.display = 'none';
-        }, 300);
-    },
-
-    // A maioria das funções de renderização permanece a mesma, pois operam nos dados do AppState
-    // ... (todas as outras funções de UI como renderDashboardPage, renderTransactionsPage, etc. permanecem aqui sem alterações) ...
+    
     capitalize: s => s.charAt(0).toUpperCase() + s.slice(1),
-    getPageTitle: v => ({ dashboard: 'Dashboard', transactions: 'Minhas Transações', accounts: 'Contas & Cartões', reports: 'Relatórios e Análises', categories: 'Gerenciar Categorias', import: 'Importar com Assistente' }[v] || 'Dashboard'),
+    getPageTitle: v => ({ dashboard: 'Dashboard', transactions: 'Minhas Transações', accounts: 'Contas & Cartões', reports: 'Relatórios', categories: 'Gerenciar Categorias' }[v] || 'Dashboard'),
     
     updateNavLinks() {
         document.querySelectorAll('aside nav a').forEach(l => l.classList.remove('bg-gray-200', 'text-gray-700'));
@@ -899,125 +720,155 @@ const UI = {
     
     renderReportsPage() {
         const page = document.getElementById('reports-page');
-        page.innerHTML = `
-        <div class="space-y-8">
-            <div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Diagnóstico Financeiro</h3>
-                <p class="text-gray-600">Selecione um período e gere um diagnóstico completo da sua saúde financeira.</p>
-                <div class="flex items-end space-x-2 mt-4 bg-gray-50 p-4 rounded-lg">
-                    <div class="period-selector-container flex-grow grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="report-month" class="block text-sm font-medium text-gray-700">Mês</label>
-                            <select id="report-month" class="period-month-select mt-1 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
-                        </div>
-                        <div>
-                            <label for="report-year" class="block text-sm font-medium text-gray-700">Ano</label>
-                            <select id="report-year" class="period-year-select mt-1 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
-                        </div>
-                    </div>
-                    <button id="get-analysis-btn" class="px-5 py-2.5 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm">Gerar Diagnóstico</button>
-                </div>
-            </div>
-            <div id="financial-diagnosis-output"></div>
-        </div>`;
-        this.populatePeriodSelectors();
-    },
-
-    renderFinancialDiagnosis(data) {
-        const container = document.getElementById('financial-diagnosis-output');
-        if (!container) return;
-
-        if (data.error) {
-            container.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-md text-center text-gray-500">${data.error}</div>`;
-            return;
-        }
-
-        const balanceColor = data.balance >= 0 ? 'text-green-600' : 'text-red-600';
-        const savingRateColor = data.savingRate >= 10 ? 'text-green-600' : (data.savingRate > 0 ? 'text-yellow-600' : 'text-red-600');
-
-        const topCategoriesHTML = data.topExpenseCategories.map(([category, value]) => `
-            <li class="flex justify-between items-center text-sm">
-                <span class="text-gray-600">${category}</span>
-                <span class="font-medium text-gray-800">${this.formatCurrency(value)}</span>
-            </li>
-        `).join('');
+        const now = new Date();
+        const yearOptions = Array.from({length: 5}, (_, i) => now.getFullYear() - i).map(y => `<option value="${y}" ${y === now.getFullYear() ? 'selected' : ''}>${y}</option>`).join('');
+        const monthOptions = Array.from({length: 12}, (_, i) => `<option value="${i}" ${i === now.getMonth() ? 'selected' : ''}>${new Date(0, i).toLocaleString('pt-BR', {month: 'long'})}</option>`).join('');
         
-        const renderComparison = (comparison, label) => {
-            if(comparison.type === 'stable') return `<p class="text-sm text-gray-500">${label} permaneceu estável.</p>`;
-            const color = comparison.type === 'increase' ? 'text-red-500' : 'text-green-500';
-            const text = comparison.type === 'increase' ? 'Aumento' : 'Redução';
-            return `<p class="text-sm ${color}">${text} de ${comparison.change.toFixed(1)}% nos ${label.toLowerCase()}.</p>`;
-        }
-
-        container.innerHTML = `
-        <div class="bg-white p-6 rounded-xl shadow-md space-y-6">
-            <h4 class="text-xl font-bold text-gray-800">Diagnóstico para ${data.periodLabel}</h4>
-
-            <!-- Balanço do Mês -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                <div class="bg-green-50 p-4 rounded-lg">
-                    <p class="text-sm text-green-800 font-medium">Receitas</p>
-                    <p class="text-2xl font-bold text-green-700">${this.formatCurrency(data.income)}</p>
+        page.innerHTML = `
+            <div class="bg-white p-6 rounded-xl shadow-md space-y-6">
+                 <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Relatórios e Análises</h3>
+                    <p class="text-gray-600">Analise suas finanças e receba sugestões para melhorar sua saúde financeira.</p>
                 </div>
-                <div class="bg-red-50 p-4 rounded-lg">
-                    <p class="text-sm text-red-800 font-medium">Despesas</p>
-                    <p class="text-2xl font-bold text-red-700">${this.formatCurrency(data.expenses)}</p>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <p class="text-sm text-blue-800 font-medium">Balanço Final</p>
-                    <p class="text-2xl font-bold ${balanceColor}">${this.formatCurrency(data.balance)}</p>
-                </div>
-            </div>
 
-            <!-- Análise e Dicas -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Lado Esquerdo: Detalhes -->
-                <div class="space-y-4">
+                <div class="p-4 bg-gray-50 rounded-lg flex justify-between items-center">
                     <div>
-                        <h5 class="font-semibold text-gray-700">Taxa de Economia</h5>
-                        <p class="text-3xl font-bold ${savingRateColor}">${data.savingRate.toFixed(1)}%</p>
+                        <h4 class="font-semibold text-gray-700">Análise Inteligente</h4>
+                        <p class="text-sm text-gray-500">Receba dicas personalizadas com base nos seus gastos do último mês.</p>
                     </div>
-                     <div>
-                        <h5 class="font-semibold text-gray-700">Maiores Despesas</h5>
-                        <ul class="mt-2 space-y-2">
-                           ${topCategoriesHTML || '<li class="text-sm text-gray-500">Sem despesas registradas.</li>'}
-                        </ul>
-                    </div>
+                    <button id="get-analysis-btn" class="px-5 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform hover:scale-105">Analisar Finanças</button>
                 </div>
+                
+                <hr/>
 
-                <!-- Lado Direito: Dicas -->
-                <div class="space-y-4">
-                     <div>
-                        <h5 class="font-semibold text-gray-700">Comparativo com Mês Anterior</h5>
-                        <div class="mt-2 space-y-1">
-                           ${renderComparison(data.incomeComparison, 'Receitas')}
-                           ${renderComparison(data.expenseComparison, 'Despesas')}
+                <div id="report-filters" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label for="report-mode" class="block text-sm font-medium text-gray-700">Tipo de Relatório</label>
+                        <select id="report-mode" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="simple" selected>Simples</option>
+                            <option value="comparative">Comparativo</option>
+                        </select>
+                    </div>
+                    <div id="period-1-filters" class="contents">
+                        <div>
+                            <label for="report-year-1" class="block text-sm font-medium text-gray-700">Ano (Período 1)</label>
+                            <select id="report-year-1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${yearOptions}</select>
+                        </div>
+                         <div>
+                            <label for="report-month-1" class="block text-sm font-medium text-gray-700">Mês (Período 1)</label>
+                            <select id="report-month-1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${monthOptions}</select>
                         </div>
                     </div>
-                    <div class="p-4 bg-indigo-50 rounded-lg">
-                         <h5 class="font-semibold text-indigo-800">Dica Inteligente</h5>
-                         <p class="text-sm text-indigo-700 mt-1">${data.smartTip}</p>
+                    <div id="period-2-filters" class="hidden contents">
+                        <div>
+                            <label for="report-year-2" class="block text-sm font-medium text-gray-700">Ano (Período 2)</label>
+                            <select id="report-year-2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${yearOptions}</select>
+                        </div>
+                         <div>
+                            <label for="report-month-2" class="block text-sm font-medium text-gray-700">Mês (Período 2)</label>
+                            <select id="report-month-2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${monthOptions}</select>
+                        </div>
+                    </div>
+                     <div>
+                        <label for="report-type" class="block text-sm font-medium text-gray-700">Tipo</label>
+                        <select id="report-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="despesa" selected>Despesas</option>
+                            <option value="receita">Receitas</option>
+                        </select>
+                    </div>
+                    <div class="lg:col-span-full flex justify-end">
+                        <button id="generate-report-btn" class="w-full lg:w-auto px-6 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">Gerar Relatório</button>
                     </div>
                 </div>
-            </div>
-        </div>
-        `;
+                <div id="report-output" class="mt-6">
+                </div>
+            </div>`;
     },
-    
-    renderImportPage() {
-        const page = document.getElementById('import-page');
-        page.innerHTML = `
-        <div class="bg-white p-6 rounded-xl shadow-md">
-            <h3 class="text-2xl font-bold text-gray-800 mb-2">Importar com Assistente</h3>
-            <p class="text-gray-600 mb-4">Copie o conteúdo do seu extrato ou fatura e cole no campo abaixo. O assistente tentará identificar as transações para você.</p>
-            
-            <textarea id="statement-text-input" class="w-full h-48 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Exemplo:\n15/05 PGTO COBRANCA NETFLIX R$ 39,90\n16/05 COMPRA CARTAO UBER TRIP R$ 25,50\n17/05 PIX RECEBIDO JOAO DA SILVA R$ 100,00"></textarea>
-            
-            <div class="flex justify-end mt-4">
-                <button id="parse-statement-btn" class="px-6 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">Analisar Extrato</button>
+
+    renderReportResults({data1, data2, title, p1Label, p2Label}) {
+        const container = document.getElementById('report-output');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="p-6 bg-white rounded-xl shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-700">${title}</h3>
+                    <button id="export-report-btn" class="px-3 py-1 text-sm text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50">Exportar</button>
+                </div>
+                <div class="chart-container mb-6" style="height: 400px;">
+                    <canvas id="report-chart"></canvas>
+                </div>
+                <div id="report-table-container" class="overflow-x-auto"></div>
             </div>
-        </div>
         `;
+
+        const ctx = document.getElementById('report-chart').getContext('2d');
+        if (window.reportChart) window.reportChart.destroy();
+        
+        const isComparative = !!data2;
+        const allCategories = [...new Set([...Object.keys(data1), ...(isComparative ? Object.keys(data2) : [])])];
+        
+        const datasets = [{ 
+            label: p1Label || 'Valor',
+            data: allCategories.map(cat => data1[cat] || 0),
+            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1
+        }];
+
+        if(isComparative) {
+            datasets.push({
+                label: p2Label,
+                data: allCategories.map(cat => data2[cat] || 0),
+                backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                borderColor: 'rgba(239, 68, 68, 1)',
+                borderWidth: 1
+            });
+        }
+
+        window.reportChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: allCategories, datasets },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: isComparative } } }
+        });
+        
+        const tableContainer = document.getElementById('report-table-container');
+        let tableHTML = `
+            <table class="w-full text-sm text-left text-gray-500 custom-table">
+                <thead class="text-xs text-gray-700 uppercase"><tr>
+                    <th class="py-3 px-6">Categoria</th>
+                    <th class="py-3 px-6 text-right">${p1Label || 'Valor'}</th>
+                    ${isComparative ? `<th class="py-3 px-6 text-right">${p2Label}</th><th class="py-3 px-6 text-right">Diferença (R$)</th><th class="py-3 px-6 text-right">Diferença (%)</th>` : '<th class="py-3 px-6 text-right">% do Total</th>'}
+                </tr></thead><tbody>`;
+        
+        const total1 = Object.values(data1).reduce((s, v) => s + v, 0);
+        const total2 = isComparative ? Object.values(data2).reduce((s, v) => s + v, 0) : 0;
+
+        allCategories.forEach(cat => {
+            const v1 = data1[cat] || 0;
+            if(isComparative) {
+                 const v2 = data2[cat] || 0;
+                 const diff = v1 - v2;
+                 const percChange = v2 !== 0 ? ((diff / v2) * 100).toFixed(1) + '%' : (v1 > 0 ? 'Novo' : '0.0%');
+                 tableHTML += `<tr>
+                    <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
+                    <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
+                    <td class="py-4 px-6 text-right">${this.formatCurrency(v2)}</td>
+                    <td class="py-4 px-6 text-right ${diff > 0 ? 'text-red-500' : 'text-green-500'}">${this.formatCurrency(diff)}</td>
+                    <td class="py-4 px-6 text-right ${diff > 0 ? 'text-red-500' : 'text-green-500'}">${percChange}</td>
+                </tr>`;
+            } else {
+                 const percentage = total1 > 0 ? ((v1 / total1) * 100).toFixed(2) : 0;
+                 tableHTML += `<tr>
+                    <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
+                    <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
+                    <td class="py-4 px-6 text-right">${percentage}%</td>
+                </tr>`;
+            }
+        });
+
+        tableHTML += `</tbody></table>`;
+        tableContainer.innerHTML = tableHTML;
     },
 
     renderAccountsPage() {
@@ -1283,7 +1134,7 @@ const UI = {
         }
     },
     
-      renderEditTransactionModal(tx) {
+     renderEditTransactionModal(tx) {
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}" ${tx.accountId === a.id && !tx.isCreditCard ? 'selected' : ''}>${a.name}</option>`).join('');
         const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}" ${tx.accountId === c.id && tx.isCreditCard ? 'selected' : ''}>${c.name} (Cartão)</option>`).join('');
         const categoryOptions = AppState.categories.map(c => `<option value="${c}" ${tx.category === c ? 'selected' : ''}>${c}</option>`).join('');
@@ -1384,7 +1235,38 @@ const UI = {
         `;
         this.showModal('Editar Múltiplas Transações', content, 'Salvar Alterações', 'bulk-edit-modal-form');
     },
-    
+
+    renderFileImportModal() {
+        const content = `
+            <p class="text-sm text-gray-600 mb-4">Selecione o tipo de arquivo que deseja importar.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <button data-type="ofx" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
+                    <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="font-semibold">OFX</span>
+                </button>
+                <button data-type="pdf" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
+                     <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    <span class="font-semibold">PDF</span>
+                </button>
+                <button data-type="image" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
+                     <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span class="font-semibold">Imagem</span>
+                </button>
+            </div>
+        `;
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.innerHTML = `
+            <div class="modal-backdrop">
+                <div class="modal-content">
+                    <div class="modal-header flex justify-between items-center">
+                        <h3 class="text-xl font-semibold">Importar Extrato</h3>
+                        <button class="modal-close-btn text-2xl hover:text-red-500">&times;</button>
+                    </div>
+                    <div class="modal-body">${content}</div>
+                </div>
+            </div>`;
+    },
+
     renderImportReviewModal(transactions) {
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
         const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (Cartão)</option>`).join('');
@@ -1417,7 +1299,7 @@ const UI = {
                         ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
                         ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
                     </select>
-                </div>
+                 </div>
             </li>
         `}).join('');
 
@@ -1598,7 +1480,7 @@ const UI = {
                 }
 
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
-                                <div>
+                                <div class="flex-1">
                                     <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
                                     <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
                                 </div>
@@ -1619,7 +1501,7 @@ const UI = {
             case 'total-balance':
                 title = 'Saldo Detalhado por Conta';
                 if (AppState.accounts.length === 0) {
-                       content = '<p class="text-gray-500 text-center py-4">Nenhuma conta cadastrada.</p>';
+                     content = '<p class="text-gray-500 text-center py-4">Nenhuma conta cadastrada.</p>';
                 } else {
                     content = '<ul class="space-y-3">';
                     AppState.accounts.forEach(acc => {
@@ -1702,7 +1584,7 @@ const UI = {
             txs.forEach(tx => {
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
-                                <div>
+                                <div class="flex-1">
                                     <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
                                     <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
                                 </div>
@@ -1758,7 +1640,7 @@ const UI = {
                 }
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
-                                <div>
+                                <div class="flex-1">
                                     <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
                                     <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
                                 </div>
@@ -1848,6 +1730,60 @@ const UI = {
         content += '</ul></div></div>';
         this.showInfoModal(`Detalhes: ${description}`, content);
     },
+
+    renderAnalysisModal(analysis) {
+        if (analysis.error) {
+            this.showFeedback(analysis.error, 'info');
+            return;
+        }
+
+        let suggestionsHTML = '';
+
+        if (analysis.monthlyBalance >= 0) {
+            suggestionsHTML += `<div class="p-4 bg-green-50 rounded-lg mb-4">
+                <h4 class="font-bold text-green-800">Parabéns!</h4>
+                <p class="text-green-700">Você fechou o mês de ${analysis.period} com um saldo positivo de <strong>${this.formatCurrency(analysis.monthlyBalance)}</strong>. Considere investir esse valor para alcançar seus objetivos mais rápido!</p>
+            </div>`;
+        } else {
+             suggestionsHTML += `<div class="p-4 bg-red-50 rounded-lg mb-4">
+                <h4 class="font-bold text-red-800">Atenção!</h4>
+                <p class="text-red-700">Seu balanço no mês de ${analysis.period} foi negativo em <strong>${this.formatCurrency(analysis.monthlyBalance)}</strong>. É um bom momento para revisar seus gastos.</p>
+            </div>`;
+        }
+
+        if (analysis.topExpenseCategories.length > 0) {
+            suggestionsHTML += `<div class="mb-4">
+                <h4 class="font-semibold text-gray-700 mb-2">Principais Despesas de ${analysis.period}</h4>
+                <ul class="space-y-2">`;
+            analysis.topExpenseCategories.forEach(cat => {
+                 suggestionsHTML += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
+                    <span>${cat.category}</span>
+                    <span class="font-semibold">${this.formatCurrency(cat.amount)} <span class="text-gray-500 font-normal">(${cat.percentage}%)</span></span>
+                </li>`;
+            });
+            suggestionsHTML += `</ul>
+                <p class="text-xs text-gray-500 mt-3">Focar em reduzir os gastos nas suas maiores categorias pode ter um grande impacto. Já analisou se há espaço para cortar custos em <strong>${analysis.topExpenseCategories[0].category}</strong>?</p>
+            </div>`;
+        }
+
+        const nonEssentialCategories = ['Lazer', 'Compras', 'Alimentação'];
+        const topNonEssential = analysis.topExpenseCategories.find(c => nonEssentialCategories.includes(c.category));
+
+        if(topNonEssential){
+             suggestionsHTML += `<div class="p-4 bg-blue-50 rounded-lg">
+                <h4 class="font-bold text-blue-800">Dica Rápida</h4>
+                <p class="text-blue-700">Vimos que <strong>${topNonEssential.category}</strong> está entre seus maiores gastos. Que tal definir um orçamento mensal para essa categoria ou procurar por alternativas mais baratas?</p>
+            </div>`;
+        } else {
+            suggestionsHTML += `<div class="p-4 bg-blue-50 rounded-lg">
+                <h4 class="font-bold text-blue-800">Dica Rápida</h4>
+                <p class="text-blue-700">Uma boa prática é tentar economizar de 10% a 20% da sua renda mensal. Você está no caminho certo?</p>
+            </div>`;
+        }
+
+        const content = `<div>${suggestionsHTML}</div>`;
+        this.showInfoModal(`Análise de ${analysis.period}`, content);
+    },
     
     showConfirmationModal(title, message, onConfirm) {
         const modalContainer = document.getElementById('modal-container');
@@ -1870,7 +1806,6 @@ const UI = {
             onConfirm();
             this.closeModal();
         };
-        modalContainer.querySelector('.modal-close-btn').addEventListener('click', () => this.closeModal());
     },
 
     closeModal() { document.getElementById('modal-container').innerHTML = ''; },
@@ -1937,7 +1872,7 @@ const UI = {
         const ctx = document.getElementById('balance-chart')?.getContext('2d');
         if (!ctx) return;
         if (window.balanceChart) window.balanceChart.destroy();
-        const { labels, data } = this.getMonthlyBalanceData(6, AppState.displayYear, AppState.displayMonth);
+        const { labels, data } = this.getMonthlyBalanceData(6);
         window.balanceChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Saldo em Contas', data, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false } });
     },
     renderExpensesChart() {
@@ -1955,15 +1890,14 @@ const UI = {
         ctx.canvas.classList.toggle('hidden', labels.length === 0);
         if(labels.length > 0) window.expensesChart = new Chart(ctx, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6'], hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }}} });
     },
-    getMonthlyBalanceData(numMonths, endYear, endMonth) {
-        const labels = []; const data = []; 
+    getMonthlyBalanceData(numMonths) {
+        const labels = []; const data = []; const now = new Date();
         for (let i = numMonths - 1; i >= 0; i--) {
-            const date = new Date(endYear, endMonth - i, 1);
+            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
             labels.push(date.toLocaleDateString('pt-BR', { month: 'short' }));
-            const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-            
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
             let balance = AppState.accounts.reduce((s, a) => s + (a.initialBalance || 0), 0);
-            AppState.transactions.filter(tx => new Date(tx.date + 'T00:00:00') <= endOfMonth).forEach(tx => {
+            AppState.transactions.filter(tx => new Date(tx.date) <= endOfMonth).forEach(tx => {
                 if(!tx.isCreditCard) {
                     if (tx.fundamentalType === 'receita') balance += tx.value;
                     else if (tx.isPaid) balance -= tx.value;
@@ -2025,9 +1959,9 @@ const UI = {
             .filter(t => {
                 const txDate = new Date(t.date + 'T00:00:00');
                 return !t.isPaid && 
-                        t.fundamentalType === 'despesa' && 
-                        txDate.getMonth() === month && // Only this month
-                        txDate.getFullYear() === year;
+                       t.fundamentalType === 'despesa' && 
+                       txDate.getMonth() === month && // Only this month
+                       txDate.getFullYear() === year;
             })
             .sort((a,b) => new Date(a.date) - new Date(b.date))
             .slice(0, 5);
@@ -2102,7 +2036,7 @@ const UI = {
     }
 };
 
-// --- Módulo de Handlers (Manipuladores de Eventos) ---
+// Módulo de Handlers
 const Handlers = {
     importedTransactions: [],
     init() {
@@ -2116,9 +2050,8 @@ const Handlers = {
         }));
         
         document.getElementById('clear-data-btn').addEventListener('click', () => {
-            UI.showConfirmationModal('Limpar Todos os Dados', 'Tem a certeza que deseja apagar TUDO? Esta ação não pode ser desfeita e removerá todos os dados da nuvem.', () => {
-                AppState.clearAllData(); 
-                UI.showFeedback('Todos os dados foram limpos!', 'success');
+            UI.showConfirmationModal('Limpar Todos os Dados', 'Tem certeza que deseja apagar TUDO? Esta ação não pode ser desfeita.', () => {
+                AppState.clearAllData(); UI.render(); UI.showFeedback('Todos os dados foram limpos!', 'success');
             });
         });
         
@@ -2132,9 +2065,8 @@ const Handlers = {
         document.getElementById('page-container').addEventListener('click', e => {
             if (e.target.id === 'add-new-account-btn') UI.renderAccountModal();
             if (e.target.id === 'add-new-category-btn') UI.renderCategoryModal();
+            if (e.target.id === 'generate-report-btn') this.handleGenerateReport();
             if (e.target.id === 'get-analysis-btn') this.handleAnalysisClick();
-            if (e.target.id === 'parse-statement-btn') this.handleParseStatement();
-
             
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) this.handleEditClick(editBtn);
@@ -2178,17 +2110,12 @@ const Handlers = {
 
         document.getElementById('page-container').addEventListener('change', e => {
              if (e.target.classList.contains('period-month-select') || e.target.classList.contains('period-year-select')) {
-                const container = e.target.closest('.period-selector-container');
-                if(!container) return;
-
-                const monthSelect = container.querySelector('.period-month-select');
-                const yearSelect = container.querySelector('.period-year-select');
-
-                if (monthSelect && yearSelect) {
-                    AppState.displayMonth = parseInt(monthSelect.value);
-                    AppState.displayYear = parseInt(yearSelect.value);
-                    UI.render();
-                }
+                const activePageId = AppState.currentView;
+                const monthSelect = document.querySelector(`#${activePageId}-page .period-month-select`);
+                const yearSelect = document.querySelector(`#${activePageId}-page .period-year-select`);
+                AppState.displayMonth = parseInt(monthSelect.value);
+                AppState.displayYear = parseInt(yearSelect.value);
+                UI.render();
             }
 
             // Handler para checkboxes de transação
@@ -2203,6 +2130,13 @@ const Handlers = {
             }
         });
         
+        document.getElementById('page-container').addEventListener('change', e => {
+            if (e.target.id === 'report-mode') {
+                document.getElementById('period-2-filters').classList.toggle('hidden', e.target.value !== 'comparative');
+                document.getElementById('period-2-filters').classList.toggle('contents', e.target.value === 'comparative');
+            }
+        });
+
         document.getElementById('modal-container').addEventListener('click', e => {
             if (e.target.closest('.modal-close-btn')) UI.closeModal();
             if (e.target.classList.contains('installment-status-toggle')) this.handleInstallmentStatusToggle(e.target.dataset.txId);
@@ -2211,6 +2145,7 @@ const Handlers = {
             if (editBtn) this.handleModalClick(e);
             if (e.target.closest('.launch-import-btn') || e.target.closest('.ignore-import-btn')) this.handleImportReviewClick(e);
             if (e.target.closest('#launch-all-imported-btn')) this.handleBulkLaunchImport();
+            if (e.target.closest('.import-type-btn')) this.handleImportTypeSelection(e.target.closest('.import-type-btn').dataset.type);
         });
         
         document.getElementById('modal-container').addEventListener('submit', e => {
@@ -2248,7 +2183,15 @@ const Handlers = {
             }
         });
         
+        const importStatementBtn = document.getElementById('import-statement-btn');
+        if (importStatementBtn) {
+            importStatementBtn.addEventListener('click', () => UI.renderFileImportModal());
+        }
         document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
+        const statementFileInput = document.getElementById('statement-file-input');
+        if (statementFileInput) {
+            statementFileInput.addEventListener('change', (e) => this.handleFileSelectedForImport(e));
+        }
     },
     
     handleTransactionSelection(checkbox) {
@@ -2281,45 +2224,44 @@ const Handlers = {
         UI.renderBulkActionBar();
     },
     
-    async handleBulkMarkPaid() {
+    handleBulkMarkPaid() {
         if (AppState.selectedTransactionIds.length === 0) return;
         
-        const batch = writeBatch(db);
         let changedCount = 0;
         AppState.selectedTransactionIds.forEach(id => {
             const tx = AppState.transactions.find(t => t.id === id);
             if (tx && tx.fundamentalType === 'despesa' && !tx.isPaid) {
-                 const docRef = doc(db, `/artifacts/${appId}/users/${userId}/transactions`, id);
-                 batch.update(docRef, { isPaid: true });
+                tx.isPaid = true;
                 changedCount++;
             }
         });
 
         if (changedCount > 0) {
-            await batch.commit();
+            AppState.recalculateAllBalances();
+            AppState.saveAll();
             this.handleBulkDeselect();
-            // A UI será atualizada pelo onSnapshot
+            UI.render();
             UI.showFeedback(`${changedCount} transaç${changedCount > 1 ? 'ões' : 'ão'} marcada${changedCount > 1 ? 's' : ''} como paga.`, 'success');
         } else {
              UI.showFeedback('Nenhuma transação pendente foi selecionada.', 'info');
         }
     },
 
-    async handleBulkDelete() {
+    handleBulkDelete() {
         const selectedCount = AppState.selectedTransactionIds.length;
         if (selectedCount === 0) return;
 
         UI.showConfirmationModal(
             `Excluir ${selectedCount} Transações`,
-            `Tem a certeza que deseja excluir as ${selectedCount} transações selecionadas?`,
-            async () => {
-                const batch = writeBatch(db);
-                AppState.selectedTransactionIds.forEach(id => {
-                     const docRef = doc(db, `/artifacts/${appId}/users/${userId}/transactions`, id);
-                     batch.delete(docRef);
-                });
-                await batch.commit();
+            `Tem certeza que deseja excluir as ${selectedCount} transações selecionadas?`,
+            () => {
+                AppState.transactions = AppState.transactions.filter(
+                    tx => !AppState.selectedTransactionIds.includes(tx.id)
+                );
+                AppState.recalculateAllBalances();
+                AppState.saveAll();
                 this.handleBulkDeselect();
+                UI.render();
                 UI.showFeedback(`${selectedCount} transações foram excluídas.`, 'success');
             }
         );
@@ -2349,13 +2291,13 @@ const Handlers = {
 
             if (!scope) return false;
 
-             const batch = writeBatch(db);
-             const changesToApply = {};
-             if (changes.category) changesToApply.category = changes.category;
-             if (changes.accountId !== undefined) {
-                 changesToApply.accountId = changes.accountId;
-                 changesToApply.isCreditCard = changes.isCreditCard;
-             }
+            const applyChangesToTx = (tx, currentChanges) => {
+                if (currentChanges.category) tx.category = currentChanges.category;
+                if (currentChanges.accountId !== undefined) {
+                    tx.accountId = currentChanges.accountId;
+                    tx.isCreditCard = currentChanges.isCreditCard;
+                }
+            };
             
             const allInSeries = AppState.transactions.filter(t => t.groupId === seriesInfo.sampleTx.groupId);
             const firstSelectedDate = new Date(allInSeries.filter(t => seriesInfo.selectedIds.includes(t.id)).sort((a,b) => new Date(a.date) - new Date(b.date))[0].date);
@@ -2366,12 +2308,8 @@ const Handlers = {
                 else if (scope === 'selected' && seriesInfo.selectedIds.includes(tx.id)) shouldApply = true;
                 else if (scope === 'future' && new Date(tx.date) >= firstSelectedDate) shouldApply = true;
                 
-                if(shouldApply) {
-                    const docRef = doc(db, `/artifacts/${appId}/users/${userId}/transactions`, tx.id);
-                    batch.update(docRef, changesToApply);
-                }
+                if(shouldApply) applyChangesToTx(tx, changes);
             });
-            await batch.commit();
         }
         return true; 
     },
@@ -2393,28 +2331,18 @@ const Handlers = {
 
         const selectedTxs = AppState.selectedTransactionIds.map(id => AppState.transactions.find(t => t.id === id)).filter(Boolean);
         
-        const batch = writeBatch(db);
-
         if (newStatus) {
             selectedTxs.forEach(tx => {
-                if (tx.fundamentalType === 'despesa') {
-                     const docRef = doc(db, `/artifacts/${appId}/users/${userId}/transactions`, tx.id);
-                     batch.update(docRef, { isPaid: (newStatus === 'paid') });
-                }
+                if (tx.fundamentalType === 'despesa') tx.isPaid = (newStatus === 'paid');
             });
         }
         
         const simpleTxs = selectedTxs.filter(tx => !tx.groupId);
         simpleTxs.forEach(tx => {
-            const docRef = doc(db, `/artifacts/${appId}/users/${userId}/transactions`, tx.id);
-            const simpleChanges = {};
-            if (changes.category) simpleChanges.category = changes.category;
+            if (changes.category) tx.category = changes.category;
             if (changes.accountId !== undefined) {
-                simpleChanges.accountId = changes.accountId;
-                simpleChanges.isCreditCard = changes.isCreditCard;
-            }
-            if (Object.keys(simpleChanges).length > 0) {
-                 batch.update(docRef, simpleChanges);
+                tx.accountId = changes.accountId;
+                tx.isCreditCard = changes.isCreditCard;
             }
         });
 
@@ -2430,72 +2358,71 @@ const Handlers = {
             const success = await this.processBulkSeriesChanges(Array.from(seriesMap.values()), changes);
             if (!success) {
                  this.handleBulkDeselect();
-                 // A UI será atualizada pelo onSnapshot, então não precisa de UI.render()
+                 UI.render();
                  UI.showFeedback('Edição em massa cancelada.', 'info');
                  return;
             }
         }
         
-        await batch.commit(); // Comete as alterações simples e de status
         this.finishBulkUpdate();
     },
 
     finishBulkUpdate() {
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
         this.handleBulkDeselect();
+        UI.render();
         UI.showFeedback('Transações atualizadas com sucesso!', 'success');
-        // A UI será atualizada pelo onSnapshot
     },
 
-    handleParseStatement() {
-        const text = document.getElementById('statement-text-input').value;
-        if (!text.trim()) {
-            UI.showFeedback("Por favor, cole o texto do seu extrato.", 'error');
-            return;
-        }
+    handleImportTypeSelection(type) {
+        const fileInput = document.getElementById('statement-file-input');
+        const typeMap = {
+            ofx: '.ofx, .OFX',
+            pdf: '.pdf',
+            image: 'image/png, image/jpeg, image/webp'
+        };
+        fileInput.accept = typeMap[type] || '';
+        fileInput.click();
+    },
 
-        UI.showFeedback('Analisando extrato... (Simulação)', 'info');
+    handleFileSelectedForImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        UI.closeModal();
+        UI.showFeedback('Processando arquivo... (Simulação)', 'info');
 
         setTimeout(() => {
-            const lines = text.split('\n').filter(line => line.trim() !== '');
-            const transactions = [];
-            const dateRegex = /(\d{2}\/\d{2}(?:\/\d{2,4})?)/;
-            const valueRegex = /(R\$)\s?(\d{1,3}(?:\.\d{3})*,\d{2})/;
+            const mockDescriptions = [ 'Compra Online - Amazon', 'Restaurante Sabor Caseiro', 'Pagamento NETFLIX', 'Posto de Gasolina Shell', 'Farmácia Pague Menos', 'Padaria Pão Quente', 'Conta de Luz - Celesc', 'Conta de Água - SAMAE', 'Uber Viagem' ];
+            const numberOfTransactions = Math.floor(Math.random() * 5) + 3;
+            this.importedTransactions = [];
 
-            lines.forEach(line => {
-                const dateMatch = line.match(dateRegex);
-                const valueMatch = line.match(valueRegex);
+            for (let i = 0; i < numberOfTransactions; i++) {
+                const randomDescription = mockDescriptions[Math.floor(Math.random() * mockDescriptions.length)];
+                const randomValue = parseFloat((Math.random() * 300 + 10).toFixed(2));
+                
+                const randomDate = new Date();
+                randomDate.setDate(randomDate.getDate() - Math.floor(Math.random() * 30));
+                const date = randomDate.toISOString().slice(0, 10);
 
-                if (dateMatch && valueMatch) {
-                    let description = line.replace(dateMatch[0], '').replace(valueMatch[0], '').trim();
-                    description = description.replace(/[-*:]$/, '').trim(); 
-                    
-                    const value = parseFloat(valueMatch[2].replace('.', '').replace(',', '.'));
-                    
-                    const dateParts = dateMatch[1].split('/');
-                    const day = parseInt(dateParts[0], 10);
-                    const month = parseInt(dateParts[1], 10) - 1;
-                    const year = dateParts[2] ? (dateParts[2].length === 2 ? 2000 + parseInt(dateParts[2]) : parseInt(dateParts[2])) : new Date().getFullYear();
-                    const transactionDate = new Date(year, month, day);
+                const isInstallment = Math.random() > 0.6; 
+                const installmentsTotal = isInstallment ? [2, 3, 6, 10, 12][Math.floor(Math.random() * 5)] : 1;
+                const installmentsPaid = isInstallment ? Math.floor(Math.random() * installmentsTotal) : 0;
 
-                    transactions.push({
-                        date: transactionDate.toISOString().slice(0, 10),
-                        description: description || 'Transação Importada',
-                        value: value,
-                        fundamentalType: 'despesa', 
-                        isPaid: true, 
-                        installmentsTotal: 1,
-                        installmentsPaid: 0,
-                    });
-                }
-            });
-
-            if (transactions.length > 0) {
-                this.importedTransactions = transactions;
-                UI.showFeedback(`${transactions.length} transações encontradas!`, 'success');
-                UI.renderImportReviewModal(this.importedTransactions);
-            } else {
-                UI.showFeedback('Nenhuma transação válida encontrada no texto.', 'error');
+                this.importedTransactions.push({
+                    description: `${randomDescription} (${file.name.split('.')[0]})`,
+                    value: randomValue,
+                    date: date,
+                    installmentsTotal: installmentsTotal,
+                    installmentsPaid: installmentsPaid,
+                    fundamentalType: 'despesa'
+                });
             }
+            
+            UI.showFeedback('Dados extraídos! Por favor, revise e salve.', 'success');
+            UI.renderImportReviewModal(this.importedTransactions);
+            event.target.value = null; 
         }, 1500);
     },
 
@@ -2526,10 +2453,9 @@ const Handlers = {
         }
     },
     
-    async handleBulkLaunchImport() {
+    handleBulkLaunchImport() {
         const listItems = document.querySelectorAll('#imported-tx-list li');
         let launchedCount = 0;
-        const batch = writeBatch(db);
 
         listItems.forEach(item => {
             const index = parseInt(item.dataset.index);
@@ -2539,30 +2465,36 @@ const Handlers = {
                 const isCC = AppState.creditCards.some(c => c.id === accountId);
 
                 const newTx = {
+                    id: crypto.randomUUID(),
                     isPaid: true,
                     accountId: accountId || null,
                     isCreditCard: isCC,
                     ...txData,
                 };
-                const docRef = doc(collection(db, `/artifacts/${appId}/users/${userId}/transactions`));
-                batch.set(docRef, newTx);
+                AppState.addTransaction(newTx);
                 launchedCount++;
             }
         });
         
-        await batch.commit();
         this.importedTransactions = [];
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
         UI.closeModal();
+        UI.render();
         UI.showFeedback(`${launchedCount} despesas importadas com sucesso!`, 'success');
-        // UI será atualizada pelo onSnapshot
     },
 
-    async handleUnlinkTransactionClick(txId, accountId) {
-        UI.showConfirmationModal('Remover Vínculo', 'Tem a certeza que deseja desvincular esta transação da conta?', async () => {
-            await AppState.updateTransaction(txId, { accountId: null, isCreditCard: false });
-            UI.closeModal();
-            setTimeout(() => UI.renderAccountDetailsModal(accountId), 200); // Aguarda a atualização do listener
-            UI.showFeedback('Vínculo removido.', 'success');
+    handleUnlinkTransactionClick(txId, accountId) {
+        UI.showConfirmationModal('Remover Vínculo', 'Tem certeza que deseja desvincular esta transação da conta?', () => {
+            const tx = AppState.transactions.find(t => t.id === txId);
+            if (tx) {
+                tx.accountId = null;
+                AppState.recalculateAllBalances();
+                AppState.saveAll();
+                UI.closeModal();
+                setTimeout(() => UI.renderAccountDetailsModal(accountId), 100);
+                UI.showFeedback('Vínculo removido.', 'success');
+            }
         });
     },
 
@@ -2574,19 +2506,24 @@ const Handlers = {
         UI.renderCardDetailsModal(cardId);
     },
 
-    async handleStatusToggle(txId, sourceModalType = null) {
+    handleStatusToggle(txId, sourceModalType = null) {
         const tx = AppState.transactions.find(t => t.id === txId);
         if(!tx || tx.fundamentalType !== 'despesa') return;
 
-        const updateStatus = async () => {
-            await AppState.updateTransaction(tx.id, { isPaid: !tx.isPaid });
-             if (sourceModalType) {
-                UI.closeModal();
-                setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 200);
-            }
-        };
-
+        // If we are trying to mark as paid
         if (!tx.isPaid) {
+            const setAsPaid = () => {
+                tx.isPaid = true;
+                AppState.recalculateAllBalances();
+                AppState.saveAll();
+                 if (sourceModalType) {
+                    UI.closeModal();
+                    setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
+                } else {
+                    UI.render();
+                }
+            };
+
             const hasPreviousUnpaid = tx.groupId && AppState.transactions.some(t =>
                 t.groupId === tx.groupId &&
                 new Date(t.date) < new Date(tx.date) &&
@@ -2596,14 +2533,24 @@ const Handlers = {
             if (hasPreviousUnpaid) {
                 UI.showConfirmationModal(
                     'Atenção: Parcela Anterior Aberta',
-                    'Existem parcelas anteriores para esta despesa que ainda não foram pagas. Tem a certeza de que deseja marcar esta como paga mesmo assim?',
-                    updateStatus
+                    'Existem parcelas anteriores para esta despesa que ainda não foram pagas. Tem certeza de que deseja marcar esta como paga mesmo assim?',
+                    setAsPaid
                 );
             } else {
-                await updateStatus();
+                setAsPaid();
             }
-        } else {
-            await updateStatus();
+        } 
+        // If we are trying to mark as unpaid
+        else {
+            tx.isPaid = false;
+            AppState.recalculateAllBalances();
+            AppState.saveAll();
+             if (sourceModalType) {
+                UI.closeModal();
+                setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
+            } else {
+                UI.render();
+            }
         }
     },
     
@@ -2623,10 +2570,12 @@ const Handlers = {
         }
     },
 
-    async handleInstallmentStatusToggle(txId) {
+    handleInstallmentStatusToggle(txId) {
         const tx = AppState.transactions.find(t => t.id === txId);
         if (tx) {
-            await AppState.updateTransaction(txId, { isPaid: !tx.isPaid });
+            tx.isPaid = !tx.isPaid;
+            AppState.recalculateAllBalances();
+            AppState.saveAll();
             UI.renderInstallmentDetailsModal(tx.groupId);
         }
     },
@@ -2640,10 +2589,8 @@ const Handlers = {
     },
 
     handleAnalysisClick() {
-        const month = parseInt(document.getElementById('report-month').value);
-        const year = parseInt(document.getElementById('report-year').value);
-        const analysis = AppState.generateFinancialDiagnosis(year, month);
-        UI.renderFinancialDiagnosis(analysis);
+        const analysis = AppState.getFinancialAnalysis();
+        UI.renderAnalysisModal(analysis);
     },
 
     handleEditClick(button) {
@@ -2685,40 +2632,35 @@ const Handlers = {
                 UI.showFeedback('Exclua ou desvincule transações e cartões desta conta primeiro.', 'error');
                 return;
             }
-            UI.showConfirmationModal('Excluir Conta', 'Tem a certeza que deseja excluir esta conta?', () => {
-                AppState.removeAccount(id);
-                UI.showFeedback('Conta excluída.', 'success');
+            UI.showConfirmationModal('Excluir Conta', 'Tem certeza que deseja excluir esta conta?', () => {
+                AppState.removeAccount(id); AppState.saveAll(); UI.render(); UI.showFeedback('Conta excluída.', 'success');
             });
         } else if (type === 'card') {
             const hasTransactions = AppState.transactions.some(t => t.accountId === id && t.isCreditCard);
             if (hasTransactions) {
                  UI.showFeedback('Exclua as transações deste cartão primeiro.', 'error'); return;
             }
-            UI.showConfirmationModal('Excluir Cartão', 'Tem a certeza que deseja excluir este cartão?', () => {
-                AppState.removeCreditCard(id);
-                UI.showFeedback('Cartão excluído.', 'success');
+            UI.showConfirmationModal('Excluir Cartão', 'Tem certeza que deseja excluir este cartão?', () => {
+                AppState.removeCreditCard(id); AppState.saveAll(); UI.render(); UI.showFeedback('Cartão excluído.', 'success');
             });
         } else if (type === 'transaction') {
             if (tx && tx.groupId) {
                 UI.showConfirmationModal('Excluir Parcelamento', 'Esta é uma transação parcelada. Deseja excluir todas as parcelas relacionadas?', () => {
-                    AppState.removeTransaction(id);
-                    UI.showFeedback(`Parcelamento da ${typeName.toLowerCase()} excluído.`, 'success');
+                     AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`Parcelamento da ${typeName.toLowerCase()} excluído.`, 'success');
                 });
             } else {
-                UI.showConfirmationModal(`Excluir ${typeName}`, `Tem a certeza que deseja excluir esta ${typeName.toLowerCase()}?`, () => {
-                    AppState.removeTransaction(id);
-                    UI.showFeedback(`${typeName} excluída com sucesso.`, 'success');
+                UI.showConfirmationModal(`Excluir ${typeName}`, `Tem certeza que deseja excluir esta ${typeName.toLowerCase()}?`, () => {
+                    AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`${typeName} excluída com sucesso.`, 'success');
                 });
             }
         } else if (type === 'category') {
-            UI.showConfirmationModal('Excluir Categoria', `Tem a certeza que deseja excluir a categoria "${name}"? As transações existentes serão movidas para "Outros".`, () => {
-                AppState.removeCategory(name);
-                UI.showFeedback('Categoria excluída.', 'success');
+            UI.showConfirmationModal('Excluir Categoria', `Tem certeza que deseja excluir a categoria "${name}"? As transações existentes serão movidas para "Outros".`, () => {
+                AppState.removeCategory(name); AppState.saveAll(); UI.render(); UI.showFeedback('Categoria excluída.', 'success');
             });
         }
     },
     
-    async handleEditSeriesFormSubmit(form) {
+    handleEditSeriesFormSubmit(form) {
         const groupId = form.querySelector('#editing-group-id').value;
         const newDescription = form.querySelector('#edit-series-description').value;
         const newCategory = form.querySelector('#edit-series-category').value;
@@ -2728,21 +2670,19 @@ const Handlers = {
             .filter(t => t.groupId === groupId)
             .sort((a,b) => new Date(a.date) - new Date(b.date));
         
-        const batch = writeBatch(db);
         groupTxs.forEach((tx, index) => {
             const newDate = new Date(newStartDate);
             newDate.setMonth(newStartDate.getMonth() + index);
             
-            const docRef = doc(db, `/artifacts/${appId}/users/${userId}/transactions`, tx.id);
-            batch.update(docRef, {
-                description: newDescription,
-                category: newCategory,
-                date: newDate.toISOString().slice(0,10)
-            });
+            tx.description = newDescription;
+            tx.category = newCategory;
+            tx.date = newDate.toISOString().slice(0,10);
         });
-        await batch.commit();
 
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
         UI.closeModal();
+        UI.render();
         UI.showFeedback('Série de parcelas atualizada com sucesso!', 'success');
     },
 
@@ -2776,9 +2716,7 @@ const Handlers = {
         
         UI.closeModal();
 
-        const applyChanges = async (scope) => {
-            const batch = writeBatch(db);
-
+        const applyChanges = (scope) => {
             if (scope !== 'one' && originalTx.groupId && hasSharedChanges) {
                 const groupTxs = AppState.transactions.filter(t => t.groupId === originalTx.groupId);
                 groupTxs.forEach(txInSeries => {
@@ -2790,16 +2728,20 @@ const Handlers = {
                     }
                     
                     if (shouldApply) {
-                        const docRef = doc(db, `/artifacts/${appId}/users/${userId}/transactions`, txInSeries.id);
-                        batch.update(docRef, changes);
+                        if (changes.description) txInSeries.description = changes.description;
+                        if (changes.category) txInSeries.category = changes.category;
+                        if(changes.accountId !== undefined) {
+                            txInSeries.accountId = changes.accountId;
+                            txInSeries.isCreditCard = changes.isCreditCard;
+                        }
                     }
                 });
             }
             
-            const mainDocRef = doc(db, `/artifacts/${appId}/users/${userId}/transactions`, txId);
-            batch.update(mainDocRef, updatedData); // Sempre atualiza a parcela atual com todos os dados
-            
-            await batch.commit();
+            AppState.updateTransaction(txId, { ...originalTx, ...updatedData });
+            AppState.recalculateAllBalances();
+            AppState.saveAll();
+            UI.render();
             const typeName = originalTx.fundamentalType === 'receita' ? 'Receita' : 'Despesa';
             UI.showFeedback(`${typeName} alterada com sucesso!`, 'success');
         };
@@ -2814,34 +2756,36 @@ const Handlers = {
                     () => { UI.closeModal(); resolve('all'); }
                 );
                  document.querySelector('#modal-container .modal-backdrop').addEventListener('click', (e) => {
-                     if (e.target === e.currentTarget) { UI.closeModal(); resolve(null); }
+                      if (e.target === e.currentTarget) { UI.closeModal(); resolve(null); }
                  });
             });
-            if (scope) await applyChanges(scope);
+            if (scope) applyChanges(scope);
         } else {
-            await applyChanges('one');
+            applyChanges('one');
         }
     },
 
-    async handleCategoryFormSubmit(form) {
+    handleCategoryFormSubmit(form) {
         const newName = form.querySelector('#category-name').value.trim();
         const oldName = form.querySelector('#editing-category-name').value;
         let success = false;
         if(oldName) { // Editing
-            success = await AppState.updateCategory(oldName, newName);
+            success = AppState.updateCategory(oldName, newName);
         } else { // Adding
-            success = await AppState.addCategory(newName);
+            success = AppState.addCategory(newName);
         }
 
         if(success) {
+            AppState.saveAll();
             UI.closeModal();
+            UI.render();
             UI.showFeedback(`Categoria ${oldName ? 'atualizada' : 'adicionada'}!`, 'success');
         } else {
             UI.showFeedback('Nome de categoria inválido ou já existente.', 'error');
         }
     },
 
-    async handleAccountFormSubmit(form) {
+    handleAccountFormSubmit(form) {
         const editingId = form.querySelector('#editing-id').value;
         const editingType = form.querySelector('#editing-type').value;
         const isEditing = !!editingId;
@@ -2855,55 +2799,43 @@ const Handlers = {
             bankLogo: form.querySelector('#acc-bank').value
         };
 
-        let accountIdToUse = isEditing && editingType === 'account' ? editingId : (isEditing && editingType === 'card' ? AppState.creditCards.find(c=>c.id === editingId).linkedAccountId : null);
+        let accountIdToUse = isEditing && editingType === 'account' ? editingId : (isEditing && editingType === 'card' ? AppState.creditCards.find(c=>c.id === editingId).linkedAccountId : crypto.randomUUID());
 
         if (isEditing && editingType === 'account') {
-             await AppState.updateAccount(accountIdToUse, accountData);
+             AppState.updateAccount(accountIdToUse, accountData);
         } else if (!isEditing) {
-            // Cria a conta primeiro para obter o ID
-            const newAccDocRef = doc(collection(db, `/artifacts/${appId}/users/${userId}/accounts`));
-            accountIdToUse = newAccDocRef.id;
-            accountData.id = accountIdToUse;
-            await setDoc(newAccDocRef, accountData);
+             accountData.id = accountIdToUse;
+             AppState.addAccount(accountData);
         }
 
         const cardLinked = AppState.creditCards.find(c => c.linkedAccountId === accountIdToUse);
         if (hasCard) {
-            const newLimit = parseFloat(form.querySelector('#card-limit').value) || 0;
-
-            if(cardLinked) {
-                const usedAmount = AppState.transactions
-                    .filter(tx => tx.accountId === cardLinked.id && tx.isCreditCard && tx.fundamentalType === 'despesa' && !tx.isPaid)
-                    .reduce((sum, tx) => sum + tx.value, 0);
-
-                if (newLimit < usedAmount) {
-                    UI.showFeedback(`O novo limite (${UI.formatCurrency(newLimit)}) é inferior ao valor já utilizado e pendente de pagamento (${UI.formatCurrency(usedAmount)}).`, 'error');
-                    return; 
-                }
-            }
-            
             const cardData = {
                 name: form.querySelector('#card-name').value || `${accountData.name} Card`,
-                limit: newLimit,
+                limit: parseFloat(form.querySelector('#card-limit').value) || 0,
                 dueDay: parseInt(form.querySelector('#card-due-day').value) || 1,
                 brand: form.querySelector('#card-brand').value,
                 linkedAccountId: accountIdToUse
             };
-
             if(cardLinked) {
-                await AppState.updateCreditCard(cardLinked.id, cardData);
+                AppState.updateCreditCard(cardLinked.id, cardData);
             } else {
-                await AppState.addCreditCard(cardData);
+                 cardData.id = crypto.randomUUID();
+                 cardData.availableLimit = cardData.limit;
+                 AppState.addCreditCard(cardData);
             }
         } else if (cardLinked) {
-             await AppState.removeCreditCard(cardLinked.id);
+             AppState.removeCreditCard(cardLinked.id);
         }
         
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
         UI.closeModal();
+        UI.render();
         UI.showFeedback('Conta/Cartão salvo com sucesso!', 'success');
     },
 
-    async handleNewTransactionFormSubmit(form) {
+    handleNewTransactionFormSubmit(form) {
         const isImported = form.querySelector('input[name="isImported"]')?.value === 'true';
         
         const accountId = form.querySelector('#trans-account').value;
@@ -2915,14 +2847,12 @@ const Handlers = {
         const groupId = totalInstallments > 1 ? crypto.randomUUID() : null;
         const fundamentalType = form.querySelector('#trans-type').value
 
-        const batch = writeBatch(db);
         for (let i = 1; i <= totalInstallments; i++) {
             const installmentDate = new Date(startDate);
             installmentDate.setMonth(startDate.getMonth() + i - 1);
             
-            const docRef = doc(collection(db, `/artifacts/${appId}/users/${userId}/transactions`));
             const txData = {
-                id: docRef.id,
+                id: crypto.randomUUID(),
                 description: form.querySelector('#trans-description').value,
                 value: parseFloat(form.querySelector('#trans-value').value),
                 date: installmentDate.toISOString().slice(0, 10),
@@ -2934,9 +2864,11 @@ const Handlers = {
                 installments: totalInstallments > 1 ? `(${i}/${totalInstallments})` : null,
                 groupId: groupId
             };
-            batch.set(docRef, txData);
+            AppState.addTransaction(txData);
         }
-        await batch.commit();
+
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
         
         const typeName = fundamentalType === 'receita' ? 'Receita' : 'Despesa';
         UI.showFeedback(`${typeName} salva com sucesso!`, 'success');
@@ -2949,33 +2881,47 @@ const Handlers = {
         } else {
             UI.closeModal();
         }
+        UI.render();
+    },
+    
+    handleGenerateReport() {
+        const mode = document.getElementById('report-mode').value;
+        const type = document.getElementById('report-type').value;
+
+        const getPeriodData = (period) => {
+            const year = document.getElementById(`report-year-${period}`).value;
+            const month = document.getElementById(`report-month-${period}`).value;
+            const txs = AppState.transactions.filter(t => {
+                const date = new Date(t.date + "T00:00:00");
+                return date.getFullYear() == year && date.getMonth() == month && t.fundamentalType === type;
+            });
+            const data = txs.reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + t.value;
+                return acc;
+            }, {});
+            return { data, year, month };
+        };
+
+        if (mode === 'simple') {
+            const { data, year, month } = getPeriodData(1);
+            const title = `Relatório de ${type === 'despesa' ? 'Despesas' : 'Receitas'} - ${new Date(year, month).toLocaleString('pt-BR', {month: 'long', year: 'numeric'})}`;
+            UI.renderReportResults({data1: data, title});
+        } else {
+            const p1 = getPeriodData(1);
+            const p2 = getPeriodData(2);
+            const p1Label = `${new Date(p1.year, p1.month).toLocaleString('pt-BR', {month: 'short'})}/${p1.year}`;
+            const p2Label = `${new Date(p2.year, p2.month).toLocaleString('pt-BR', {month: 'short'})}/${p2.year}`;
+            const title = `Comparativo de ${type === 'despesa' ? 'Despesas' : 'Receitas'}: ${p1Label} vs ${p2Label}`;
+            UI.renderReportResults({data1: p1.data, data2: p2.data, title, p1Label, p2Label});
+        }
     },
 };
 
-// --- Ponto de Entrada da Aplicação ---
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        userId = user.uid;
-        document.getElementById('user-id-display').textContent = `ID Utilizador: ${userId}`;
-        AppState.initDataListeners();
-    } else {
-        // Se o token estiver disponível, use-o; senão, faça login anónimo.
-        try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                 await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                 await signInAnonymously(auth);
-            }
-        } catch(error) {
-            console.error("Authentication failed:", error);
-            UI.showLoading("Falha na autenticação. Por favor, recarregue a página.");
-        }
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    AppState.init();
+    UI.init();
+    Handlers.init();
 });
-
-// Inicializa os manipuladores de eventos que não dependem de dados
-Handlers.init();
-
 </script>
 </body>
 </html>
