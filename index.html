@@ -22,15 +22,18 @@
         #sidebar, main { transition: all 0.3s ease-in-out; }
 
         /* Estilos da Sidebar Recolhida */
-        .sidebar-collapsed #sidebar { width: 5rem; /* 80px */ }
-        .sidebar-collapsed #sidebar .sidebar-logo-text,
-        .sidebar-collapsed #sidebar .nav-text,
-        .sidebar-collapsed #sidebar .add-transaction-text,
-        .sidebar-collapsed #sidebar #sidebar-toggle-btn .nav-text { display: none; }
-        .sidebar-collapsed #sidebar .nav-link,
-        .sidebar-collapsed #sidebar .sidebar-footer button { justify-content: center; }
-        .sidebar-collapsed #sidebar .sidebar-footer button svg { margin-right: 0; }
-        .sidebar-collapsed #sidebar #sidebar-toggle-btn svg { transform: rotate(180deg); }
+        body.sidebar-collapsed #sidebar { width: 5rem; /* 80px */ }
+        body.sidebar-collapsed main { margin-left: 5rem; }
+        body.sidebar-collapsed #sidebar .sidebar-logo-text,
+        body.sidebar-collapsed #sidebar .nav-text,
+        body.sidebar-collapsed #sidebar .add-transaction-text,
+        body.sidebar-collapsed #sidebar #sidebar-toggle-btn .nav-text-label { display: none; }
+        
+        body.sidebar-collapsed #sidebar .nav-link,
+        body.sidebar-collapsed #sidebar .sidebar-footer button { justify-content: center; }
+        
+        body.sidebar-collapsed #sidebar .sidebar-footer button svg { margin-right: 0; }
+        body.sidebar-collapsed #sidebar #sidebar-toggle-btn svg { transform: rotate(180deg); }
 
         /* Estilo para tabelas */
         .custom-table { border-collapse: separate; border-spacing: 0 0.5rem; }
@@ -89,7 +92,8 @@
     <!-- Sidebar de Navegação -->
     <aside id="sidebar" class="w-64 bg-white shadow-lg flex flex-col flex-shrink-0">
         <div id="logo-container" class="flex items-center justify-center h-20 border-b cursor-pointer">
-            <h1 class="text-2xl font-bold text-blue-600 sidebar-logo-text">Finanças+</h1>
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01"></path></svg>
+            <h1 class="text-2xl font-bold text-blue-600 ml-2 sidebar-logo-text">Finanças+</h1>
         </div>
         <nav class="flex-1 px-4 py-6 space-y-2">
             <a href="#" id="nav-dashboard" class="nav-link flex items-center px-4 py-2 text-gray-700 bg-gray-200 rounded-lg">
@@ -118,9 +122,9 @@
                 <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 <span class="add-transaction-text">Nova Transação</span>
             </button>
-            <button id="sidebar-toggle-btn" class="w-full flex items-center justify-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                <svg class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-                <span class="nav-text ml-3">Recolher</span>
+            <button id="sidebar-toggle-btn" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                 <svg class="w-6 h-6 mr-3 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                <span class="nav-text nav-text-label">Recolher</span>
             </button>
         </div>
     </aside>
@@ -132,17 +136,18 @@
                 <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
             </div>
             <div class="flex items-center space-x-4">
-                <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Backup</button>
-                <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
+                 <button id="import-statement-btn" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg shadow-sm">Importar Extrato</button>
                 <input type="file" id="import-file-input" class="hidden" accept=".json">
+                 <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
+                <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Backup</button>
                 <button id="clear-data-btn" class="text-sm text-gray-500 hover:text-red-600">Limpar Dados</button>
             </div>
         </header>
         <div id="page-container" class="flex-1 p-4 md:p-8">
             <section id="dashboard-page">
                 <div class="period-selector-container mb-8 flex items-center space-x-2">
-                    <select class="period-month-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"></select>
-                    <select class="period-year-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"></select>
+                    <select class="period-month-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
+                    <select class="period-year-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
                 </div>
                 <div id="summary-cards-container" class="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"></div>
                 
@@ -152,9 +157,16 @@
                         <div id="card-summary-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         </div>
                     </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-700 mb-4">Próximas Contas a Vencer</h3>
-                        <div id="upcoming-bills-container" class="bg-white p-4 rounded-xl shadow-md space-y-3">
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-700 mb-4">Próximas Contas a Vencer</h3>
+                            <div id="upcoming-bills-container" class="bg-white p-4 rounded-xl shadow-md space-y-3">
+                            </div>
+                        </div>
+                        <div id="overdue-bills-section" class="hidden">
+                             <h3 class="text-xl font-bold text-red-700 mb-4">Contas em Atraso</h3>
+                            <div id="overdue-bills-container" class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg space-y-3 cursor-pointer" title="Clique para ver todas as despesas atrasadas">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -180,6 +192,7 @@
 
     <div id="modal-container"></div>
     <div id="feedback-message" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50"></div>
+    <input type="file" id="statement-file-input" class="hidden">
 
 <script>
 // Módulo de Estado da Aplicação
@@ -202,6 +215,7 @@ const AppState = {
     },
     
     recalculateAllBalances() {
+        // Recalcula o saldo das contas de débito/dinheiro
         this.accounts.forEach(account => {
             let currentBalance = account.initialBalance || 0;
             const accountTransactions = this.transactions.filter(
@@ -217,20 +231,26 @@ const AppState = {
             account.balance = currentBalance;
         });
 
+        // Recalcula o limite disponível dos cartões de crédito
         this.creditCards.forEach(card => {
-            let balanceUsed = 0;
+            let usedAmount = 0;
             const cardTransactions = this.transactions.filter(
                 tx => tx.accountId === card.id && tx.isCreditCard
             );
+            
             cardTransactions.forEach(tx => {
-                if (tx.fundamentalType === 'despesa') {
-                    balanceUsed += tx.value;
-                } 
+                // Despesas não pagas consomem o limite
+                if (tx.fundamentalType === 'despesa' && !tx.isPaid) {
+                    usedAmount += tx.value;
+                }
+                // Receitas (estornos/créditos) liberam o limite
                 else if (tx.fundamentalType === 'receita') {
-                    balanceUsed -= tx.value;
+                    usedAmount -= tx.value;
                 }
             });
-            card.availableLimit = card.limit - balanceUsed;
+             // Garante que o valor usado não seja negativo (em caso de mais estornos que gastos)
+            usedAmount = Math.max(0, usedAmount);
+            card.availableLimit = card.limit - usedAmount;
         });
     },
 
@@ -459,6 +479,7 @@ const UI = {
         this.renderSummaryCards();
         this.renderCardSummaries();
         this.renderUpcomingBills();
+        this.renderOverdueBills();
         this.renderBalanceChart();
         this.renderExpensesChart();
     },
@@ -486,15 +507,15 @@ const UI = {
         page.innerHTML = `
             <div class="bg-white p-6 rounded-xl shadow-md">
                 <div id="bulk-action-bar-container" class="mb-4"></div>
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center space-x-2">
-                        <h3 class="text-xl font-bold text-gray-700">Histórico de Transações</h3>
+                <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                    <div class="flex items-center space-x-2 w-full md:w-auto">
+                        <h3 class="text-xl font-bold text-gray-700 whitespace-nowrap">Histórico</h3>
                         <div class="period-selector-container flex items-center space-x-2">
                             <select class="period-month-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"></select>
                             <select class="period-year-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"></select>
                         </div>
                     </div>
-                    <input type="text" id="transactions-search" placeholder="Pesquisar..." class="w-1/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <input type="text" id="transactions-search" placeholder="Pesquisar..." class="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-500 custom-table">
@@ -572,7 +593,7 @@ const UI = {
                 <input type="hidden" id="editing-category-name" value="${categoryNameToEdit || ''}">
                 <div>
                     <label for="category-name" class="block text-sm font-medium text-gray-700">Nome da Categoria</label>
-                    <input type="text" id="category-name" value="${categoryNameToEdit || ''}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <input type="text" id="category-name" value="${categoryNameToEdit || ''}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
             </form>
         `;
@@ -723,7 +744,7 @@ const UI = {
                 <div id="report-filters" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                     <div>
                         <label for="report-mode" class="block text-sm font-medium text-gray-700">Tipo de Relatório</label>
-                        <select id="report-mode" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <select id="report-mode" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                             <option value="simple" selected>Simples</option>
                             <option value="comparative">Comparativo</option>
                         </select>
@@ -731,26 +752,26 @@ const UI = {
                     <div id="period-1-filters" class="contents">
                         <div>
                             <label for="report-year-1" class="block text-sm font-medium text-gray-700">Ano (Período 1)</label>
-                            <select id="report-year-1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${yearOptions}</select>
+                            <select id="report-year-1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${yearOptions}</select>
                         </div>
                          <div>
                             <label for="report-month-1" class="block text-sm font-medium text-gray-700">Mês (Período 1)</label>
-                            <select id="report-month-1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${monthOptions}</select>
+                            <select id="report-month-1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${monthOptions}</select>
                         </div>
                     </div>
                     <div id="period-2-filters" class="hidden contents">
                         <div>
                             <label for="report-year-2" class="block text-sm font-medium text-gray-700">Ano (Período 2)</label>
-                            <select id="report-year-2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${yearOptions}</select>
+                            <select id="report-year-2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${yearOptions}</select>
                         </div>
                          <div>
                             <label for="report-month-2" class="block text-sm font-medium text-gray-700">Mês (Período 2)</label>
-                            <select id="report-month-2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${monthOptions}</select>
+                            <select id="report-month-2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${monthOptions}</select>
                         </div>
                     </div>
                      <div>
                         <label for="report-type" class="block text-sm font-medium text-gray-700">Tipo</label>
-                        <select id="report-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <select id="report-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                             <option value="despesa" selected>Despesas</option>
                             <option value="receita">Receitas</option>
                         </select>
@@ -853,17 +874,20 @@ const UI = {
     renderAccountsPage() {
         const page = document.getElementById('accounts-page');
         page.innerHTML = `
-            <div class="flex justify-end mb-6">
-                <button id="add-new-account-btn" class="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-transform hover:scale-105">+ Nova Conta/Cartão</button>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div>
-                    <h3 class="text-xl font-bold text-gray-700 mb-4">Minhas Contas</h3>
-                    <div id="accounts-list" class="space-y-4"></div>
+            <div class="space-y-6">
+                <div class="flex justify-between items-center mb-6">
+                     <h2 class="text-2xl font-bold text-gray-800">Minhas Contas e Cartões</h2>
+                     <button id="add-new-account-btn" class="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-transform hover:scale-105">+ Nova Conta/Cartão</button>
                 </div>
-                <div>
-                    <h3 class="text-xl font-bold text-gray-700 mb-4">Meus Cartões</h3>
-                    <div id="cards-list" class="space-y-4"></div>
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-700 mb-4">Minhas Contas</h3>
+                        <div id="accounts-list" class="space-y-4"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-700 mb-4">Meus Cartões</h3>
+                        <div id="cards-list" class="space-y-4"></div>
+                    </div>
                 </div>
             </div>
         `;
@@ -1027,8 +1051,17 @@ const UI = {
         this.showModal(isEditing ? 'Editar Item' : 'Adicionar Conta/Cartão', content, 'Salvar', 'account-modal-form');
     },
 
-    renderNewTransactionModal() {
-        const tx = { date: new Date().toISOString().slice(0,10), fundamentalType: 'despesa', category: 'Outros', value: '' };
+    renderNewTransactionModal(data = {}) {
+        const tx = {
+            date: new Date().toISOString().slice(0, 10),
+            fundamentalType: 'despesa',
+            category: 'Outros',
+            value: '',
+            description: '',
+            installmentsTotal: 1,
+            installmentsPaid: 0,
+            ...data
+        };
         
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
         const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (Cartão)</option>`).join('');
@@ -1036,14 +1069,15 @@ const UI = {
 
         const content = `
             <form id="transaction-modal-form" class="space-y-4">
+                <input type="hidden" name="isImported" value="${data.isImported ? 'true' : ''}" data-import-index="${data.importIndex}">
                 <div>
                     <label for="trans-description" class="block text-sm font-medium text-gray-700">Descrição</label>
-                    <input type="text" id="trans-description" value="" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <input type="text" id="trans-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="trans-value" class="block text-sm font-medium text-gray-700">Valor (R$)</label>
-                        <input type="number" id="trans-value" value="" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <input type="number" id="trans-value" value="${tx.value}" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     </div>
                     <div>
                         <label for="trans-date" class="block text-sm font-medium text-gray-700">Data da 1ª Parcela</label>
@@ -1055,19 +1089,19 @@ const UI = {
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="trans-installments-total" class="block text-sm font-medium text-gray-700">Nº de Parcelas</label>
-                            <input type="number" id="trans-installments-total" value="1" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                            <input type="number" id="trans-installments-total" value="${tx.installmentsTotal}" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                         <div>
                             <label for="trans-installments-paid" class="block text-sm font-medium text-gray-700">Parcelas já Pagas</label>
-                            <input type="number" id="trans-installments-paid" value="0" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                            <input type="number" id="trans-installments-paid" value="${tx.installmentsPaid}" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                     </div>
                  </div>
                  <div>
                     <label for="trans-type" class="block text-sm font-medium text-gray-700">Tipo</label>
                     <select id="trans-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="despesa" selected>Despesa</option>
-                        <option value="receita">Receita</option>
+                        <option value="despesa" ${tx.fundamentalType === 'despesa' ? 'selected' : ''}>Despesa</option>
+                        <option value="receita" ${tx.fundamentalType === 'receita' ? 'selected' : ''}>Receita</option>
                     </select>
                 </div>
                 <div>
@@ -1089,11 +1123,14 @@ const UI = {
         `;
         this.showModal('Nova Transação', content, 'Salvar', 'transaction-modal-form');
         
-        // Ativar o helper se o tipo padrão for 'receita'
         const transTypeSelect = document.getElementById('trans-type');
         const helperText = document.getElementById('income-account-helper');
         if (transTypeSelect && helperText) {
             helperText.classList.toggle('hidden', transTypeSelect.value !== 'receita');
+        }
+
+        if (data.accountId) {
+             document.getElementById('trans-account').value = data.accountId;
         }
     },
     
@@ -1197,6 +1234,98 @@ const UI = {
             </form>
         `;
         this.showModal('Editar Múltiplas Transações', content, 'Salvar Alterações', 'bulk-edit-modal-form');
+    },
+
+    renderFileImportModal() {
+        const content = `
+            <p class="text-sm text-gray-600 mb-4">Selecione o tipo de arquivo que deseja importar.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <button data-type="ofx" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
+                    <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="font-semibold">OFX</span>
+                </button>
+                <button data-type="pdf" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
+                     <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    <span class="font-semibold">PDF</span>
+                </button>
+                <button data-type="image" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
+                     <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span class="font-semibold">Imagem</span>
+                </button>
+            </div>
+        `;
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.innerHTML = `
+            <div class="modal-backdrop">
+                <div class="modal-content">
+                    <div class="modal-header flex justify-between items-center">
+                        <h3 class="text-xl font-semibold">Importar Extrato</h3>
+                        <button class="modal-close-btn text-2xl hover:text-red-500">&times;</button>
+                    </div>
+                    <div class="modal-body">${content}</div>
+                </div>
+            </div>`;
+    },
+
+    renderImportReviewModal(transactions) {
+        const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (Cartão)</option>`).join('');
+
+        const listHTML = transactions.map((tx, index) => {
+            if (!tx) return '';
+            const installmentText = tx.installmentsTotal > 1 ? `<span class="text-xs font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">${tx.installmentsPaid + 1}/${tx.installmentsTotal}</span>` : '';
+            return `
+            <li class="p-3 bg-gray-50 rounded-lg" data-index="${index}">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="font-medium text-gray-800">${tx.description}</p>
+                        <div class="flex items-center text-sm space-x-4 mt-1">
+                            <p class="text-red-600 font-semibold">${this.formatCurrency(tx.value)}</p>
+                            <p class="text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                            ${installmentText}
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0 space-x-2">
+                        <button class="ignore-import-btn p-2 text-gray-400 hover:text-red-600" title="Ignorar">
+                             <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                        <button class="launch-import-btn px-3 py-1 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700">Lançar</button>
+                    </div>
+                </div>
+                 <div class="mt-2">
+                    <label for="import-account-${index}" class="sr-only">Vincular a</label>
+                    <select id="import-account-${index}" class="import-account-select block w-full text-sm border-gray-200 rounded-md shadow-sm">
+                        <option value="">Vincular a...</option>
+                        ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
+                        ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
+                    </select>
+                 </div>
+            </li>
+        `}).join('');
+
+        const hasRemainingTxs = transactions.some(tx => tx !== null);
+        
+        const content = `
+            <p class="text-sm text-gray-600 mb-4">Revise as despesas encontradas no arquivo. Você pode vincular a uma conta/cartão agora, ou fazer isso depois.</p>
+            <ul id="imported-tx-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">${listHTML || ''}</ul>
+            <p id="no-more-imports" class="text-center text-gray-500 py-4 ${hasRemainingTxs ? 'hidden' : ''}">Todas as despesas foram processadas.</p>
+        `;
+
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.innerHTML = `
+            <div class="modal-backdrop">
+                <div class="modal-content">
+                    <div class="modal-header flex justify-between items-center">
+                        <h3 class="text-xl font-semibold">Revisar Despesas Importadas</h3>
+                        <button class="modal-close-btn text-2xl hover:text-red-500">&times;</button>
+                    </div>
+                    <div class="modal-body">${content}</div>
+                    <div class="modal-footer flex justify-end gap-3">
+                        <button type="button" id="launch-all-imported-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700 ${!hasRemainingTxs ? 'hidden' : ''}">Lançar Todas</button>
+                        <button type="button" class="modal-close-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Concluir</button>
+                    </div>
+                </div>
+            </div>`;
     },
 
     showModal(title, content, submitText, formId) {
@@ -1359,7 +1488,7 @@ const UI = {
                                     <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
                                     ${statusHTML ? `<div class="w-24 text-center">${statusHTML}</div>` : ''}
                                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     </button>
                                 </div>
                             </li>`;
@@ -1404,7 +1533,7 @@ const UI = {
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
              case 'monthly-unpaid':
-                 title = 'Contas a Pagar no Mês';
+                  title = 'Contas a Pagar no Mês';
                 const unpaidTxs = monthTxs.filter(t => !t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(a.date) - new Date(b.date));
                 content = txListBuilder(unpaidTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
@@ -1462,10 +1591,10 @@ const UI = {
                                 <div class="flex items-center">
                                      <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
                                      <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover Vínculo">
-                                         <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536l1.101-1.102a4 4 0 000-5.656l-4-4a4 4 0 00-5.656 5.656l1.101 1.102" /></svg>
+                                          <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536l1.101-1.102a4 4 0 000-5.656l-4-4a4 4 0 00-5.656 5.656l1.101 1.102" /></svg>
                                      </button>
                                      <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                         <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                          <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                      </button>
                                 </div>
                             </li>`;
@@ -1484,6 +1613,70 @@ const UI = {
         `;
         
         this.showInfoModal(`Detalhes da Conta: ${account.name}`, content, (e) => Handlers.handleModalClick(e, 'account-details'));
+    },
+
+    renderCardDetailsModal(cardId) {
+        const card = AppState.creditCards.find(c => c.id === cardId);
+        if (!card) return;
+
+        const month = AppState.displayMonth;
+        const year = AppState.displayYear;
+        
+        const cardTxs = AppState.transactions
+            .filter(tx => tx.accountId === cardId && new Date(tx.date + 'T00:00:00').getMonth() === month && new Date(tx.date + 'T00:00:00').getFullYear() === year)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        let totalBill = 0;
+        const txListBuilder = (txs) => {
+            if (txs.length === 0) {
+                return `<p class="text-gray-500 text-center py-4">Nenhuma transação nesta fatura.</p>`;
+            }
+            let listHtml = '<ul class="space-y-3">';
+            txs.forEach(tx => {
+                if (tx.fundamentalType === 'despesa') {
+                    totalBill += tx.value;
+                } else if (tx.fundamentalType === 'receita') {
+                    totalBill -= tx.value;
+                }
+                const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
+                listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
+                                    <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                                </div>
+                                <div class="flex items-center">
+                                     <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
+                                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                          <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                     </button>
+                                </div>
+                            </li>`;
+            });
+            listHtml += '</ul>';
+            return listHtml;
+        }
+
+        const txList = txListBuilder(cardTxs); // Call builder once to calculate totalBill
+
+        const content = `
+            <div data-card-id="${cardId}">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
+                    <div class="text-gray-500">Limite Total:</div>
+                    <div class="font-semibold text-right">${this.formatCurrency(card.limit)}</div>
+                    <div class="text-gray-500">Fatura Atual:</div>
+                    <div class="font-semibold text-red-600 text-right">${this.formatCurrency(totalBill)}</div>
+                    <div class="text-gray-500">Limite Disponível:</div>
+                    <div class="font-semibold text-green-600 text-right">${this.formatCurrency(card.availableLimit)}</div>
+                </div>
+                <hr class="my-4"/>
+                <h4 class="font-bold text-lg mb-2 text-gray-800">Transações na Fatura</h4>
+                <div class="max-h-64 overflow-y-auto pr-2">
+                    ${txList}
+                </div>
+            </div>
+        `;
+        
+        this.showInfoModal(`Detalhes da Fatura: ${card.name}`, content, (e) => Handlers.handleModalClick(e, 'card-details'));
     },
 
 
@@ -1645,7 +1838,7 @@ const UI = {
         const overdueCount = AppState.transactions.filter(t => !t.isPaid && t.fundamentalType === 'despesa' && new Date(t.date + 'T00:00:00') < today).length;
 
         container.innerHTML = `
-            ${this.createSummaryCard('Saldo Total', totalBalance, 'blue')}
+            ${this.createSummaryCard('Saldo Total', totalBalance, 'blue', totalBalance < 0)}
             ${this.createSummaryCard('Receitas no Mês', income, 'green')}
             ${this.createSummaryCard('Despesas no Mês', expenses, 'red')}
             ${this.createSummaryCard('Total Pago no Mês', paidExpenses, 'yellow')}
@@ -1727,15 +1920,23 @@ const UI = {
         container.innerHTML = cards.map(card => {
             const month = AppState.displayMonth;
             const year = AppState.displayYear;
-            const currentBill = AppState.transactions
-                .filter(t => t.accountId === card.id && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year)
-                .reduce((sum, t) => sum + t.value, 0);
+            
+            let currentBill = 0;
+            AppState.transactions
+                .filter(t => t.accountId === card.id && new Date(t.date + 'T00:00:00').getMonth() === month && new Date(t.date + 'T00:00:00').getFullYear() === year)
+                .forEach(tx => {
+                    if (tx.fundamentalType === 'despesa') {
+                        currentBill += tx.value;
+                    } else if (tx.fundamentalType === 'receita') {
+                        currentBill -= tx.value;
+                    }
+                });
 
             return `
-                <div class="bg-white p-4 rounded-xl shadow-md">
-                    <p class="font-semibold text-gray-800">${card.name}</p>
-                    <p class="text-sm text-gray-500">Vencimento dia ${card.dueDay}</p>
-                    <div class="mt-4">
+                <div class="bg-white p-4 rounded-xl shadow-md card-summary-item cursor-pointer hover:bg-gray-50" data-card-id="${card.id}">
+                    <p class="font-semibold text-gray-800 pointer-events-none">${card.name}</p>
+                    <p class="text-sm text-gray-500 pointer-events-none">Vencimento dia ${card.dueDay}</p>
+                    <div class="mt-4 pointer-events-none">
                         <div class="flex justify-between text-sm mb-1">
                             <span>Fatura Atual</span>
                             <span class="font-semibold">${this.formatCurrency(currentBill)}</span>
@@ -1755,7 +1956,13 @@ const UI = {
         const month = AppState.displayMonth;
         const year = AppState.displayYear;
         const upcoming = AppState.transactions
-            .filter(t => !t.isPaid && t.fundamentalType === 'despesa' && new Date(t.date + 'T00:00:00').getMonth() === month && new Date(t.date + 'T00:00:00').getFullYear() === year)
+            .filter(t => {
+                const txDate = new Date(t.date + 'T00:00:00');
+                return !t.isPaid && 
+                       t.fundamentalType === 'despesa' && 
+                       txDate.getMonth() === month && // Only this month
+                       txDate.getFullYear() === year;
+            })
             .sort((a,b) => new Date(a.date) - new Date(b.date))
             .slice(0, 5);
         
@@ -1773,6 +1980,35 @@ const UI = {
                 <p class="font-bold text-red-500">${this.formatCurrency(bill.value)}</p>
             </div>
         `).join('<hr class="my-2">');
+    },
+
+    renderOverdueBills() {
+        const section = document.getElementById('overdue-bills-section');
+        const container = document.getElementById('overdue-bills-container');
+        if (!container || !section) return;
+
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        
+        const overdue = AppState.transactions
+            .filter(t => {
+                const txDate = new Date(t.date + 'T00:00:00');
+                return !t.isPaid && t.fundamentalType === 'despesa' && txDate < today;
+            });
+
+        if (overdue.length === 0) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        section.classList.remove('hidden');
+        const totalOverdue = overdue.reduce((sum, bill) => sum + bill.value, 0);
+        container.innerHTML = `
+            <div class="flex justify-between items-center">
+                 <p class="font-bold text-red-800">${overdue.length} conta(s) em atraso</p>
+                 <p class="font-bold text-red-800">${this.formatCurrency(totalOverdue)}</p>
+            </div>
+        `;
     },
     
     renderBulkActionBar() {
@@ -1802,6 +2038,7 @@ const UI = {
 
 // Módulo de Handlers
 const Handlers = {
+    importedTransactions: [],
     init() {
         document.getElementById('logo-container').addEventListener('click', () => {
             AppState.currentView = 'dashboard';
@@ -1820,7 +2057,6 @@ const Handlers = {
         
         document.getElementById('sidebar-toggle-btn').addEventListener('click', () => {
             AppState.isSidebarCollapsed = !AppState.isSidebarCollapsed;
-            document.getElementById('sidebar-toggle-btn').querySelector('span').textContent = AppState.isSidebarCollapsed ? '' : 'Recolher';
             document.body.classList.toggle('sidebar-collapsed', AppState.isSidebarCollapsed);
         });
 
@@ -1841,6 +2077,9 @@ const Handlers = {
             const summaryCard = e.target.closest('.summary-card');
             if (summaryCard) this.handleSummaryCardClick(summaryCard.dataset.type);
             
+            const cardSummary = e.target.closest('.card-summary-item');
+            if(cardSummary) this.handleCardSummaryClick(cardSummary.dataset.cardId);
+
             const installmentRow = e.target.closest('.installment-group-row');
             if(installmentRow) {
                 const editButton = e.target.closest('.edit-btn');
@@ -1864,6 +2103,9 @@ const Handlers = {
             if (e.target.id === 'bulk-mark-paid') this.handleBulkMarkPaid();
             if (e.target.id === 'bulk-delete') this.handleBulkDelete();
             if (e.target.id === 'bulk-deselect') this.handleBulkDeselect();
+
+            const overdueContainer = e.target.closest('#overdue-bills-container');
+            if(overdueContainer) this.handleSummaryCardClick('monthly-overdue');
         });
 
         document.getElementById('page-container').addEventListener('change', e => {
@@ -1891,19 +2133,19 @@ const Handlers = {
         document.getElementById('page-container').addEventListener('change', e => {
             if (e.target.id === 'report-mode') {
                 document.getElementById('period-2-filters').classList.toggle('hidden', e.target.value !== 'comparative');
+                document.getElementById('period-2-filters').classList.toggle('contents', e.target.value === 'comparative');
             }
         });
 
         document.getElementById('modal-container').addEventListener('click', e => {
             if (e.target.closest('.modal-close-btn')) UI.closeModal();
-            if (e.target.classList.contains('installment-status-toggle')) {
-                this.handleInstallmentStatusToggle(e.target.dataset.txId);
-            }
-            if (e.target.closest('.unlink-btn')) {
-                this.handleUnlinkTransactionClick(e.target.closest('.unlink-btn').dataset.id, e.target.closest('[data-account-id]').dataset.accountId);
-            }
+            if (e.target.classList.contains('installment-status-toggle')) this.handleInstallmentStatusToggle(e.target.dataset.txId);
+            if (e.target.closest('.unlink-btn')) this.handleUnlinkTransactionClick(e.target.closest('.unlink-btn').dataset.id, e.target.closest('[data-account-id]').dataset.accountId);
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) this.handleModalClick(e);
+            if (e.target.closest('.launch-import-btn') || e.target.closest('.ignore-import-btn')) this.handleImportReviewClick(e);
+            if (e.target.closest('#launch-all-imported-btn')) this.handleBulkLaunchImport();
+            if (e.target.closest('.import-type-btn')) this.handleImportTypeSelection(e.target.closest('.import-type-btn').dataset.type);
         });
         
         document.getElementById('modal-container').addEventListener('submit', e => {
@@ -1940,10 +2182,18 @@ const Handlers = {
                 e.target.value = null; // Reset input
             }
         });
-
+        
+        const importStatementBtn = document.getElementById('import-statement-btn');
+        if (importStatementBtn) {
+            importStatementBtn.addEventListener('click', () => UI.renderFileImportModal());
+        }
         document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
+        const statementFileInput = document.getElementById('statement-file-input');
+        if (statementFileInput) {
+            statementFileInput.addEventListener('change', (e) => this.handleFileSelectedForImport(e));
+        }
     },
-     
+    
     handleTransactionSelection(checkbox) {
         if (checkbox.id === 'select-all-txs') {
             const allCheckboxes = document.querySelectorAll('.tx-select-checkbox');
@@ -2017,90 +2267,221 @@ const Handlers = {
         );
     },
 
+    async processBulkSeriesChanges(seriesQueue, changes) {
+        for (const seriesInfo of seriesQueue) {
+             const message = `Aplicar alterações para a série "${seriesInfo.sampleTx.description}"?`;
+             const scope = await new Promise(resolve => {
+                UI.showBulkApplyToSeriesModal(
+                    `Editar Série: ${seriesInfo.sampleTx.description}`,
+                    message,
+                    () => { UI.closeModal(); resolve('selected'); },
+                    () => { UI.closeModal(); resolve('future'); },
+                    () => { UI.closeModal(); resolve('all'); }
+                );
+                const backdrop = document.querySelector('#modal-container .modal-backdrop');
+                if (backdrop) {
+                    backdrop.addEventListener('click', (e) => {
+                        if (e.target === backdrop) {
+                             UI.closeModal();
+                             resolve(null);
+                        }
+                    }, { once: true });
+                }
+             });
+
+            if (!scope) return false;
+
+            const applyChangesToTx = (tx, currentChanges) => {
+                if (currentChanges.category) tx.category = currentChanges.category;
+                if (currentChanges.accountId !== undefined) {
+                    tx.accountId = currentChanges.accountId;
+                    tx.isCreditCard = currentChanges.isCreditCard;
+                }
+            };
+            
+            const allInSeries = AppState.transactions.filter(t => t.groupId === seriesInfo.sampleTx.groupId);
+            const firstSelectedDate = new Date(allInSeries.filter(t => seriesInfo.selectedIds.includes(t.id)).sort((a,b) => new Date(a.date) - new Date(b.date))[0].date);
+
+            allInSeries.forEach(tx => {
+                let shouldApply = false;
+                if (scope === 'all') shouldApply = true;
+                else if (scope === 'selected' && seriesInfo.selectedIds.includes(tx.id)) shouldApply = true;
+                else if (scope === 'future' && new Date(tx.date) >= firstSelectedDate) shouldApply = true;
+                
+                if(shouldApply) applyChangesToTx(tx, changes);
+            });
+        }
+        return true; 
+    },
+    
     async handleBulkEditFormSubmit(form) {
+        UI.closeModal();
         const newCategory = form.querySelector('#bulk-edit-category').value;
         const newAccountId = form.querySelector('#bulk-edit-account').value;
         const newStatus = form.querySelector('#bulk-edit-status').value;
 
-        if (!newCategory && !newAccountId && !newStatus) {
-            UI.closeModal();
-            return;
-        }
+        if (!newCategory && !newAccountId && !newStatus) return;
 
         const changes = {};
         if (newCategory) changes.category = newCategory;
-        if (newStatus) changes.isPaid = newStatus === 'paid';
         if (newAccountId) {
             changes.accountId = newAccountId === 'null' ? null : newAccountId;
             changes.isCreditCard = newAccountId !== 'null' ? !!AppState.creditCards.find(c => c.id === newAccountId) : false;
         }
 
-        const applyChangesToTx = (tx, currentChanges) => {
-            if (currentChanges.category) tx.category = currentChanges.category;
-            if (currentChanges.accountId !== undefined) {
-                tx.accountId = currentChanges.accountId;
-                tx.isCreditCard = currentChanges.isCreditCard;
-            }
-            if (currentChanges.isPaid !== undefined && tx.fundamentalType === 'despesa') {
-                tx.isPaid = currentChanges.isPaid;
-            }
-        };
+        const selectedTxs = AppState.selectedTransactionIds.map(id => AppState.transactions.find(t => t.id === id)).filter(Boolean);
         
-        const selectedTxs = AppState.selectedTransactionIds.map(id => AppState.transactions.find(t => t.id === id));
+        if (newStatus) {
+            selectedTxs.forEach(tx => {
+                if (tx.fundamentalType === 'despesa') tx.isPaid = (newStatus === 'paid');
+            });
+        }
+        
         const simpleTxs = selectedTxs.filter(tx => !tx.groupId);
-        const installmentSeries = new Map();
-
-        selectedTxs.filter(tx => tx.groupId).forEach(tx => {
-            if (!installmentSeries.has(tx.groupId)) {
-                installmentSeries.set(tx.groupId, {
-                    sampleTx: tx,
-                    selectedIds: []
-                });
+        simpleTxs.forEach(tx => {
+            if (changes.category) tx.category = changes.category;
+            if (changes.accountId !== undefined) {
+                tx.accountId = changes.accountId;
+                tx.isCreditCard = changes.isCreditCard;
             }
-            installmentSeries.get(tx.groupId).selectedIds.push(tx.id);
         });
 
-        simpleTxs.forEach(tx => applyChangesToTx(tx, changes));
+        const seriesMap = new Map();
+        selectedTxs.filter(tx => tx.groupId).forEach(tx => {
+            if (!seriesMap.has(tx.groupId)) {
+                seriesMap.set(tx.groupId, { sampleTx: tx, selectedIds: [] });
+            }
+            seriesMap.get(tx.groupId).selectedIds.push(tx.id);
+        });
         
-        UI.closeModal();
-        
-        if (installmentSeries.size > 0) {
-            const groupIds = Array.from(installmentSeries.keys());
-            for (const groupId of groupIds) {
-                const seriesInfo = installmentSeries.get(groupId);
-                const message = `Aplicar alterações para a série "${seriesInfo.sampleTx.description}"?`;
-                
-                const scope = await new Promise(resolve => {
-                    UI.showBulkApplyToSeriesModal(
-                        `Editar Série de Parcelas`,
-                        message,
-                        () => resolve('selected'),
-                        () => resolve('future'),
-                        () => resolve('all')
-                    );
-                });
-
-                if (scope) {
-                    const allInSeries = AppState.transactions.filter(t => t.groupId === groupId);
-                    const firstSelectedDate = new Date(allInSeries.filter(t => seriesInfo.selectedIds.includes(t.id)).sort((a,b) => new Date(a.date) - new Date(b.date))[0].date);
-
-                    allInSeries.forEach(tx => {
-                        let shouldApply = false;
-                        if (scope === 'all') shouldApply = true;
-                        else if (scope === 'selected' && seriesInfo.selectedIds.includes(tx.id)) shouldApply = true;
-                        else if (scope === 'future' && new Date(tx.date) >= firstSelectedDate) shouldApply = true;
-                        
-                        if(shouldApply) applyChangesToTx(tx, changes);
-                    });
-                }
+        if (seriesMap.size > 0 && (changes.category || changes.accountId !== undefined)) {
+            const success = await this.processBulkSeriesChanges(Array.from(seriesMap.values()), changes);
+            if (!success) {
+                 this.handleBulkDeselect();
+                 UI.render();
+                 UI.showFeedback('Edição em massa cancelada.', 'info');
+                 return;
             }
         }
         
+        this.finishBulkUpdate();
+    },
+
+    finishBulkUpdate() {
         AppState.recalculateAllBalances();
         AppState.saveAll();
         this.handleBulkDeselect();
         UI.render();
         UI.showFeedback('Transações atualizadas com sucesso!', 'success');
+    },
+
+    handleImportTypeSelection(type) {
+        const fileInput = document.getElementById('statement-file-input');
+        const typeMap = {
+            ofx: '.ofx, .OFX',
+            pdf: '.pdf',
+            image: 'image/png, image/jpeg, image/webp'
+        };
+        fileInput.accept = typeMap[type] || '';
+        fileInput.click();
+    },
+
+    handleFileSelectedForImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        UI.closeModal();
+        UI.showFeedback('Processando arquivo... (Simulação)', 'info');
+
+        setTimeout(() => {
+            const mockDescriptions = [ 'Compra Online - Amazon', 'Restaurante Sabor Caseiro', 'Pagamento NETFLIX', 'Posto de Gasolina Shell', 'Farmácia Pague Menos', 'Padaria Pão Quente', 'Conta de Luz - Celesc', 'Conta de Água - SAMAE', 'Uber Viagem' ];
+            const numberOfTransactions = Math.floor(Math.random() * 5) + 3;
+            this.importedTransactions = [];
+
+            for (let i = 0; i < numberOfTransactions; i++) {
+                const randomDescription = mockDescriptions[Math.floor(Math.random() * mockDescriptions.length)];
+                const randomValue = parseFloat((Math.random() * 300 + 10).toFixed(2));
+                
+                const randomDate = new Date();
+                randomDate.setDate(randomDate.getDate() - Math.floor(Math.random() * 30));
+                const date = randomDate.toISOString().slice(0, 10);
+
+                const isInstallment = Math.random() > 0.6; 
+                const installmentsTotal = isInstallment ? [2, 3, 6, 10, 12][Math.floor(Math.random() * 5)] : 1;
+                const installmentsPaid = isInstallment ? Math.floor(Math.random() * installmentsTotal) : 0;
+
+                this.importedTransactions.push({
+                    description: `${randomDescription} (${file.name.split('.')[0]})`,
+                    value: randomValue,
+                    date: date,
+                    installmentsTotal: installmentsTotal,
+                    installmentsPaid: installmentsPaid,
+                    fundamentalType: 'despesa'
+                });
+            }
+            
+            UI.showFeedback('Dados extraídos! Por favor, revise e salve.', 'success');
+            UI.renderImportReviewModal(this.importedTransactions);
+            event.target.value = null; 
+        }, 1500);
+    },
+
+    handleImportReviewClick(event) {
+        const listItem = event.target.closest('li[data-index]');
+        if (!listItem) return;
+    
+        const index = parseInt(listItem.dataset.index);
+        const transactionData = this.importedTransactions[index];
+        if (!transactionData) return;
+        
+        const selectedAccountId = listItem.querySelector('.import-account-select').value;
+    
+        if (event.target.closest('.launch-import-btn')) {
+            UI.closeModal();
+            setTimeout(() => {
+                UI.renderNewTransactionModal({ ...transactionData, accountId: selectedAccountId, isImported: true, importIndex: index });
+            }, 100);
+        } else if (event.target.closest('.ignore-import-btn')) {
+            this.importedTransactions[index] = null;
+            listItem.remove();
+            
+            const list = document.getElementById('imported-tx-list');
+            if (list && !list.querySelector('li')) {
+                document.getElementById('no-more-imports').classList.remove('hidden');
+                document.getElementById('launch-all-imported-btn').style.display = 'none';
+            }
+        }
+    },
+    
+    handleBulkLaunchImport() {
+        const listItems = document.querySelectorAll('#imported-tx-list li');
+        let launchedCount = 0;
+
+        listItems.forEach(item => {
+            const index = parseInt(item.dataset.index);
+            const txData = this.importedTransactions[index];
+            if (txData) {
+                const accountId = item.querySelector('.import-account-select').value;
+                const isCC = AppState.creditCards.some(c => c.id === accountId);
+
+                const newTx = {
+                    id: crypto.randomUUID(),
+                    isPaid: true,
+                    accountId: accountId || null,
+                    isCreditCard: isCC,
+                    ...txData,
+                };
+                AppState.addTransaction(newTx);
+                launchedCount++;
+            }
+        });
+        
+        this.importedTransactions = [];
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
+        UI.closeModal();
+        UI.render();
+        UI.showFeedback(`${launchedCount} despesas importadas com sucesso!`, 'success');
     },
 
     handleUnlinkTransactionClick(txId, accountId) {
@@ -2120,11 +2501,48 @@ const Handlers = {
     handleAccountClick(accountId) {
         UI.renderAccountDetailsModal(accountId);
     },
+    
+    handleCardSummaryClick(cardId) {
+        UI.renderCardDetailsModal(cardId);
+    },
 
     handleStatusToggle(txId, sourceModalType = null) {
         const tx = AppState.transactions.find(t => t.id === txId);
-        if(tx && tx.fundamentalType === 'despesa') {
-            tx.isPaid = !tx.isPaid;
+        if(!tx || tx.fundamentalType !== 'despesa') return;
+
+        // If we are trying to mark as paid
+        if (!tx.isPaid) {
+            const setAsPaid = () => {
+                tx.isPaid = true;
+                AppState.recalculateAllBalances();
+                AppState.saveAll();
+                 if (sourceModalType) {
+                    UI.closeModal();
+                    setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
+                } else {
+                    UI.render();
+                }
+            };
+
+            const hasPreviousUnpaid = tx.groupId && AppState.transactions.some(t =>
+                t.groupId === tx.groupId &&
+                new Date(t.date) < new Date(tx.date) &&
+                !t.isPaid
+            );
+
+            if (hasPreviousUnpaid) {
+                UI.showConfirmationModal(
+                    'Atenção: Parcela Anterior Aberta',
+                    'Existem parcelas anteriores para esta despesa que ainda não foram pagas. Tem certeza de que deseja marcar esta como paga mesmo assim?',
+                    setAsPaid
+                );
+            } else {
+                setAsPaid();
+            }
+        } 
+        // If we are trying to mark as unpaid
+        else {
+            tx.isPaid = false;
             AppState.recalculateAllBalances();
             AppState.saveAll();
              if (sourceModalType) {
@@ -2268,10 +2686,10 @@ const Handlers = {
         UI.showFeedback('Série de parcelas atualizada com sucesso!', 'success');
     },
 
-    handleEditTransactionFormSubmit(form) {
+    async handleEditTransactionFormSubmit(form) {
         const txId = form.querySelector('#editing-id').value;
-        const tx = AppState.transactions.find(t => t.id === txId);
-        if (!tx) return;
+        const originalTx = AppState.transactions.find(t => t.id === txId);
+        if (!originalTx) return;
     
         const accountId = form.querySelector('#edit-trans-account').value;
         const isCC = AppState.creditCards.some(c => c.id === accountId);
@@ -2286,61 +2704,62 @@ const Handlers = {
             isCreditCard: isCC,
         };
     
-        const descriptionChanged = tx.description !== updatedData.description;
-        const categoryChanged = tx.category !== updatedData.category;
-        const accountChanged = tx.accountId !== updatedData.accountId;
+        const changes = {};
+        if (originalTx.description !== updatedData.description) changes.description = updatedData.description;
+        if (originalTx.category !== updatedData.category) changes.category = updatedData.category;
+        if (originalTx.accountId !== updatedData.accountId) {
+            changes.accountId = updatedData.accountId;
+            changes.isCreditCard = updatedData.isCreditCard;
+        }
+        
+        const hasSharedChanges = Object.keys(changes).length > 0;
+        
+        UI.closeModal();
 
         const applyChanges = (scope) => {
-            const originalTx = AppState.transactions.find(t => t.id === txId);
-            if (!originalTx) return;
-
-            const sharedChanges = {};
-            if (descriptionChanged) sharedChanges.description = updatedData.description;
-            if (categoryChanged) sharedChanges.category = updatedData.category;
-            if (accountChanged) {
-                sharedChanges.accountId = updatedData.accountId;
-                sharedChanges.isCreditCard = updatedData.isCreditCard;
-            }
-            
-            if (scope !== 'one' && originalTx.groupId && Object.keys(sharedChanges).length > 0) {
+            if (scope !== 'one' && originalTx.groupId && hasSharedChanges) {
                 const groupTxs = AppState.transactions.filter(t => t.groupId === originalTx.groupId);
-                groupTxs.forEach(t => {
+                groupTxs.forEach(txInSeries => {
                     let shouldApply = false;
                     if (scope === 'all') {
                         shouldApply = true;
-                    } else if (scope === 'future' && new Date(t.date) >= new Date(originalTx.date)) {
+                    } else if (scope === 'future' && new Date(txInSeries.date) >= new Date(originalTx.date)) {
                         shouldApply = true;
                     }
                     
                     if (shouldApply) {
-                        if (sharedChanges.description) t.description = sharedChanges.description;
-                        if (sharedChanges.category) t.category = sharedChanges.category;
-                        if(sharedChanges.accountId !== undefined) {
-                            t.accountId = sharedChanges.accountId;
-                            t.isCreditCard = sharedChanges.isCreditCard;
+                        if (changes.description) txInSeries.description = changes.description;
+                        if (changes.category) txInSeries.category = changes.category;
+                        if(changes.accountId !== undefined) {
+                            txInSeries.accountId = changes.accountId;
+                            txInSeries.isCreditCard = changes.isCreditCard;
                         }
                     }
                 });
             }
-
-            AppState.updateTransaction(txId, updatedData);
-
+            
+            AppState.updateTransaction(txId, { ...originalTx, ...updatedData });
             AppState.recalculateAllBalances();
             AppState.saveAll();
-            UI.closeModal();
             UI.render();
-            const typeName = tx.fundamentalType === 'receita' ? 'Receita' : 'Despesa';
+            const typeName = originalTx.fundamentalType === 'receita' ? 'Receita' : 'Despesa';
             UI.showFeedback(`${typeName} alterada com sucesso!`, 'success');
         };
 
-        if (tx.groupId && (descriptionChanged || categoryChanged || accountChanged)) {
-            UI.showApplyToSeriesModal(
-                'Editar Parcelas',
-                'Você alterou um campo compartilhado. Como deseja aplicar esta mudança?',
-                () => applyChanges('one'),
-                () => applyChanges('future'),
-                () => applyChanges('all')
-            );
+        if (originalTx.groupId && hasSharedChanges) {
+             const scope = await new Promise(resolve => {
+                UI.showApplyToSeriesModal(
+                    'Editar Parcelas',
+                    'Você alterou um campo compartilhado. Como deseja aplicar esta mudança?',
+                    () => { UI.closeModal(); resolve('one'); },
+                    () => { UI.closeModal(); resolve('future'); },
+                    () => { UI.closeModal(); resolve('all'); }
+                );
+                 document.querySelector('#modal-container .modal-backdrop').addEventListener('click', (e) => {
+                      if (e.target === e.currentTarget) { UI.closeModal(); resolve(null); }
+                 });
+            });
+            if (scope) applyChanges(scope);
         } else {
             applyChanges('one');
         }
@@ -2417,6 +2836,8 @@ const Handlers = {
     },
 
     handleNewTransactionFormSubmit(form) {
+        const isImported = form.querySelector('input[name="isImported"]')?.value === 'true';
+        
         const accountId = form.querySelector('#trans-account').value;
         const isCC = AppState.creditCards.some(c => c.id === accountId);
         
@@ -2448,10 +2869,19 @@ const Handlers = {
 
         AppState.recalculateAllBalances();
         AppState.saveAll();
-        UI.closeModal();
-        UI.render();
+        
         const typeName = fundamentalType === 'receita' ? 'Receita' : 'Despesa';
         UI.showFeedback(`${typeName} salva com sucesso!`, 'success');
+
+        if(isImported) {
+             const importIndex = parseInt(form.querySelector('input[name="isImported"]').dataset.importIndex);
+             this.importedTransactions[importIndex] = null;
+            UI.closeModal();
+            setTimeout(() => UI.renderImportReviewModal(this.importedTransactions), 50);
+        } else {
+            UI.closeModal();
+        }
+        UI.render();
     },
     
     handleGenerateReport() {
