@@ -61,6 +61,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            animation: fadeIn 0.3s ease;
         }
         .modal-content {
             background-color: white;
@@ -71,6 +72,7 @@
             max-height: 90vh;
             display: flex;
             flex-direction: column;
+            animation: slideIn 0.3s ease;
         }
         .modal-header {
             padding: 1rem 1.5rem;
@@ -85,6 +87,9 @@
             border-top: 1px solid #e2e8f0;
             background-color: #f7fafc;
         }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -103,6 +108,10 @@
             <a href="#" id="nav-transactions" class="nav-link flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
                 <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 <span class="nav-text">Transações</span>
+            </a>
+            <a href="#" id="nav-faturas" class="nav-link flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                 <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="nav-text">Faturas</span>
             </a>
             <a href="#" id="nav-accounts" class="nav-link flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
                 <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
@@ -136,9 +145,8 @@
                 <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
             </div>
             <div class="flex items-center space-x-4">
-                 <button id="import-statement-btn" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg shadow-sm">Importar Extrato</button>
                 <input type="file" id="import-file-input" class="hidden" accept=".json">
-                 <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
+                <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
                 <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Backup</button>
                 <button id="clear-data-btn" class="text-sm text-gray-500 hover:text-red-600">Limpar Dados</button>
             </div>
@@ -184,6 +192,7 @@
                 </div>
             </section>
             <section id="transactions-page" class="hidden"></section>
+            <section id="faturas-page" class="hidden"></section>
             <section id="accounts-page" class="hidden"></section>
             <section id="categories-page" class="hidden"></section>
             <section id="reports-page" class="hidden"></section>
@@ -192,25 +201,28 @@
 
     <div id="modal-container"></div>
     <div id="feedback-message" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50"></div>
-    <input type="file" id="statement-file-input" class="hidden">
-
+    
 <script>
 // Módulo de Estado da Aplicação
 const AppState = {
     accounts: [], creditCards: [], transactions: [],
-    categories: ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros"],
+    categories: ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"],
     currentView: 'dashboard', isSidebarCollapsed: false,
     displayMonth: new Date().getMonth(),
     displayYear: new Date().getFullYear(),
     selectedTransactionIds: [],
+    selectedFaturaCardId: null,
     
     init() {
         this.accounts = JSON.parse(localStorage.getItem('app_accounts_v3')) || [];
         this.creditCards = JSON.parse(localStorage.getItem('app_creditCards_v3')) || [];
         this.transactions = JSON.parse(localStorage.getItem('app_transactions_v3')) || [];
         const storedCategories = JSON.parse(localStorage.getItem('app_categories_v3'));
-        if (storedCategories && storedCategories.length) this.categories = storedCategories;
+        if (storedCategories && storedCategories.length) {
+            this.categories = storedCategories;
+        }
         if (!this.categories.includes("Outros")) this.categories.push("Outros");
+        if (!this.categories.includes("Pagamento de Fatura")) this.categories.push("Pagamento de Fatura");
         this.recalculateAllBalances();
     },
     
@@ -263,7 +275,7 @@ const AppState = {
     
     clearAllData() {
         this.accounts = []; this.creditCards = []; this.transactions = [];
-        this.categories = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros"];
+        this.categories = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"];
         this.saveAll();
     },
 
@@ -461,7 +473,7 @@ const UI = {
     },
     
     capitalize: s => s.charAt(0).toUpperCase() + s.slice(1),
-    getPageTitle: v => ({ dashboard: 'Dashboard', transactions: 'Minhas Transações', accounts: 'Contas & Cartões', reports: 'Relatórios', categories: 'Gerenciar Categorias' }[v] || 'Dashboard'),
+    getPageTitle: v => ({ dashboard: 'Dashboard', transactions: 'Minhas Transações', faturas: 'Faturas', accounts: 'Contas & Cartões', reports: 'Relatórios', categories: 'Gerenciar Categorias' }[v] || 'Dashboard'),
     
     updateNavLinks() {
         document.querySelectorAll('aside nav a').forEach(l => l.classList.remove('bg-gray-200', 'text-gray-700'));
@@ -572,7 +584,7 @@ const UI = {
                     <p class="font-medium text-gray-800">${cat}</p>
                     <p class="text-sm text-gray-500">Utilizado: ${this.formatCurrency(totalUsed)}</p>
                 </div>
-                ${cat !== "Outros" ? `
+                ${cat !== "Outros" && cat !== "Pagamento de Fatura" ? `
                 <div class="flex items-center space-x-2">
                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-name="${cat}" data-type="category" title="Editar">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -718,6 +730,145 @@ const UI = {
         }).join('');
     },
     
+    renderFaturasPage() {
+        const page = document.getElementById('faturas-page');
+        page.innerHTML = `
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
+                <div class="lg:col-span-1 bg-white p-4 rounded-xl shadow-md overflow-y-auto">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">Meus Cartões</h3>
+                    <div id="fatura-card-list" class="space-y-3"></div>
+                </div>
+                <div id="fatura-details-container" class="lg:col-span-3 bg-white p-6 rounded-xl shadow-md overflow-y-auto">
+                    <!-- Detalhes da fatura aparecerão aqui -->
+                </div>
+            </div>`;
+        this.renderCardListForFaturas();
+        if (AppState.selectedFaturaCardId) {
+            this.renderInvoiceListForCard(AppState.selectedFaturaCardId);
+        } else {
+            document.getElementById('fatura-details-container').innerHTML = `<div class="flex items-center justify-center h-full text-gray-500"><svg class="w-10 h-10 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg> Selecione um cartão para ver as faturas.</div>`;
+        }
+    },
+
+    renderCardListForFaturas() {
+        const container = document.getElementById('fatura-card-list');
+        if (!container) return;
+
+        if (AppState.creditCards.length === 0) {
+            container.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cartão cadastrado.</p>`;
+            return;
+        }
+
+        container.innerHTML = AppState.creditCards.map(card => `
+            <div class="p-3 rounded-lg cursor-pointer fatura-card-item ${card.id === AppState.selectedFaturaCardId ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 hover:bg-gray-200'}" data-card-id="${card.id}">
+                <p class="font-semibold">${card.name}</p>
+                <p class="text-sm">${card.brand}</p>
+            </div>
+        `).join('');
+    },
+    
+    renderInvoiceListForCard(cardId) {
+        const container = document.getElementById('fatura-details-container');
+        if (!container) return;
+
+        const card = AppState.creditCards.find(c => c.id === cardId);
+        const transactionsByMonth = AppState.transactions
+            .filter(tx => tx.accountId === cardId)
+            .reduce((acc, tx) => {
+                const monthYear = new Date(tx.date).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+                if (!acc[monthYear]) {
+                    acc[monthYear] = {
+                        txs: [],
+                        total: 0,
+                        year: new Date(tx.date).getFullYear(),
+                        month: new Date(tx.date).getMonth()
+                    };
+                }
+                acc[monthYear].txs.push(tx);
+                if (tx.fundamentalType === 'despesa') acc[monthYear].total += tx.value;
+                else acc[monthYear].total -= tx.value;
+                return acc;
+            }, {});
+
+        const sortedMonths = Object.keys(transactionsByMonth).sort((a, b) => new Date(transactionsByMonth[b].txs[0].date) - new Date(transactionsByMonth[a].txs[0].date));
+        
+        container.innerHTML = `
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">Faturas de ${card.name}</h3>
+            ${sortedMonths.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhuma fatura encontrada para este cartão.</p>` : `
+            <div class="space-y-4">
+                ${sortedMonths.map(monthYear => {
+                    const invoice = transactionsByMonth[monthYear];
+                    return `
+                    <div class="bg-gray-50 p-4 rounded-lg cursor-pointer fatura-invoice-item hover:bg-gray-100" data-card-id="${cardId}" data-year="${invoice.year}" data-month="${invoice.month}">
+                        <div class="flex justify-between items-center">
+                            <p class="font-semibold text-lg capitalize">${monthYear}</p>
+                            <p class="font-bold text-red-600">${this.formatCurrency(invoice.total)}</p>
+                        </div>
+                        <p class="text-sm text-gray-500">Vencimento em ${card.dueDay}/${invoice.month + 2 > 12 ? 1 : invoice.month + 2}/${invoice.month + 2 > 12 ? invoice.year + 1 : invoice.year}</p>
+                    </div>`
+                }).join('')}
+            </div>
+            `}
+        `;
+    },
+
+    renderInvoiceDetails(cardId, year, month) {
+        const container = document.getElementById('fatura-details-container');
+        if (!container) return;
+        const card = AppState.creditCards.find(c => c.id === cardId);
+        const monthName = new Date(year, month).toLocaleString('pt-BR', { month: 'long' });
+
+        const transactions = AppState.transactions
+            .filter(tx => {
+                const txDate = new Date(tx.date + "T00:00:00");
+                return tx.accountId === cardId && txDate.getFullYear() === year && txDate.getMonth() === month;
+            })
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        let total = 0;
+        transactions.forEach(tx => {
+            if (tx.fundamentalType === 'despesa') total += tx.value;
+            else total -= tx.value;
+        });
+
+        container.innerHTML = `
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <button id="back-to-invoices-btn" class="text-sm text-blue-600 hover:underline mb-2">&larr; Voltar para faturas de ${card.name}</button>
+                    <h3 class="text-2xl font-bold text-gray-800 capitalize">Fatura de ${monthName} ${year}</h3>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500">Total da Fatura</p>
+                    <p class="text-2xl font-bold ${total >= 0 ? 'text-red-600' : 'text-green-600'}">${this.formatCurrency(total)}</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                ${transactions.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhum lançamento nesta fatura.</p>` :
+                transactions.map(tx => {
+                    const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
+                    const valuePrefix = tx.fundamentalType === 'receita' ? '+' : '-';
+                    return `
+                    <div class="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
+                        <div>
+                            <p class="font-medium text-gray-700">${tx.description} ${tx.installments || ''}</p>
+                            <p class="text-sm text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <p class="font-semibold ${valueColor} w-24 text-right">${valuePrefix} ${this.formatCurrency(tx.value)}</p>
+                            <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                        </div>
+                    </div>`
+                }).join('')}
+            </div>
+        `;
+
+        document.getElementById('back-to-invoices-btn').addEventListener('click', () => {
+            this.renderInvoiceListForCard(cardId);
+        });
+    },
+
     renderReportsPage() {
         const page = document.getElementById('reports-page');
         const now = new Date();
@@ -1069,7 +1220,7 @@ const UI = {
 
         const content = `
             <form id="transaction-modal-form" class="space-y-4">
-                <input type="hidden" name="isImported" value="${data.isImported ? 'true' : ''}" data-import-index="${data.importIndex}">
+                <input type="hidden" name="isImported" value="${data.isImported ? 'true' : ''}" data-import-index="${data.importIndex || ''}">
                 <div>
                     <label for="trans-description" class="block text-sm font-medium text-gray-700">Descrição</label>
                     <input type="text" id="trans-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
@@ -1235,54 +1386,63 @@ const UI = {
         `;
         this.showModal('Editar Múltiplas Transações', content, 'Salvar Alterações', 'bulk-edit-modal-form');
     },
+    
+    renderPayBillModal(cardId, billAmount) {
+        const card = AppState.creditCards.find(c => c.id === cardId);
+        if (!card) return;
 
-    renderFileImportModal() {
+        const accountOptions = AppState.accounts
+            .filter(a => a.type !== 'cash') // Cannot pay bill with cash
+            .map(a => `<option value="${a.id}">${a.name} (${this.formatCurrency(a.balance)})</option>`)
+            .join('');
+
         const content = `
-            <p class="text-sm text-gray-600 mb-4">Selecione o tipo de arquivo que deseja importar.</p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <button data-type="ofx" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
-                    <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span class="font-semibold">OFX</span>
-                </button>
-                <button data-type="pdf" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
-                     <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                    <span class="font-semibold">PDF</span>
-                </button>
-                <button data-type="image" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
-                     <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    <span class="font-semibold">Imagem</span>
-                </button>
-            </div>
-        `;
-        const modalContainer = document.getElementById('modal-container');
-        modalContainer.innerHTML = `
-            <div class="modal-backdrop">
-                <div class="modal-content">
-                    <div class="modal-header flex justify-between items-center">
-                        <h3 class="text-xl font-semibold">Importar Extrato</h3>
-                        <button class="modal-close-btn text-2xl hover:text-red-500">&times;</button>
-                    </div>
-                    <div class="modal-body">${content}</div>
+            <form id="pay-bill-form" class="space-y-4">
+                <input type="hidden" id="pay-bill-card-id" value="${cardId}">
+                <div class="p-3 bg-gray-50 rounded-lg text-center">
+                    <p class="text-sm text-gray-500">Valor da Fatura de ${card.name}</p>
+                    <p class="text-3xl font-bold text-red-600">${this.formatCurrency(billAmount)}</p>
                 </div>
-            </div>`;
+                <div>
+                    <label for="pay-bill-amount" class="block text-sm font-medium text-gray-700">Valor do Pagamento</label>
+                    <input type="number" id="pay-bill-amount" value="${billAmount.toFixed(2)}" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label for="pay-bill-source-account" class="block text-sm font-medium text-gray-700">Pagar com a conta</label>
+                    <select id="pay-bill-source-account" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="">Selecione uma conta...</option>
+                        ${accountOptions}
+                    </select>
+                </div>
+                <div>
+                    <label for="pay-bill-date" class="block text-sm font-medium text-gray-700">Data do Pagamento</label>
+                    <input type="date" id="pay-bill-date" value="${new Date().toISOString().slice(0, 10)}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+            </form>
+        `;
+        this.showModal('Pagar Fatura do Cartão', content, 'Confirmar Pagamento', 'pay-bill-form');
     },
 
     renderImportReviewModal(transactions) {
-        const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (Cartão)</option>`).join('');
+        if (AppState.creditCards.length === 0) {
+            UI.showFeedback('Você precisa ter pelo menos um cartão de crédito cadastrado para importar uma fatura.', 'error');
+            return;
+        }
+
+        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
         const listHTML = transactions.map((tx, index) => {
             if (!tx) return '';
-            const installmentText = tx.installmentsTotal > 1 ? `<span class="text-xs font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">${tx.installmentsPaid + 1}/${tx.installmentsTotal}</span>` : '';
+            const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
+            const valuePrefix = tx.fundamentalType === 'receita' ? '+' : '-';
             return `
             <li class="p-3 bg-gray-50 rounded-lg" data-index="${index}">
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="font-medium text-gray-800">${tx.description}</p>
                         <div class="flex items-center text-sm space-x-4 mt-1">
-                            <p class="text-red-600 font-semibold">${this.formatCurrency(tx.value)}</p>
+                            <p class="font-semibold ${valueColor}">${valuePrefix} ${this.formatCurrency(tx.value)}</p>
                             <p class="text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                            ${installmentText}
                         </div>
                     </div>
                     <div class="flex-shrink-0 space-x-2">
@@ -1292,22 +1452,22 @@ const UI = {
                         <button class="launch-import-btn px-3 py-1 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700">Lançar</button>
                     </div>
                 </div>
-                 <div class="mt-2">
-                    <label for="import-account-${index}" class="sr-only">Vincular a</label>
-                    <select id="import-account-${index}" class="import-account-select block w-full text-sm border-gray-200 rounded-md shadow-sm">
-                        <option value="">Vincular a...</option>
-                        ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
-                        ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
-                    </select>
-                 </div>
             </li>
         `}).join('');
 
         const hasRemainingTxs = transactions.some(tx => tx !== null);
         
         const content = `
-            <p class="text-sm text-gray-600 mb-4">Revise as despesas encontradas no arquivo. Você pode vincular a uma conta/cartão agora, ou fazer isso depois.</p>
-            <ul id="imported-tx-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">${listHTML || ''}</ul>
+            <p class="text-sm text-gray-600 mb-2">Revise as despesas encontradas no arquivo. Elas serão lançadas como 'não pagas' no cartão selecionado.</p>
+             <div class="mb-4">
+                <label for="import-card-select" class="block text-sm font-medium text-gray-700">Vincular fatura ao cartão:</label>
+                <select id="import-card-select" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <option value="">Selecione um cartão...</option>
+                    ${cardOptions}
+                </select>
+            </div>
+            <hr class="my-4"/>
+            <ul id="imported-tx-list" class="space-y-3 max-h-72 overflow-y-auto pr-2">${listHTML || ''}</ul>
             <p id="no-more-imports" class="text-center text-gray-500 py-4 ${hasRemainingTxs ? 'hidden' : ''}">Todas as despesas foram processadas.</p>
         `;
 
@@ -1316,7 +1476,7 @@ const UI = {
             <div class="modal-backdrop">
                 <div class="modal-content">
                     <div class="modal-header flex justify-between items-center">
-                        <h3 class="text-xl font-semibold">Revisar Despesas Importadas</h3>
+                        <h3 class="text-xl font-semibold">Revisar Despesas da Fatura</h3>
                         <button class="modal-close-btn text-2xl hover:text-red-500">&times;</button>
                     </div>
                     <div class="modal-body">${content}</div>
@@ -1433,13 +1593,20 @@ const UI = {
                         <button class="modal-close-btn text-2xl hover:text-red-500">&times;</button>
                     </div>
                     <div class="modal-body">${content}</div>
-                    <div class="modal-footer flex justify-end">
+                    <div class="modal-footer flex justify-end gap-3">
+                        ${title.startsWith('Detalhes da Fatura') ? `<button type="button" id="pay-bill-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Pagar Fatura</button>` : ''}
                         <button type="button" class="modal-close-btn px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Entendi</button>
                     </div>
                 </div>
             </div>`;
         if (callback) {
             modalContainer.querySelector('.modal-body').addEventListener('click', callback);
+        }
+        const payBillBtn = document.getElementById('pay-bill-btn');
+        if(payBillBtn){
+             const cardId = modalContainer.querySelector('[data-card-id]').dataset.cardId;
+             const billAmount = modalContainer.querySelector('[data-card-id]').dataset.billAmount;
+             payBillBtn.addEventListener('click', () => Handlers.handlePayBillClick(cardId, billAmount));
         }
     },
     
@@ -1659,7 +1826,7 @@ const UI = {
         const txList = txListBuilder(cardTxs); // Call builder once to calculate totalBill
 
         const content = `
-            <div data-card-id="${cardId}">
+            <div data-card-id="${cardId}" data-bill-amount="${totalBill}">
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
                     <div class="text-gray-500">Limite Total:</div>
                     <div class="font-semibold text-right">${this.formatCurrency(card.limit)}</div>
@@ -2061,6 +2228,14 @@ const Handlers = {
         });
 
         document.getElementById('add-new-transaction-btn').addEventListener('click', () => UI.renderNewTransactionModal());
+        
+        const importStatementBtn = document.getElementById('import-statement-btn');
+        if (importStatementBtn) {
+            importStatementBtn.addEventListener('click', () => {
+                document.getElementById('statement-file-input').click();
+            });
+        }
+        
 
         document.getElementById('page-container').addEventListener('click', e => {
             if (e.target.id === 'add-new-account-btn') UI.renderAccountModal();
@@ -2106,6 +2281,18 @@ const Handlers = {
 
             const overdueContainer = e.target.closest('#overdue-bills-container');
             if(overdueContainer) this.handleSummaryCardClick('monthly-overdue');
+
+            const faturaCardItem = e.target.closest('.fatura-card-item');
+            if (faturaCardItem) {
+                AppState.selectedFaturaCardId = faturaCardItem.dataset.cardId;
+                UI.renderFaturasPage();
+            }
+
+            const faturaInvoiceItem = e.target.closest('.fatura-invoice-item');
+            if (faturaInvoiceItem) {
+                const { cardId, year, month } = faturaInvoiceItem.dataset;
+                UI.renderInvoiceDetails(cardId, parseInt(year), parseInt(month));
+            }
         });
 
         document.getElementById('page-container').addEventListener('change', e => {
@@ -2145,7 +2332,6 @@ const Handlers = {
             if (editBtn) this.handleModalClick(e);
             if (e.target.closest('.launch-import-btn') || e.target.closest('.ignore-import-btn')) this.handleImportReviewClick(e);
             if (e.target.closest('#launch-all-imported-btn')) this.handleBulkLaunchImport();
-            if (e.target.closest('.import-type-btn')) this.handleImportTypeSelection(e.target.closest('.import-type-btn').dataset.type);
         });
         
         document.getElementById('modal-container').addEventListener('submit', e => {
@@ -2156,6 +2342,7 @@ const Handlers = {
             if (e.target.id === 'category-modal-form') this.handleCategoryFormSubmit(e.target);
             if (e.target.id === 'edit-series-form') this.handleEditSeriesFormSubmit(e.target);
             if (e.target.id === 'bulk-edit-modal-form') this.handleBulkEditFormSubmit(e.target);
+            if (e.target.id === 'pay-bill-form') this.handlePayBillFormSubmit(e.target);
         });
 
         document.getElementById('modal-container').addEventListener('change', e => {
@@ -2183,15 +2370,116 @@ const Handlers = {
             }
         });
         
-        const importStatementBtn = document.getElementById('import-statement-btn');
-        if (importStatementBtn) {
-            importStatementBtn.addEventListener('click', () => UI.renderFileImportModal());
-        }
-        document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
         const statementFileInput = document.getElementById('statement-file-input');
-        if (statementFileInput) {
+        if(statementFileInput) {
             statementFileInput.addEventListener('change', (e) => this.handleFileSelectedForImport(e));
         }
+        
+        document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
+    },
+    
+    handleFileSelectedForImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        UI.closeModal();
+        UI.showFeedback('A processar a fatura PDF...', 'info');
+
+        setTimeout(() => {
+            const mockDescriptions = [ 'IFOOD*RESTAURANTE', 'Spotify AB', 'UBER TRIP', 'SUPERMERCADO GIASSI', 'NETFLIX.COM', 'POSTO IPIRANGA', 'FARMACIA S.JOAO', 'LOJAS RENNER', 'PAG*Americanas', 'ESTORNO COMPRA CANCELADA' ];
+            const numberOfTransactions = Math.floor(Math.random() * 10) + 8; // 8 a 17 transações
+            this.importedTransactions = [];
+
+            for (let i = 0; i < numberOfTransactions; i++) {
+                const randomDescription = mockDescriptions[Math.floor(Math.random() * mockDescriptions.length)];
+                const randomValue = parseFloat((Math.random() * 250 + 5).toFixed(2));
+                
+                const randomDate = new Date();
+                randomDate.setMonth(randomDate.getMonth() -1);
+                randomDate.setDate(Math.floor(Math.random() * 28) + 1);
+                const date = randomDate.toISOString().slice(0, 10);
+                
+                // 10% de chance de ser receita (estorno)
+                const isIncome = randomDescription.toLowerCase().includes('estorno') || Math.random() < 0.1;
+
+                this.importedTransactions.push({
+                    description: `${randomDescription}`,
+                    value: randomValue,
+                    date: date,
+                    installmentsTotal: 1,
+                    installmentsPaid: 0,
+                    fundamentalType: isIncome ? 'receita' : 'despesa'
+                });
+            }
+            
+            UI.showFeedback('Despesas da fatura extraídas! Por favor, revise e salve.', 'success');
+            UI.renderImportReviewModal(this.importedTransactions);
+            event.target.value = null; 
+        }, 1500);
+    },
+
+    handleImportReviewClick(event) {
+        const listItem = event.target.closest('li[data-index]');
+        if (!listItem) return;
+    
+        const index = parseInt(listItem.dataset.index);
+        const transactionData = this.importedTransactions[index];
+        if (!transactionData) return;
+        
+        const cardId = document.getElementById('import-card-select').value;
+    
+        if (event.target.closest('.launch-import-btn')) {
+            UI.closeModal();
+            setTimeout(() => {
+                UI.renderNewTransactionModal({ ...transactionData, accountId: cardId, isImported: true, importIndex: index });
+            }, 100);
+        } else if (event.target.closest('.ignore-import-btn')) {
+            this.importedTransactions[index] = null;
+            listItem.style.transition = 'opacity 0.3s ease';
+            listItem.style.opacity = '0';
+            setTimeout(() => {
+                listItem.remove();
+                const list = document.getElementById('imported-tx-list');
+                if (list && list.querySelectorAll('li').length === 0) {
+                    document.getElementById('no-more-imports').classList.remove('hidden');
+                    document.getElementById('launch-all-imported-btn').style.display = 'none';
+                }
+            }, 300);
+        }
+    },
+    
+    handleBulkLaunchImport() {
+        const listItems = document.querySelectorAll('#imported-tx-list li');
+        let launchedCount = 0;
+        const cardId = document.getElementById('import-card-select').value;
+
+        if(!cardId) {
+            UI.showFeedback('Por favor, selecione um cartão para vincular as despesas.', 'error');
+            return;
+        }
+
+        listItems.forEach(item => {
+            const index = parseInt(item.dataset.index);
+            const txData = this.importedTransactions[index];
+            if (txData) {
+                const newTx = {
+                    id: crypto.randomUUID(),
+                    isPaid: false, // Despesas do cartão entram como não pagas
+                    accountId: cardId,
+                    isCreditCard: true,
+                    ...txData,
+                };
+                AppState.addTransaction(newTx);
+                launchedCount++;
+            }
+        });
+        
+        this.importedTransactions = [];
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
+        UI.closeModal();
+        UI.render();
+        UI.showFeedback(`${launchedCount} despesas importadas com sucesso!`, 'success');
     },
     
     handleTransactionSelection(checkbox) {
@@ -2375,113 +2663,12 @@ const Handlers = {
         UI.showFeedback('Transações atualizadas com sucesso!', 'success');
     },
 
-    handleImportTypeSelection(type) {
-        const fileInput = document.getElementById('statement-file-input');
-        const typeMap = {
-            ofx: '.ofx, .OFX',
-            pdf: '.pdf',
-            image: 'image/png, image/jpeg, image/webp'
-        };
-        fileInput.accept = typeMap[type] || '';
-        fileInput.click();
-    },
-
-    handleFileSelectedForImport(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
+    handlePayBillClick(cardId, billAmount) {
         UI.closeModal();
-        UI.showFeedback('Processando arquivo... (Simulação)', 'info');
-
+        // Use a timeout to ensure the first modal is gone before rendering the new one
         setTimeout(() => {
-            const mockDescriptions = [ 'Compra Online - Amazon', 'Restaurante Sabor Caseiro', 'Pagamento NETFLIX', 'Posto de Gasolina Shell', 'Farmácia Pague Menos', 'Padaria Pão Quente', 'Conta de Luz - Celesc', 'Conta de Água - SAMAE', 'Uber Viagem' ];
-            const numberOfTransactions = Math.floor(Math.random() * 5) + 3;
-            this.importedTransactions = [];
-
-            for (let i = 0; i < numberOfTransactions; i++) {
-                const randomDescription = mockDescriptions[Math.floor(Math.random() * mockDescriptions.length)];
-                const randomValue = parseFloat((Math.random() * 300 + 10).toFixed(2));
-                
-                const randomDate = new Date();
-                randomDate.setDate(randomDate.getDate() - Math.floor(Math.random() * 30));
-                const date = randomDate.toISOString().slice(0, 10);
-
-                const isInstallment = Math.random() > 0.6; 
-                const installmentsTotal = isInstallment ? [2, 3, 6, 10, 12][Math.floor(Math.random() * 5)] : 1;
-                const installmentsPaid = isInstallment ? Math.floor(Math.random() * installmentsTotal) : 0;
-
-                this.importedTransactions.push({
-                    description: `${randomDescription} (${file.name.split('.')[0]})`,
-                    value: randomValue,
-                    date: date,
-                    installmentsTotal: installmentsTotal,
-                    installmentsPaid: installmentsPaid,
-                    fundamentalType: 'despesa'
-                });
-            }
-            
-            UI.showFeedback('Dados extraídos! Por favor, revise e salve.', 'success');
-            UI.renderImportReviewModal(this.importedTransactions);
-            event.target.value = null; 
-        }, 1500);
-    },
-
-    handleImportReviewClick(event) {
-        const listItem = event.target.closest('li[data-index]');
-        if (!listItem) return;
-    
-        const index = parseInt(listItem.dataset.index);
-        const transactionData = this.importedTransactions[index];
-        if (!transactionData) return;
-        
-        const selectedAccountId = listItem.querySelector('.import-account-select').value;
-    
-        if (event.target.closest('.launch-import-btn')) {
-            UI.closeModal();
-            setTimeout(() => {
-                UI.renderNewTransactionModal({ ...transactionData, accountId: selectedAccountId, isImported: true, importIndex: index });
-            }, 100);
-        } else if (event.target.closest('.ignore-import-btn')) {
-            this.importedTransactions[index] = null;
-            listItem.remove();
-            
-            const list = document.getElementById('imported-tx-list');
-            if (list && !list.querySelector('li')) {
-                document.getElementById('no-more-imports').classList.remove('hidden');
-                document.getElementById('launch-all-imported-btn').style.display = 'none';
-            }
-        }
-    },
-    
-    handleBulkLaunchImport() {
-        const listItems = document.querySelectorAll('#imported-tx-list li');
-        let launchedCount = 0;
-
-        listItems.forEach(item => {
-            const index = parseInt(item.dataset.index);
-            const txData = this.importedTransactions[index];
-            if (txData) {
-                const accountId = item.querySelector('.import-account-select').value;
-                const isCC = AppState.creditCards.some(c => c.id === accountId);
-
-                const newTx = {
-                    id: crypto.randomUUID(),
-                    isPaid: true,
-                    accountId: accountId || null,
-                    isCreditCard: isCC,
-                    ...txData,
-                };
-                AppState.addTransaction(newTx);
-                launchedCount++;
-            }
-        });
-        
-        this.importedTransactions = [];
-        AppState.recalculateAllBalances();
-        AppState.saveAll();
-        UI.closeModal();
-        UI.render();
-        UI.showFeedback(`${launchedCount} despesas importadas com sucesso!`, 'success');
+            UI.renderPayBillModal(cardId, parseFloat(billAmount));
+        }, 100);
     },
 
     handleUnlinkTransactionClick(txId, accountId) {
@@ -2756,7 +2943,7 @@ const Handlers = {
                     () => { UI.closeModal(); resolve('all'); }
                 );
                  document.querySelector('#modal-container .modal-backdrop').addEventListener('click', (e) => {
-                      if (e.target === e.currentTarget) { UI.closeModal(); resolve(null); }
+                       if (e.target === e.currentTarget) { UI.closeModal(); resolve(null); }
                  });
             });
             if (scope) applyChanges(scope);
@@ -2858,7 +3045,7 @@ const Handlers = {
                 date: installmentDate.toISOString().slice(0, 10),
                 fundamentalType: fundamentalType,
                 category: form.querySelector('#trans-category').value,
-                isPaid: i <= paidInstallments,
+                isPaid: fundamentalType === 'despesa' ? (i <= paidInstallments) : true,
                 accountId: accountId || null,
                 isCreditCard: isCC,
                 installments: totalInstallments > 1 ? `(${i}/${totalInstallments})` : null,
@@ -2882,6 +3069,54 @@ const Handlers = {
             UI.closeModal();
         }
         UI.render();
+    },
+    
+    handlePayBillFormSubmit(form) {
+        const cardId = form.querySelector('#pay-bill-card-id').value;
+        const amount = parseFloat(form.querySelector('#pay-bill-amount').value);
+        const sourceAccountId = form.querySelector('#pay-bill-source-account').value;
+        const date = form.querySelector('#pay-bill-date').value;
+
+        if (!sourceAccountId || !amount || !date) {
+            UI.showFeedback("Por favor, preencha todos os campos para o pagamento.", 'error');
+            return;
+        }
+
+        const card = AppState.creditCards.find(c => c.id === cardId);
+        
+        // 1. Criar a transação de despesa na conta de origem
+        const paymentTx = {
+            id: crypto.randomUUID(),
+            description: `Pagamento Fatura ${card.name}`,
+            value: amount,
+            date: date,
+            fundamentalType: 'despesa',
+            category: 'Pagamento de Fatura',
+            isPaid: true,
+            accountId: sourceAccountId,
+            isCreditCard: false,
+            installments: null,
+            groupId: null
+        };
+        AppState.addTransaction(paymentTx);
+
+        // 2. Marcar as despesas do cartão no mês atual como pagas
+        const month = AppState.displayMonth;
+        const year = AppState.displayYear;
+        AppState.transactions.forEach(tx => {
+            if (tx.accountId === cardId && tx.fundamentalType === 'despesa') {
+                const txDate = new Date(tx.date + 'T00:00:00');
+                if (txDate.getMonth() === month && txDate.getFullYear() === year) {
+                    tx.isPaid = true;
+                }
+            }
+        });
+
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
+        UI.closeModal();
+        UI.render();
+        UI.showFeedback(`Pagamento da fatura de ${card.name} registrado com sucesso!`, 'success');
     },
     
     handleGenerateReport() {
