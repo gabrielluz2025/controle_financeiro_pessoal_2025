@@ -272,21 +272,29 @@ const AppState = {
     },
     
     recalculateAllBalances() {
+        // Recalculate account balances
         this.accounts.forEach(account => {
             let currentBalance = account.initialBalance || 0;
             const accountTransactions = this.transactions.filter(
                 tx => tx.accountId === account.id && !tx.isCreditCard
             );
             accountTransactions.forEach(tx => {
+                // If an income, add value
                 if (tx.fundamentalType === 'receita') {
                     currentBalance += tx.value;
-                } else if (tx.fundamentalType === 'despesa' && tx.isPaid) {
+                } 
+                // If an expense paid by this account, subtract value
+                else if (tx.fundamentalType === 'despesa' && tx.isPaid && tx.paidByAccountId === account.id) {
                     currentBalance -= tx.value;
-                }
+                } 
+                // If an expense not paid by this account, but from a linked card, it affects the card balance, not directly the account
+                // However, payment of that card bill *will* affect this account balance, which is handled by the "Pagamento de Fatura" transaction type.
+                // So, no direct impact for credit card expenses on account balance here.
             });
             account.balance = currentBalance;
         });
 
+        // Recalculate credit card balances
         this.creditCards.forEach(card => {
             let usedAmount = 0;
             const cardTransactions = this.transactions.filter(
@@ -294,13 +302,18 @@ const AppState = {
             );
             
             cardTransactions.forEach(tx => {
-                if (tx.fundamentalType === 'despesa' && !tx.isPaid) {
+                // Credit card expenses increase used amount
+                if (tx.fundamentalType === 'despesa') {
                     usedAmount += tx.value;
-                }
+                } 
+                // Payments to the card reduce used amount (these are "Receitas" in the context of the card, but "Pagamento de Fatura" expense on linked account)
+                // This scenario (payments to card as income) should be reflected as the "Pagamento de Fatura" transaction category from the linked account.
+                // If there are explicit "receita" transactions on a credit card (e.g., refunds), they reduce the used amount.
                 else if (tx.fundamentalType === 'receita') {
                     usedAmount -= tx.value;
                 }
             });
+            // Ensure usedAmount doesn't go below zero
             usedAmount = Math.max(0, usedAmount);
             card.availableLimit = card.limit - usedAmount;
         });
@@ -680,6 +693,7 @@ const UI = {
             const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
             
             let statusHTML;
+            let paymentSourceHTML = ''; // Added to display payment source
             if (tx.fundamentalType === 'receita') {
                 statusHTML = `<td class="py-4 px-6 text-center">-</td>`;
             } else {
@@ -693,6 +707,12 @@ const UI = {
                 if (tx.isPaid) {
                     statusText = 'Pago';
                     statusColor = 'bg-green-100 text-green-800';
+                    if (tx.paidByAccountId) {
+                        const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
+                        if (paidByAccount) {
+                            paymentSourceHTML = `<p class="text-xs text-gray-500">por ${paidByAccount.name}</p>`;
+                        }
+                    }
                 } else if (txDate < today) {
                     let isOverdue = true;
                     if (tx.groupId) {
@@ -713,6 +733,7 @@ const UI = {
                         <span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">
                             ${statusText}
                         </span>
+                        ${paymentSourceHTML}
                     </td>
                 `;
             }
@@ -970,7 +991,7 @@ const UI = {
                     </div>
                      <div>
                         <label for="report-type" class="block text-sm font-medium text-gray-700">Tipo</label>
-                        <select id="report-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <select id="report-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                             <option value="despesa" selected>Despesas</option>
                             <option value="receita">Receitas</option>
                         </select>
@@ -1046,10 +1067,10 @@ const UI = {
         allCategories.forEach(cat => {
             const v1 = data1[cat] || 0;
             if(isComparative) {
-                 const v2 = data2[cat] || 0;
-                 const diff = v1 - v2;
-                 const percChange = v2 !== 0 ? ((diff / v2) * 100).toFixed(1) + '%' : (v1 > 0 ? 'Novo' : '0.0%');
-                 tableHTML += `<tr>
+                const v2 = data2[cat] || 0;
+                const diff = v1 - v2;
+                const percChange = v2 !== 0 ? ((diff / v2) * 100).toFixed(1) + '%' : (v1 > 0 ? 'Novo' : '0.0%');
+                tableHTML += `<tr>
                     <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
                     <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
                     <td class="py-4 px-6 text-right">${this.formatCurrency(v2)}</td>
@@ -1057,8 +1078,8 @@ const UI = {
                     <td class="py-4 px-6 text-right ${diff > 0 ? 'text-red-500' : 'text-green-500'}">${percChange}</td>
                 </tr>`;
             } else {
-                 const percentage = total1 > 0 ? ((v1 / total1) * 100).toFixed(2) : 0;
-                 tableHTML += `<tr>
+                const percentage = total1 > 0 ? ((v1 / total1) * 100).toFixed(2) : 0;
+                tableHTML += `<tr>
                     <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
                     <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
                     <td class="py-4 px-6 text-right">${percentage}%</td>
@@ -1295,8 +1316,8 @@ const UI = {
                             <input type="number" id="trans-installments-paid" value="${tx.installmentsPaid}" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                     </div>
-                 </div>
-                 <div>
+                </div>
+                <div>
                     <label for="trans-type" class="block text-sm font-medium text-gray-700">Tipo</label>
                     <select id="trans-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="despesa" ${tx.fundamentalType === 'despesa' ? 'selected' : ''}>Despesa</option>
@@ -1499,7 +1520,7 @@ const UI = {
 
     showChoiceModal(title, message, buttons) {
         const modalContainer = document.getElementById('modal-container');
-         let buttonsHTML = '';
+        let buttonsHTML = '';
         buttons.forEach(btn => {
             buttonsHTML += `<button id="${btn.id}" class="${btn.class}">${btn.text}</button>`;
         });
@@ -1518,7 +1539,7 @@ const UI = {
                          <button type="button" class="modal-close-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
                      </div>
                  </div>
-            </div>`;
+             </div>`;
 
         buttons.forEach(btn => {
              document.getElementById(btn.id).addEventListener('click', btn.onClick);
@@ -1545,7 +1566,7 @@ const UI = {
                          <button id="apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Todas as Parcelas</button>
                      </div>
                  </div>
-            </div>`;
+             </div>`;
         document.getElementById('apply-one-btn').onclick = onApplyOne;
         document.getElementById('apply-future-btn').onclick = onApplyFuture;
         document.getElementById('apply-all-btn').onclick = onApplyAll;
@@ -1568,7 +1589,7 @@ const UI = {
                          <button id="bulk-apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Em Toda a Série</button>
                      </div>
                  </div>
-            </div>`;
+             </div>`;
         document.getElementById('bulk-apply-selected-btn').onclick = onApplySelected;
         document.getElementById('bulk-apply-future-btn').onclick = onApplyFuture;
         document.getElementById('bulk-apply-all-btn').onclick = onApplyAll;
@@ -1623,6 +1644,7 @@ const UI = {
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
                 
                 let statusHTML = '';
+                let paymentSourceHTML = '';
                 if(tx.fundamentalType === 'despesa') {
                     const txDate = new Date(tx.date + "T00:00:00");
                     let statusText = 'Pendente';
@@ -1630,26 +1652,32 @@ const UI = {
                     if (tx.isPaid) {
                         statusText = 'Pago';
                         statusColor = 'bg-green-100 text-green-800';
+                        if (tx.paidByAccountId) {
+                            const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
+                            if (paidByAccount) {
+                                paymentSourceHTML = `<p class="text-xs text-gray-500">por ${paidByAccount.name}</p>`;
+                            }
+                        }
                     } else if (txDate < today) {
                         statusText = 'Atrasado';
                         statusColor = 'bg-red-100 text-red-800';
                     }
-                    statusHTML = `<span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">${statusText}</span>`;
+                    statusHTML = `<span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">${statusText}</span>${paymentSourceHTML}`;
                 }
 
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
-                                <div class="flex-1">
-                                    <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
-                                    <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
-                                    ${statusHTML ? `<div class="w-24 text-center">${statusHTML}</div>` : ''}
-                                    <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                    </button>
-                                </div>
-                            </li>`;
+                                 <div class="flex-1">
+                                     <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
+                                     <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                                 </div>
+                                 <div class="flex items-center">
+                                     <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
+                                     ${statusHTML ? `<div class="w-24 text-center">${statusHTML}</div>` : ''}
+                                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                     </button>
+                                 </div>
+                             </li>`;
             });
             listHtml += '</ul>';
             return listHtml;
@@ -1684,7 +1712,7 @@ const UI = {
                 content = txListBuilder(expenseTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
-            case 'monthly-paid':
+             case 'monthly-paid':
                  title = 'Total Pago no Mês';
                 const paidTxs = monthTxs.filter(t => t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(paidTxs);
@@ -1741,21 +1769,30 @@ const UI = {
             let listHtml = '<ul class="space-y-3">';
             txs.forEach(tx => {
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
+                let paymentSourceHtml = '';
+                if(tx.isPaid && tx.paidByAccountId) {
+                    const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
+                    if (paidByAccount) {
+                        paymentSourceHtml = `<p class="text-xs text-gray-500">pago por: ${paidByAccount.name}</p>`;
+                    }
+                }
+
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
-                                <div class="flex-1">
-                                    <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
-                                    <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                                </div>
-                                <div class="flex items-center">
-                                     <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
-                                     <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover Vínculo">
-                                         <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536l1.101-1.102a4 4 0 000-5.656l-4-4a4 4 0 00-5.656 5.656l1.101 1.102" /></svg>
-                                     </button>
-                                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                         <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                     </button>
-                                </div>
-                            </li>`;
+                                 <div class="flex-1">
+                                     <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
+                                     <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                                     ${paymentSourceHtml}
+                                 </div>
+                                 <div class="flex items-center">
+                                      <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
+                                      <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover Vínculo">
+                                           <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536l1.101-1.102a4 4 0 000-5.656l-4-4a4 4 0 00-5.656 5.656l1.101 1.102" /></svg>
+                                      </button>
+                                      <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                           <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                      </button>
+                                 </div>
+                             </li>`;
             });
             listHtml += '</ul>';
             return listHtml;
@@ -1797,18 +1834,26 @@ const UI = {
                     totalBill -= tx.value;
                 }
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
+                let paymentSourceHtml = '';
+                if(tx.isPaid && tx.paidByAccountId) {
+                    const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
+                    if (paidByAccount) {
+                        paymentSourceHtml = `<p class="text-xs text-gray-500">pago por: ${paidByAccount.name}</p>`;
+                    }
+                }
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
-                                <div class="flex-1">
-                                    <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
-                                    <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                                </div>
-                                <div class="flex items-center">
-                                     <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
-                                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                         <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                     </button>
-                                </div>
-                            </li>`;
+                                 <div class="flex-1">
+                                     <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
+                                     <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                                     ${paymentSourceHtml}
+                                 </div>
+                                 <div class="flex items-center">
+                                      <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
+                                      <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                           <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                      </button>
+                                 </div>
+                             </li>`;
             });
             listHtml += '</ul>';
             return listHtml;
@@ -1871,11 +1916,20 @@ const UI = {
         allInstallments.forEach(tx => {
             const statusColor = tx.isPaid ? 'text-green-600' : 'text-yellow-600';
             const statusText = tx.isPaid ? 'Pago' : 'Pendente';
+            let paymentSourceHtml = '';
+            if(tx.isPaid && tx.paidByAccountId) {
+                const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
+                if (paidByAccount) {
+                    paymentSourceHtml = `<p class="text-xs text-gray-500">pago por: ${paidByAccount.name}</p>`;
+                }
+            }
+
             content += `
                 <li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
                     <div>
                         <p class="font-medium text-gray-800">${tx.installments}</p>
                         <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                        ${paymentSourceHtml}
                     </div>
                     <div class="text-right">
                         <p class="font-semibold">${this.formatCurrency(tx.value)}</p>
@@ -1975,6 +2029,36 @@ const UI = {
             </div>`;
     },
 
+    // New modal to select payment source for a transaction
+    renderPaymentSourceModal(txId, sourceModalType) {
+        const tx = AppState.transactions.find(t => t.id === txId);
+        if (!tx) return;
+
+        const allAccountsAndCards = [
+            ...AppState.accounts.map(acc => ({ id: acc.id, name: acc.name, isCreditCard: false })),
+            ...AppState.creditCards.map(card => ({ id: card.id, name: card.name, isCreditCard: true }))
+        ];
+
+        const optionsHtml = allAccountsAndCards.map(item => {
+            return `<option value="${item.id}" data-is-credit-card="${item.isCreditCard}">${item.name} (${item.isCreditCard ? 'Cartão' : 'Conta'})</option>`;
+        }).join('');
+
+        const content = `
+            <form id="payment-source-form" class="space-y-4">
+                <input type="hidden" id="payment-source-tx-id" value="${txId}">
+                <input type="hidden" id="payment-source-modal-type" value="${sourceModalType || ''}">
+                <p class="text-gray-700">Selecione a conta ou cartão de onde a despesa foi paga:</p>
+                <div>
+                    <label for="payment-source-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
+                    <select id="payment-source-account" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="">Selecione...</option>
+                        ${optionsHtml}
+                    </select>
+                </div>
+            </form>
+        `;
+        this.showModal('Registrar Pagamento', content, 'Confirmar', 'payment-source-form');
+    },
 
     showConfirmationModal(title, message, onConfirm) {
         const modalContainer = document.getElementById('modal-container');
@@ -1992,7 +2076,7 @@ const UI = {
                          <button id="confirm-action-btn" class="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700">Confirmar</button>
                      </div>
                  </div>
-            </div>`;
+             </div>`;
         document.getElementById('confirm-action-btn').onclick = () => {
             onConfirm();
             this.closeModal();
@@ -2089,9 +2173,14 @@ const UI = {
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
             let balance = AppState.accounts.reduce((s, a) => s + (a.initialBalance || 0), 0);
             AppState.transactions.filter(tx => new Date(tx.date) <= endOfMonth).forEach(tx => {
-                if(!tx.isCreditCard) {
-                    if (tx.fundamentalType === 'receita') balance += tx.value;
-                    else if (tx.isPaid) balance -= tx.value;
+                // Only consider expenses that are actually paid from accounts (not credit cards unless it's a bill payment)
+                // And income is always added.
+                if(tx.fundamentalType === 'receita') {
+                    balance += tx.value;
+                } else if (tx.fundamentalType === 'despesa' && tx.isPaid && !tx.isCreditCard) { // Direct expense from account
+                    balance -= tx.value;
+                } else if (tx.fundamentalType === 'despesa' && tx.isPaid && tx.category === 'Pagamento de Fatura') { // Bill payment
+                    balance -= tx.value;
                 }
             });
             data.push(balance.toFixed(2));
@@ -2150,9 +2239,9 @@ const UI = {
             .filter(t => {
                 const txDate = new Date(t.date + 'T00:00:00');
                 return !t.isPaid && 
-                       t.fundamentalType === 'despesa' && 
-                       txDate.getMonth() === month && // Only this month
-                       txDate.getFullYear() === year;
+                        t.fundamentalType === 'despesa' && 
+                        txDate.getMonth() === month && // Only this month
+                        txDate.getFullYear() === year;
             })
             .sort((a,b) => new Date(a.date) - new Date(b.date))
             .slice(0, 5);
@@ -2275,11 +2364,11 @@ const UI = {
                         <h4 class="font-bold text-lg text-gray-700">${budget.category}</h4>
                         <div class="flex items-center space-x-1">
                              <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${budget.id}" data-type="budget" title="Editar">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
-                            <button class="delete-btn p-2 text-gray-400 hover:text-red-600" data-id="${budget.id}" data-type="budget" title="Excluir">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
+                             <button class="delete-btn p-2 text-gray-400 hover:text-red-600" data-id="${budget.id}" data-type="budget" title="Excluir">
+                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                             </button>
                         </div>
                     </div>
                     <div class="text-sm text-gray-500 mb-3">
@@ -2424,8 +2513,9 @@ const Handlers = {
                 }
             }
 
+            // Modified to handle payment source selection
             if (e.target.classList.contains('status-badge')) {
-                this.handleStatusToggle(e.target.dataset.id);
+                this.handleStatusToggle(e.target.dataset.id, AppState.currentView); // Pass current view as sourceModalType
             }
             
             const accountItem = e.target.closest('.account-item');
@@ -2433,7 +2523,7 @@ const Handlers = {
                 this.handleAccountClick(accountItem.dataset.id);
             }
             
-              // Handlers para Ações em Massa
+             // Handlers para Ações em Massa
             if (e.target.id === 'bulk-edit') UI.renderBulkEditModal();
             if (e.target.id === 'bulk-mark-paid') this.handleBulkMarkPaid();
             if (e.target.id === 'bulk-delete') this.handleBulkDelete();
@@ -2502,6 +2592,8 @@ const Handlers = {
             if (e.target.id === 'bulk-edit-modal-form') this.handleBulkEditFormSubmit(e.target);
             if (e.target.id === 'pay-bill-form') this.handlePayBillFormSubmit(e.target);
             if (e.target.id === 'budget-modal-form') this.handleBudgetFormSubmit(e.target);
+            // New handler for payment source form
+            if (e.target.id === 'payment-source-form') this.handlePaymentSourceFormSubmit(e.target);
         });
 
         document.getElementById('modal-container').addEventListener('change', e => {
@@ -2565,11 +2657,22 @@ const Handlers = {
     handleBulkMarkPaid() {
         if (AppState.selectedTransactionIds.length === 0) return;
         
+        // This flow now requires selecting a payment source for each transaction,
+        // or a single source for all if multiple are selected.
+        // For simplicity in bulk, let's assume a single payment source for all selected.
+        // Or we could trigger `renderPaymentSourceModal` for the first selected unpaid transaction,
+        // then apply to all, or iterate. Let's make it simple for now:
+        // Mark all selected as paid, without specifying source for bulk action.
+        // A more advanced feature would be a "Bulk Mark as Paid From..." modal.
+
         let changedCount = 0;
         AppState.selectedTransactionIds.forEach(id => {
             const tx = AppState.transactions.find(t => t.id === id);
             if (tx && tx.fundamentalType === 'despesa' && !tx.isPaid) {
                 tx.isPaid = true;
+                // For simplicity in bulk, we don't assign paidByAccountId here.
+                // It would require another modal or complex logic.
+                // The user can edit individual transactions to set it.
                 changedCount++;
             }
         });
@@ -2609,7 +2712,7 @@ const Handlers = {
         for (const seriesInfo of seriesQueue) {
              const message = `Aplicar alterações para a série "${seriesInfo.sampleTx.description}"?`;
              const scope = await new Promise(resolve => {
-                UI.showBulkApplyToSeriesModal(
+                 UI.showBulkApplyToSeriesModal(
                     `Editar Série: ${seriesInfo.sampleTx.description}`,
                     message,
                     () => { UI.closeModal(); resolve('selected'); },
@@ -2672,7 +2775,15 @@ const Handlers = {
         
         if (newStatus) {
             selectedTxs.forEach(tx => {
-                if (tx.fundamentalType === 'despesa') tx.isPaid = (newStatus === 'paid');
+                if (tx.fundamentalType === 'despesa') {
+                    tx.isPaid = (newStatus === 'paid');
+                    // In bulk edit, we don't ask for paidByAccountId for simplicity.
+                    // This could be a future enhancement.
+                    if (!tx.isPaid) { // If marking as unpaid, clear paidByAccountId
+                        tx.paidByAccountId = null;
+                        tx.paidByIsCreditCard = null;
+                    }
+                }
             });
         }
         
@@ -2727,6 +2838,7 @@ const Handlers = {
             const tx = AppState.transactions.find(t => t.id === txId);
             if (tx) {
                 tx.accountId = null;
+                tx.isCreditCard = false; // Ensure this is set to false if unlinked from a card
                 AppState.recalculateAllBalances();
                 AppState.saveAll();
                 UI.closeModal();
@@ -2751,14 +2863,20 @@ const Handlers = {
         // If we are trying to mark as paid
         if (!tx.isPaid) {
             const setAsPaid = () => {
-                tx.isPaid = true;
-                AppState.recalculateAllBalances();
-                AppState.saveAll();
-                 if (sourceModalType) {
-                    UI.closeModal();
-                    setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
+                // If payment source already exists from previous edits or import, use it
+                if (tx.paidByAccountId) {
+                    tx.isPaid = true;
+                    AppState.recalculateAllBalances();
+                    AppState.saveAll();
+                    if (sourceModalType) {
+                         UI.closeModal();
+                         setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
+                    } else {
+                        UI.render();
+                    }
                 } else {
-                    UI.render();
+                    // If no payment source, open modal to select one
+                    UI.renderPaymentSourceModal(txId, sourceModalType);
                 }
             };
 
@@ -2781,9 +2899,11 @@ const Handlers = {
         // If we are trying to mark as unpaid
         else {
             tx.isPaid = false;
+            tx.paidByAccountId = null; // Clear payment source if marked unpaid
+            tx.paidByIsCreditCard = null; // Clear payment source if marked unpaid
             AppState.recalculateAllBalances();
             AppState.saveAll();
-             if (sourceModalType) {
+            if (sourceModalType) {
                 UI.closeModal();
                 setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
             } else {
@@ -2792,6 +2912,44 @@ const Handlers = {
         }
     },
     
+    // New handler for payment source form submission
+    handlePaymentSourceFormSubmit(form) {
+        const txId = form.querySelector('#payment-source-tx-id').value;
+        const selectedAccountId = form.querySelector('#payment-source-account').value;
+        const sourceModalType = form.querySelector('#payment-source-modal-type').value;
+
+        if (!selectedAccountId) {
+            UI.showFeedback('Por favor, selecione uma conta ou cartão.', 'error');
+            return;
+        }
+
+        const tx = AppState.transactions.find(t => t.id === txId);
+        if (tx) {
+            const isCreditCard = !!AppState.creditCards.find(c => c.id === selectedAccountId);
+            tx.isPaid = true;
+            tx.paidByAccountId = selectedAccountId;
+            tx.paidByIsCreditCard = isCreditCard;
+
+            AppState.recalculateAllBalances();
+            AppState.saveAll();
+            UI.closeModal();
+            UI.showFeedback('Despesa marcada como paga com sucesso!', 'success');
+            // Re-render the correct page/modal
+            if (sourceModalType === 'transactions') {
+                UI.renderTransactionsPage();
+            } else if (sourceModalType && UI[`renderDetailedSummaryModal`]) {
+                UI.renderDetailedSummaryModal(sourceModalType);
+            } else if (tx.groupId && UI.renderInstallmentDetailsModal) { // If it was an installment, re-render its details
+                 UI.renderInstallmentDetailsModal(tx.groupId);
+            } else {
+                UI.render();
+            }
+        } else {
+            UI.showFeedback('Transação não encontrada.', 'error');
+            UI.closeModal();
+        }
+    },
+
     handleModalClick(event, type) {
         const editBtn = event.target.closest('.edit-btn');
         if (editBtn) {
@@ -2811,10 +2969,18 @@ const Handlers = {
     handleInstallmentStatusToggle(txId) {
         const tx = AppState.transactions.find(t => t.id === txId);
         if (tx) {
-            tx.isPaid = !tx.isPaid;
-            AppState.recalculateAllBalances();
-            AppState.saveAll();
-            UI.renderInstallmentDetailsModal(tx.groupId);
+            // When marking as unpaid, clear the paidByAccountId
+            if (tx.isPaid) {
+                tx.isPaid = false;
+                tx.paidByAccountId = null;
+                tx.paidByIsCreditCard = null;
+                AppState.recalculateAllBalances();
+                AppState.saveAll();
+                UI.renderInstallmentDetailsModal(tx.groupId);
+            } else {
+                // When marking as paid, prompt for source
+                UI.renderPaymentSourceModal(txId, 'installment-details');
+            }
         }
     },
     
@@ -3001,6 +3167,7 @@ const Handlers = {
             tx.value = newValue;
             tx.category = newCategory;
             tx.date = newDate.toISOString().slice(0,10);
+            // Don't modify paidByAccountId/isCreditCard for series edit, as it's specific to each installment
         });
 
         AppState.recalculateAllBalances();
@@ -3027,7 +3194,26 @@ const Handlers = {
             accountId: accountId || null,
             isCreditCard: isCC,
         };
-    
+        // Update paidByAccountId and paidByIsCreditCard if `isPaid` changes or if accountId changes
+        if (updatedData.isPaid !== originalTx.isPaid) {
+            if (updatedData.isPaid) {
+                // When marking as paid, if no paidByAccountId exists, use the linked account.
+                // Otherwise, it implies user selected it in a separate prompt (future improvement).
+                updatedData.paidByAccountId = originalTx.accountId || null;
+                updatedData.paidByIsCreditCard = originalTx.isCreditCard || false;
+            } else {
+                updatedData.paidByAccountId = null;
+                updatedData.paidByIsCreditCard = null;
+            }
+        } else if (updatedData.isPaid && updatedData.accountId !== originalTx.accountId) {
+             // If already paid and account changes, update paidByAccountId
+            updatedData.paidByAccountId = updatedData.accountId;
+            updatedData.paidByIsCreditCard = updatedData.isCreditCard;
+        } else if (!updatedData.isPaid) { // If it's unpaid, ensure payment source is cleared
+            updatedData.paidByAccountId = null;
+            updatedData.paidByIsCreditCard = null;
+        }
+
         const changes = {};
         if (originalTx.description !== updatedData.description) changes.description = updatedData.description;
         if (originalTx.value !== updatedData.value) changes.value = updatedData.value;
@@ -3088,7 +3274,7 @@ const Handlers = {
 
         if (originalTx.groupId && hasSharedChanges) {
              const scope = await new Promise(resolve => {
-                UI.showApplyToSeriesModal(
+                 UI.showApplyToSeriesModal(
                     'Editar Parcelas',
                     'Você alterou um campo compartilhado (descrição, valor, categoria ou conta). Como deseja aplicar esta mudança?',
                     () => { UI.closeModal(); resolve('one'); },
@@ -3202,8 +3388,17 @@ const Handlers = {
                 accountId: accountId || null,
                 isCreditCard: isCC,
                 installments: totalInstallments > 1 ? `(${i}/${totalInstallments})` : null,
-                groupId: groupId
+                groupId: groupId,
+                paidByAccountId: null, // New field for payment source
+                paidByIsCreditCard: null // New field for payment source type
             };
+
+            // If it's a paid expense, and an account is selected, set it as the payment source.
+            // For credit card expenses, paidByAccountId should only be set when the bill is paid.
+            if (txData.isPaid && txData.fundamentalType === 'despesa' && !txData.isCreditCard) {
+                txData.paidByAccountId = txData.accountId;
+                txData.paidByIsCreditCard = txData.isCreditCard;
+            }
             AppState.addTransaction(txData);
         }
 
@@ -3216,8 +3411,8 @@ const Handlers = {
         if(isImported) {
              const importIndex = parseInt(form.querySelector('input[name="isImported"]').dataset.importIndex);
              this.importedTransactions[importIndex] = null;
-            UI.closeModal();
-            setTimeout(() => UI.renderImportReviewModal(this.importedTransactions), 50);
+             UI.closeModal();
+             setTimeout(() => UI.renderImportReviewModal(this.importedTransactions), 50);
         } else {
             UI.closeModal();
         }
@@ -3249,7 +3444,9 @@ const Handlers = {
             accountId: sourceAccountId,
             isCreditCard: false,
             installments: null,
-            groupId: null
+            groupId: null,
+            paidByAccountId: sourceAccountId, // Payment source is the account itself
+            paidByIsCreditCard: false // Payment source is a regular account
         };
         AppState.addTransaction(paymentTx);
 
@@ -3261,6 +3458,12 @@ const Handlers = {
                 const txDate = new Date(tx.date + 'T00:00:00');
                 if (txDate.getMonth() === month && txDate.getFullYear() === year) {
                     tx.isPaid = true;
+                    // For credit card expenses paid by bill, the payment source is the linked account.
+                    // This is slightly complex as credit card transactions don't have paidByAccountId initially
+                    // but become paid when the *bill* is paid.
+                    // For simplicity, we can set the card itself as a "paidBy" source for its own expenses if we need to track it,
+                    // or leave it null as the payment is handled by a separate transaction.
+                    // For now, let's keep it null as the explicit payment transaction handles the fund transfer.
                 }
             }
         });
