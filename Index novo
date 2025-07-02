@@ -61,30 +61,62 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            animation: fadeIn 0.3s ease;
         }
         .modal-content {
             background-color: white;
             border-radius: 0.75rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             width: 90%;
-            max-width: 500px;
+            max-width: 700px;
             max-height: 90vh;
             display: flex;
             flex-direction: column;
+            animation: slideIn 0.3s ease;
         }
-        .modal-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
+        .modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; }
+        .modal-body { padding: 1.5rem; overflow-y: auto; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; background-color: #f7fafc; }
+        
+        /* Estilos da Análise AI Visual */
+        .ai-analysis-content h3 { font-size: 1.25rem; font-weight: 700; color: #1d4ed8; margin-bottom: 0.5rem; }
+        .ai-analysis-content h4 { font-weight: 600; font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #1e40af; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.25rem;}
+        .ai-analysis-content ul { list-style-type: none; padding-left: 0.5rem; }
+        .ai-analysis-content li { margin-bottom: 0.75rem; display: flex; align-items: flex-start; }
+        .ai-analysis-content li::before { content: '🔹'; color: #3b82f6; margin-right: 0.75rem; font-size: 0.8rem; line-height: 1.75; }
+        .ai-analysis-content strong { font-weight: 700; color: #1e3a8a; }
+        .ai-analysis-content .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
         }
-        .modal-body {
-            padding: 1.5rem;
-            overflow-y: auto;
+        
+        /* Estilos de Orçamento */
+        .budget-progress-bar {
+            background-color: #e5e7eb;
+            border-radius: 0.5rem;
+            height: 1.25rem;
+            overflow: hidden;
         }
-        .modal-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid #e2e8f0;
-            background-color: #f7fafc;
+        .budget-progress-fill {
+            height: 100%;
+            border-radius: 0.5rem 0 0 0.5rem;
+            transition: width 0.5s ease-in-out;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.75rem;
+            line-height: 1.25rem;
+            white-space: nowrap;
         }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -103,6 +135,14 @@
             <a href="#" id="nav-transactions" class="nav-link flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
                 <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 <span class="nav-text">Transações</span>
+            </a>
+            <a href="#" id="nav-budgets" class="nav-link flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41M12 12a4 4 0 100-8 4 4 0 000 8z" /></svg>
+                <span class="nav-text">Orçamentos</span>
+            </a>
+            <a href="#" id="nav-faturas" class="nav-link flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="nav-text">Faturas</span>
             </a>
             <a href="#" id="nav-accounts" class="nav-link flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
                 <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
@@ -123,7 +163,7 @@
                 <span class="add-transaction-text">Nova Transação</span>
             </button>
             <button id="sidebar-toggle-btn" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                 <svg class="w-6 h-6 mr-3 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                <svg class="w-6 h-6 mr-3 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
                 <span class="nav-text nav-text-label">Recolher</span>
             </button>
         </div>
@@ -136,18 +176,23 @@
                 <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
             </div>
             <div class="flex items-center space-x-4">
-                 <button id="import-statement-btn" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg shadow-sm">Importar Extrato</button>
                 <input type="file" id="import-file-input" class="hidden" accept=".json">
-                 <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
+                <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
                 <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Backup</button>
                 <button id="clear-data-btn" class="text-sm text-gray-500 hover:text-red-600">Limpar Dados</button>
             </div>
         </header>
         <div id="page-container" class="flex-1 p-4 md:p-8">
             <section id="dashboard-page">
-                <div class="period-selector-container mb-8 flex items-center space-x-2">
-                    <select class="period-month-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
-                    <select class="period-year-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
+                <div class="flex justify-between items-center mb-8">
+                    <div class="period-selector-container flex items-center space-x-2">
+                        <select class="period-month-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
+                        <select class="period-year-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
+                    </div>
+                    <button id="get-analysis-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform hover:scale-105 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        Analisar Finanças
+                    </button>
                 </div>
                 <div id="summary-cards-container" class="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"></div>
                 
@@ -158,6 +203,12 @@
                         </div>
                     </div>
                     <div class="space-y-8">
+                        <div>
+                             <h3 class="text-xl font-bold text-gray-700 mb-4">Resumo dos Orçamentos</h3>
+                            <div id="budget-progress-container" class="bg-white p-4 rounded-xl shadow-md space-y-4">
+                                <!-- Progresso do Orçamento será inserido aqui -->
+                            </div>
+                        </div>
                         <div>
                             <h3 class="text-xl font-bold text-gray-700 mb-4">Próximas Contas a Vencer</h3>
                             <div id="upcoming-bills-container" class="bg-white p-4 rounded-xl shadow-md space-y-3">
@@ -184,6 +235,8 @@
                 </div>
             </section>
             <section id="transactions-page" class="hidden"></section>
+            <section id="budgets-page" class="hidden"></section>
+            <section id="faturas-page" class="hidden"></section>
             <section id="accounts-page" class="hidden"></section>
             <section id="categories-page" class="hidden"></section>
             <section id="reports-page" class="hidden"></section>
@@ -192,46 +245,56 @@
 
     <div id="modal-container"></div>
     <div id="feedback-message" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50"></div>
-    <input type="file" id="statement-file-input" class="hidden">
-
+    
 <script>
 // Módulo de Estado da Aplicação
 const AppState = {
-    accounts: [], creditCards: [], transactions: [],
-    categories: ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros"],
+    accounts: [], creditCards: [], transactions: [], budgets: [],
+    categories: ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"],
     currentView: 'dashboard', isSidebarCollapsed: false,
     displayMonth: new Date().getMonth(),
     displayYear: new Date().getFullYear(),
     selectedTransactionIds: [],
+    selectedFaturaCardId: null,
     
     init() {
         this.accounts = JSON.parse(localStorage.getItem('app_accounts_v3')) || [];
         this.creditCards = JSON.parse(localStorage.getItem('app_creditCards_v3')) || [];
         this.transactions = JSON.parse(localStorage.getItem('app_transactions_v3')) || [];
+        this.budgets = JSON.parse(localStorage.getItem('app_budgets_v3')) || [];
         const storedCategories = JSON.parse(localStorage.getItem('app_categories_v3'));
-        if (storedCategories && storedCategories.length) this.categories = storedCategories;
+        if (storedCategories && storedCategories.length) {
+            this.categories = storedCategories;
+        }
         if (!this.categories.includes("Outros")) this.categories.push("Outros");
+        if (!this.categories.includes("Pagamento de Fatura")) this.categories.push("Pagamento de Fatura");
         this.recalculateAllBalances();
     },
     
     recalculateAllBalances() {
-        // Recalcula o saldo das contas de débito/dinheiro
+        // Recalculate account balances
         this.accounts.forEach(account => {
             let currentBalance = account.initialBalance || 0;
             const accountTransactions = this.transactions.filter(
                 tx => tx.accountId === account.id && !tx.isCreditCard
             );
             accountTransactions.forEach(tx => {
+                // If an income, add value
                 if (tx.fundamentalType === 'receita') {
                     currentBalance += tx.value;
-                } else if (tx.fundamentalType === 'despesa' && tx.isPaid) {
+                } 
+                // If an expense paid by this account, subtract value
+                else if (tx.fundamentalType === 'despesa' && tx.isPaid && tx.paidByAccountId === account.id) {
                     currentBalance -= tx.value;
-                }
+                } 
+                // If an expense not paid by this account, but from a linked card, it affects the card balance, not directly the account
+                // However, payment of that card bill *will* affect this account balance, which is handled by the "Pagamento de Fatura" transaction type.
+                // So, no direct impact for credit card expenses on account balance here.
             });
             account.balance = currentBalance;
         });
 
-        // Recalcula o limite disponível dos cartões de crédito
+        // Recalculate credit card balances
         this.creditCards.forEach(card => {
             let usedAmount = 0;
             const cardTransactions = this.transactions.filter(
@@ -239,16 +302,18 @@ const AppState = {
             );
             
             cardTransactions.forEach(tx => {
-                // Despesas não pagas consomem o limite
-                if (tx.fundamentalType === 'despesa' && !tx.isPaid) {
+                // Credit card expenses increase used amount
+                if (tx.fundamentalType === 'despesa') {
                     usedAmount += tx.value;
-                }
-                // Receitas (estornos/créditos) liberam o limite
+                } 
+                // Payments to the card reduce used amount (these are "Receitas" in the context of the card, but "Pagamento de Fatura" expense on linked account)
+                // This scenario (payments to card as income) should be reflected as the "Pagamento de Fatura" transaction category from the linked account.
+                // If there are explicit "receita" transactions on a credit card (e.g., refunds), they reduce the used amount.
                 else if (tx.fundamentalType === 'receita') {
                     usedAmount -= tx.value;
                 }
             });
-             // Garante que o valor usado não seja negativo (em caso de mais estornos que gastos)
+            // Ensure usedAmount doesn't go below zero
             usedAmount = Math.max(0, usedAmount);
             card.availableLimit = card.limit - usedAmount;
         });
@@ -259,11 +324,12 @@ const AppState = {
         localStorage.setItem('app_creditCards_v3', JSON.stringify(this.creditCards));
         localStorage.setItem('app_transactions_v3', JSON.stringify(this.transactions));
         localStorage.setItem('app_categories_v3', JSON.stringify(this.categories));
+        localStorage.setItem('app_budgets_v3', JSON.stringify(this.budgets));
     },
     
     clearAllData() {
-        this.accounts = []; this.creditCards = []; this.transactions = [];
-        this.categories = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Outros"];
+        this.accounts = []; this.creditCards = []; this.transactions = []; this.budgets = [];
+        this.categories = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"];
         this.saveAll();
     },
 
@@ -273,6 +339,7 @@ const AppState = {
             creditCards: this.creditCards,
             transactions: this.transactions,
             categories: this.categories,
+            budgets: this.budgets,
         };
         const dataStr = JSON.stringify(dataToExport, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
@@ -294,6 +361,7 @@ const AppState = {
                         this.creditCards = importedData.creditCards || [];
                         this.transactions = importedData.transactions || [];
                         this.categories = importedData.categories || ["Outros"];
+                        this.budgets = importedData.budgets || [];
                         this.saveAll();
                         this.recalculateAllBalances();
                         UI.render();
@@ -309,53 +377,41 @@ const AppState = {
         reader.readAsText(file);
     },
 
-    getFinancialAnalysis() {
+    getComparativeAnalysis() {
         const now = new Date();
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        const prevMonthEnd = new Date(now.getFullYear(), now.getMonth() - 1, 0);
 
-        const lastMonthTxs = this.transactions.filter(t => {
-            const txDate = new Date(t.date + "T00:00:00");
-            return txDate >= lastMonth && txDate <= endOfLastMonth;
-        });
+        const calculateMetricsForPeriod = (startDate, endDate) => {
+            const periodTxs = this.transactions.filter(t => {
+                const txDate = new Date(t.date + "T00:00:00");
+                return txDate >= startDate && txDate <= endDate;
+            });
 
-        if (lastMonthTxs.length === 0) {
-            return { error: "Não há dados suficientes do mês passado para gerar uma análise." };
+            const income = periodTxs.filter(t => t.fundamentalType === 'receita').reduce((sum, t) => sum + t.value, 0);
+            const expenses = periodTxs.filter(t => t.fundamentalType === 'despesa').reduce((sum, t) => sum + t.value, 0);
+            const balance = income - expenses;
+            const savingsRate = income > 0 ? (balance / income) * 100 : 0;
+            const expensesByCategory = periodTxs
+                .filter(t => t.fundamentalType === 'despesa')
+                .reduce((acc, t) => {
+                    acc[t.category] = (acc[t.category] || 0) + t.value;
+                    return acc;
+                }, {});
+
+            return { income, expenses, balance, savingsRate, expensesByCategory, periodLabel: startDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }) };
+        };
+
+        const lastMonthData = calculateMetricsForPeriod(lastMonthStart, lastMonthEnd);
+        const prevMonthData = calculateMetricsForPeriod(prevMonthStart, prevMonthEnd);
+        
+        if (lastMonthData.income === 0 && lastMonthData.expenses === 0 && prevMonthData.income === 0 && prevMonthData.expenses === 0) {
+            return { error: "Não há dados suficientes dos últimos dois meses para gerar uma análise. Adicione algumas transações e tente novamente." };
         }
 
-        const totalIncome = lastMonthTxs
-            .filter(t => t.fundamentalType === 'receita')
-            .reduce((sum, t) => sum + t.value, 0);
-
-        const totalExpenses = lastMonthTxs
-            .filter(t => t.fundamentalType === 'despesa')
-            .reduce((sum, t) => sum + t.value, 0);
-
-        const expensesByCategory = lastMonthTxs
-            .filter(t => t.fundamentalType === 'despesa')
-            .reduce((acc, t) => {
-                acc[t.category] = (acc[t.category] || 0) + t.value;
-                return acc;
-            }, {});
-
-        const topExpenseCategories = Object.entries(expensesByCategory)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 5)
-            .map(([category, amount]) => ({
-                category,
-                amount,
-                percentage: totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(1) : 0
-            }));
-
-        const monthlyBalance = totalIncome - totalExpenses;
-
-        return {
-            totalIncome,
-            totalExpenses,
-            monthlyBalance,
-            topExpenseCategories,
-            period: lastMonth.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
-        };
+        return { lastMonthData, prevMonthData };
     },
 
     addTransaction(tx) { this.transactions.push(tx); },
@@ -414,7 +470,7 @@ const AppState = {
         return false;
     },
     removeCategory(name) {
-        if (name && name !== "Outros") {
+        if (name && name !== "Outros" && name !== "Pagamento de Fatura") {
             this.categories = this.categories.filter(c => c !== name);
             this.transactions.forEach(tx => {
                 if (tx.category === name) {
@@ -424,6 +480,14 @@ const AppState = {
             return true;
         }
         return false;
+    },
+    addBudget(budget) { this.budgets.push(budget); },
+    updateBudget(budgetId, updatedData) {
+        const budgetIndex = this.budgets.findIndex(b => b.id === budgetId);
+        if (budgetIndex > -1) this.budgets[budgetIndex] = { ...this.budgets[budgetIndex], ...updatedData };
+    },
+    removeBudget(budgetId) {
+        this.budgets = this.budgets.filter(b => b.id !== budgetId);
     }
 };
 
@@ -461,7 +525,7 @@ const UI = {
     },
     
     capitalize: s => s.charAt(0).toUpperCase() + s.slice(1),
-    getPageTitle: v => ({ dashboard: 'Dashboard', transactions: 'Minhas Transações', accounts: 'Contas & Cartões', reports: 'Relatórios', categories: 'Gerenciar Categorias' }[v] || 'Dashboard'),
+    getPageTitle: v => ({ dashboard: 'Dashboard', transactions: 'Minhas Transações', budgets: 'Orçamentos', faturas: 'Faturas', accounts: 'Contas & Cartões', reports: 'Relatórios', categories: 'Gerenciar Categorias' }[v] || 'Dashboard'),
     
     updateNavLinks() {
         document.querySelectorAll('aside nav a').forEach(l => l.classList.remove('bg-gray-200', 'text-gray-700'));
@@ -478,6 +542,7 @@ const UI = {
         this.populatePeriodSelectors();
         this.renderSummaryCards();
         this.renderCardSummaries();
+        this.renderBudgetProgress();
         this.renderUpcomingBills();
         this.renderOverdueBills();
         this.renderBalanceChart();
@@ -572,7 +637,7 @@ const UI = {
                     <p class="font-medium text-gray-800">${cat}</p>
                     <p class="text-sm text-gray-500">Utilizado: ${this.formatCurrency(totalUsed)}</p>
                 </div>
-                ${cat !== "Outros" ? `
+                ${cat !== "Outros" && cat !== "Pagamento de Fatura" ? `
                 <div class="flex items-center space-x-2">
                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-name="${cat}" data-type="category" title="Editar">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -628,6 +693,7 @@ const UI = {
             const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
             
             let statusHTML;
+            let paymentSourceHTML = ''; // Added to display payment source
             if (tx.fundamentalType === 'receita') {
                 statusHTML = `<td class="py-4 px-6 text-center">-</td>`;
             } else {
@@ -641,6 +707,12 @@ const UI = {
                 if (tx.isPaid) {
                     statusText = 'Pago';
                     statusColor = 'bg-green-100 text-green-800';
+                    if (tx.paidByAccountId) {
+                        const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
+                        if (paidByAccount) {
+                            paymentSourceHTML = `<p class="text-xs text-gray-500">por ${paidByAccount.name}</p>`;
+                        }
+                    }
                 } else if (txDate < today) {
                     let isOverdue = true;
                     if (tx.groupId) {
@@ -661,6 +733,7 @@ const UI = {
                         <span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">
                             ${statusText}
                         </span>
+                        ${paymentSourceHTML}
                     </td>
                 `;
             }
@@ -718,6 +791,153 @@ const UI = {
         }).join('');
     },
     
+    renderFaturasPage() {
+        const page = document.getElementById('faturas-page');
+        page.innerHTML = `
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
+                <div class="lg:col-span-1 bg-white p-4 rounded-xl shadow-md overflow-y-auto">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">Meus Cartões</h3>
+                    <div id="fatura-card-list" class="space-y-3"></div>
+                </div>
+                <div id="fatura-details-container" class="lg:col-span-3 bg-white p-6 rounded-xl shadow-md overflow-y-auto">
+                    <!-- Detalhes da fatura aparecerão aqui -->
+                </div>
+            </div>`;
+        this.renderCardListForFaturas();
+        if (AppState.selectedFaturaCardId) {
+            this.renderInvoiceListForCard(AppState.selectedFaturaCardId);
+        } else {
+            document.getElementById('fatura-details-container').innerHTML = `<div class="flex items-center justify-center h-full text-gray-500"><svg class="w-10 h-10 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg> Selecione um cartão para ver as faturas.</div>`;
+        }
+    },
+
+    renderCardListForFaturas() {
+        const container = document.getElementById('fatura-card-list');
+        if (!container) return;
+
+        if (AppState.creditCards.length === 0) {
+            container.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cartão cadastrado.</p>`;
+            return;
+        }
+
+        container.innerHTML = AppState.creditCards.map(card => `
+            <div class="p-3 rounded-lg cursor-pointer fatura-card-item ${card.id === AppState.selectedFaturaCardId ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 hover:bg-gray-200'}" data-card-id="${card.id}">
+                <p class="font-semibold">${card.name}</p>
+                <p class="text-sm">${card.brand}</p>
+            </div>
+        `).join('');
+    },
+    
+    renderInvoiceListForCard(cardId) {
+        const container = document.getElementById('fatura-details-container');
+        if (!container) return;
+
+        const card = AppState.creditCards.find(c => c.id === cardId);
+        const transactionsByMonth = AppState.transactions
+            .filter(tx => tx.accountId === cardId)
+            .reduce((acc, tx) => {
+                const txDate = new Date(tx.date + 'T00:00:00');
+                const month = txDate.getMonth();
+                const year = txDate.getFullYear();
+                const monthYear = new Date(year, month).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+                if (!acc[monthYear]) {
+                    acc[monthYear] = {
+                        txs: [],
+                        total: 0,
+                        year: year,
+                        month: month
+                    };
+                }
+                acc[monthYear].txs.push(tx);
+                if (tx.fundamentalType === 'despesa') acc[monthYear].total += tx.value;
+                else acc[monthYear].total -= tx.value;
+                return acc;
+            }, {});
+
+        const sortedMonths = Object.keys(transactionsByMonth).sort((a, b) => {
+            const dateA = new Date(transactionsByMonth[a].year, transactionsByMonth[a].month);
+            const dateB = new Date(transactionsByMonth[b].year, transactionsByMonth[b].month);
+            return dateB - dateA;
+        });
+        
+        container.innerHTML = `
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">Faturas de ${card.name}</h3>
+            ${sortedMonths.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhuma fatura encontrada para este cartão.</p>` : `
+            <div class="space-y-4">
+                ${sortedMonths.map(monthYear => {
+                    const invoice = transactionsByMonth[monthYear];
+                    const dueDate = new Date(invoice.year, invoice.month + 1, card.dueDay);
+                    return `
+                    <div class="bg-gray-50 p-4 rounded-lg cursor-pointer fatura-invoice-item hover:bg-gray-100" data-card-id="${cardId}" data-year="${invoice.year}" data-month="${invoice.month}">
+                        <div class="flex justify-between items-center">
+                            <p class="font-semibold text-lg capitalize">${monthYear}</p>
+                            <p class="font-bold text-red-600">${this.formatCurrency(invoice.total)}</p>
+                        </div>
+                        <p class="text-sm text-gray-500">Vencimento em ${dueDate.toLocaleDateString('pt-BR')}</p>
+                    </div>`
+                }).join('')}
+            </div>
+            `}
+        `;
+    },
+
+    renderInvoiceDetails(cardId, year, month) {
+        const container = document.getElementById('fatura-details-container');
+        if (!container) return;
+        const card = AppState.creditCards.find(c => c.id === cardId);
+        const monthName = new Date(year, month).toLocaleString('pt-BR', { month: 'long' });
+
+        const transactions = AppState.transactions
+            .filter(tx => {
+                const txDate = new Date(tx.date + "T00:00:00");
+                return tx.accountId === cardId && txDate.getFullYear() === year && txDate.getMonth() === month;
+            })
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        let total = 0;
+        transactions.forEach(tx => {
+            if (tx.fundamentalType === 'despesa') total += tx.value;
+            else total -= tx.value;
+        });
+
+        container.innerHTML = `
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <button id="back-to-invoices-btn" class="text-sm text-blue-600 hover:underline mb-2">&larr; Voltar para faturas de ${card.name}</button>
+                    <h3 class="text-2xl font-bold text-gray-800 capitalize">Fatura de ${monthName} ${year}</h3>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500">Total da Fatura</p>
+                    <p class="text-2xl font-bold ${total >= 0 ? 'text-red-600' : 'text-green-600'}">${this.formatCurrency(total)}</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                ${transactions.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhum lançamento nesta fatura.</p>` :
+                transactions.map(tx => {
+                    const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
+                    const valuePrefix = tx.fundamentalType === 'receita' ? '+' : '-';
+                    return `
+                    <div class="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
+                        <div>
+                            <p class="font-medium text-gray-700">${tx.description} ${tx.installments || ''}</p>
+                            <p class="text-sm text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <p class="font-semibold ${valueColor} w-24 text-right">${valuePrefix} ${this.formatCurrency(tx.value)}</p>
+                            <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" data-context="faturas" data-card-id="${cardId}" data-year="${year}" data-month="${month}" title="Editar">
+                                <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                        </div>
+                    </div>`
+                }).join('')}
+            </div>
+        `;
+
+        document.getElementById('back-to-invoices-btn').addEventListener('click', () => {
+            this.renderInvoiceListForCard(cardId);
+        });
+    },
+
     renderReportsPage() {
         const page = document.getElementById('reports-page');
         const now = new Date();
@@ -726,7 +946,7 @@ const UI = {
         
         page.innerHTML = `
             <div class="bg-white p-6 rounded-xl shadow-md space-y-6">
-                 <div>
+                <div>
                     <h3 class="text-2xl font-bold text-gray-800 mb-2">Relatórios e Análises</h3>
                     <p class="text-gray-600">Analise suas finanças e receba sugestões para melhorar sua saúde financeira.</p>
                 </div>
@@ -771,7 +991,7 @@ const UI = {
                     </div>
                      <div>
                         <label for="report-type" class="block text-sm font-medium text-gray-700">Tipo</label>
-                        <select id="report-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <select id="report-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                             <option value="despesa" selected>Despesas</option>
                             <option value="receita">Receitas</option>
                         </select>
@@ -847,10 +1067,10 @@ const UI = {
         allCategories.forEach(cat => {
             const v1 = data1[cat] || 0;
             if(isComparative) {
-                 const v2 = data2[cat] || 0;
-                 const diff = v1 - v2;
-                 const percChange = v2 !== 0 ? ((diff / v2) * 100).toFixed(1) + '%' : (v1 > 0 ? 'Novo' : '0.0%');
-                 tableHTML += `<tr>
+                const v2 = data2[cat] || 0;
+                const diff = v1 - v2;
+                const percChange = v2 !== 0 ? ((diff / v2) * 100).toFixed(1) + '%' : (v1 > 0 ? 'Novo' : '0.0%');
+                tableHTML += `<tr>
                     <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
                     <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
                     <td class="py-4 px-6 text-right">${this.formatCurrency(v2)}</td>
@@ -858,8 +1078,8 @@ const UI = {
                     <td class="py-4 px-6 text-right ${diff > 0 ? 'text-red-500' : 'text-green-500'}">${percChange}</td>
                 </tr>`;
             } else {
-                 const percentage = total1 > 0 ? ((v1 / total1) * 100).toFixed(2) : 0;
-                 tableHTML += `<tr>
+                const percentage = total1 > 0 ? ((v1 / total1) * 100).toFixed(2) : 0;
+                tableHTML += `<tr>
                     <td class="py-4 px-6 font-medium text-gray-900">${cat}</td>
                     <td class="py-4 px-6 text-right">${this.formatCurrency(v1)}</td>
                     <td class="py-4 px-6 text-right">${percentage}%</td>
@@ -952,8 +1172,8 @@ const UI = {
                         </button>
                          <button class="delete-btn p-2 text-gray-400 hover:text-red-600" data-id="${card.id}" data-type="card" title="Excluir">
                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </div>
+                         </button>
+                     </div>
                 </div>
             </div>`;
         }).join('');
@@ -1069,7 +1289,7 @@ const UI = {
 
         const content = `
             <form id="transaction-modal-form" class="space-y-4">
-                <input type="hidden" name="isImported" value="${data.isImported ? 'true' : ''}" data-import-index="${data.importIndex}">
+                <input type="hidden" name="isImported" value="${data.isImported ? 'true' : ''}" data-import-index="${data.importIndex || ''}">
                 <div>
                     <label for="trans-description" class="block text-sm font-medium text-gray-700">Descrição</label>
                     <input type="text" id="trans-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
@@ -1096,8 +1316,8 @@ const UI = {
                             <input type="number" id="trans-installments-paid" value="${tx.installmentsPaid}" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                     </div>
-                 </div>
-                 <div>
+                </div>
+                <div>
                     <label for="trans-type" class="block text-sm font-medium text-gray-700">Tipo</label>
                     <select id="trans-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="despesa" ${tx.fundamentalType === 'despesa' ? 'selected' : ''}>Despesa</option>
@@ -1134,7 +1354,7 @@ const UI = {
         }
     },
     
-     renderEditTransactionModal(tx) {
+    renderEditTransactionModal(tx, options = {}) {
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}" ${tx.accountId === a.id && !tx.isCreditCard ? 'selected' : ''}>${a.name}</option>`).join('');
         const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}" ${tx.accountId === c.id && tx.isCreditCard ? 'selected' : ''}>${c.name} (Cartão)</option>`).join('');
         const categoryOptions = AppState.categories.map(c => `<option value="${c}" ${tx.category === c ? 'selected' : ''}>${c}</option>`).join('');
@@ -1142,6 +1362,10 @@ const UI = {
         const content = `
             <form id="edit-transaction-form" class="space-y-4">
                 <input type="hidden" id="editing-id" value="${tx.id}">
+                <input type="hidden" id="edit-context" value="${options.context || ''}">
+                <input type="hidden" id="edit-context-card-id" value="${options.cardId || ''}">
+                <input type="hidden" id="edit-context-year" value="${options.year || ''}">
+                <input type="hidden" id="edit-context-month" value="${options.month || ''}">
                 <div>
                     <label for="edit-trans-description" class="block text-sm font-medium text-gray-700">Descrição ${tx.installments || ''}</label>
                     <input type="text" id="edit-trans-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
@@ -1185,6 +1409,10 @@ const UI = {
                 <div>
                     <label for="edit-series-description" class="block text-sm font-medium text-gray-700">Descrição</label>
                     <input type="text" id="edit-series-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label for="edit-series-value" class="block text-sm font-medium text-gray-700">Novo Valor da Parcela (R$)</label>
+                    <input type="number" id="edit-series-value" value="${tx.value}" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div>
                     <label for="edit-series-category" class="block text-sm font-medium text-gray-700">Categoria</label>
@@ -1235,97 +1463,41 @@ const UI = {
         `;
         this.showModal('Editar Múltiplas Transações', content, 'Salvar Alterações', 'bulk-edit-modal-form');
     },
+    
+    renderPayBillModal(cardId, billAmount) {
+        const card = AppState.creditCards.find(c => c.id === cardId);
+        if (!card) return;
 
-    renderFileImportModal() {
+        const accountOptions = AppState.accounts
+            .filter(a => a.type !== 'cash') // Cannot pay bill with cash
+            .map(a => `<option value="${a.id}">${a.name} (${this.formatCurrency(a.balance)})</option>`)
+            .join('');
+
         const content = `
-            <p class="text-sm text-gray-600 mb-4">Selecione o tipo de arquivo que deseja importar.</p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <button data-type="ofx" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
-                    <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span class="font-semibold">OFX</span>
-                </button>
-                <button data-type="pdf" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
-                     <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                    <span class="font-semibold">PDF</span>
-                </button>
-                <button data-type="image" class="import-type-btn flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-700">
-                     <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    <span class="font-semibold">Imagem</span>
-                </button>
-            </div>
-        `;
-        const modalContainer = document.getElementById('modal-container');
-        modalContainer.innerHTML = `
-            <div class="modal-backdrop">
-                <div class="modal-content">
-                    <div class="modal-header flex justify-between items-center">
-                        <h3 class="text-xl font-semibold">Importar Extrato</h3>
-                        <button class="modal-close-btn text-2xl hover:text-red-500">&times;</button>
-                    </div>
-                    <div class="modal-body">${content}</div>
+            <form id="pay-bill-form" class="space-y-4">
+                <input type="hidden" id="pay-bill-card-id" value="${cardId}">
+                <div class="p-3 bg-gray-50 rounded-lg text-center">
+                    <p class="text-sm text-gray-500">Valor da Fatura de ${card.name}</p>
+                    <p class="text-3xl font-bold text-red-600">${this.formatCurrency(billAmount)}</p>
                 </div>
-            </div>`;
-    },
-
-    renderImportReviewModal(transactions) {
-        const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (Cartão)</option>`).join('');
-
-        const listHTML = transactions.map((tx, index) => {
-            if (!tx) return '';
-            const installmentText = tx.installmentsTotal > 1 ? `<span class="text-xs font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">${tx.installmentsPaid + 1}/${tx.installmentsTotal}</span>` : '';
-            return `
-            <li class="p-3 bg-gray-50 rounded-lg" data-index="${index}">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="font-medium text-gray-800">${tx.description}</p>
-                        <div class="flex items-center text-sm space-x-4 mt-1">
-                            <p class="text-red-600 font-semibold">${this.formatCurrency(tx.value)}</p>
-                            <p class="text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                            ${installmentText}
-                        </div>
-                    </div>
-                    <div class="flex-shrink-0 space-x-2">
-                        <button class="ignore-import-btn p-2 text-gray-400 hover:text-red-600" title="Ignorar">
-                             <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                        <button class="launch-import-btn px-3 py-1 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700">Lançar</button>
-                    </div>
+                <div>
+                    <label for="pay-bill-amount" class="block text-sm font-medium text-gray-700">Valor do Pagamento</label>
+                    <input type="number" id="pay-bill-amount" value="${billAmount.toFixed(2)}" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
-                 <div class="mt-2">
-                    <label for="import-account-${index}" class="sr-only">Vincular a</label>
-                    <select id="import-account-${index}" class="import-account-select block w-full text-sm border-gray-200 rounded-md shadow-sm">
-                        <option value="">Vincular a...</option>
-                        ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
-                        ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
+                <div>
+                    <label for="pay-bill-source-account" class="block text-sm font-medium text-gray-700">Pagar com a conta</label>
+                    <select id="pay-bill-source-account" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="">Selecione uma conta...</option>
+                        ${accountOptions}
                     </select>
-                 </div>
-            </li>
-        `}).join('');
-
-        const hasRemainingTxs = transactions.some(tx => tx !== null);
-        
-        const content = `
-            <p class="text-sm text-gray-600 mb-4">Revise as despesas encontradas no arquivo. Você pode vincular a uma conta/cartão agora, ou fazer isso depois.</p>
-            <ul id="imported-tx-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">${listHTML || ''}</ul>
-            <p id="no-more-imports" class="text-center text-gray-500 py-4 ${hasRemainingTxs ? 'hidden' : ''}">Todas as despesas foram processadas.</p>
-        `;
-
-        const modalContainer = document.getElementById('modal-container');
-        modalContainer.innerHTML = `
-            <div class="modal-backdrop">
-                <div class="modal-content">
-                    <div class="modal-header flex justify-between items-center">
-                        <h3 class="text-xl font-semibold">Revisar Despesas Importadas</h3>
-                        <button class="modal-close-btn text-2xl hover:text-red-500">&times;</button>
-                    </div>
-                    <div class="modal-body">${content}</div>
-                    <div class="modal-footer flex justify-end gap-3">
-                        <button type="button" id="launch-all-imported-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700 ${!hasRemainingTxs ? 'hidden' : ''}">Lançar Todas</button>
-                        <button type="button" class="modal-close-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Concluir</button>
-                    </div>
                 </div>
-            </div>`;
+                <div>
+                    <label for="pay-bill-date" class="block text-sm font-medium text-gray-700">Data do Pagamento</label>
+                    <input type="date" id="pay-bill-date" value="${new Date().toISOString().slice(0, 10)}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+            </form>
+        `;
+        this.showModal('Pagar Fatura do Cartão', content, 'Confirmar Pagamento', 'pay-bill-form');
     },
 
     showModal(title, content, submitText, formId) {
@@ -1348,26 +1520,26 @@ const UI = {
 
     showChoiceModal(title, message, buttons) {
         const modalContainer = document.getElementById('modal-container');
-         let buttonsHTML = '';
+        let buttonsHTML = '';
         buttons.forEach(btn => {
             buttonsHTML += `<button id="${btn.id}" class="${btn.class}">${btn.text}</button>`;
         });
 
         modalContainer.innerHTML = `
              <div class="modal-backdrop">
-                <div class="modal-content max-w-lg">
-                    <div class="modal-header">
-                        <h3 class="text-xl font-semibold text-gray-800">${title}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <p class="text-gray-600">${message}</p>
-                    </div>
-                    <div class="modal-footer flex justify-end gap-3">
-                        ${buttonsHTML}
-                        <button type="button" class="modal-close-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
-                    </div>
-                </div>
-            </div>`;
+                 <div class="modal-content max-w-lg">
+                     <div class="modal-header">
+                         <h3 class="text-xl font-semibold text-gray-800">${title}</h3>
+                     </div>
+                     <div class="modal-body">
+                         <p class="text-gray-600">${message}</p>
+                     </div>
+                     <div class="modal-footer flex justify-end gap-3">
+                         ${buttonsHTML}
+                         <button type="button" class="modal-close-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
+                     </div>
+                 </div>
+             </div>`;
 
         buttons.forEach(btn => {
              document.getElementById(btn.id).addEventListener('click', btn.onClick);
@@ -1381,20 +1553,20 @@ const UI = {
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
              <div class="modal-backdrop">
-                <div class="modal-content max-w-lg">
-                    <div class="modal-header">
-                        <h3 class="text-xl font-semibold text-gray-800">${title}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <p class="text-gray-600">${message}</p>
-                    </div>
-                    <div class="modal-footer flex flex-col sm:flex-row justify-end gap-3">
-                        <button id="apply-one-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Apenas esta</button>
-                        <button id="apply-future-btn" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Esta e as Futuras</button>
-                        <button id="apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Todas as Parcelas</button>
-                    </div>
-                </div>
-            </div>`;
+                 <div class="modal-content max-w-lg">
+                     <div class="modal-header">
+                         <h3 class="text-xl font-semibold text-gray-800">${title}</h3>
+                     </div>
+                     <div class="modal-body">
+                         <p class="text-gray-600">${message}</p>
+                     </div>
+                     <div class="modal-footer flex flex-col sm:flex-row justify-end gap-3">
+                         <button id="apply-one-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Apenas esta</button>
+                         <button id="apply-future-btn" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Esta e as Futuras</button>
+                         <button id="apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Todas as Parcelas</button>
+                     </div>
+                 </div>
+             </div>`;
         document.getElementById('apply-one-btn').onclick = onApplyOne;
         document.getElementById('apply-future-btn').onclick = onApplyFuture;
         document.getElementById('apply-all-btn').onclick = onApplyAll;
@@ -1404,20 +1576,20 @@ const UI = {
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
              <div class="modal-backdrop">
-                <div class="modal-content max-w-lg">
-                    <div class="modal-header">
-                        <h3 class="text-xl font-semibold text-gray-800">${title}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <p class="text-gray-600">${message}</p>
-                    </div>
-                    <div class="modal-footer flex flex-col sm:flex-row justify-end gap-3">
-                        <button id="bulk-apply-selected-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Apenas nas Selecionadas</button>
-                        <button id="bulk-apply-future-btn" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Nas Selecionadas e Futuras</button>
-                        <button id="bulk-apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Em Toda a Série</button>
-                    </div>
-                </div>
-            </div>`;
+                 <div class="modal-content max-w-lg">
+                     <div class="modal-header">
+                         <h3 class="text-xl font-semibold text-gray-800">${title}</h3>
+                     </div>
+                     <div class="modal-body">
+                         <p class="text-gray-600">${message}</p>
+                     </div>
+                     <div class="modal-footer flex flex-col sm:flex-row justify-end gap-3">
+                         <button id="bulk-apply-selected-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Apenas nas Selecionadas</button>
+                         <button id="bulk-apply-future-btn" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Nas Selecionadas e Futuras</button>
+                         <button id="bulk-apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Em Toda a Série</button>
+                     </div>
+                 </div>
+             </div>`;
         document.getElementById('bulk-apply-selected-btn').onclick = onApplySelected;
         document.getElementById('bulk-apply-future-btn').onclick = onApplyFuture;
         document.getElementById('bulk-apply-all-btn').onclick = onApplyAll;
@@ -1433,13 +1605,20 @@ const UI = {
                         <button class="modal-close-btn text-2xl hover:text-red-500">&times;</button>
                     </div>
                     <div class="modal-body">${content}</div>
-                    <div class="modal-footer flex justify-end">
+                    <div class="modal-footer flex justify-end gap-3">
+                        ${title.startsWith('Detalhes da Fatura') ? `<button type="button" id="pay-bill-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Pagar Fatura</button>` : ''}
                         <button type="button" class="modal-close-btn px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Entendi</button>
                     </div>
                 </div>
             </div>`;
         if (callback) {
             modalContainer.querySelector('.modal-body').addEventListener('click', callback);
+        }
+        const payBillBtn = document.getElementById('pay-bill-btn');
+        if(payBillBtn){
+             const cardId = modalContainer.querySelector('[data-card-id]').dataset.cardId;
+             const billAmount = modalContainer.querySelector('[data-card-id]').dataset.billAmount;
+             payBillBtn.addEventListener('click', () => Handlers.handlePayBillClick(cardId, billAmount));
         }
     },
     
@@ -1465,6 +1644,7 @@ const UI = {
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
                 
                 let statusHTML = '';
+                let paymentSourceHTML = '';
                 if(tx.fundamentalType === 'despesa') {
                     const txDate = new Date(tx.date + "T00:00:00");
                     let statusText = 'Pendente';
@@ -1472,26 +1652,32 @@ const UI = {
                     if (tx.isPaid) {
                         statusText = 'Pago';
                         statusColor = 'bg-green-100 text-green-800';
+                        if (tx.paidByAccountId) {
+                            const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
+                            if (paidByAccount) {
+                                paymentSourceHTML = `<p class="text-xs text-gray-500">por ${paidByAccount.name}</p>`;
+                            }
+                        }
                     } else if (txDate < today) {
                         statusText = 'Atrasado';
                         statusColor = 'bg-red-100 text-red-800';
                     }
-                    statusHTML = `<span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">${statusText}</span>`;
+                    statusHTML = `<span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">${statusText}</span>${paymentSourceHTML}`;
                 }
 
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
-                                <div class="flex-1">
-                                    <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
-                                    <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
-                                    ${statusHTML ? `<div class="w-24 text-center">${statusHTML}</div>` : ''}
-                                    <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                    </button>
-                                </div>
-                            </li>`;
+                                 <div class="flex-1">
+                                     <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
+                                     <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                                 </div>
+                                 <div class="flex items-center">
+                                     <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
+                                     ${statusHTML ? `<div class="w-24 text-center">${statusHTML}</div>` : ''}
+                                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                     </button>
+                                 </div>
+                             </li>`;
             });
             listHtml += '</ul>';
             return listHtml;
@@ -1526,14 +1712,14 @@ const UI = {
                 content = txListBuilder(expenseTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
-            case 'monthly-paid':
+             case 'monthly-paid':
                  title = 'Total Pago no Mês';
                 const paidTxs = monthTxs.filter(t => t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(paidTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
              case 'monthly-unpaid':
-                  title = 'Contas a Pagar no Mês';
+                 title = 'Contas a Pagar no Mês';
                 const unpaidTxs = monthTxs.filter(t => !t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(a.date) - new Date(b.date));
                 content = txListBuilder(unpaidTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
@@ -1583,21 +1769,30 @@ const UI = {
             let listHtml = '<ul class="space-y-3">';
             txs.forEach(tx => {
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
+                let paymentSourceHtml = '';
+                if(tx.isPaid && tx.paidByAccountId) {
+                    const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
+                    if (paidByAccount) {
+                        paymentSourceHtml = `<p class="text-xs text-gray-500">pago por: ${paidByAccount.name}</p>`;
+                    }
+                }
+
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
-                                <div class="flex-1">
-                                    <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
-                                    <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                                </div>
-                                <div class="flex items-center">
-                                     <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
-                                     <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover Vínculo">
-                                          <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536l1.101-1.102a4 4 0 000-5.656l-4-4a4 4 0 00-5.656 5.656l1.101 1.102" /></svg>
-                                     </button>
-                                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                          <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                     </button>
-                                </div>
-                            </li>`;
+                                 <div class="flex-1">
+                                     <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
+                                     <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                                     ${paymentSourceHtml}
+                                 </div>
+                                 <div class="flex items-center">
+                                      <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
+                                      <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover Vínculo">
+                                           <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536l1.101-1.102a4 4 0 000-5.656l-4-4a4 4 0 00-5.656 5.656l1.101 1.102" /></svg>
+                                      </button>
+                                      <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                           <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                      </button>
+                                 </div>
+                             </li>`;
             });
             listHtml += '</ul>';
             return listHtml;
@@ -1639,18 +1834,26 @@ const UI = {
                     totalBill -= tx.value;
                 }
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
+                let paymentSourceHtml = '';
+                if(tx.isPaid && tx.paidByAccountId) {
+                    const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
+                    if (paidByAccount) {
+                        paymentSourceHtml = `<p class="text-xs text-gray-500">pago por: ${paidByAccount.name}</p>`;
+                    }
+                }
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
-                                <div class="flex-1">
-                                    <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
-                                    <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                                </div>
-                                <div class="flex items-center">
-                                     <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
-                                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                          <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                     </button>
-                                </div>
-                            </li>`;
+                                 <div class="flex-1">
+                                     <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
+                                     <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                                     ${paymentSourceHtml}
+                                 </div>
+                                 <div class="flex items-center">
+                                      <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
+                                      <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                           <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                      </button>
+                                 </div>
+                             </li>`;
             });
             listHtml += '</ul>';
             return listHtml;
@@ -1659,7 +1862,7 @@ const UI = {
         const txList = txListBuilder(cardTxs); // Call builder once to calculate totalBill
 
         const content = `
-            <div data-card-id="${cardId}">
+            <div data-card-id="${cardId}" data-bill-amount="${totalBill}">
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
                     <div class="text-gray-500">Limite Total:</div>
                     <div class="font-semibold text-right">${this.formatCurrency(card.limit)}</div>
@@ -1713,11 +1916,20 @@ const UI = {
         allInstallments.forEach(tx => {
             const statusColor = tx.isPaid ? 'text-green-600' : 'text-yellow-600';
             const statusText = tx.isPaid ? 'Pago' : 'Pendente';
+            let paymentSourceHtml = '';
+            if(tx.isPaid && tx.paidByAccountId) {
+                const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
+                if (paidByAccount) {
+                    paymentSourceHtml = `<p class="text-xs text-gray-500">pago por: ${paidByAccount.name}</p>`;
+                }
+            }
+
             content += `
                 <li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
                     <div>
                         <p class="font-medium text-gray-800">${tx.installments}</p>
                         <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                        ${paymentSourceHtml}
                     </div>
                     <div class="text-right">
                         <p class="font-semibold">${this.formatCurrency(tx.value)}</p>
@@ -1730,78 +1942,141 @@ const UI = {
         content += '</ul></div></div>';
         this.showInfoModal(`Detalhes: ${description}`, content);
     },
-
-    renderAnalysisModal(analysis) {
-        if (analysis.error) {
-            this.showFeedback(analysis.error, 'info');
-            return;
-        }
-
-        let suggestionsHTML = '';
-
-        if (analysis.monthlyBalance >= 0) {
-            suggestionsHTML += `<div class="p-4 bg-green-50 rounded-lg mb-4">
-                <h4 class="font-bold text-green-800">Parabéns!</h4>
-                <p class="text-green-700">Você fechou o mês de ${analysis.period} com um saldo positivo de <strong>${this.formatCurrency(analysis.monthlyBalance)}</strong>. Considere investir esse valor para alcançar seus objetivos mais rápido!</p>
-            </div>`;
-        } else {
-             suggestionsHTML += `<div class="p-4 bg-red-50 rounded-lg mb-4">
-                <h4 class="font-bold text-red-800">Atenção!</h4>
-                <p class="text-red-700">Seu balanço no mês de ${analysis.period} foi negativo em <strong>${this.formatCurrency(analysis.monthlyBalance)}</strong>. É um bom momento para revisar seus gastos.</p>
-            </div>`;
-        }
-
-        if (analysis.topExpenseCategories.length > 0) {
-            suggestionsHTML += `<div class="mb-4">
-                <h4 class="font-semibold text-gray-700 mb-2">Principais Despesas de ${analysis.period}</h4>
-                <ul class="space-y-2">`;
-            analysis.topExpenseCategories.forEach(cat => {
-                 suggestionsHTML += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
-                    <span>${cat.category}</span>
-                    <span class="font-semibold">${this.formatCurrency(cat.amount)} <span class="text-gray-500 font-normal">(${cat.percentage}%)</span></span>
-                </li>`;
-            });
-            suggestionsHTML += `</ul>
-                <p class="text-xs text-gray-500 mt-3">Focar em reduzir os gastos nas suas maiores categorias pode ter um grande impacto. Já analisou se há espaço para cortar custos em <strong>${analysis.topExpenseCategories[0].category}</strong>?</p>
-            </div>`;
-        }
-
-        const nonEssentialCategories = ['Lazer', 'Compras', 'Alimentação'];
-        const topNonEssential = analysis.topExpenseCategories.find(c => nonEssentialCategories.includes(c.category));
-
-        if(topNonEssential){
-             suggestionsHTML += `<div class="p-4 bg-blue-50 rounded-lg">
-                <h4 class="font-bold text-blue-800">Dica Rápida</h4>
-                <p class="text-blue-700">Vimos que <strong>${topNonEssential.category}</strong> está entre seus maiores gastos. Que tal definir um orçamento mensal para essa categoria ou procurar por alternativas mais baratas?</p>
-            </div>`;
-        } else {
-            suggestionsHTML += `<div class="p-4 bg-blue-50 rounded-lg">
-                <h4 class="font-bold text-blue-800">Dica Rápida</h4>
-                <p class="text-blue-700">Uma boa prática é tentar economizar de 10% a 20% da sua renda mensal. Você está no caminho certo?</p>
-            </div>`;
-        }
-
-        const content = `<div>${suggestionsHTML}</div>`;
-        this.showInfoModal(`Análise de ${analysis.period}`, content);
-    },
     
+    // Converte um texto simples com Markdown básico para HTML.
+    parseSimpleMarkdown(text) {
+        let html = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+            .replace(/^\s*\*\s(.*)/gm, '<li>$1</li>');
+        
+        html = html.replace(/<\/li>\n<li>/g, '</li><li>');
+        const listItems = html.match(/<li>.*<\/li>/g);
+        if (listItems) {
+            html = html.replace(listItems.join(''), `<ul>${listItems.join('')}</ul>`);
+        }
+        
+        return html.replace(/\n/g, '<br>');
+    },
+
+    renderVisualAnalysisPanel(analysisData) {
+        const { lastMonthData, prevMonthData } = analysisData;
+        const formatCurrency = this.formatCurrency;
+
+        const createComparisonMetric = (title, currentValue, previousValue, higherIsBetter) => {
+            const diff = currentValue - previousValue;
+            let percentage = previousValue !== 0 ? (diff / previousValue) * 100 : (currentValue > 0 ? 100 : 0);
+            
+            let colorClass, arrow;
+            if (diff > 0) {
+                colorClass = higherIsBetter ? 'text-green-500' : 'text-red-500';
+                arrow = '▲';
+            } else if (diff < 0) {
+                colorClass = higherIsBetter ? 'text-red-500' : 'text-green-500';
+                arrow = '▼';
+            } else {
+                colorClass = 'text-gray-500';
+                arrow = '–';
+            }
+            
+            return `
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-center text-sm text-gray-500">
+                        <span>${title}</span>
+                        <span class="font-semibold ${colorClass}">${arrow} ${Math.abs(percentage).toFixed(1)}%</span>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">${formatCurrency(currentValue)}</p>
+                    <p class="text-sm text-gray-400">Anterior: ${formatCurrency(previousValue)}</p>
+                </div>
+            `;
+        };
+
+        return `
+            <div class="ai-analysis-content">
+                <h3>Análise Comparativa</h3>
+                <p class="text-sm text-gray-500 mb-4">Comparando ${lastMonthData.periodLabel} com ${prevMonthData.periodLabel}</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    ${createComparisonMetric('Receitas', lastMonthData.income, prevMonthData.income, true)}
+                    ${createComparisonMetric('Despesas', lastMonthData.expenses, prevMonthData.expenses, false)}
+                    ${createComparisonMetric('Saldo Final', lastMonthData.balance, prevMonthData.balance, true)}
+                </div>
+
+                <h4><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2 -mt-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>Insights da IA</h4>
+                <div id="ai-insights-content" class="p-4 bg-blue-50 text-blue-900 rounded-lg text-sm leading-6">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        `;
+    },
+
+    showVisualAnalysisModal(analysisData) {
+        const title = 'Análise Financeira Inteligente';
+        const contentHtml = this.renderVisualAnalysisPanel(analysisData);
+        
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.innerHTML = `
+            <div class="modal-backdrop">
+                <div class="modal-content">
+                    <div class="modal-header flex justify-between items-center">
+                        <h3 class="text-xl font-semibold">${title}</h3>
+                        <button class="modal-close-btn text-2xl hover:text-red-500">&times;</button>
+                    </div>
+                    <div class="modal-body">${contentHtml}</div>
+                    <div class="modal-footer flex justify-end gap-3">
+                        <button type="button" class="modal-close-btn px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Fechar</button>
+                    </div>
+                </div>
+            </div>`;
+    },
+
+    // New modal to select payment source for a transaction
+    renderPaymentSourceModal(txId, sourceModalType) {
+        const tx = AppState.transactions.find(t => t.id === txId);
+        if (!tx) return;
+
+        const allAccountsAndCards = [
+            ...AppState.accounts.map(acc => ({ id: acc.id, name: acc.name, isCreditCard: false })),
+            ...AppState.creditCards.map(card => ({ id: card.id, name: card.name, isCreditCard: true }))
+        ];
+
+        const optionsHtml = allAccountsAndCards.map(item => {
+            return `<option value="${item.id}" data-is-credit-card="${item.isCreditCard}">${item.name} (${item.isCreditCard ? 'Cartão' : 'Conta'})</option>`;
+        }).join('');
+
+        const content = `
+            <form id="payment-source-form" class="space-y-4">
+                <input type="hidden" id="payment-source-tx-id" value="${txId}">
+                <input type="hidden" id="payment-source-modal-type" value="${sourceModalType || ''}">
+                <p class="text-gray-700">Selecione a conta ou cartão de onde a despesa foi paga:</p>
+                <div>
+                    <label for="payment-source-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
+                    <select id="payment-source-account" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="">Selecione...</option>
+                        ${optionsHtml}
+                    </select>
+                </div>
+            </form>
+        `;
+        this.showModal('Registrar Pagamento', content, 'Confirmar', 'payment-source-form');
+    },
+
     showConfirmationModal(title, message, onConfirm) {
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
              <div class="modal-backdrop">
-                <div class="modal-content max-w-sm">
-                    <div class="modal-header">
-                        <h3 class="text-xl font-semibold text-gray-800">${title}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <p class="text-gray-600">${message}</p>
-                    </div>
-                    <div class="modal-footer flex justify-end gap-3">
-                        <button type="button" class="modal-close-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
-                        <button id="confirm-action-btn" class="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700">Confirmar</button>
-                    </div>
-                </div>
-            </div>`;
+                 <div class="modal-content max-w-sm">
+                     <div class="modal-header">
+                         <h3 class="text-xl font-semibold text-gray-800">${title}</h3>
+                     </div>
+                     <div class="modal-body">
+                         <p class="text-gray-600">${message}</p>
+                     </div>
+                     <div class="modal-footer flex justify-end gap-3">
+                         <button type="button" class="modal-close-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
+                         <button id="confirm-action-btn" class="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700">Confirmar</button>
+                     </div>
+                 </div>
+             </div>`;
         document.getElementById('confirm-action-btn').onclick = () => {
             onConfirm();
             this.closeModal();
@@ -1898,9 +2173,14 @@ const UI = {
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
             let balance = AppState.accounts.reduce((s, a) => s + (a.initialBalance || 0), 0);
             AppState.transactions.filter(tx => new Date(tx.date) <= endOfMonth).forEach(tx => {
-                if(!tx.isCreditCard) {
-                    if (tx.fundamentalType === 'receita') balance += tx.value;
-                    else if (tx.isPaid) balance -= tx.value;
+                // Only consider expenses that are actually paid from accounts (not credit cards unless it's a bill payment)
+                // And income is always added.
+                if(tx.fundamentalType === 'receita') {
+                    balance += tx.value;
+                } else if (tx.fundamentalType === 'despesa' && tx.isPaid && !tx.isCreditCard) { // Direct expense from account
+                    balance -= tx.value;
+                } else if (tx.fundamentalType === 'despesa' && tx.isPaid && tx.category === 'Pagamento de Fatura') { // Bill payment
+                    balance -= tx.value;
                 }
             });
             data.push(balance.toFixed(2));
@@ -1959,9 +2239,9 @@ const UI = {
             .filter(t => {
                 const txDate = new Date(t.date + 'T00:00:00');
                 return !t.isPaid && 
-                       t.fundamentalType === 'despesa' && 
-                       txDate.getMonth() === month && // Only this month
-                       txDate.getFullYear() === year;
+                        t.fundamentalType === 'despesa' && 
+                        txDate.getMonth() === month && // Only this month
+                        txDate.getFullYear() === year;
             })
             .sort((a,b) => new Date(a.date) - new Date(b.date))
             .slice(0, 5);
@@ -2033,12 +2313,153 @@ const UI = {
                 </div>
             </div>
         `;
+    },
+    renderBudgetsPage() {
+        const page = document.getElementById('budgets-page');
+        page.innerHTML = `
+             <div class="space-y-6">
+                 <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800">Meus Orçamentos</h2>
+                     <button id="add-new-budget-btn" class="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-transform hover:scale-105">+ Novo Orçamento</button>
+                </div>
+                <div id="budget-list-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Orçamentos serão inseridos aqui -->
+                </div>
+            </div>`;
+        this.renderBudgetList();
+    },
+
+    renderBudgetList() {
+        const container = document.getElementById('budget-list-container');
+        if (!container) return;
+
+        const budgets = AppState.budgets;
+        if (budgets.length === 0) {
+            container.innerHTML = `<p class="text-center text-gray-500 py-8 col-span-full">Nenhum orçamento definido. Clique em "Novo Orçamento" para começar.</p>`;
+            return;
+        }
+
+        container.innerHTML = budgets.map(budget => {
+            const spent = AppState.transactions
+                .filter(tx => {
+                    const txDate = new Date(tx.date + 'T00:00:00');
+                    return tx.category === budget.category &&
+                           tx.fundamentalType === 'despesa' &&
+                           txDate.getFullYear() === AppState.displayYear &&
+                           txDate.getMonth() === AppState.displayMonth;
+                })
+                .reduce((sum, tx) => sum + tx.value, 0);
+
+            const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+            let progressBarColor = 'bg-blue-500';
+            if (percentage > 75 && percentage <= 100) {
+                progressBarColor = 'bg-yellow-500';
+            } else if (percentage > 100) {
+                progressBarColor = 'bg-red-500';
+            }
+
+            return `
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold text-lg text-gray-700">${budget.category}</h4>
+                        <div class="flex items-center space-x-1">
+                             <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${budget.id}" data-type="budget" title="Editar">
+                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                             <button class="delete-btn p-2 text-gray-400 hover:text-red-600" data-id="${budget.id}" data-type="budget" title="Excluir">
+                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                             </button>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-500 mb-3">
+                        <span class="font-semibold ${percentage > 100 ? 'text-red-600' : 'text-gray-800'}">${this.formatCurrency(spent)}</span> de ${this.formatCurrency(budget.amount)}
+                    </div>
+                    <div class="budget-progress-bar">
+                        <div class="budget-progress-fill ${progressBarColor}" style="width: ${Math.min(percentage, 100)}%;">${percentage.toFixed(0)}%</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    renderBudgetModal(budgetToEdit = null) {
+        const isEditing = !!budgetToEdit;
+        const title = isEditing ? 'Editar Orçamento' : 'Novo Orçamento';
+        
+        const budgetedCategories = AppState.budgets.map(b => b.category);
+        const availableCategories = AppState.categories
+            .filter(c => c !== 'Pagamento de Fatura' && c !== 'Salário' && (!budgetedCategories.includes(c) || (isEditing && c === budgetToEdit.category)));
+
+        if (availableCategories.length === 0 && !isEditing) {
+            UI.showFeedback('Todas as categorias já possuem um orçamento.', 'info');
+            return;
+        }
+
+        const categoryOptions = availableCategories.map(c => `<option value="${c}" ${isEditing && budgetToEdit.category === c ? 'selected' : ''}>${c}</option>`).join('');
+
+        const content = `
+            <form id="budget-modal-form" class="space-y-4">
+                <input type="hidden" id="editing-budget-id" value="${isEditing ? budgetToEdit.id : ''}">
+                <div>
+                    <label for="budget-category" class="block text-sm font-medium text-gray-700">Categoria</label>
+                    <select id="budget-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" ${isEditing ? 'disabled' : ''}>
+                        ${categoryOptions}
+                    </select>
+                </div>
+                <div>
+                    <label for="budget-amount" class="block text-sm font-medium text-gray-700">Valor do Orçamento (R$)</label>
+                    <input type="number" id="budget-amount" value="${isEditing ? budgetToEdit.amount : ''}" required min="0" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+            </form>
+        `;
+        this.showModal(title, content, 'Salvar', 'budget-modal-form');
+    },
+    
+    renderBudgetProgress() {
+        const container = document.getElementById('budget-progress-container');
+        if (!container) return;
+        
+        const budgetsWithSpent = AppState.budgets.map(budget => {
+            const spent = AppState.transactions
+                .filter(tx => {
+                    const txDate = new Date(tx.date + 'T00:00:00');
+                    return tx.category === budget.category &&
+                           tx.fundamentalType === 'despesa' &&
+                           txDate.getFullYear() === AppState.displayYear &&
+                           txDate.getMonth() === AppState.displayMonth;
+                })
+                .reduce((sum, tx) => sum + tx.value, 0);
+            const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+            return { ...budget, spent, percentage };
+        }).sort((a,b) => b.percentage - a.percentage);
+
+        if (budgetsWithSpent.length === 0) {
+            container.innerHTML = `<p class="text-center text-sm text-gray-500 py-4">Nenhum orçamento definido para este mês.</p>`;
+            return;
+        }
+
+        container.innerHTML = budgetsWithSpent.slice(0,3).map(budget => {
+            let progressBarColor = 'bg-blue-500';
+            if (budget.percentage > 75 && budget.percentage <= 100) progressBarColor = 'bg-yellow-500';
+            else if (budget.percentage > 100) progressBarColor = 'bg-red-500';
+            
+            return `
+                <div>
+                    <div class="flex justify-between text-sm font-medium text-gray-600 mb-1">
+                        <span>${budget.category}</span>
+                        <span>${this.formatCurrency(budget.spent)} / ${this.formatCurrency(budget.amount)}</span>
+                    </div>
+                    <div class="budget-progress-bar">
+                        <div class="budget-progress-fill ${progressBarColor}" style="width: ${Math.min(budget.percentage, 100)}%;"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 };
 
 // Módulo de Handlers
 const Handlers = {
-    importedTransactions: [],
     init() {
         document.getElementById('logo-container').addEventListener('click', () => {
             AppState.currentView = 'dashboard';
@@ -2061,12 +2482,15 @@ const Handlers = {
         });
 
         document.getElementById('add-new-transaction-btn').addEventListener('click', () => UI.renderNewTransactionModal());
-
+        
         document.getElementById('page-container').addEventListener('click', e => {
             if (e.target.id === 'add-new-account-btn') UI.renderAccountModal();
             if (e.target.id === 'add-new-category-btn') UI.renderCategoryModal();
+            if (e.target.id === 'add-new-budget-btn') UI.renderBudgetModal();
             if (e.target.id === 'generate-report-btn') this.handleGenerateReport();
-            if (e.target.id === 'get-analysis-btn') this.handleAnalysisClick();
+            
+            const getAnalysisBtn = e.target.closest('#get-analysis-btn');
+            if (getAnalysisBtn) this.handleAnalysisClick();
             
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) this.handleEditClick(editBtn);
@@ -2089,8 +2513,9 @@ const Handlers = {
                 }
             }
 
+            // Modified to handle payment source selection
             if (e.target.classList.contains('status-badge')) {
-                this.handleStatusToggle(e.target.dataset.id);
+                this.handleStatusToggle(e.target.dataset.id, AppState.currentView); // Pass current view as sourceModalType
             }
             
             const accountItem = e.target.closest('.account-item');
@@ -2106,6 +2531,18 @@ const Handlers = {
 
             const overdueContainer = e.target.closest('#overdue-bills-container');
             if(overdueContainer) this.handleSummaryCardClick('monthly-overdue');
+
+            const faturaCardItem = e.target.closest('.fatura-card-item');
+            if (faturaCardItem) {
+                AppState.selectedFaturaCardId = faturaCardItem.dataset.cardId;
+                UI.renderFaturasPage();
+            }
+
+            const faturaInvoiceItem = e.target.closest('.fatura-invoice-item');
+            if (faturaInvoiceItem) {
+                const { cardId, year, month } = faturaInvoiceItem.dataset;
+                UI.renderInvoiceDetails(cardId, parseInt(year), parseInt(month));
+            }
         });
 
         document.getElementById('page-container').addEventListener('change', e => {
@@ -2143,9 +2580,6 @@ const Handlers = {
             if (e.target.closest('.unlink-btn')) this.handleUnlinkTransactionClick(e.target.closest('.unlink-btn').dataset.id, e.target.closest('[data-account-id]').dataset.accountId);
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) this.handleModalClick(e);
-            if (e.target.closest('.launch-import-btn') || e.target.closest('.ignore-import-btn')) this.handleImportReviewClick(e);
-            if (e.target.closest('#launch-all-imported-btn')) this.handleBulkLaunchImport();
-            if (e.target.closest('.import-type-btn')) this.handleImportTypeSelection(e.target.closest('.import-type-btn').dataset.type);
         });
         
         document.getElementById('modal-container').addEventListener('submit', e => {
@@ -2156,6 +2590,10 @@ const Handlers = {
             if (e.target.id === 'category-modal-form') this.handleCategoryFormSubmit(e.target);
             if (e.target.id === 'edit-series-form') this.handleEditSeriesFormSubmit(e.target);
             if (e.target.id === 'bulk-edit-modal-form') this.handleBulkEditFormSubmit(e.target);
+            if (e.target.id === 'pay-bill-form') this.handlePayBillFormSubmit(e.target);
+            if (e.target.id === 'budget-modal-form') this.handleBudgetFormSubmit(e.target);
+            // New handler for payment source form
+            if (e.target.id === 'payment-source-form') this.handlePaymentSourceFormSubmit(e.target);
         });
 
         document.getElementById('modal-container').addEventListener('change', e => {
@@ -2183,17 +2621,9 @@ const Handlers = {
             }
         });
         
-        const importStatementBtn = document.getElementById('import-statement-btn');
-        if (importStatementBtn) {
-            importStatementBtn.addEventListener('click', () => UI.renderFileImportModal());
-        }
         document.getElementById('export-data-btn').addEventListener('click', () => AppState.exportData());
-        const statementFileInput = document.getElementById('statement-file-input');
-        if (statementFileInput) {
-            statementFileInput.addEventListener('change', (e) => this.handleFileSelectedForImport(e));
-        }
     },
-    
+
     handleTransactionSelection(checkbox) {
         if (checkbox.id === 'select-all-txs') {
             const allCheckboxes = document.querySelectorAll('.tx-select-checkbox');
@@ -2227,11 +2657,22 @@ const Handlers = {
     handleBulkMarkPaid() {
         if (AppState.selectedTransactionIds.length === 0) return;
         
+        // This flow now requires selecting a payment source for each transaction,
+        // or a single source for all if multiple are selected.
+        // For simplicity in bulk, let's assume a single payment source for all selected.
+        // Or we could trigger `renderPaymentSourceModal` for the first selected unpaid transaction,
+        // then apply to all, or iterate. Let's make it simple for now:
+        // Mark all selected as paid, without specifying source for bulk action.
+        // A more advanced feature would be a "Bulk Mark as Paid From..." modal.
+
         let changedCount = 0;
         AppState.selectedTransactionIds.forEach(id => {
             const tx = AppState.transactions.find(t => t.id === id);
             if (tx && tx.fundamentalType === 'despesa' && !tx.isPaid) {
                 tx.isPaid = true;
+                // For simplicity in bulk, we don't assign paidByAccountId here.
+                // It would require another modal or complex logic.
+                // The user can edit individual transactions to set it.
                 changedCount++;
             }
         });
@@ -2271,7 +2712,7 @@ const Handlers = {
         for (const seriesInfo of seriesQueue) {
              const message = `Aplicar alterações para a série "${seriesInfo.sampleTx.description}"?`;
              const scope = await new Promise(resolve => {
-                UI.showBulkApplyToSeriesModal(
+                 UI.showBulkApplyToSeriesModal(
                     `Editar Série: ${seriesInfo.sampleTx.description}`,
                     message,
                     () => { UI.closeModal(); resolve('selected'); },
@@ -2297,6 +2738,7 @@ const Handlers = {
                     tx.accountId = currentChanges.accountId;
                     tx.isCreditCard = currentChanges.isCreditCard;
                 }
+                if (currentChanges.value) tx.value = currentChanges.value;
             };
             
             const allInSeries = AppState.transactions.filter(t => t.groupId === seriesInfo.sampleTx.groupId);
@@ -2333,7 +2775,15 @@ const Handlers = {
         
         if (newStatus) {
             selectedTxs.forEach(tx => {
-                if (tx.fundamentalType === 'despesa') tx.isPaid = (newStatus === 'paid');
+                if (tx.fundamentalType === 'despesa') {
+                    tx.isPaid = (newStatus === 'paid');
+                    // In bulk edit, we don't ask for paidByAccountId for simplicity.
+                    // This could be a future enhancement.
+                    if (!tx.isPaid) { // If marking as unpaid, clear paidByAccountId
+                        tx.paidByAccountId = null;
+                        tx.paidByIsCreditCard = null;
+                    }
+                }
             });
         }
         
@@ -2375,113 +2825,12 @@ const Handlers = {
         UI.showFeedback('Transações atualizadas com sucesso!', 'success');
     },
 
-    handleImportTypeSelection(type) {
-        const fileInput = document.getElementById('statement-file-input');
-        const typeMap = {
-            ofx: '.ofx, .OFX',
-            pdf: '.pdf',
-            image: 'image/png, image/jpeg, image/webp'
-        };
-        fileInput.accept = typeMap[type] || '';
-        fileInput.click();
-    },
-
-    handleFileSelectedForImport(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
+    handlePayBillClick(cardId, billAmount) {
         UI.closeModal();
-        UI.showFeedback('Processando arquivo... (Simulação)', 'info');
-
+        // Use a timeout to ensure the first modal is gone before rendering the new one
         setTimeout(() => {
-            const mockDescriptions = [ 'Compra Online - Amazon', 'Restaurante Sabor Caseiro', 'Pagamento NETFLIX', 'Posto de Gasolina Shell', 'Farmácia Pague Menos', 'Padaria Pão Quente', 'Conta de Luz - Celesc', 'Conta de Água - SAMAE', 'Uber Viagem' ];
-            const numberOfTransactions = Math.floor(Math.random() * 5) + 3;
-            this.importedTransactions = [];
-
-            for (let i = 0; i < numberOfTransactions; i++) {
-                const randomDescription = mockDescriptions[Math.floor(Math.random() * mockDescriptions.length)];
-                const randomValue = parseFloat((Math.random() * 300 + 10).toFixed(2));
-                
-                const randomDate = new Date();
-                randomDate.setDate(randomDate.getDate() - Math.floor(Math.random() * 30));
-                const date = randomDate.toISOString().slice(0, 10);
-
-                const isInstallment = Math.random() > 0.6; 
-                const installmentsTotal = isInstallment ? [2, 3, 6, 10, 12][Math.floor(Math.random() * 5)] : 1;
-                const installmentsPaid = isInstallment ? Math.floor(Math.random() * installmentsTotal) : 0;
-
-                this.importedTransactions.push({
-                    description: `${randomDescription} (${file.name.split('.')[0]})`,
-                    value: randomValue,
-                    date: date,
-                    installmentsTotal: installmentsTotal,
-                    installmentsPaid: installmentsPaid,
-                    fundamentalType: 'despesa'
-                });
-            }
-            
-            UI.showFeedback('Dados extraídos! Por favor, revise e salve.', 'success');
-            UI.renderImportReviewModal(this.importedTransactions);
-            event.target.value = null; 
-        }, 1500);
-    },
-
-    handleImportReviewClick(event) {
-        const listItem = event.target.closest('li[data-index]');
-        if (!listItem) return;
-    
-        const index = parseInt(listItem.dataset.index);
-        const transactionData = this.importedTransactions[index];
-        if (!transactionData) return;
-        
-        const selectedAccountId = listItem.querySelector('.import-account-select').value;
-    
-        if (event.target.closest('.launch-import-btn')) {
-            UI.closeModal();
-            setTimeout(() => {
-                UI.renderNewTransactionModal({ ...transactionData, accountId: selectedAccountId, isImported: true, importIndex: index });
-            }, 100);
-        } else if (event.target.closest('.ignore-import-btn')) {
-            this.importedTransactions[index] = null;
-            listItem.remove();
-            
-            const list = document.getElementById('imported-tx-list');
-            if (list && !list.querySelector('li')) {
-                document.getElementById('no-more-imports').classList.remove('hidden');
-                document.getElementById('launch-all-imported-btn').style.display = 'none';
-            }
-        }
-    },
-    
-    handleBulkLaunchImport() {
-        const listItems = document.querySelectorAll('#imported-tx-list li');
-        let launchedCount = 0;
-
-        listItems.forEach(item => {
-            const index = parseInt(item.dataset.index);
-            const txData = this.importedTransactions[index];
-            if (txData) {
-                const accountId = item.querySelector('.import-account-select').value;
-                const isCC = AppState.creditCards.some(c => c.id === accountId);
-
-                const newTx = {
-                    id: crypto.randomUUID(),
-                    isPaid: true,
-                    accountId: accountId || null,
-                    isCreditCard: isCC,
-                    ...txData,
-                };
-                AppState.addTransaction(newTx);
-                launchedCount++;
-            }
-        });
-        
-        this.importedTransactions = [];
-        AppState.recalculateAllBalances();
-        AppState.saveAll();
-        UI.closeModal();
-        UI.render();
-        UI.showFeedback(`${launchedCount} despesas importadas com sucesso!`, 'success');
+            UI.renderPayBillModal(cardId, parseFloat(billAmount));
+        }, 100);
     },
 
     handleUnlinkTransactionClick(txId, accountId) {
@@ -2489,6 +2838,7 @@ const Handlers = {
             const tx = AppState.transactions.find(t => t.id === txId);
             if (tx) {
                 tx.accountId = null;
+                tx.isCreditCard = false; // Ensure this is set to false if unlinked from a card
                 AppState.recalculateAllBalances();
                 AppState.saveAll();
                 UI.closeModal();
@@ -2513,14 +2863,20 @@ const Handlers = {
         // If we are trying to mark as paid
         if (!tx.isPaid) {
             const setAsPaid = () => {
-                tx.isPaid = true;
-                AppState.recalculateAllBalances();
-                AppState.saveAll();
-                 if (sourceModalType) {
-                    UI.closeModal();
-                    setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
+                // If payment source already exists from previous edits or import, use it
+                if (tx.paidByAccountId) {
+                    tx.isPaid = true;
+                    AppState.recalculateAllBalances();
+                    AppState.saveAll();
+                    if (sourceModalType) {
+                         UI.closeModal();
+                         setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
+                    } else {
+                        UI.render();
+                    }
                 } else {
-                    UI.render();
+                    // If no payment source, open modal to select one
+                    UI.renderPaymentSourceModal(txId, sourceModalType);
                 }
             };
 
@@ -2543,9 +2899,11 @@ const Handlers = {
         // If we are trying to mark as unpaid
         else {
             tx.isPaid = false;
+            tx.paidByAccountId = null; // Clear payment source if marked unpaid
+            tx.paidByIsCreditCard = null; // Clear payment source if marked unpaid
             AppState.recalculateAllBalances();
             AppState.saveAll();
-             if (sourceModalType) {
+            if (sourceModalType) {
                 UI.closeModal();
                 setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
             } else {
@@ -2554,6 +2912,44 @@ const Handlers = {
         }
     },
     
+    // New handler for payment source form submission
+    handlePaymentSourceFormSubmit(form) {
+        const txId = form.querySelector('#payment-source-tx-id').value;
+        const selectedAccountId = form.querySelector('#payment-source-account').value;
+        const sourceModalType = form.querySelector('#payment-source-modal-type').value;
+
+        if (!selectedAccountId) {
+            UI.showFeedback('Por favor, selecione uma conta ou cartão.', 'error');
+            return;
+        }
+
+        const tx = AppState.transactions.find(t => t.id === txId);
+        if (tx) {
+            const isCreditCard = !!AppState.creditCards.find(c => c.id === selectedAccountId);
+            tx.isPaid = true;
+            tx.paidByAccountId = selectedAccountId;
+            tx.paidByIsCreditCard = isCreditCard;
+
+            AppState.recalculateAllBalances();
+            AppState.saveAll();
+            UI.closeModal();
+            UI.showFeedback('Despesa marcada como paga com sucesso!', 'success');
+            // Re-render the correct page/modal
+            if (sourceModalType === 'transactions') {
+                UI.renderTransactionsPage();
+            } else if (sourceModalType && UI[`renderDetailedSummaryModal`]) {
+                UI.renderDetailedSummaryModal(sourceModalType);
+            } else if (tx.groupId && UI.renderInstallmentDetailsModal) { // If it was an installment, re-render its details
+                 UI.renderInstallmentDetailsModal(tx.groupId);
+            } else {
+                UI.render();
+            }
+        } else {
+            UI.showFeedback('Transação não encontrada.', 'error');
+            UI.closeModal();
+        }
+    },
+
     handleModalClick(event, type) {
         const editBtn = event.target.closest('.edit-btn');
         if (editBtn) {
@@ -2573,10 +2969,18 @@ const Handlers = {
     handleInstallmentStatusToggle(txId) {
         const tx = AppState.transactions.find(t => t.id === txId);
         if (tx) {
-            tx.isPaid = !tx.isPaid;
-            AppState.recalculateAllBalances();
-            AppState.saveAll();
-            UI.renderInstallmentDetailsModal(tx.groupId);
+            // When marking as unpaid, clear the paidByAccountId
+            if (tx.isPaid) {
+                tx.isPaid = false;
+                tx.paidByAccountId = null;
+                tx.paidByIsCreditCard = null;
+                AppState.recalculateAllBalances();
+                AppState.saveAll();
+                UI.renderInstallmentDetailsModal(tx.groupId);
+            } else {
+                // When marking as paid, prompt for source
+                UI.renderPaymentSourceModal(txId, 'installment-details');
+            }
         }
     },
     
@@ -2588,33 +2992,113 @@ const Handlers = {
         UI.renderDetailedSummaryModal(type);
     },
 
-    handleAnalysisClick() {
-        const analysis = AppState.getFinancialAnalysis();
-        UI.renderAnalysisModal(analysis);
+    async handleAnalysisClick() {
+        const analysisData = AppState.getComparativeAnalysis();
+
+        if (analysisData.error) {
+            UI.showFeedback(analysisData.error, 'info');
+            return;
+        }
+        
+        UI.showVisualAnalysisModal(analysisData);
+        
+        const { lastMonthData, prevMonthData } = analysisData;
+        const formatCurrency = UI.formatCurrency;
+
+        const topExpenses = Object.entries(lastMonthData.expensesByCategory)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 5)
+            .map(([category, value]) => `- ${category}: ${formatCurrency(value)}`)
+            .join('\n');
+
+        const prompt = `
+            Você é um consultor financeiro amigável e prestativo.
+            Analise o seguinte resumo financeiro de um usuário do Brasil e forneça insights e sugestões práticas em português do Brasil.
+            Seja conciso, use uma linguagem clara e formate a resposta usando Markdown (use asteriscos para listas, como em '* Item', e dois asteriscos para negrito, como em '**Negrito**').
+            Não use cabeçalhos de markdown (com '#'). Comece diretamente com um parágrafo de resumo.
+            
+            Dados para análise:
+            - **Mês Anterior (${prevMonthData.periodLabel}):** Receitas de ${formatCurrency(prevMonthData.income)}, Despesas de ${formatCurrency(prevMonthData.expenses)}, Saldo de ${formatCurrency(prevMonthData.balance)}.
+            - **Mês Atual (${lastMonthData.periodLabel}):** Receitas de ${formatCurrency(lastMonthData.income)}, Despesas de ${formatCurrency(lastMonthData.expenses)}, Saldo de ${formatCurrency(lastMonthData.balance)}.
+            - **Principais Despesas (Mês Atual):**\n${topExpenses || "Nenhuma despesa registrada."}
+
+            Estruture sua resposta da seguinte forma:
+            1.  Um parágrafo de análise geral.
+            2.  Uma lista de "Pontos Positivos".
+            3.  Uma lista de "Pontos de Atenção e Sugestões".
+        `;
+
+        try {
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = { contents: chatHistory };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro na API: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            
+            let analysisText = "Não foi possível gerar a análise no momento.";
+            if (result.candidates && result.candidates[0] && result.candidates[0].content.parts[0]) {
+                 analysisText = result.candidates[0].content.parts[0].text;
+            }
+
+            const analysisHtml = UI.parseSimpleMarkdown(analysisText);
+            const insightsContainer = document.getElementById('ai-insights-content');
+            if (insightsContainer) {
+                insightsContainer.innerHTML = analysisHtml;
+            }
+
+        } catch (error) {
+            console.error('Erro ao chamar a API do Gemini:', error);
+            const insightsContainer = document.getElementById('ai-insights-content');
+            if (insightsContainer) {
+                insightsContainer.innerHTML = '<p class="text-red-500">Ocorreu um erro ao tentar gerar sua análise financeira. Por favor, tente novamente mais tarde.</p>';
+            }
+        }
     },
 
     handleEditClick(button) {
         const type = button.dataset.type;
+        const id = button.dataset.id;
+        
         if (type === 'transaction') {
-            const id = button.dataset.id;
             const item = AppState.transactions.find(i => i.id === id);
+            const context = button.dataset.context;
+            const options = { context };
+            if (context === 'faturas') {
+                options.cardId = button.dataset.cardId;
+                options.year = parseInt(button.dataset.year);
+                options.month = parseInt(button.dataset.month);
+            }
+
             if (item) {
                 if (item.groupId) {
                     UI.showChoiceModal('Opção de Edição', 'O que você deseja editar?', [
-                        { id: 'edit-one-btn', text: 'Apenas esta Parcela', class: 'px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700', onClick: () => { UI.closeModal(); UI.renderEditTransactionModal(item); } },
+                        { id: 'edit-one-btn', text: 'Apenas esta Parcela', class: 'px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700', onClick: () => { UI.closeModal(); UI.renderEditTransactionModal(item, options); } },
                         { id: 'edit-all-btn', text: 'Editar a Série Inteira', class: 'px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700', onClick: () => { UI.closeModal(); UI.renderEditSeriesModal(item); } }
                     ]);
                 } else {
-                    UI.renderEditTransactionModal(item);
+                    UI.renderEditTransactionModal(item, options);
                 }
             }
         } else if (type === 'account' || type === 'card') {
-            const id = button.dataset.id;
-            const item = type === 'account' ? AppState.accounts.find(i => i.id === id) : AppState.creditCards.find(i => i.id === id);
-            if (item) UI.renderAccountModal(item, type);
+            const itemToEdit = type === 'account' ? AppState.accounts.find(i => i.id === id) : AppState.creditCards.find(i => i.id === id);
+            if (itemToEdit) UI.renderAccountModal(itemToEdit, type);
         } else if (type === 'category') {
             const name = button.dataset.name;
             UI.renderCategoryModal(name);
+        } else if (type === 'budget') {
+            const budgetToEdit = AppState.budgets.find(b => b.id === id);
+            if (budgetToEdit) UI.renderBudgetModal(budgetToEdit);
         }
     },
     
@@ -2622,9 +3106,7 @@ const Handlers = {
         const type = button.dataset.type;
         const id = button.dataset.id;
         const name = button.dataset.name;
-        const tx = AppState.transactions.find(t => t.id === id);
-        const typeName = tx ? (tx.fundamentalType === 'receita' ? 'Receita' : 'Despesa') : 'Transação';
-
+        
         if (type === 'account') {
             const hasTransactions = AppState.transactions.some(t => t.accountId === id && !t.isCreditCard);
             const hasLinkedCard = AppState.creditCards.some(c => c.linkedAccountId === id);
@@ -2644,6 +3126,8 @@ const Handlers = {
                 AppState.removeCreditCard(id); AppState.saveAll(); UI.render(); UI.showFeedback('Cartão excluído.', 'success');
             });
         } else if (type === 'transaction') {
+            const tx = AppState.transactions.find(t => t.id === id);
+            const typeName = tx ? (tx.fundamentalType === 'receita' ? 'Receita' : 'Despesa') : 'Transação';
             if (tx && tx.groupId) {
                 UI.showConfirmationModal('Excluir Parcelamento', 'Esta é uma transação parcelada. Deseja excluir todas as parcelas relacionadas?', () => {
                      AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`Parcelamento da ${typeName.toLowerCase()} excluído.`, 'success');
@@ -2657,12 +3141,17 @@ const Handlers = {
             UI.showConfirmationModal('Excluir Categoria', `Tem certeza que deseja excluir a categoria "${name}"? As transações existentes serão movidas para "Outros".`, () => {
                 AppState.removeCategory(name); AppState.saveAll(); UI.render(); UI.showFeedback('Categoria excluída.', 'success');
             });
+        } else if (type === 'budget') {
+            UI.showConfirmationModal('Excluir Orçamento', 'Tem certeza que deseja excluir este orçamento?', () => {
+                AppState.removeBudget(id); AppState.saveAll(); UI.render(); UI.showFeedback('Orçamento excluído.', 'success');
+            });
         }
     },
     
     handleEditSeriesFormSubmit(form) {
         const groupId = form.querySelector('#editing-group-id').value;
         const newDescription = form.querySelector('#edit-series-description').value;
+        const newValue = parseFloat(form.querySelector('#edit-series-value').value);
         const newCategory = form.querySelector('#edit-series-category').value;
         const newStartDate = new Date(form.querySelector('#edit-series-start-date').value + "T00:00:00");
 
@@ -2675,8 +3164,10 @@ const Handlers = {
             newDate.setMonth(newStartDate.getMonth() + index);
             
             tx.description = newDescription;
+            tx.value = newValue;
             tx.category = newCategory;
             tx.date = newDate.toISOString().slice(0,10);
+            // Don't modify paidByAccountId/isCreditCard for series edit, as it's specific to each installment
         });
 
         AppState.recalculateAllBalances();
@@ -2703,9 +3194,29 @@ const Handlers = {
             accountId: accountId || null,
             isCreditCard: isCC,
         };
-    
+        // Update paidByAccountId and paidByIsCreditCard if `isPaid` changes or if accountId changes
+        if (updatedData.isPaid !== originalTx.isPaid) {
+            if (updatedData.isPaid) {
+                // When marking as paid, if no paidByAccountId exists, use the linked account.
+                // Otherwise, it implies user selected it in a separate prompt (future improvement).
+                updatedData.paidByAccountId = originalTx.accountId || null;
+                updatedData.paidByIsCreditCard = originalTx.isCreditCard || false;
+            } else {
+                updatedData.paidByAccountId = null;
+                updatedData.paidByIsCreditCard = null;
+            }
+        } else if (updatedData.isPaid && updatedData.accountId !== originalTx.accountId) {
+             // If already paid and account changes, update paidByAccountId
+            updatedData.paidByAccountId = updatedData.accountId;
+            updatedData.paidByIsCreditCard = updatedData.isCreditCard;
+        } else if (!updatedData.isPaid) { // If it's unpaid, ensure payment source is cleared
+            updatedData.paidByAccountId = null;
+            updatedData.paidByIsCreditCard = null;
+        }
+
         const changes = {};
         if (originalTx.description !== updatedData.description) changes.description = updatedData.description;
+        if (originalTx.value !== updatedData.value) changes.value = updatedData.value;
         if (originalTx.category !== updatedData.category) changes.category = updatedData.category;
         if (originalTx.accountId !== updatedData.accountId) {
             changes.accountId = updatedData.accountId;
@@ -2714,25 +3225,34 @@ const Handlers = {
         
         const hasSharedChanges = Object.keys(changes).length > 0;
         
+        const context = form.querySelector('#edit-context').value;
+        const cardId = form.querySelector('#edit-context-card-id').value;
+        const year = parseInt(form.querySelector('#edit-context-year').value);
+        const month = parseInt(form.querySelector('#edit-context-month').value);
+        
         UI.closeModal();
 
         const applyChanges = (scope) => {
             if (scope !== 'one' && originalTx.groupId && hasSharedChanges) {
                 const groupTxs = AppState.transactions.filter(t => t.groupId === originalTx.groupId);
                 groupTxs.forEach(txInSeries => {
+                    const txDate = new Date(txInSeries.date + "T00:00:00");
+                    const originalDate = new Date(originalTx.date + "T00:00:00");
+
                     let shouldApply = false;
                     if (scope === 'all') {
                         shouldApply = true;
-                    } else if (scope === 'future' && new Date(txInSeries.date) >= new Date(originalTx.date)) {
+                    } else if (scope === 'future' && txDate >= originalDate) {
                         shouldApply = true;
                     }
                     
                     if (shouldApply) {
                         if (changes.description) txInSeries.description = changes.description;
                         if (changes.category) txInSeries.category = changes.category;
+                        if (changes.value) txInSeries.value = changes.value;
                         if(changes.accountId !== undefined) {
-                            txInSeries.accountId = changes.accountId;
-                            txInSeries.isCreditCard = changes.isCreditCard;
+                             txInSeries.accountId = changes.accountId;
+                             txInSeries.isCreditCard = changes.isCreditCard;
                         }
                     }
                 });
@@ -2741,24 +3261,30 @@ const Handlers = {
             AppState.updateTransaction(txId, { ...originalTx, ...updatedData });
             AppState.recalculateAllBalances();
             AppState.saveAll();
-            UI.render();
+            
+            if (context === 'faturas') {
+                UI.renderInvoiceDetails(cardId, year, month);
+            } else {
+                UI.render();
+            }
+
             const typeName = originalTx.fundamentalType === 'receita' ? 'Receita' : 'Despesa';
             UI.showFeedback(`${typeName} alterada com sucesso!`, 'success');
         };
 
         if (originalTx.groupId && hasSharedChanges) {
              const scope = await new Promise(resolve => {
-                UI.showApplyToSeriesModal(
+                 UI.showApplyToSeriesModal(
                     'Editar Parcelas',
-                    'Você alterou um campo compartilhado. Como deseja aplicar esta mudança?',
+                    'Você alterou um campo compartilhado (descrição, valor, categoria ou conta). Como deseja aplicar esta mudança?',
                     () => { UI.closeModal(); resolve('one'); },
                     () => { UI.closeModal(); resolve('future'); },
                     () => { UI.closeModal(); resolve('all'); }
                 );
                  document.querySelector('#modal-container .modal-backdrop').addEventListener('click', (e) => {
-                      if (e.target === e.currentTarget) { UI.closeModal(); resolve(null); }
+                     if (e.target === e.currentTarget) { UI.closeModal(); resolve(null); }
                  });
-            });
+             });
             if (scope) applyChanges(scope);
         } else {
             applyChanges('one');
@@ -2858,12 +3384,21 @@ const Handlers = {
                 date: installmentDate.toISOString().slice(0, 10),
                 fundamentalType: fundamentalType,
                 category: form.querySelector('#trans-category').value,
-                isPaid: i <= paidInstallments,
+                isPaid: fundamentalType === 'despesa' ? (i <= paidInstallments) : true,
                 accountId: accountId || null,
                 isCreditCard: isCC,
                 installments: totalInstallments > 1 ? `(${i}/${totalInstallments})` : null,
-                groupId: groupId
+                groupId: groupId,
+                paidByAccountId: null, // New field for payment source
+                paidByIsCreditCard: null // New field for payment source type
             };
+
+            // If it's a paid expense, and an account is selected, set it as the payment source.
+            // For credit card expenses, paidByAccountId should only be set when the bill is paid.
+            if (txData.isPaid && txData.fundamentalType === 'despesa' && !txData.isCreditCard) {
+                txData.paidByAccountId = txData.accountId;
+                txData.paidByIsCreditCard = txData.isCreditCard;
+            }
             AppState.addTransaction(txData);
         }
 
@@ -2876,12 +3411,68 @@ const Handlers = {
         if(isImported) {
              const importIndex = parseInt(form.querySelector('input[name="isImported"]').dataset.importIndex);
              this.importedTransactions[importIndex] = null;
-            UI.closeModal();
-            setTimeout(() => UI.renderImportReviewModal(this.importedTransactions), 50);
+             UI.closeModal();
+             setTimeout(() => UI.renderImportReviewModal(this.importedTransactions), 50);
         } else {
             UI.closeModal();
         }
         UI.render();
+    },
+    
+    handlePayBillFormSubmit(form) {
+        const cardId = form.querySelector('#pay-bill-card-id').value;
+        const amount = parseFloat(form.querySelector('#pay-bill-amount').value);
+        const sourceAccountId = form.querySelector('#pay-bill-source-account').value;
+        const date = form.querySelector('#pay-bill-date').value;
+
+        if (!sourceAccountId || !amount || !date) {
+            UI.showFeedback("Por favor, preencha todos os campos para o pagamento.", 'error');
+            return;
+        }
+
+        const card = AppState.creditCards.find(c => c.id === cardId);
+        
+        // 1. Criar a transação de despesa na conta de origem
+        const paymentTx = {
+            id: crypto.randomUUID(),
+            description: `Pagamento Fatura ${card.name}`,
+            value: amount,
+            date: date,
+            fundamentalType: 'despesa',
+            category: 'Pagamento de Fatura',
+            isPaid: true,
+            accountId: sourceAccountId,
+            isCreditCard: false,
+            installments: null,
+            groupId: null,
+            paidByAccountId: sourceAccountId, // Payment source is the account itself
+            paidByIsCreditCard: false // Payment source is a regular account
+        };
+        AppState.addTransaction(paymentTx);
+
+        // 2. Marcar as despesas do cartão no mês atual como pagas
+        const month = AppState.displayMonth;
+        const year = AppState.displayYear;
+        AppState.transactions.forEach(tx => {
+            if (tx.accountId === cardId && tx.fundamentalType === 'despesa') {
+                const txDate = new Date(tx.date + 'T00:00:00');
+                if (txDate.getMonth() === month && txDate.getFullYear() === year) {
+                    tx.isPaid = true;
+                    // For credit card expenses paid by bill, the payment source is the linked account.
+                    // This is slightly complex as credit card transactions don't have paidByAccountId initially
+                    // but become paid when the *bill* is paid.
+                    // For simplicity, we can set the card itself as a "paidBy" source for its own expenses if we need to track it,
+                    // or leave it null as the payment is handled by a separate transaction.
+                    // For now, let's keep it null as the explicit payment transaction handles the fund transfer.
+                }
+            }
+        });
+
+        AppState.recalculateAllBalances();
+        AppState.saveAll();
+        UI.closeModal();
+        UI.render();
+        UI.showFeedback(`Pagamento da fatura de ${card.name} registrado com sucesso!`, 'success');
     },
     
     handleGenerateReport() {
@@ -2915,6 +3506,30 @@ const Handlers = {
             UI.renderReportResults({data1: p1.data, data2: p2.data, title, p1Label, p2Label});
         }
     },
+    handleBudgetFormSubmit(form) {
+        const editingId = form.querySelector('#editing-budget-id').value;
+        const isEditing = !!editingId;
+        const category = form.querySelector('#budget-category').value;
+        const amount = parseFloat(form.querySelector('#budget-amount').value);
+
+        if (!category || !amount || amount <= 0) {
+            UI.showFeedback('Por favor, selecione uma categoria e insira um valor válido.', 'error');
+            return;
+        }
+
+        if (isEditing) {
+            const budgetData = { id: editingId, category, amount };
+            AppState.updateBudget(editingId, budgetData);
+        } else {
+            const budgetData = { id: crypto.randomUUID(), category, amount };
+            AppState.addBudget(budgetData);
+        }
+
+        AppState.saveAll();
+        UI.closeModal();
+        UI.render();
+        UI.showFeedback(`Orçamento ${isEditing ? 'atualizado' : 'adicionado'} com sucesso!`, 'success');
+    }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
