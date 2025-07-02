@@ -15,10 +15,11 @@
         /* Scrollbar customizada */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #edf2f7; }
-        ::-webkit-scrollbar-thumb { background-color: #a0aec0; border-radius: 10px; border: 2px solid #edf2f7; }
+        ::-webkit-scrollbar-thumb { background-color: #a0aec0; border-radius: 10px; border: 2px solid #edf2f7; }\
         ::-webkit-scrollbar-thumb:hover { background-color: #718096; }
 
         .sidebar-icon { stroke-width: 2; }
+        /* Transição suave para a sidebar e o conteúdo principal */
         #sidebar, main { transition: all 0.3s ease-in-out; }
 
         /* Estilos da Sidebar Recolhida */
@@ -113,6 +114,14 @@
             line-height: 1.25rem;
             white-space: nowrap;
         }
+
+        /* Estilo para destaque do tour */
+        .tour-highlight {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5); /* blue-500 with opacity */
+            border-radius: 0.75rem; /* rounded-lg */
+            z-index: 50; /* Ensure it's above other content */
+            position: relative; /* Needed for z-index to work correctly */
+        }
         
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -127,7 +136,7 @@
             <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01"></path></svg>
             <h1 class="text-2xl font-bold text-blue-600 ml-2 sidebar-logo-text">Finanças+</h1>
         </div>
-        <nav class="flex-1 px-4 py-6 space-y-2">
+        <nav id="sidebar-nav" class="flex-1 px-4 py-6 space-y-2">
             <a href="#" id="nav-dashboard" class="nav-link flex items-center px-4 py-2 text-gray-700 bg-gray-200 rounded-lg">
                 <svg class="w-6 h-6 mr-3 sidebar-icon flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                 <span class="nav-text">Dashboard</span>
@@ -171,25 +180,26 @@
 
     <!-- Conteúdo Principal -->
     <main class="flex-1 flex flex-col bg-gray-50 overflow-y-auto">
-        <header class="flex items-center justify-between h-20 px-8 bg-white border-b flex-shrink-0">
+        <header class="flex items-center justify-between h-20 px-4 sm:px-8 bg-white border-b flex-shrink-0">
             <div class="flex items-center">
-                <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
+                <h2 id="page-title" class="text-xl sm:text-3xl font-bold text-gray-800">Dashboard</h2>
             </div>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2 sm:space-x-4">
                 <input type="file" id="import-file-input" class="hidden" accept=".json">
-                <button id="export-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Exportar Backup</button>
-                <button id="import-data-btn" class="text-sm text-gray-500 hover:text-blue-600">Importar Backup</button>
-                <button id="clear-data-btn" class="text-sm text-gray-500 hover:text-red-600">Limpar Dados</button>
+                <button id="export-data-btn" class="text-xs sm:text-sm text-gray-500 hover:text-blue-600 py-1 px-2 sm:py-2 sm:px-3 rounded-md">Exportar Backup</button>
+                <button id="import-data-btn" class="text-xs sm:text-sm text-gray-500 hover:text-blue-600 py-1 px-2 sm:py-2 sm:px-3 rounded-md">Importar Backup</button>
+                <button id="clear-data-btn" class="text-xs sm:text-sm text-gray-500 hover:text-red-600 py-1 px-2 sm:py-2 sm:px-3 rounded-md">Limpar Dados</button>
+                <button id="start-tour-btn" class="px-3 py-1 text-sm text-white bg-purple-600 rounded-md hover:bg-purple-700 shadow-sm transition-transform hover:scale-105">Tour</button>
             </div>
         </header>
         <div id="page-container" class="flex-1 p-4 md:p-8">
             <section id="dashboard-page">
-                <div class="flex justify-between items-center mb-8">
-                    <div class="period-selector-container flex items-center space-x-2">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-8 space-y-4 sm:space-y-0">
+                    <div class="period-selector-container flex items-center space-x-2 w-full sm:w-auto">
                         <select class="period-month-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
                         <select class="period-year-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
                     </div>
-                    <button id="get-analysis-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform hover:scale-105 flex items-center">
+                    <button id="get-analysis-btn" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform hover:scale-105 flex items-center justify-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                         Analisar Finanças
                     </button>
@@ -266,35 +276,30 @@ const AppState = {
         if (storedCategories && storedCategories.length) {
             this.categories = storedCategories;
         }
+        // Ensure "Dízimo" and "Salário" categories exist
+        if (!this.categories.includes("Salário")) this.categories.push("Salário");
+        if (!this.categories.includes("Dízimo")) this.categories.push("Dízimo");
         if (!this.categories.includes("Outros")) this.categories.push("Outros");
         if (!this.categories.includes("Pagamento de Fatura")) this.categories.push("Pagamento de Fatura");
         this.recalculateAllBalances();
     },
     
     recalculateAllBalances() {
-        // Recalculate account balances
         this.accounts.forEach(account => {
             let currentBalance = account.initialBalance || 0;
             const accountTransactions = this.transactions.filter(
                 tx => tx.accountId === account.id && !tx.isCreditCard
             );
             accountTransactions.forEach(tx => {
-                // If an income, add value
                 if (tx.fundamentalType === 'receita') {
                     currentBalance += tx.value;
-                } 
-                // If an expense paid by this account, subtract value
-                else if (tx.fundamentalType === 'despesa' && tx.isPaid && tx.paidByAccountId === account.id) {
+                } else if (tx.fundamentalType === 'despesa' && tx.isPaid) {
                     currentBalance -= tx.value;
-                } 
-                // If an expense not paid by this account, but from a linked card, it affects the card balance, not directly the account
-                // However, payment of that card bill *will* affect this account balance, which is handled by the "Pagamento de Fatura" transaction type.
-                // So, no direct impact for credit card expenses on account balance here.
+                }
             });
             account.balance = currentBalance;
         });
 
-        // Recalculate credit card balances
         this.creditCards.forEach(card => {
             let usedAmount = 0;
             const cardTransactions = this.transactions.filter(
@@ -302,18 +307,13 @@ const AppState = {
             );
             
             cardTransactions.forEach(tx => {
-                // Credit card expenses increase used amount
-                if (tx.fundamentalType === 'despesa') {
+                if (tx.fundamentalType === 'despesa' && !tx.isPaid) {
                     usedAmount += tx.value;
-                } 
-                // Payments to the card reduce used amount (these are "Receitas" in the context of the card, but "Pagamento de Fatura" expense on linked account)
-                // This scenario (payments to card as income) should be reflected as the "Pagamento de Fatura" transaction category from the linked account.
-                // If there are explicit "receita" transactions on a credit card (e.g., refunds), they reduce the used amount.
+                }
                 else if (tx.fundamentalType === 'receita') {
                     usedAmount -= tx.value;
                 }
             });
-            // Ensure usedAmount doesn't go below zero
             usedAmount = Math.max(0, usedAmount);
             card.availableLimit = card.limit - usedAmount;
         });
@@ -329,7 +329,7 @@ const AppState = {
     
     clearAllData() {
         this.accounts = []; this.creditCards = []; this.transactions = []; this.budgets = [];
-        this.categories = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"];
+        this.categories = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros", "Dízimo"];
         this.saveAll();
     },
 
@@ -470,7 +470,7 @@ const AppState = {
         return false;
     },
     removeCategory(name) {
-        if (name && name !== "Outros" && name !== "Pagamento de Fatura") {
+        if (name && name !== "Outros" && name !== "Pagamento de Fatura" && name !== "Salário" && name !== "Dízimo") {
             this.categories = this.categories.filter(c => c !== name);
             this.transactions.forEach(tx => {
                 if (tx.category === name) {
@@ -484,7 +484,7 @@ const AppState = {
     addBudget(budget) { this.budgets.push(budget); },
     updateBudget(budgetId, updatedData) {
         const budgetIndex = this.budgets.findIndex(b => b.id === budgetId);
-        if (budgetIndex > -1) this.budgets[budgetIndex] = { ...this.budgets[budgetIndex], ...updatedData };
+        if (budgetIndex > -1) this.budgets[budgetIndex] = { ...this.budgets[budgetId], ...updatedData };
     },
     removeBudget(budgetId) {
         this.budgets = this.budgets.filter(b => b.id !== budgetId);
@@ -507,7 +507,111 @@ const UI = {
         { name: 'Viacredi', logo: 'https://www.viacredi.coop.br/wp-content/themes/viacredi/dist/images/logo-viacredi.svg' },
         { name: 'Outro', logo: '' }
     ],
-
+    
+    tourSteps: [
+        {
+            id: 'step-1-sidebar',
+            title: 'Bem-vindo ao Finanças+!',
+            description: 'Este tour irá guiá-lo pelas principais funcionalidades do seu dashboard financeiro. Começaremos pela **barra lateral**, onde você pode navegar entre as diferentes seções da aplicação.',
+            targetElementId: 'sidebar-nav',
+            action: () => {
+                AppState.currentView = 'dashboard';
+                UI.render();
+            }
+        },
+        {
+            id: 'step-2-dashboard-summary',
+            title: 'Visão Geral do Dashboard',
+            description: 'Aqui você encontra um resumo rápido das suas finanças para o mês selecionado, incluindo receitas, despesas e o balanço geral.',
+            targetElementId: 'summary-cards-container',
+            action: () => {
+                AppState.currentView = 'dashboard';
+                UI.render();
+            }
+        },
+        {
+            id: 'step-3-add-transaction',
+            title: 'Adicionar Nova Transação',
+            description: 'Use este botão para registrar suas receitas, despesas e pagamentos, sejam eles únicos ou parcelados.',
+            targetElementId: 'add-new-transaction-btn',
+            action: () => {
+                AppState.currentView = 'dashboard'; // Ensure we are on dashboard to show button
+                UI.render();
+            }
+        },
+        {
+            id: 'step-4-transactions-page',
+            title: 'Gerenciar Transações',
+            description: 'Nesta seção, você pode visualizar, editar, excluir e pesquisar todas as suas transações financeiras. Use os filtros de período para navegar pelo histórico.',
+            targetElementId: 'nav-transactions',
+            action: () => {
+                AppState.currentView = 'transactions';
+                UI.render();
+            }
+        },
+        {
+            id: 'step-5-accounts-page',
+            title: 'Contas e Cartões',
+            description: 'Gerencie suas contas bancárias, poupanças, dinheiro em espécie e cartões de crédito. Mantenha seus saldos atualizados e organize suas fontes de dinheiro.',
+            targetElementId: 'nav-accounts',
+            action: () => {
+                AppState.currentView = 'accounts';
+                UI.render();
+            }
+        },
+        {
+            id: 'step-6-budgets-page',
+            title: 'Orçamentos',
+            description: 'Defina orçamentos para diferentes categorias de despesas e acompanhe seu progresso para garantir que você esteja dentro do planejado.',
+            targetElementId: 'nav-budgets',
+            action: () => {
+                AppState.currentView = 'budgets';
+                UI.render();
+            }
+        },
+        {
+            id: 'step-7-faturas-page',
+            title: 'Faturas de Cartão',
+            description: 'Acompanhe suas faturas de cartão de crédito, visualize lançamentos e gerencie pagamentos de forma organizada.',
+            targetElementId: 'nav-faturas',
+            action: () => {
+                AppState.currentView = 'faturas';
+                UI.render();
+            }
+        },
+        {
+            id: 'step-8-reports-page',
+            title: 'Relatórios e Análises',
+            description: 'Gere relatórios detalhados e utilize a análise inteligente para obter insights sobre seus hábitos financeiros e identificar áreas de melhoria.',
+            targetElementId: 'nav-reports',
+            action: () => {
+                AppState.currentView = 'reports';
+                UI.render();
+            }
+        },
+        {
+            id: 'step-9-ai-analysis',
+            title: 'Análise Financeira Inteligente',
+            description: 'Este recurso de IA fornece insights personalizados sobre suas finanças, comparando seus gastos e receitas para ajudar você a tomar decisões mais inteligentes.',
+            targetElementId: 'get-analysis-btn',
+            action: () => {
+                AppState.currentView = 'dashboard'; // Ensure we are on dashboard to show button
+                UI.render();
+            }
+        },
+        {
+            id: 'step-10-end-tour',
+            title: 'Tour Concluído!',
+            description: 'Parabéns! Você concluiu o tour pelo Finanças+. Agora você está pronto para explorar e gerenciar suas finanças de forma eficiente. Se precisar de ajuda, sinta-se à vontade para iniciar o tour novamente a qualquer momento.',
+            targetElementId: null, // No specific element to highlight
+            action: () => {
+                AppState.currentView = 'dashboard';
+                UI.render();
+            }
+        }
+    ],
+    currentTourStepIndex: -1,
+    
     init() { this.render(); },
     
     render() {
@@ -631,13 +735,16 @@ const UI = {
                 .filter(t => t.category === cat && t.fundamentalType === 'despesa')
                 .reduce((sum, t) => sum + t.value, 0);
 
+            // Disable editing/deleting for core categories
+            const isCoreCategory = ["Outros", "Pagamento de Fatura", "Salário", "Dízimo"].includes(cat);
+
             return `
             <div class="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
                 <div>
                     <p class="font-medium text-gray-800">${cat}</p>
                     <p class="text-sm text-gray-500">Utilizado: ${this.formatCurrency(totalUsed)}</p>
                 </div>
-                ${cat !== "Outros" && cat !== "Pagamento de Fatura" ? `
+                ${!isCoreCategory ? `
                 <div class="flex items-center space-x-2">
                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-name="${cat}" data-type="category" title="Editar">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -693,7 +800,6 @@ const UI = {
             const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
             
             let statusHTML;
-            let paymentSourceHTML = ''; // Added to display payment source
             if (tx.fundamentalType === 'receita') {
                 statusHTML = `<td class="py-4 px-6 text-center">-</td>`;
             } else {
@@ -707,12 +813,6 @@ const UI = {
                 if (tx.isPaid) {
                     statusText = 'Pago';
                     statusColor = 'bg-green-100 text-green-800';
-                    if (tx.paidByAccountId) {
-                        const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
-                        if (paidByAccount) {
-                            paymentSourceHTML = `<p class="text-xs text-gray-500">por ${paidByAccount.name}</p>`;
-                        }
-                    }
                 } else if (txDate < today) {
                     let isOverdue = true;
                     if (tx.groupId) {
@@ -733,7 +833,6 @@ const UI = {
                         <span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">
                             ${statusText}
                         </span>
-                        ${paymentSourceHTML}
                     </td>
                 `;
             }
@@ -793,6 +892,7 @@ const UI = {
     
     renderFaturasPage() {
         const page = document.getElementById('faturas-page');
+        // Adicionado `h-full` para garantir que o grid ocupe a altura total disponível.
         page.innerHTML = `
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
                 <div class="lg:col-span-1 bg-white p-4 rounded-xl shadow-md overflow-y-auto">
@@ -951,12 +1051,12 @@ const UI = {
                     <p class="text-gray-600">Analise suas finanças e receba sugestões para melhorar sua saúde financeira.</p>
                 </div>
 
-                <div class="p-4 bg-gray-50 rounded-lg flex justify-between items-center">
+                <div class="p-4 bg-gray-50 rounded-lg flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
                     <div>
                         <h4 class="font-semibold text-gray-700">Análise Inteligente</h4>
                         <p class="text-sm text-gray-500">Receba dicas personalizadas com base nos seus gastos do último mês.</p>
                     </div>
-                    <button id="get-analysis-btn" class="px-5 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform hover:scale-105">Analisar Finanças</button>
+                    <button id="get-analysis-btn" class="w-full sm:w-auto px-5 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform hover:scale-105">Analisar Finanças</button>
                 </div>
                 
                 <hr/>
@@ -974,7 +1074,7 @@ const UI = {
                             <label for="report-year-1" class="block text-sm font-medium text-gray-700">Ano (Período 1)</label>
                             <select id="report-year-1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${yearOptions}</select>
                         </div>
-                         <div>
+                        <div>
                             <label for="report-month-1" class="block text-sm font-medium text-gray-700">Mês (Período 1)</label>
                             <select id="report-month-1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${monthOptions}</select>
                         </div>
@@ -984,12 +1084,12 @@ const UI = {
                             <label for="report-year-2" class="block text-sm font-medium text-gray-700">Ano (Período 2)</label>
                             <select id="report-year-2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${yearOptions}</select>
                         </div>
-                         <div>
+                        <div>
                             <label for="report-month-2" class="block text-sm font-medium text-gray-700">Mês (Período 2)</label>
                             <select id="report-month-2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${monthOptions}</select>
                         </div>
                     </div>
-                     <div>
+                    <div>
                         <label for="report-type" class="block text-sm font-medium text-gray-700">Tipo</label>
                         <select id="report-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                             <option value="despesa" selected>Despesas</option>
@@ -1011,7 +1111,7 @@ const UI = {
         
         container.innerHTML = `
             <div class="p-6 bg-white rounded-xl shadow-md">
-                <div class="flex justify-between items-center mb-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-2 sm:space-y-0">
                     <h3 class="text-xl font-bold text-gray-700">${title}</h3>
                     <button id="export-report-btn" class="px-3 py-1 text-sm text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50">Exportar</button>
                 </div>
@@ -1095,11 +1195,11 @@ const UI = {
         const page = document.getElementById('accounts-page');
         page.innerHTML = `
             <div class="space-y-6">
-                <div class="flex justify-between items-center mb-6">
-                     <h2 class="text-2xl font-bold text-gray-800">Minhas Contas e Cartões</h2>
-                     <button id="add-new-account-btn" class="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-transform hover:scale-105">+ Nova Conta/Cartão</button>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-3 sm:space-y-0">
+                    <h2 class="text-2xl font-bold text-gray-800">Minhas Contas e Cartões</h2>
+                    <button id="add-new-account-btn" class="w-full sm:w-auto px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-transform hover:scale-105">+ Nova Conta/Cartão</button>
                 </div>
-                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div>
                         <h3 class="text-xl font-bold text-gray-700 mb-4">Minhas Contas</h3>
                         <div id="accounts-list" class="space-y-4"></div>
@@ -1280,6 +1380,7 @@ const UI = {
             description: '',
             installmentsTotal: 1,
             installmentsPaid: 0,
+            titheAmount: '', // New field for tithe
             ...data
         };
         
@@ -1294,7 +1395,7 @@ const UI = {
                     <label for="trans-description" class="block text-sm font-medium text-gray-700">Descrição</label>
                     <input type="text" id="trans-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="trans-value" class="block text-sm font-medium text-gray-700">Valor (R$)</label>
                         <input type="number" id="trans-value" value="${tx.value}" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
@@ -1306,7 +1407,7 @@ const UI = {
                 </div>
                 <div class="p-3 bg-gray-50 rounded-lg">
                     <h4 class="font-semibold text-gray-600 mb-2">Parcelamento</h4>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label for="trans-installments-total" class="block text-sm font-medium text-gray-700">Nº de Parcelas</label>
                             <input type="number" id="trans-installments-total" value="${tx.installmentsTotal}" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
@@ -1328,7 +1429,11 @@ const UI = {
                     <label for="trans-category" class="block text-sm font-medium text-gray-700">Categoria</label>
                     <select id="trans-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
-                 <div>
+                <div id="tithe-field-container" class="hidden">
+                    <label for="trans-tithe-amount" class="block text-sm font-medium text-gray-700">Dízimo (Ex: 10% ou 100.00)</label>
+                    <input type="text" id="trans-tithe-amount" value="${tx.titheAmount}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="Valor ou porcentagem (ex: 10%)">
+                </div>
+                <div>
                     <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
                     <select id="trans-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="">Nenhuma</option>
@@ -1344,7 +1449,23 @@ const UI = {
         this.showModal('Nova Transação', content, 'Salvar', 'transaction-modal-form');
         
         const transTypeSelect = document.getElementById('trans-type');
+        const transCategorySelect = document.getElementById('trans-category');
+        const titheFieldContainer = document.getElementById('tithe-field-container');
         const helperText = document.getElementById('income-account-helper');
+
+        const toggleTitheField = () => {
+            if (transTypeSelect.value === 'receita' && transCategorySelect.value === 'Salário') {
+                titheFieldContainer.classList.remove('hidden');
+            } else {
+                titheFieldContainer.classList.add('hidden');
+            }
+        };
+
+        transTypeSelect.addEventListener('change', toggleTitheField);
+        transCategorySelect.addEventListener('change', toggleTitheField);
+
+        toggleTitheField(); // Initial check
+        
         if (transTypeSelect && helperText) {
             helperText.classList.toggle('hidden', transTypeSelect.value !== 'receita');
         }
@@ -1359,6 +1480,10 @@ const UI = {
         const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}" ${tx.accountId === c.id && tx.isCreditCard ? 'selected' : ''}>${c.name} (Cartão)</option>`).join('');
         const categoryOptions = AppState.categories.map(c => `<option value="${c}" ${tx.category === c ? 'selected' : ''}>${c}</option>`).join('');
 
+        // Find the tithe transaction if it exists for this salary
+        const titheTx = tx.titheTxId ? AppState.transactions.find(t => t.id === tx.titheTxId) : null;
+        const titheAmountValue = titheTx ? titheTx.value : ''; // Assuming titheAmount stores actual value for now
+
         const content = `
             <form id="edit-transaction-form" class="space-y-4">
                 <input type="hidden" id="editing-id" value="${tx.id}">
@@ -1370,7 +1495,7 @@ const UI = {
                     <label for="edit-trans-description" class="block text-sm font-medium text-gray-700">Descrição ${tx.installments || ''}</label>
                     <input type="text" id="edit-trans-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
-                 <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="edit-trans-value" class="block text-sm font-medium text-gray-700">Valor (R$)</label>
                         <input type="number" id="edit-trans-value" value="${tx.value}" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
@@ -1384,7 +1509,11 @@ const UI = {
                     <label for="edit-trans-category" class="block text-sm font-medium text-gray-700">Categoria</label>
                     <select id="edit-trans-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
-                 <div>
+                <div id="edit-tithe-field-container" class="hidden">
+                    <label for="edit-trans-tithe-amount" class="block text-sm font-medium text-gray-700">Dízimo (Ex: 10% ou 100.00)</label>
+                    <input type="text" id="edit-trans-tithe-amount" value="${titheAmountValue}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="Valor ou porcentagem (ex: 10%)">
+                </div>
+                <div>
                     <label for="edit-trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
                     <select id="edit-trans-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="">Nenhum</option>
@@ -1399,6 +1528,20 @@ const UI = {
             </form>
         `;
         this.showModal(`Editar ${tx.installments ? `Parcela` : 'Transação'}`, content, 'Salvar', 'edit-transaction-form');
+
+        const editTransCategorySelect = document.getElementById('edit-trans-category');
+        const editTransType = tx.fundamentalType; // Get the original type of the transaction
+        const editTitheFieldContainer = document.getElementById('edit-tithe-field-container');
+
+        const toggleEditTitheField = () => {
+            if (editTransType === 'receita' && editTransCategorySelect.value === 'Salário') {
+                editTitheFieldContainer.classList.remove('hidden');
+            } else {
+                editTitheFieldContainer.classList.add('hidden');
+            }
+        };
+        editTransCategorySelect.addEventListener('change', toggleEditTitheField);
+        toggleEditTitheField(); // Initial check
     },
     
     renderEditSeriesModal(tx) {
@@ -1520,7 +1663,7 @@ const UI = {
 
     showChoiceModal(title, message, buttons) {
         const modalContainer = document.getElementById('modal-container');
-        let buttonsHTML = '';
+         let buttonsHTML = '';
         buttons.forEach(btn => {
             buttonsHTML += `<button id="${btn.id}" class="${btn.class}">${btn.text}</button>`;
         });
@@ -1644,7 +1787,6 @@ const UI = {
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
                 
                 let statusHTML = '';
-                let paymentSourceHTML = '';
                 if(tx.fundamentalType === 'despesa') {
                     const txDate = new Date(tx.date + "T00:00:00");
                     let statusText = 'Pendente';
@@ -1652,17 +1794,11 @@ const UI = {
                     if (tx.isPaid) {
                         statusText = 'Pago';
                         statusColor = 'bg-green-100 text-green-800';
-                        if (tx.paidByAccountId) {
-                            const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
-                            if (paidByAccount) {
-                                paymentSourceHTML = `<p class="text-xs text-gray-500">por ${paidByAccount.name}</p>`;
-                            }
-                        }
                     } else if (txDate < today) {
                         statusText = 'Atrasado';
                         statusColor = 'bg-red-100 text-red-800';
                     }
-                    statusHTML = `<span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">${statusText}</span>${paymentSourceHTML}`;
+                    statusHTML = `<span class="status-badge px-2 py-1 text-xs font-medium rounded-full ${statusColor}" data-id="${tx.id}">${statusText}</span>`;
                 }
 
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
@@ -1674,7 +1810,7 @@ const UI = {
                                      <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
                                      ${statusHTML ? `<div class="w-24 text-center">${statusHTML}</div>` : ''}
                                      <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                      </button>
                                  </div>
                              </li>`;
@@ -1684,7 +1820,7 @@ const UI = {
         }
 
         switch (type) {
-            case 'total-balance':
+            case 'total-balance': // This case will now be replaced by 'monthly-balance' in the UI
                 title = 'Saldo Detalhado por Conta';
                 if (AppState.accounts.length === 0) {
                      content = '<p class="text-gray-500 text-center py-4">Nenhuma conta cadastrada.</p>';
@@ -1692,9 +1828,9 @@ const UI = {
                     content = '<ul class="space-y-3">';
                     AppState.accounts.forEach(acc => {
                         content += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
-                                        <span class="font-medium text-gray-800">${acc.name}</span>
-                                        <span class="font-semibold ${acc.balance >= 0 ? 'text-green-600' : 'text-red-600'}">${this.formatCurrency(acc.balance)}</span>
-                                    </li>`;
+                                         <span class="font-medium text-gray-800">${acc.name}</span>
+                                         <span class="font-semibold ${acc.balance >= 0 ? 'text-green-600' : 'text-red-600'}">${this.formatCurrency(acc.balance)}</span>
+                                     </li>`;
                     });
                     content += '</ul>';
                 }
@@ -1712,7 +1848,7 @@ const UI = {
                 content = txListBuilder(expenseTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
-             case 'monthly-paid':
+            case 'monthly-paid':
                  title = 'Total Pago no Mês';
                 const paidTxs = monthTxs.filter(t => t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(paidTxs);
@@ -1733,7 +1869,7 @@ const UI = {
                 content = txListBuilder(overdueTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
-            case 'monthly-balance':
+            case 'monthly-balance': // This case now handles the click for the "Balanço Mensal" card
                  title = 'Balanço do Mês';
                 const incomeBalanço = monthTxs.filter(t => t.fundamentalType === 'receita').sort((a,b) => new Date(b.date) - new Date(a.date));
                 const expenseBalanço = monthTxs.filter(t => t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -1769,28 +1905,19 @@ const UI = {
             let listHtml = '<ul class="space-y-3">';
             txs.forEach(tx => {
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
-                let paymentSourceHtml = '';
-                if(tx.isPaid && tx.paidByAccountId) {
-                    const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
-                    if (paidByAccount) {
-                        paymentSourceHtml = `<p class="text-xs text-gray-500">pago por: ${paidByAccount.name}</p>`;
-                    }
-                }
-
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
                                  <div class="flex-1">
                                      <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
                                      <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                                     ${paymentSourceHtml}
                                  </div>
                                  <div class="flex items-center">
-                                      <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
-                                      <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover Vínculo">
-                                           <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536l1.101-1.102a4 4 0 000-5.656l-4-4a4 4 0 00-5.656 5.656l1.101 1.102" /></svg>
-                                      </button>
-                                      <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                           <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                      </button>
+                                     <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
+                                     <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover Vínculo">
+                                         <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536l1.101-1.102a4 4 0 000-5.656l-4-4a4 4 0 00-5.656 5.656l1.101 1.102" /></svg>
+                                     </button>
+                                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                         <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                     </button>
                                  </div>
                              </li>`;
             });
@@ -1834,24 +1961,16 @@ const UI = {
                     totalBill -= tx.value;
                 }
                 const color = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
-                let paymentSourceHtml = '';
-                if(tx.isPaid && tx.paidByAccountId) {
-                    const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
-                    if (paidByAccount) {
-                        paymentSourceHtml = `<p class="text-xs text-gray-500">pago por: ${paidByAccount.name}</p>`;
-                    }
-                }
                 listHtml += `<li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
                                  <div class="flex-1">
                                      <p class="font-medium text-gray-800">${tx.description} ${tx.installments || ''}</p>
                                      <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                                     ${paymentSourceHtml}
                                  </div>
                                  <div class="flex items-center">
-                                      <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
-                                      <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
-                                           <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                      </button>
+                                     <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
+                                     <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
+                                         <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                     </button>
                                  </div>
                              </li>`;
             });
@@ -1916,20 +2035,11 @@ const UI = {
         allInstallments.forEach(tx => {
             const statusColor = tx.isPaid ? 'text-green-600' : 'text-yellow-600';
             const statusText = tx.isPaid ? 'Pago' : 'Pendente';
-            let paymentSourceHtml = '';
-            if(tx.isPaid && tx.paidByAccountId) {
-                const paidByAccount = AppState.accounts.find(a => a.id === tx.paidByAccountId) || AppState.creditCards.find(c => c.id === tx.paidByAccountId);
-                if (paidByAccount) {
-                    paymentSourceHtml = `<p class="text-xs text-gray-500">pago por: ${paidByAccount.name}</p>`;
-                }
-            }
-
             content += `
                 <li class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md">
                     <div>
                         <p class="font-medium text-gray-800">${tx.installments}</p>
                         <p class="text-xs text-gray-500">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                        ${paymentSourceHtml}
                     </div>
                     <div class="text-right">
                         <p class="font-semibold">${this.formatCurrency(tx.value)}</p>
@@ -2029,36 +2139,6 @@ const UI = {
             </div>`;
     },
 
-    // New modal to select payment source for a transaction
-    renderPaymentSourceModal(txId, sourceModalType) {
-        const tx = AppState.transactions.find(t => t.id === txId);
-        if (!tx) return;
-
-        const allAccountsAndCards = [
-            ...AppState.accounts.map(acc => ({ id: acc.id, name: acc.name, isCreditCard: false })),
-            ...AppState.creditCards.map(card => ({ id: card.id, name: card.name, isCreditCard: true }))
-        ];
-
-        const optionsHtml = allAccountsAndCards.map(item => {
-            return `<option value="${item.id}" data-is-credit-card="${item.isCreditCard}">${item.name} (${item.isCreditCard ? 'Cartão' : 'Conta'})</option>`;
-        }).join('');
-
-        const content = `
-            <form id="payment-source-form" class="space-y-4">
-                <input type="hidden" id="payment-source-tx-id" value="${txId}">
-                <input type="hidden" id="payment-source-modal-type" value="${sourceModalType || ''}">
-                <p class="text-gray-700">Selecione a conta ou cartão de onde a despesa foi paga:</p>
-                <div>
-                    <label for="payment-source-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
-                    <select id="payment-source-account" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="">Selecione...</option>
-                        ${optionsHtml}
-                    </select>
-                </div>
-            </form>
-        `;
-        this.showModal('Registrar Pagamento', content, 'Confirmar', 'payment-source-form');
-    },
 
     showConfirmationModal(title, message, onConfirm) {
         const modalContainer = document.getElementById('modal-container');
@@ -2083,7 +2163,10 @@ const UI = {
         };
     },
 
-    closeModal() { document.getElementById('modal-container').innerHTML = ''; },
+    closeModal() { 
+        document.getElementById('modal-container').innerHTML = ''; 
+        this.removeHighlight(); // Remove highlight when any modal is closed
+    },
     showFeedback(message, type = 'info') {
         const el = document.getElementById('feedback-message');
         const colors = { success: 'bg-green-100 text-green-800', error: 'bg-red-100 text-red-800', info: 'bg-blue-100 text-blue-800' };
@@ -2102,7 +2185,7 @@ const UI = {
         const today = new Date();
         today.setHours(0,0,0,0);
 
-        const totalBalance = AppState.accounts.reduce((s, a) => s + (a.balance || 0), 0);
+        // Calculate monthly income and expenses
         const monthTxs = AppState.transactions.filter(t => {
             const txDate = new Date(t.date + 'T00:00:00');
             return txDate.getMonth() === month && txDate.getFullYear() === year;
@@ -2112,8 +2195,11 @@ const UI = {
         const paidExpenses = monthTxs.filter(t => t.isPaid && t.fundamentalType === 'despesa').reduce((s, t) => s + t.value, 0);
         const overdueCount = AppState.transactions.filter(t => !t.isPaid && t.fundamentalType === 'despesa' && new Date(t.date + 'T00:00:00') < today).length;
 
+        // Calculate net monthly balance for the "Balanço Mensal" card
+        const netMonthlyBalance = income - expenses;
+
         container.innerHTML = `
-            ${this.createSummaryCard('Saldo Total', totalBalance, 'blue', totalBalance < 0)}
+            ${this.createSummaryCard('Balanço Mensal', netMonthlyBalance, 'blue', netMonthlyBalance < 0)}
             ${this.createSummaryCard('Receitas no Mês', income, 'green')}
             ${this.createSummaryCard('Despesas no Mês', expenses, 'red')}
             ${this.createSummaryCard('Total Pago no Mês', paidExpenses, 'yellow')}
@@ -2129,7 +2215,7 @@ const UI = {
             orange: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
         };
         const typeMap = { 
-            'Saldo Total': 'total-balance', 
+            'Balanço Mensal': 'monthly-balance', // Updated mapping
             'Receitas no Mês': 'monthly-income', 
             'Despesas no Mês': 'monthly-expenses', 
             'Total Pago no Mês': 'monthly-paid',
@@ -2173,14 +2259,9 @@ const UI = {
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
             let balance = AppState.accounts.reduce((s, a) => s + (a.initialBalance || 0), 0);
             AppState.transactions.filter(tx => new Date(tx.date) <= endOfMonth).forEach(tx => {
-                // Only consider expenses that are actually paid from accounts (not credit cards unless it's a bill payment)
-                // And income is always added.
-                if(tx.fundamentalType === 'receita') {
-                    balance += tx.value;
-                } else if (tx.fundamentalType === 'despesa' && tx.isPaid && !tx.isCreditCard) { // Direct expense from account
-                    balance -= tx.value;
-                } else if (tx.fundamentalType === 'despesa' && tx.isPaid && tx.category === 'Pagamento de Fatura') { // Bill payment
-                    balance -= tx.value;
+                if(!tx.isCreditCard) {
+                    if (tx.fundamentalType === 'receita') balance += tx.value;
+                    else if (tx.isPaid) balance -= tx.value;
                 }
             });
             data.push(balance.toFixed(2));
@@ -2318,9 +2399,9 @@ const UI = {
         const page = document.getElementById('budgets-page');
         page.innerHTML = `
              <div class="space-y-6">
-                 <div class="flex justify-between items-center">
+                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-3 sm:space-y-0">
                     <h2 class="text-2xl font-bold text-gray-800">Meus Orçamentos</h2>
-                     <button id="add-new-budget-btn" class="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-transform hover:scale-105">+ Novo Orçamento</button>
+                     <button id="add-new-budget-btn" class="w-full sm:w-auto px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-transform hover:scale-105">+ Novo Orçamento</button>
                 </div>
                 <div id="budget-list-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     <!-- Orçamentos serão inseridos aqui -->
@@ -2375,7 +2456,7 @@ const UI = {
                         <span class="font-semibold ${percentage > 100 ? 'text-red-600' : 'text-gray-800'}">${this.formatCurrency(spent)}</span> de ${this.formatCurrency(budget.amount)}
                     </div>
                     <div class="budget-progress-bar">
-                        <div class="budget-progress-fill ${progressBarColor}" style="width: ${Math.min(percentage, 100)}%;">${percentage.toFixed(0)}%</div>
+                        <div class="budget-progress-fill ${progressBarColor}" style="width: ${Math.min(percentage, 100)}%;"></div>
                     </div>
                 </div>
             `;
@@ -2388,7 +2469,7 @@ const UI = {
         
         const budgetedCategories = AppState.budgets.map(b => b.category);
         const availableCategories = AppState.categories
-            .filter(c => c !== 'Pagamento de Fatura' && c !== 'Salário' && (!budgetedCategories.includes(c) || (isEditing && c === budgetToEdit.category)));
+            .filter(c => c !== 'Pagamento de Fatura' && c !== 'Salário' && c !== 'Dízimo' && (!budgetedCategories.includes(c) || (isEditing && c === budgetToEdit.category)));
 
         if (availableCategories.length === 0 && !isEditing) {
             UI.showFeedback('Todas as categorias já possuem um orçamento.', 'info');
@@ -2455,6 +2536,89 @@ const UI = {
                 </div>
             `;
         }).join('');
+    },
+
+    // Tour specific functions
+    startTour() {
+        AppState.isSidebarCollapsed = false; // Ensure sidebar is open for the tour
+        document.body.classList.remove('sidebar-collapsed');
+        this.currentTourStepIndex = 0;
+        this.showTourStep();
+    },
+
+    showTourStep() {
+        this.removeHighlight(); // Remove highlight from previous step
+        const step = this.tourSteps[this.currentTourStepIndex];
+        if (!step) {
+            this.endTour();
+            return;
+        }
+
+        // Execute action associated with the step (e.g., navigate to a page)
+        if (step.action && typeof step.action === 'function') {
+            step.action();
+            // Give a small delay for the page to render before highlighting
+            setTimeout(() => this.renderTourModal(step), 100);
+        } else {
+            this.renderTourModal(step);
+        }
+    },
+
+    renderTourModal(step) {
+        const totalSteps = this.tourSteps.length;
+        const isLastStep = this.currentTourStepIndex === totalSteps - 1;
+        const isFirstStep = this.currentTourStepIndex === 0;
+
+        const content = `
+            <div class="space-y-4">
+                <p class="text-gray-700">${step.description}</p>
+            </div>
+        `;
+
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.innerHTML = `
+            <div class="modal-backdrop">
+                <div class="modal-content max-w-lg">
+                    <div class="modal-header flex justify-between items-center">
+                        <h3 class="text-xl font-semibold">${step.title}</h3>
+                        <span class="text-sm text-gray-500">${this.currentTourStepIndex + 1}/${totalSteps}</span>
+                    </div>
+                    <div class="modal-body">${content}</div>
+                    <div class="modal-footer flex justify-between items-center">
+                        <button id="tour-prev-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 ${isFirstStep ? 'opacity-50 cursor-not-allowed' : ''}" ${isFirstStep ? 'disabled' : ''}>Anterior</button>
+                        <button id="tour-next-btn" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">${isLastStep ? 'Finalizar' : 'Próximo'}</button>
+                    </div>
+                </div>
+            </div>`;
+        
+        document.getElementById('tour-prev-btn').addEventListener('click', () => Handlers.handleTourNavigation('prev'));
+        document.getElementById('tour-next-btn').addEventListener('click', () => Handlers.handleTourNavigation('next'));
+
+        if (step.targetElementId) {
+            this.highlightElement(step.targetElementId);
+        }
+    },
+
+    highlightElement(elementId) {
+        this.removeHighlight(); // Remove any existing highlight
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.classList.add('tour-highlight');
+        }
+    },
+
+    removeHighlight() {
+        const highlighted = document.querySelector('.tour-highlight');
+        if (highlighted) {
+            highlighted.classList.remove('tour-highlight');
+        }
+    },
+
+    endTour() {
+        this.currentTourStepIndex = -1; // Reset tour
+        this.closeModal();
+        this.removeHighlight();
+        UI.showFeedback('Tour finalizado. Esperamos que tenha sido útil!', 'info');
     }
 };
 
@@ -2483,6 +2647,8 @@ const Handlers = {
 
         document.getElementById('add-new-transaction-btn').addEventListener('click', () => UI.renderNewTransactionModal());
         
+        document.getElementById('start-tour-btn').addEventListener('click', () => UI.startTour());
+
         document.getElementById('page-container').addEventListener('click', e => {
             if (e.target.id === 'add-new-account-btn') UI.renderAccountModal();
             if (e.target.id === 'add-new-category-btn') UI.renderCategoryModal();
@@ -2513,9 +2679,8 @@ const Handlers = {
                 }
             }
 
-            // Modified to handle payment source selection
             if (e.target.classList.contains('status-badge')) {
-                this.handleStatusToggle(e.target.dataset.id, AppState.currentView); // Pass current view as sourceModalType
+                this.handleStatusToggle(e.target.dataset.id);
             }
             
             const accountItem = e.target.closest('.account-item');
@@ -2547,12 +2712,12 @@ const Handlers = {
 
         document.getElementById('page-container').addEventListener('change', e => {
              if (e.target.classList.contains('period-month-select') || e.target.classList.contains('period-year-select')) {
-                const activePageId = AppState.currentView;
-                const monthSelect = document.querySelector(`#${activePageId}-page .period-month-select`);
-                const yearSelect = document.querySelector(`#${activePageId}-page .period-year-select`);
-                AppState.displayMonth = parseInt(monthSelect.value);
-                AppState.displayYear = parseInt(yearSelect.value);
-                UI.render();
+                 const activePageId = AppState.currentView;
+                 const monthSelect = document.querySelector(`#${activePageId}-page .period-month-select`);
+                 const yearSelect = document.querySelector(`#${activePageId}-page .period-year-select`);
+                 AppState.displayMonth = parseInt(monthSelect.value);
+                 AppState.displayYear = parseInt(yearSelect.value);
+                 UI.render();
             }
 
             // Handler para checkboxes de transação
@@ -2592,8 +2757,6 @@ const Handlers = {
             if (e.target.id === 'bulk-edit-modal-form') this.handleBulkEditFormSubmit(e.target);
             if (e.target.id === 'pay-bill-form') this.handlePayBillFormSubmit(e.target);
             if (e.target.id === 'budget-modal-form') this.handleBudgetFormSubmit(e.target);
-            // New handler for payment source form
-            if (e.target.id === 'payment-source-form') this.handlePaymentSourceFormSubmit(e.target);
         });
 
         document.getElementById('modal-container').addEventListener('change', e => {
@@ -2607,6 +2770,17 @@ const Handlers = {
                 const helperText = document.getElementById('income-account-helper');
                 if (helperText) {
                     helperText.classList.toggle('hidden', e.target.value !== 'receita');
+                }
+            }
+            // New change handler for category in new transaction modal
+            if (e.target.id === 'trans-category' || e.target.id === 'trans-type') {
+                const transTypeSelect = document.getElementById('trans-type');
+                const transCategorySelect = document.getElementById('trans-category');
+                const titheFieldContainer = document.getElementById('tithe-field-container');
+                if (transTypeSelect.value === 'receita' && transCategorySelect.value === 'Salário') {
+                    titheFieldContainer.classList.remove('hidden');
+                } else {
+                    titheFieldContainer.classList.add('hidden');
                 }
             }
         });
@@ -2657,22 +2831,11 @@ const Handlers = {
     handleBulkMarkPaid() {
         if (AppState.selectedTransactionIds.length === 0) return;
         
-        // This flow now requires selecting a payment source for each transaction,
-        // or a single source for all if multiple are selected.
-        // For simplicity in bulk, let's assume a single payment source for all selected.
-        // Or we could trigger `renderPaymentSourceModal` for the first selected unpaid transaction,
-        // then apply to all, or iterate. Let's make it simple for now:
-        // Mark all selected as paid, without specifying source for bulk action.
-        // A more advanced feature would be a "Bulk Mark as Paid From..." modal.
-
         let changedCount = 0;
         AppState.selectedTransactionIds.forEach(id => {
             const tx = AppState.transactions.find(t => t.id === id);
             if (tx && tx.fundamentalType === 'despesa' && !tx.isPaid) {
                 tx.isPaid = true;
-                // For simplicity in bulk, we don't assign paidByAccountId here.
-                // It would require another modal or complex logic.
-                // The user can edit individual transactions to set it.
                 changedCount++;
             }
         });
@@ -2696,6 +2859,14 @@ const Handlers = {
             `Excluir ${selectedCount} Transações`,
             `Tem certeza que deseja excluir as ${selectedCount} transações selecionadas?`,
             () => {
+                // Also remove associated tithe transactions if salary is deleted
+                AppState.selectedTransactionIds.forEach(id => {
+                    const tx = AppState.transactions.find(t => t.id === id);
+                    if (tx && tx.titheTxId) {
+                        AppState.transactions = AppState.transactions.filter(t => t.id !== tx.titheTxId);
+                    }
+                });
+
                 AppState.transactions = AppState.transactions.filter(
                     tx => !AppState.selectedTransactionIds.includes(tx.id)
                 );
@@ -2775,15 +2946,7 @@ const Handlers = {
         
         if (newStatus) {
             selectedTxs.forEach(tx => {
-                if (tx.fundamentalType === 'despesa') {
-                    tx.isPaid = (newStatus === 'paid');
-                    // In bulk edit, we don't ask for paidByAccountId for simplicity.
-                    // This could be a future enhancement.
-                    if (!tx.isPaid) { // If marking as unpaid, clear paidByAccountId
-                        tx.paidByAccountId = null;
-                        tx.paidByIsCreditCard = null;
-                    }
-                }
+                if (tx.fundamentalType === 'despesa') tx.isPaid = (newStatus === 'paid');
             });
         }
         
@@ -2793,6 +2956,20 @@ const Handlers = {
             if (changes.accountId !== undefined) {
                 tx.accountId = changes.accountId;
                 tx.isCreditCard = changes.isCreditCard;
+            }
+            // Handle tithe for single transactions in bulk edit (if applicable)
+            if (tx.fundamentalType === 'receita' && tx.category === 'Salário' && changes.category === 'Salário' && tx.titheTxId) {
+                const titheTx = AppState.transactions.find(t => t.id === tx.titheTxId);
+                if (titheTx) {
+                    if (changes.accountId !== undefined) {
+                        titheTx.accountId = changes.accountId;
+                        titheTx.isCreditCard = changes.isCreditCard;
+                    }
+                }
+            } else if (tx.fundamentalType === 'receita' && tx.category === 'Salário' && changes.category !== 'Salário' && tx.titheTxId) {
+                // If salary category is changed to non-salary, remove tithe
+                AppState.transactions = AppState.transactions.filter(t => t.id !== tx.titheTxId);
+                tx.titheTxId = null;
             }
         });
 
@@ -2838,7 +3015,6 @@ const Handlers = {
             const tx = AppState.transactions.find(t => t.id === txId);
             if (tx) {
                 tx.accountId = null;
-                tx.isCreditCard = false; // Ensure this is set to false if unlinked from a card
                 AppState.recalculateAllBalances();
                 AppState.saveAll();
                 UI.closeModal();
@@ -2863,20 +3039,14 @@ const Handlers = {
         // If we are trying to mark as paid
         if (!tx.isPaid) {
             const setAsPaid = () => {
-                // If payment source already exists from previous edits or import, use it
-                if (tx.paidByAccountId) {
-                    tx.isPaid = true;
-                    AppState.recalculateAllBalances();
-                    AppState.saveAll();
-                    if (sourceModalType) {
-                         UI.closeModal();
-                         setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
-                    } else {
-                        UI.render();
-                    }
+                tx.isPaid = true;
+                AppState.recalculateAllBalances();
+                AppState.saveAll();
+                if (sourceModalType) {
+                    UI.closeModal();
+                    setTimeout(() => UI.renderDetailedSummaryModal(sourceModalType), 50);
                 } else {
-                    // If no payment source, open modal to select one
-                    UI.renderPaymentSourceModal(txId, sourceModalType);
+                    UI.render();
                 }
             };
 
@@ -2899,8 +3069,6 @@ const Handlers = {
         // If we are trying to mark as unpaid
         else {
             tx.isPaid = false;
-            tx.paidByAccountId = null; // Clear payment source if marked unpaid
-            tx.paidByIsCreditCard = null; // Clear payment source if marked unpaid
             AppState.recalculateAllBalances();
             AppState.saveAll();
             if (sourceModalType) {
@@ -2912,44 +3080,6 @@ const Handlers = {
         }
     },
     
-    // New handler for payment source form submission
-    handlePaymentSourceFormSubmit(form) {
-        const txId = form.querySelector('#payment-source-tx-id').value;
-        const selectedAccountId = form.querySelector('#payment-source-account').value;
-        const sourceModalType = form.querySelector('#payment-source-modal-type').value;
-
-        if (!selectedAccountId) {
-            UI.showFeedback('Por favor, selecione uma conta ou cartão.', 'error');
-            return;
-        }
-
-        const tx = AppState.transactions.find(t => t.id === txId);
-        if (tx) {
-            const isCreditCard = !!AppState.creditCards.find(c => c.id === selectedAccountId);
-            tx.isPaid = true;
-            tx.paidByAccountId = selectedAccountId;
-            tx.paidByIsCreditCard = isCreditCard;
-
-            AppState.recalculateAllBalances();
-            AppState.saveAll();
-            UI.closeModal();
-            UI.showFeedback('Despesa marcada como paga com sucesso!', 'success');
-            // Re-render the correct page/modal
-            if (sourceModalType === 'transactions') {
-                UI.renderTransactionsPage();
-            } else if (sourceModalType && UI[`renderDetailedSummaryModal`]) {
-                UI.renderDetailedSummaryModal(sourceModalType);
-            } else if (tx.groupId && UI.renderInstallmentDetailsModal) { // If it was an installment, re-render its details
-                 UI.renderInstallmentDetailsModal(tx.groupId);
-            } else {
-                UI.render();
-            }
-        } else {
-            UI.showFeedback('Transação não encontrada.', 'error');
-            UI.closeModal();
-        }
-    },
-
     handleModalClick(event, type) {
         const editBtn = event.target.closest('.edit-btn');
         if (editBtn) {
@@ -2969,18 +3099,10 @@ const Handlers = {
     handleInstallmentStatusToggle(txId) {
         const tx = AppState.transactions.find(t => t.id === txId);
         if (tx) {
-            // When marking as unpaid, clear the paidByAccountId
-            if (tx.isPaid) {
-                tx.isPaid = false;
-                tx.paidByAccountId = null;
-                tx.paidByIsCreditCard = null;
-                AppState.recalculateAllBalances();
-                AppState.saveAll();
-                UI.renderInstallmentDetailsModal(tx.groupId);
-            } else {
-                // When marking as paid, prompt for source
-                UI.renderPaymentSourceModal(txId, 'installment-details');
-            }
+            tx.isPaid = !tx.isPaid;
+            AppState.recalculateAllBalances();
+            AppState.saveAll();
+            UI.renderInstallmentDetailsModal(tx.groupId);
         }
     },
     
@@ -3134,6 +3256,10 @@ const Handlers = {
                 });
             } else {
                 UI.showConfirmationModal(`Excluir ${typeName}`, `Tem certeza que deseja excluir esta ${typeName.toLowerCase()}?`, () => {
+                    // If it's a salary, also remove the associated tithe
+                    if (tx.fundamentalType === 'receita' && tx.category === 'Salário' && tx.titheTxId) {
+                        AppState.transactions = AppState.transactions.filter(t => t.id !== tx.titheTxId);
+                    }
                     AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`${typeName} excluída com sucesso.`, 'success');
                 });
             }
@@ -3167,7 +3293,19 @@ const Handlers = {
             tx.value = newValue;
             tx.category = newCategory;
             tx.date = newDate.toISOString().slice(0,10);
-            // Don't modify paidByAccountId/isCreditCard for series edit, as it's specific to each installment
+
+            // Handle tithe for series when updating category to or from Salary
+            if (tx.fundamentalType === 'receita' && tx.category === 'Salário' && tx.titheTxId) {
+                const titheTx = AppState.transactions.find(t => t.id === tx.titheTxId);
+                if (titheTx) {
+                    titheTx.value = newValue * 0.1; // Assuming 10% tithe for series edit
+                    titheTx.description = `Dízimo de Salário - ${newDescription}`;
+                }
+            } else if (tx.fundamentalType === 'receita' && tx.category !== 'Salário' && tx.titheTxId) {
+                 // If category changed from Salary, remove tithe
+                 AppState.transactions = AppState.transactions.filter(t => t.id !== tx.titheTxId);
+                 tx.titheTxId = null;
+            }
         });
 
         AppState.recalculateAllBalances();
@@ -3184,7 +3322,19 @@ const Handlers = {
     
         const accountId = form.querySelector('#edit-trans-account').value;
         const isCC = AppState.creditCards.some(c => c.id === accountId);
-    
+        
+        const titheAmountInput = form.querySelector('#edit-trans-tithe-amount')?.value;
+        let titheAmount = 0;
+
+        if (originalTx.fundamentalType === 'receita' && form.querySelector('#edit-trans-category').value === 'Salário' && titheAmountInput) {
+            if (titheAmountInput.includes('%')) {
+                const percentage = parseFloat(titheAmountInput.replace('%', '')) / 100;
+                titheAmount = parseFloat(form.querySelector('#edit-trans-value').value) * percentage;
+            } else {
+                titheAmount = parseFloat(titheAmountInput);
+            }
+        }
+
         const updatedData = {
             description: form.querySelector('#edit-trans-description').value,
             value: parseFloat(form.querySelector('#edit-trans-value').value),
@@ -3194,25 +3344,6 @@ const Handlers = {
             accountId: accountId || null,
             isCreditCard: isCC,
         };
-        // Update paidByAccountId and paidByIsCreditCard if `isPaid` changes or if accountId changes
-        if (updatedData.isPaid !== originalTx.isPaid) {
-            if (updatedData.isPaid) {
-                // When marking as paid, if no paidByAccountId exists, use the linked account.
-                // Otherwise, it implies user selected it in a separate prompt (future improvement).
-                updatedData.paidByAccountId = originalTx.accountId || null;
-                updatedData.paidByIsCreditCard = originalTx.isCreditCard || false;
-            } else {
-                updatedData.paidByAccountId = null;
-                updatedData.paidByIsCreditCard = null;
-            }
-        } else if (updatedData.isPaid && updatedData.accountId !== originalTx.accountId) {
-             // If already paid and account changes, update paidByAccountId
-            updatedData.paidByAccountId = updatedData.accountId;
-            updatedData.paidByIsCreditCard = updatedData.isCreditCard;
-        } else if (!updatedData.isPaid) { // If it's unpaid, ensure payment source is cleared
-            updatedData.paidByAccountId = null;
-            updatedData.paidByIsCreditCard = null;
-        }
 
         const changes = {};
         if (originalTx.description !== updatedData.description) changes.description = updatedData.description;
@@ -3221,6 +3352,12 @@ const Handlers = {
         if (originalTx.accountId !== updatedData.accountId) {
             changes.accountId = updatedData.accountId;
             changes.isCreditCard = updatedData.isCreditCard;
+        }
+        // Special handling for tithe, only applicable if the original transaction is a salary receipt.
+        if (originalTx.fundamentalType === 'receita' && originalTx.category === 'Salário') {
+            if (originalTx.titheAmount !== titheAmount) {
+                changes.titheAmount = titheAmount;
+            }
         }
         
         const hasSharedChanges = Object.keys(changes).length > 0;
@@ -3254,11 +3391,91 @@ const Handlers = {
                              txInSeries.accountId = changes.accountId;
                              txInSeries.isCreditCard = changes.isCreditCard;
                         }
+                        // Handle tithe for series when applying changes
+                        if (txInSeries.fundamentalType === 'receita' && txInSeries.category === 'Salário') {
+                            let currentTitheValue = 0;
+                            if (changes.titheAmount) {
+                                currentTitheValue = changes.titheAmount;
+                            } else if (titheAmountInput.includes('%')) {
+                                currentTitheValue = txInSeries.value * (parseFloat(titheAmountInput.replace('%', '')) / 100);
+                            } else {
+                                currentTitheValue = parseFloat(titheAmountInput);
+                            }
+
+                            if (currentTitheValue > 0) {
+                                let titheTx = AppState.transactions.find(t => t.id === txInSeries.titheTxId);
+                                if (!titheTx) {
+                                    titheTx = {
+                                        id: crypto.randomUUID(),
+                                        description: `Dízimo de Salário - ${txInSeries.description.split('(')[0].trim()}`,
+                                        value: currentTitheValue,
+                                        date: txInSeries.date,
+                                        fundamentalType: 'despesa',
+                                        category: 'Dízimo',
+                                        isPaid: true,
+                                        accountId: txInSeries.accountId,
+                                        isCreditCard: txInSeries.isCreditCard,
+                                        groupId: txInSeries.groupId,
+                                        installments: txInSeries.installments,
+                                        isTithe: true // Mark as tithe transaction
+                                    };
+                                    AppState.addTransaction(titheTx);
+                                    txInSeries.titheTxId = titheTx.id;
+                                } else {
+                                    titheTx.value = currentTitheValue;
+                                    titheTx.description = `Dízimo de Salário - ${txInSeries.description.split('(')[0].trim()}`;
+                                    titheTx.accountId = txInSeries.accountId;
+                                    titheTx.isCreditCard = txInSeries.isCreditCard;
+                                }
+                            } else if (txInSeries.titheTxId) {
+                                // If tithe amount is zero, remove the tithe transaction
+                                AppState.transactions = AppState.transactions.filter(t => t.id !== txInSeries.titheTxId);
+                                txInSeries.titheTxId = null;
+                            }
+                        }
                     }
                 });
             }
             
             AppState.updateTransaction(txId, { ...originalTx, ...updatedData });
+
+            // Specific logic for tithe when editing a single transaction
+            if (originalTx.fundamentalType === 'receita' && updatedData.category === 'Salário') {
+                if (titheAmount > 0) {
+                    let titheTx = AppState.transactions.find(t => t.id === originalTx.titheTxId);
+                    if (!titheTx) {
+                        titheTx = {
+                            id: crypto.randomUUID(),
+                            description: `Dízimo de Salário - ${updatedData.description}`,
+                            value: titheAmount,
+                            date: updatedData.date,
+                            fundamentalType: 'despesa',
+                            category: 'Dízimo',
+                            isPaid: true,
+                            accountId: updatedData.accountId,
+                            isCreditCard: updatedData.isCreditCard,
+                            isTithe: true // Mark as tithe transaction
+                        };
+                        AppState.addTransaction(titheTx);
+                        originalTx.titheTxId = titheTx.id; // Link the tithe transaction ID
+                    } else {
+                        titheTx.value = titheAmount;
+                        titheTx.description = `Dízimo de Salário - ${updatedData.description}`;
+                        titheTx.date = updatedData.date;
+                        titheTx.accountId = updatedData.accountId;
+                        titheTx.isCreditCard = updatedData.isCreditCard;
+                    }
+                } else if (originalTx.titheTxId) {
+                    // If tithe amount is zero, remove the tithe transaction
+                    AppState.transactions = AppState.transactions.filter(t => t.id !== originalTx.titheTxId);
+                    originalTx.titheTxId = null;
+                }
+            } else if (originalTx.titheTxId && (originalTx.fundamentalType !== 'receita' || updatedData.category !== 'Salário')) {
+                // If category is no longer Salary or type is not receita, remove existing tithe
+                AppState.transactions = AppState.transactions.filter(t => t.id !== originalTx.titheTxId);
+                originalTx.titheTxId = null;
+            }
+
             AppState.recalculateAllBalances();
             AppState.saveAll();
             
@@ -3372,6 +3589,10 @@ const Handlers = {
         const startDate = new Date(form.querySelector('#trans-date').value + 'T00:00:00');
         const groupId = totalInstallments > 1 ? crypto.randomUUID() : null;
         const fundamentalType = form.querySelector('#trans-type').value
+        const category = form.querySelector('#trans-category').value;
+        const transactionValue = parseFloat(form.querySelector('#trans-value').value);
+        const description = form.querySelector('#trans-description').value;
+        const titheAmountInput = form.querySelector('#trans-tithe-amount')?.value;
 
         for (let i = 1; i <= totalInstallments; i++) {
             const installmentDate = new Date(startDate);
@@ -3379,25 +3600,47 @@ const Handlers = {
             
             const txData = {
                 id: crypto.randomUUID(),
-                description: form.querySelector('#trans-description').value,
-                value: parseFloat(form.querySelector('#trans-value').value),
+                description: description,
+                value: transactionValue,
                 date: installmentDate.toISOString().slice(0, 10),
                 fundamentalType: fundamentalType,
-                category: form.querySelector('#trans-category').value,
+                category: category,
                 isPaid: fundamentalType === 'despesa' ? (i <= paidInstallments) : true,
                 accountId: accountId || null,
                 isCreditCard: isCC,
                 installments: totalInstallments > 1 ? `(${i}/${totalInstallments})` : null,
-                groupId: groupId,
-                paidByAccountId: null, // New field for payment source
-                paidByIsCreditCard: null // New field for payment source type
+                groupId: groupId
             };
 
-            // If it's a paid expense, and an account is selected, set it as the payment source.
-            // For credit card expenses, paidByAccountId should only be set when the bill is paid.
-            if (txData.isPaid && txData.fundamentalType === 'despesa' && !txData.isCreditCard) {
-                txData.paidByAccountId = txData.accountId;
-                txData.paidByIsCreditCard = txData.isCreditCard;
+            // Handle tithe for salary income
+            if (fundamentalType === 'receita' && category === 'Salário' && titheAmountInput) {
+                let titheValue;
+                if (titheAmountInput.includes('%')) {
+                    const percentage = parseFloat(titheAmountInput.replace('%', '')) / 100;
+                    titheValue = transactionValue * percentage;
+                } else {
+                    titheValue = parseFloat(titheAmountInput);
+                }
+
+                if (titheValue > 0) {
+                    const titheTxId = crypto.randomUUID();
+                    const titheTx = {
+                        id: titheTxId,
+                        description: `Dízimo de Salário - ${description}`,
+                        value: titheValue,
+                        date: installmentDate.toISOString().slice(0, 10),
+                        fundamentalType: 'despesa',
+                        category: 'Dízimo',
+                        isPaid: true, // Tithe is considered paid immediately
+                        accountId: accountId || null,
+                        isCreditCard: isCC,
+                        groupId: groupId, // Link to salary group if salary is parceled
+                        installments: totalInstallments > 1 ? `(${i}/${totalInstallments})` : null,
+                        isTithe: true // Custom property to identify tithe transactions
+                    };
+                    AppState.addTransaction(titheTx);
+                    txData.titheTxId = titheTxId; // Link salary to its tithe
+                }
             }
             AppState.addTransaction(txData);
         }
@@ -3444,9 +3687,7 @@ const Handlers = {
             accountId: sourceAccountId,
             isCreditCard: false,
             installments: null,
-            groupId: null,
-            paidByAccountId: sourceAccountId, // Payment source is the account itself
-            paidByIsCreditCard: false // Payment source is a regular account
+            groupId: null
         };
         AppState.addTransaction(paymentTx);
 
@@ -3458,12 +3699,6 @@ const Handlers = {
                 const txDate = new Date(tx.date + 'T00:00:00');
                 if (txDate.getMonth() === month && txDate.getFullYear() === year) {
                     tx.isPaid = true;
-                    // For credit card expenses paid by bill, the payment source is the linked account.
-                    // This is slightly complex as credit card transactions don't have paidByAccountId initially
-                    // but become paid when the *bill* is paid.
-                    // For simplicity, we can set the card itself as a "paidBy" source for its own expenses if we need to track it,
-                    // or leave it null as the payment is handled by a separate transaction.
-                    // For now, let's keep it null as the explicit payment transaction handles the fund transfer.
                 }
             }
         });
@@ -3529,6 +3764,17 @@ const Handlers = {
         UI.closeModal();
         UI.render();
         UI.showFeedback(`Orçamento ${isEditing ? 'atualizado' : 'adicionado'} com sucesso!`, 'success');
+    },
+
+    // Tour specific handlers
+    handleTourNavigation(direction) {
+        UI.removeHighlight(); // Clear highlight before changing step
+        if (direction === 'next') {
+            UI.currentTourStepIndex++;
+        } else if (direction === 'prev') {
+            UI.currentTourStepIndex--;
+        }
+        UI.showTourStep();
     }
 };
 
@@ -3537,6 +3783,3 @@ document.addEventListener('DOMContentLoaded', () => {
     UI.init();
     Handlers.init();
 });
-</script>
-</body>
-</html>
