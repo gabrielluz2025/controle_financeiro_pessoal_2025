@@ -1290,16 +1290,25 @@ const UI = {
                 bankBtn.disabled = false;
                 bankBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 
+                // Verificar se é erro de backend não disponível
+                const isBackendError = error.message.includes('Failed to fetch') || 
+                                       error.message.includes('NetworkError') ||
+                                       error.message.includes('CORS');
+                
                 // Mostrar status de erro
                 statusElement.innerHTML = `
                     <span class="inline-flex items-center">
                         <span class="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
-                        Erro na conexão
+                        ${isBackendError ? 'Backend offline - Inicie o servidor' : 'Erro na conexão'}
                     </span>
                 `;
                 
-                // Mostrar feedback de erro
-                this.showFeedback(`Erro ao conectar com ${bank}: ${error.message}`, 'error');
+                // Mostrar feedback de erro detalhado
+                const errorMessage = isBackendError ? 
+                    `Backend não disponível. Execute: npm start` :
+                    `Erro ao conectar com ${bank}: ${error.message}`;
+                    
+                this.showFeedback(errorMessage, 'error');
             });
     },
 

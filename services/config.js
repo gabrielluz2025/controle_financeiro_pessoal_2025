@@ -93,10 +93,13 @@ const OpenFinanceConfig = {
     
     // Modo de desenvolvimento
     development: {
-        useMockData: true, // Usar dados mockados se APIs não estiverem disponíveis
-        mockDelay: 2000, // Delay simulado (2 segundos)
-        enableSandbox: true // Usar endpoints sandbox
-    }
+        useMockData: false, // TEMPO REAL - Usar APIs reais
+        mockDelay: 0,
+        enableSandbox: false // Usar endpoints de produção
+    },
+    
+    // URL do backend
+    apiBaseUrl: 'http://localhost:3000/api'
 };
 
 // Exportar configuração

@@ -17,36 +17,65 @@ class OpenFinanceService {
             scopes: ['accounts.read', 'transactions.read', 'cards.read']
         };
         
-        this.accessToken = null;
-        this.connectedBanks = new Set();
+        this.accessToken = localStorage.getItem('auth_token') || null;
+        this.connectedBanks = new Set(JSON.parse(localStorage.getItem('connected_banks') || '[]'));
     }
 
     /**
-     * Inicia fluxo OAuth 2.0 real com o banco
+     * Obtém token de acesso armazenado
+     */
+    getAccessToken() {
+        return this.accessToken || localStorage.getItem('auth_token') || '';
+    }
+
+    /**
+     * Define token de acesso
+     */
+    setAccessToken(token) {
+        this.accessToken = token;
+        localStorage.setItem('auth_token', token);
+    }
+
+    /**
+     * Inicia fluxo OAuth 2.0 real com o banco via backend
      */
     async connectBank(bankId) {
         try {
-            console.log(`🔗 Iniciando conexão com ${bankId}...`);
+            console.log(`🔗 Iniciando conexão REAL com ${bankId}...`);
             
             // Verificar se já está conectado
             if (this.connectedBanks.has(bankId)) {
                 throw new Error('Banco já está conectado');
             }
             
-            // Verificar se OpenFinanceConfig está disponível
-            if (!window.OpenFinanceConfig) {
-                console.log('⚠️ OpenFinanceConfig não encontrado, usando fallback');
-                return this.connectWithMockData(bankId);
+            // Obter URL base da API
+            const apiBaseUrl = window.OpenFinanceConfig?.apiBaseUrl || 'http://localhost:3000/api';
+            
+            // Chamar backend para iniciar conexão OAuth
+            const response = await fetch(`${apiBaseUrl}/openfinance/connect`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.getAccessToken()}`
+                },
+                body: JSON.stringify({ bank: bankId })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao conectar com banco');
             }
             
-            // Verificar se deve usar dados mockados
-            if (window.OpenFinanceConfig.development.useMockData) {
-                console.log(`📝 Usando dados mockados para ${bankId} (desenvolvimento)`);
-                return this.connectWithMockData(bankId);
+            const data = await response.json();
+            
+            if (!data.authUrl) {
+                throw new Error('URL de autenticação não recebida');
             }
             
-            // Tentar conexão real
-            const authUrl = this.buildAuthUrl(bankId);
+            console.log(`🔗 Abrindo autenticação OAuth para ${bankId}...`);
+            
+            // Usar URL de autenticação do backend
+            const authUrl = data.authUrl;
             
             // Abrir popup para autenticação
             const popup = window.open(authUrl, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
@@ -98,14 +127,7 @@ class OpenFinanceService {
         } catch (error) {
             console.error('❌ Erro na conexão:', error);
             
-            // Fallback para dados mockados em caso de erro
-            if (error.message.includes('Não foi possível abrir a janela') || 
-                error.message.includes('DNS_PROBE_FINISHED_NXDOMAIN') ||
-                error.message.includes('OpenFinanceConfig não encontrado')) {
-                console.log(`🔄 Falha na conexão real, usando dados mockados para ${bankId}`);
-                return this.connectWithMockData(bankId);
-            }
-            
+            // Re-throw erro para tratamento no frontend
             throw error;
         }
     }
