@@ -7,6 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Open Finance Real -->
+    <script src="services/config.js"></script>
+    <script src="services/openfinance-real.js"></script>
+    <script src="services/oauth-callback.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -1099,6 +1103,46 @@ const UI = {
                      <h2 class="text-2xl font-bold text-gray-800">Minhas Contas e Cartões</h2>
                      <button id="add-new-account-btn" class="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-transform hover:scale-105">+ Nova Conta/Cartão</button>
                 </div>
+                
+                <!-- Seção Open Finance -->
+                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 rounded-xl shadow-lg text-white">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Open Finance</h3>
+                            <p class="opacity-90">Conecte suas contas bancárias de forma segura</p>
+                        </div>
+                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7m0 0l7-7m-7 7l-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <button class="openfinance-bank-btn bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-4 hover:bg-white/30 transition-all" data-bank="nubank">
+                            <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center text-white font-bold mb-2">N</div>
+                            <p class="text-sm font-medium">Nubank</p>
+                        </button>
+                        <button class="openfinance-bank-btn bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-4 hover:bg-white/30 transition-all" data-bank="itau">
+                            <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold mb-2">I</div>
+                            <p class="text-sm font-medium">Itaú</p>
+                        </button>
+                        <button class="openfinance-bank-btn bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-4 hover:bg-white/30 transition-all" data-bank="bradesco">
+                            <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center text-white font-bold mb-2">B</div>
+                            <p class="text-sm font-medium">Bradesco</p>
+                        </button>
+                        <button class="openfinance-bank-btn bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-4 hover:bg-white/30 transition-all" data-bank="santander">
+                            <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center text-white font-bold mb-2">S</div>
+                            <p class="text-sm font-medium">Santander</p>
+                        </button>
+                    </div>
+                    <div id="openfinance-status" class="mt-4 text-sm">
+                        <span class="inline-flex items-center">
+                            <span class="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            Não conectado
+                        </span>
+                    </div>
+                </div>
+                
                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div>
                         <h3 class="text-xl font-bold text-gray-700 mb-4">Minhas Contas</h3>
@@ -1113,6 +1157,7 @@ const UI = {
         `;
         this.renderAccountsList();
         this.renderCardsList();
+        this.setupOpenFinanceButtons();
     },
 
     renderAccountsList() {
@@ -1177,6 +1222,144 @@ const UI = {
                 </div>
             </div>`;
         }).join('');
+    },
+
+    setupOpenFinanceButtons() {
+        // Adicionar event listeners para os botões dos bancos
+        document.querySelectorAll('.openfinance-bank-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const bank = e.currentTarget.dataset.bank;
+                this.connectOpenFinanceBank(bank);
+            });
+        });
+    },
+
+    connectOpenFinanceBank(bank) {
+        // Conexão real com Open Finance
+        const statusElement = document.getElementById('openfinance-status');
+        const bankBtn = document.querySelector(`[data-bank="${bank}"]`);
+        
+        // Mostrar status de conectando
+        statusElement.innerHTML = `
+            <span class="inline-flex items-center">
+                <span class="w-2 h-2 bg-blue-400 rounded-full mr-2 animate-pulse"></span>
+                Iniciando conexão com ${bank.charAt(0).toUpperCase() + bank.slice(1)}...
+            </span>
+        `;
+        
+        // Desabilitar botão durante conexão
+        bankBtn.disabled = true;
+        bankBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        
+        // Iniciar conexão real
+        window.OpenFinanceService.connectBank(bank)
+            .then(result => {
+                // Atualizar status para conectado
+                const isMock = result.isMock || false;
+                statusElement.innerHTML = `
+                    <span class="inline-flex items-center">
+                        <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                        Conectado com ${bank.charAt(0).toUpperCase() + bank.slice(1)} ${isMock ? '(dados demo)' : '(dados reais)'}
+                    </span>
+                `;
+                
+                // Mudar aparência do botão para conectado
+                bankBtn.classList.remove('bg-white/20', 'hover:bg-white/30');
+                bankBtn.classList.add('bg-green-500/20', 'border-green-400');
+                
+                // Adicionar checkmark
+                const icon = bankBtn.querySelector('.w-8');
+                icon.innerHTML = '✓';
+                
+                // Sincronizar dados reais
+                this.syncRealOpenFinanceData(result.data);
+                
+                // Mostrar feedback
+                const feedbackType = isMock ? 'warning' : 'success';
+                const feedbackMessage = isMock ? 
+                    `Conectado ao ${bank.charAt(0).toUpperCase() + bank.slice(1)} com dados de demonstração!` :
+                    `Conectado com sucesso ao ${bank.charAt(0).toUpperCase() + bank.slice(1)}!`;
+                
+                this.showFeedback(feedbackMessage, feedbackType);
+                
+            })
+            .catch(error => {
+                console.error('❌ Erro na conexão:', error);
+                
+                // Restaurar botão
+                bankBtn.disabled = false;
+                bankBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                // Mostrar status de erro
+                statusElement.innerHTML = `
+                    <span class="inline-flex items-center">
+                        <span class="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                        Erro na conexão
+                    </span>
+                `;
+                
+                // Mostrar feedback de erro
+                this.showFeedback(`Erro ao conectar com ${bank}: ${error.message}`, 'error');
+            });
+    },
+
+    syncRealOpenFinanceData(bankData) {
+        try {
+            // Adicionar contas reais
+            bankData.accounts.forEach(account => {
+                if (!AppState.accounts.find(a => a.id === account.id)) {
+                    AppState.accounts.push(account);
+                }
+            });
+            
+            // Adicionar cartões reais
+            bankData.creditCards.forEach(card => {
+                if (!AppState.creditCards.find(c => c.id === card.id)) {
+                    AppState.creditCards.push(card);
+                }
+            });
+            
+            // Adicionar transações reais
+            bankData.transactions.forEach(transaction => {
+                if (!AppState.transactions.find(t => t.id === transaction.id)) {
+                    AppState.transactions.push(transaction);
+                }
+            });
+            
+            // Salvar e atualizar interface
+            AppState.saveAll();
+            AppState.recalculateAllBalances();
+            this.renderAccountsList();
+            this.renderCardsList();
+            
+            console.log('🔄 Dados reais sincronizados com sucesso!');
+            
+        } catch (error) {
+            console.error('❌ Erro na sincronização:', error);
+            this.showFeedback('Erro ao sincronizar dados', 'error');
+        }
+    },
+
+    showFeedback(message, type = 'info') {
+        const feedbackContainer = document.getElementById('feedback-message');
+        if (!feedbackContainer) return;
+        
+        const colors = {
+            success: 'bg-green-500',
+            error: 'bg-red-500',
+            info: 'bg-blue-500',
+            warning: 'bg-yellow-500'
+        };
+        
+        feedbackContainer.innerHTML = `
+            <div class="${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 scale-100">
+                ${message}
+            </div>
+        `;
+        
+        setTimeout(() => {
+            feedbackContainer.innerHTML = '';
+        }, 3000);
     },
     
     renderAccountModal(itemToEdit = null, type = 'account') {

@@ -1,0 +1,111 @@
+/* Estilos Principais - Sistema Financeiro */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f7fafc;
+}
+
+/* Scrollbar customizada */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #edf2f7; }
+::-webkit-scrollbar-thumb { background-color: #a0aec0; border-radius: 10px; border: 2px solid #edf2f7; }
+::-webkit-scrollbar-thumb:hover { background-color: #718096; }
+
+.sidebar-icon { stroke-width: 2; }
+#sidebar, main { transition: all 0.3s ease-in-out; }
+
+/* Estilos da Sidebar Recolhida */
+body.sidebar-collapsed #sidebar { width: 5rem; /* 80px */ }
+body.sidebar-collapsed main { margin-left: 5rem; }
+body.sidebar-collapsed #sidebar .sidebar-logo-text,
+body.sidebar-collapsed #sidebar .nav-text,
+body.sidebar-collapsed #sidebar .add-transaction-text,
+body.sidebar-collapsed #sidebar #sidebar-toggle-btn .nav-text-label { display: none; }
+
+body.sidebar-collapsed #sidebar .nav-link,
+body.sidebar-collapsed #sidebar .sidebar-footer button { justify-content: center; }
+
+body.sidebar-collapsed #sidebar .sidebar-footer button svg { margin-right: 0; }
+body.sidebar-collapsed #sidebar #sidebar-toggle-btn svg { transform: rotate(180deg); }
+
+/* Estilo para tabelas */
+.custom-table { border-collapse: separate; border-spacing: 0 0.5rem; }
+.custom-table thead th { position: sticky; top: 0; background-color: #f7fafc; z-index: 10; }
+.custom-table tbody tr { transition: background-color 0.2s ease; }
+.custom-table tbody tr:hover { background-color: #f1f5f9; }
+.custom-table td, .custom-table th { padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; }
+.custom-table tbody tr:last-child td { border-bottom: none; }
+.paid-transaction .description { text-decoration: line-through; color: #a0aec0; }
+.installment-group-row { cursor: pointer; }
+.status-badge { cursor: pointer; }
+.account-item { cursor: pointer; }
+
+.chart-container { position: relative; height: 350px; }
+
+/* Estilos do Modal */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+.modal-content {
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s ease;
+}
+.modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; }
+.modal-body { padding: 1.5rem; overflow-y: auto; }
+.modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; background-color: #f7fafc; }
+
+/* Estilos da Análise AI Visual */
+.ai-analysis-content h3 { font-size: 1.25rem; font-weight: 700; color: #1d4ed8; margin-bottom: 0.5rem; }
+.ai-analysis-content h4 { font-weight: 600; font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #1e40af; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.25rem;}
+.ai-analysis-content ul { list-style-type: none; padding-left: 0.5rem; }
+.ai-analysis-content li { margin-bottom: 0.75rem; display: flex; align-items: flex-start; }
+.ai-analysis-content li::before { content: '🔹'; color: #3b82f6; margin-right: 0.75rem; font-size: 0.8rem; line-height: 1.75; }
+.ai-analysis-content strong { font-weight: 700; color: #1e3a8a; }
+.ai-analysis-content .loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 2rem auto;
+}
+
+/* Estilos de Orçamento */
+.budget-progress-bar {
+    background-color: #e5e7eb;
+    border-radius: 0.5rem;
+    height: 1.25rem;
+    overflow: hidden;
+}
+.budget-progress-fill {
+    height: 100%;
+    border-radius: 0.5rem 0 0 0.5rem;
+    transition: width 0.5s ease-in-out;
+    text-align: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    white-space: nowrap;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

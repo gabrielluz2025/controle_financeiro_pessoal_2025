@@ -1,0 +1,52 @@
+{
+  "name": "sistema-financeiro-openfinance",
+  "version": "1.0.0",
+  "description": "Sistema Financeiro com Open Finance Brasil - Integração bancária real",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "frontend": "http-server -p 8001 -c-1",
+    "test": "jest",
+    "lint": "eslint .",
+    "build": "npm run build:css && npm run build:js",
+    "build:css": "postcss css/main.css -o dist/css/main.min.css",
+    "build:js": "webpack --mode production"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "crypto-js": "^4.2.0",
+    "uuid": "^9.0.1",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "winston": "^3.11.0",
+    "mongoose": "^8.0.3",
+    "redis": "^4.6.12"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "eslint": "^8.56.0",
+    "http-server": "^14.1.1"
+  },
+  "keywords": [
+    "openfinance",
+    "openbanking",
+    "brasil",
+    "finance",
+    "oauth2",
+    "api",
+    "banking"
+  ],
+  "author": "Sistema Financeiro",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
