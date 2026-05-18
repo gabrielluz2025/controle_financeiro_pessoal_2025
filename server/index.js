@@ -117,6 +117,10 @@ app.use('/api/openfinance', openFinanceRoutes);
 app.use('/api/accounts', validateToken, accountsRoutes);
 app.use('/api/analytics', validateToken, analyticsRoutes);
 
+// Rotas para Conexão Direta InfinitePay
+const InfinitePayDirectController = require('./controllers/InfinitePayDirectController');
+app.post('/api/infinitepay-direct/sync', InfinitePayDirectController.sync);
+
 // ================================================
 // ERROR HANDLING
 // ================================================

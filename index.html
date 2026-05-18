@@ -12,6 +12,7 @@
     <!-- Open Finance - InfinitePay Only -->
     <script src="services/config.js"></script>
     <script src="services/openfinance-infinitepay-only.js"></script>
+    <script src="services/infinitepay-direct.js"></script>
     <script src="services/oauth-callback.js"></script>
     <!-- Theme Manager & New Features -->
     <script src="js/theme-manager.js"></script>
@@ -1105,33 +1106,40 @@ const UI = {
                      <button id="add-new-account-btn" class="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-transform hover:scale-105">+ Nova Conta/Cartão</button>
                 </div>
                 
-                <!-- Seção Open Finance -->
+                <!-- Seção Conexão Real InfinitePay -->
                 <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 rounded-xl shadow-lg text-white">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h3 class="text-xl font-bold mb-2">Open Finance</h3>
-                            <p class="opacity-90">Conecte suas contas bancárias de forma segura</p>
+                            <h3 class="text-xl font-bold mb-2">Conexão Real InfinitePay</h3>
+                            <p class="opacity-90">Puxe seus dados reais em tempo real</p>
                         </div>
                         <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7m0 0l7-7m-7 7l-7-7"></path>
-                            </svg>
+                            <img src="https://assets.infinitepay.io/brand/infinitepay-logo-symbol.svg" alt="InfinitePay" class="w-8 h-8">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button class="openfinance-bank-btn bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-4 hover:bg-white/30 transition-all flex items-center space-x-4" data-bank="infinitepay">
-                            <img src="https://assets.infinitepay.io/brand/infinitepay-logo-symbol.svg" alt="InfinitePay" class="w-10 h-10 rounded-lg bg-white p-1" onerror="this.src='https://www.infinitepay.io/favicon.ico'">
-                            <div class="text-left">
-                                <p class="text-lg font-bold">InfinitePay</p>
-                                <p class="text-xs opacity-80">Conectar conta PJ</p>
+                    
+                    <div id="infinitepay-config-form" class="space-y-4 bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase opacity-80 mb-1">Sua InfiniteTag</label>
+                                <input type="text" id="inf-tag" class="w-full bg-white/20 border border-white/30 rounded px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="ex: joaosilva">
                             </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase opacity-80 mb-1">Chave de API</label>
+                                <input type="password" id="inf-api-key" class="w-full bg-white/20 border border-white/30 rounded px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="Cole sua chave aqui">
+                            </div>
+                        </div>
+                        <button onclick="saveAndConnectInfinitePay()" class="w-full bg-white text-purple-600 font-bold py-2 rounded hover:bg-purple-50 transition-colors shadow-md">
+                            CONECTAR E SINCRONIZAR AGORA
                         </button>
                     </div>
-                    <div id="openfinance-status" class="mt-4 text-sm">
+
+                    <div id="openfinance-status" class="mt-4 text-sm flex items-center justify-between">
                         <span class="inline-flex items-center">
-                            <span class="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            Não conectado
+                            <span id="status-dot" class="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span id="status-text">Não conectado</span>
                         </span>
+                        <span id="last-sync-text" class="opacity-70 text-xs"></span>
                     </div>
                 </div>
                 
@@ -1217,13 +1225,22 @@ const UI = {
     },
 
     setupOpenFinanceButtons() {
-        // Adicionar event listeners para os botões dos bancos
-        document.querySelectorAll('.openfinance-bank-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const bank = e.currentTarget.dataset.bank;
-                this.connectOpenFinanceBank(bank);
-            });
-        });
+        // Preencher campos se já existirem credenciais
+        const tagInput = document.getElementById('inf-tag');
+        const keyInput = document.getElementById('inf-api-key');
+        if (tagInput) tagInput.value = localStorage.getItem('inf_tag') || '';
+        if (keyInput) keyInput.value = localStorage.getItem('inf_api_key') || '';
+        
+        const isConnected = localStorage.getItem('inf_connected') === 'true';
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const lastSyncText = document.getElementById('last-sync-text');
+        
+        if (isConnected && statusDot) {
+            statusDot.className = 'w-2 h-2 bg-green-400 rounded-full mr-2';
+            statusText.innerText = 'Conectado em Tempo Real';
+            lastSyncText.innerText = 'Última sincronização: ' + (localStorage.getItem('inf_last_sync') || 'Agora');
+        }
     },
 
     connectOpenFinanceBank(bank) {
