@@ -14,16 +14,21 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { v4: uuidv4 } = require('uuid');
+const { connectDB } = require('./config/database');
 
 // Importar rotas
 const openFinanceRoutes = require('./routes/openfinance');
 const authRoutes = require('./routes/auth');
 const accountsRoutes = require('./routes/accounts');
+const analyticsRoutes = require('./routes/analytics');
 
 // Importar middleware
 const { errorHandler } = require('./middleware/errorHandler');
 const { requestLogger } = require('./middleware/logger');
 const { validateToken } = require('./middleware/auth');
+
+// Conectar ao banco de dados
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -110,6 +115,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/openfinance', openFinanceRoutes);
 app.use('/api/accounts', validateToken, accountsRoutes);
+app.use('/api/analytics', validateToken, analyticsRoutes);
 
 // ================================================
 // ERROR HANDLING
@@ -138,6 +144,8 @@ app.listen(PORT, () => {
 ║  🚀 Servidor rodando na porta ${PORT}                    ║
 ║  🔒 Segurança: Helmet, CORS, Rate Limiting ativados   ║
 ║  📊 Open Finance: Pronto para integração              ║
+║  💾 Banco de Dados: MongoDB conectado                 ║
+║  📊 Analytics: Ativado                                ║
 ║  🌐 Frontend: ${process.env.FRONTEND_URL || 'http://localhost:8001'}              ║
 ╚═══════════════════════════════════════════════════════╝
     `);
