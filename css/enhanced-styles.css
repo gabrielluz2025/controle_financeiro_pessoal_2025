@@ -1,0 +1,326 @@
+/* ============================================
+   ENHANCED STYLES - TEMA ESCURO E MELHORIAS
+   ============================================ */
+
+:root {
+    /* Cores Primárias */
+    --primary-color: #1e3a8a;
+    --primary-light: #3b82f6;
+    --primary-dark: #1e40af;
+    
+    /* Cores Secundárias */
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --info-color: #06b6d4;
+    
+    /* Tons de Cinza */
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    
+    /* Tema Escuro */
+    --dark-bg: #0f172a;
+    --dark-surface: #1e293b;
+    --dark-surface-light: #334155;
+    --dark-text: #f1f5f9;
+    --dark-text-secondary: #cbd5e1;
+}
+
+/* Modo Escuro */
+body.dark-mode {
+    background-color: var(--dark-bg);
+    color: var(--dark-text);
+}
+
+body.dark-mode #sidebar {
+    background-color: var(--dark-surface);
+    border-color: var(--dark-surface-light);
+}
+
+body.dark-mode main {
+    background-color: var(--dark-bg);
+}
+
+body.dark-mode header {
+    background-color: var(--dark-surface);
+    border-color: var(--dark-surface-light);
+}
+
+body.dark-mode .bg-white {
+    background-color: var(--dark-surface);
+    color: var(--dark-text);
+}
+
+body.dark-mode .text-gray-700 {
+    color: var(--dark-text);
+}
+
+body.dark-mode .text-gray-600 {
+    color: var(--dark-text-secondary);
+}
+
+body.dark-mode .border-gray-300 {
+    border-color: var(--dark-surface-light);
+}
+
+/* Cards Melhorados */
+.card {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    padding: 1.5rem;
+}
+
+.card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+body.dark-mode .card {
+    background-color: var(--dark-surface);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Botões Melhorados */
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background-color: var(--primary-light);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-secondary {
+    background-color: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.btn-secondary:hover {
+    background-color: var(--gray-300);
+}
+
+/* Badges de Status */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+}
+
+.badge-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--warning-color);
+}
+
+.badge-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+}
+
+.badge-info {
+    background-color: rgba(6, 182, 212, 0.1);
+    color: var(--info-color);
+}
+
+/* Animações Melhoradas */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-slide-in {
+    animation: slideInUp 0.3s ease-out;
+}
+
+.animate-fade-scale {
+    animation: fadeInScale 0.3s ease-out;
+}
+
+/* Tabelas Melhoradas */
+.table-enhanced {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-enhanced thead {
+    background-color: var(--gray-50);
+    border-bottom: 2px solid var(--gray-200);
+}
+
+body.dark-mode .table-enhanced thead {
+    background-color: var(--dark-surface-light);
+    border-bottom-color: var(--dark-bg);
+}
+
+.table-enhanced th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+body.dark-mode .table-enhanced th {
+    color: var(--dark-text);
+}
+
+.table-enhanced td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+body.dark-mode .table-enhanced td {
+    border-bottom-color: var(--dark-surface-light);
+}
+
+.table-enhanced tbody tr:hover {
+    background-color: var(--gray-50);
+}
+
+body.dark-mode .table-enhanced tbody tr:hover {
+    background-color: var(--dark-surface-light);
+}
+
+/* Gráficos Melhorados */
+.chart-wrapper {
+    position: relative;
+    height: 350px;
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .chart-wrapper {
+    background-color: var(--dark-surface);
+}
+
+/* Notificações */
+.notification {
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    animation: slideInUp 0.3s ease-out;
+}
+
+.notification-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    border-left: 4px solid var(--success-color);
+    color: var(--success-color);
+}
+
+.notification-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-left: 4px solid var(--danger-color);
+    color: var(--danger-color);
+}
+
+.notification-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-left: 4px solid var(--warning-color);
+    color: var(--warning-color);
+}
+
+/* Modo Escuro - Toggle */
+.theme-toggle {
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background-color: var(--gray-100);
+}
+
+body.dark-mode .theme-toggle:hover {
+    background-color: var(--dark-surface-light);
+}
+
+/* Melhorias de Acessibilidade */
+:focus-visible {
+    outline: 2px solid var(--primary-light);
+    outline-offset: 2px;
+}
+
+/* Scrollbar Customizada */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gray-100);
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+    background: var(--dark-surface);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gray-400);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-500);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .card {
+        padding: 1rem;
+    }
+    
+    .table-enhanced th,
+    .table-enhanced td {
+        padding: 0.75rem;
+        font-size: 0.875rem;
+    }
+}
