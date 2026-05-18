@@ -17,108 +17,17 @@ const SyncLog = require('../models/SyncLog');
 
 // Configuração dos bancos participantes do Open Finance Brasil
 const BANK_CONFIG = {
-    nubank: {
-        name: 'Nubank',
-        logo: 'https://logodownload.org/wp-content/uploads/2019/10/nubank-logo-0.png',
-        color: '#820AD1',
-        authorizationEndpoint: 'https://auth.nubank.com.br/oauth2/authorize',
-        tokenEndpoint: 'https://auth.nubank.com.br/oauth2/token',
-        resourceEndpoint: 'https://openbanking.nubank.com.br',
+    infinitepay: {
+        name: 'InfinitePay (CloudWalk)',
+        logo: 'https://www.infinitepay.io/favicon.ico', // Usando favicon como placeholder
+        color: '#00FF00', // Verde característico da InfinitePay
+        authorizationEndpoint: 'https://auth.banking.infinitepay.io/oauth2/authorize',
+        tokenEndpoint: 'https://auth.banking.infinitepay.io/oauth2/token',
+        resourceEndpoint: 'https://api.banking.infinitepay.io/open-banking',
         sandbox: {
-            authorizationEndpoint: 'https://auth.sandbox.nubank.com.br/oauth2/authorize',
-            tokenEndpoint: 'https://auth.sandbox.nubank.com.br/oauth2/token',
-            resourceEndpoint: 'https://openbanking.sandbox.nubank.com.br'
-        }
-    },
-    itau: {
-        name: 'Itaú',
-        logo: 'https://logodownload.org/wp-content/uploads/2019/02/logo-itau.png',
-        color: '#EC7000',
-        authorizationEndpoint: 'https://sts.itau.com.br/seguranca/v1/oauth2/authorize',
-        tokenEndpoint: 'https://sts.itau.com.br/seguranca/v1/oauth2/token',
-        resourceEndpoint: 'https://openbanking.itau.com.br',
-        sandbox: {
-            authorizationEndpoint: 'https://sts.sandbox.itau.com.br/seguranca/v1/oauth2/authorize',
-            tokenEndpoint: 'https://sts.sandbox.itau.com.br/seguranca/v1/oauth2/token',
-            resourceEndpoint: 'https://openbanking.sandbox.itau.com.br'
-        }
-    },
-    bradesco: {
-        name: 'Bradesco',
-        logo: 'https://logodownload.org/wp-content/uploads/2019/03/logo-bradesco-0.png',
-        color: '#CC092F',
-        authorizationEndpoint: 'https://proxy.api.prebanco.com.br/auth/oauth/v2/authorize',
-        tokenEndpoint: 'https://proxy.api.prebanco.com.br/auth/oauth/v2/token',
-        resourceEndpoint: 'https://proxy.api.prebanco.com.br/open-banking',
-        sandbox: {
-            authorizationEndpoint: 'https://proxy.api.sandbox.prebanco.com.br/auth/oauth/v2/authorize',
-            tokenEndpoint: 'https://proxy.api.sandbox.prebanco.com.br/auth/oauth/v2/token',
-            resourceEndpoint: 'https://proxy.api.sandbox.prebanco.com.br/open-banking'
-        }
-    },
-    santander: {
-        name: 'Santander',
-        logo: 'https://logodownload.org/wp-content/uploads/2019/03/logo-santander-0.png',
-        color: '#EC0000',
-        authorizationEndpoint: 'https://openbanking.santander.com.br/oauth/authorize',
-        tokenEndpoint: 'https://openbanking.santander.com.br/oauth/token',
-        resourceEndpoint: 'https://openbanking.santander.com.br',
-        sandbox: {
-            authorizationEndpoint: 'https://openbanking.sandbox.santander.com.br/oauth/authorize',
-            tokenEndpoint: 'https://openbanking.sandbox.santander.com.br/oauth/token',
-            resourceEndpoint: 'https://openbanking.sandbox.santander.com.br'
-        }
-    },
-    bb: {
-        name: 'Banco do Brasil',
-        logo: 'https://logodownload.org/wp-content/uploads/2019/03/logo-banco-do-brasil.png',
-        color: '#FFEF00',
-        authorizationEndpoint: 'https://oauth.bb.com.br/oauth/authorize',
-        tokenEndpoint: 'https://oauth.bb.com.br/oauth/token',
-        resourceEndpoint: 'https://openbanking.bb.com.br',
-        sandbox: {
-            authorizationEndpoint: 'https://oauth.sandbox.bb.com.br/oauth/authorize',
-            tokenEndpoint: 'https://oauth.sandbox.bb.com.br/oauth/token',
-            resourceEndpoint: 'https://openbanking.sandbox.bb.com.br'
-        }
-    },
-    caixa: {
-        name: 'Caixa Econômica',
-        logo: 'https://logodownload.org/wp-content/uploads/2019/03/logo-caixa-0.png',
-        color: '#005CA9',
-        authorizationEndpoint: 'https://apisdigitais.caixa.gov.br/oauth/authorize',
-        tokenEndpoint: 'https://apisdigitais.caixa.gov.br/oauth/token',
-        resourceEndpoint: 'https://apisdigitais.caixa.gov.br/open-banking',
-        sandbox: {
-            authorizationEndpoint: 'https://apisdigitais.sandbox.caixa.gov.br/oauth/authorize',
-            tokenEndpoint: 'https://apisdigitais.sandbox.caixa.gov.br/oauth/token',
-            resourceEndpoint: 'https://apisdigitais.sandbox.caixa.gov.br/open-banking'
-        }
-    },
-    inter: {
-        name: 'Banco Inter',
-        logo: 'https://logodownload.org/wp-content/uploads/2020/04/banco-inter-logo-0.png',
-        color: '#FF7A00',
-        authorizationEndpoint: 'https://cdpj.partners.bancointer.com.br/oauth/v2/authorize',
-        tokenEndpoint: 'https://cdpj.partners.bancointer.com.br/oauth/v2/token',
-        resourceEndpoint: 'https://cdpj.partners.bancointer.com.br/open-banking',
-        sandbox: {
-            authorizationEndpoint: 'https://cdpj.partners.sandbox.bancointer.com.br/oauth/v2/authorize',
-            tokenEndpoint: 'https://cdpj.partners.sandbox.bancointer.com.br/oauth/v2/token',
-            resourceEndpoint: 'https://cdpj.partners.sandbox.bancointer.com.br/open-banking'
-        }
-    },
-    c6bank: {
-        name: 'C6 Bank',
-        logo: 'https://logodownload.org/wp-content/uploads/2020/07/c6-bank-logo-0.png',
-        color: '#242424',
-        authorizationEndpoint: 'https://auth.c6bank.com.br/oauth2/authorize',
-        tokenEndpoint: 'https://auth.c6bank.com.br/oauth2/token',
-        resourceEndpoint: 'https://openbanking.c6bank.com.br',
-        sandbox: {
-            authorizationEndpoint: 'https://auth.sandbox.c6bank.com.br/oauth2/authorize',
-            tokenEndpoint: 'https://auth.sandbox.c6bank.com.br/oauth2/token',
-            resourceEndpoint: 'https://openbanking.sandbox.c6bank.com.br'
+            authorizationEndpoint: 'https://auth.sandbox.banking.infinitepay.io/oauth2/authorize',
+            tokenEndpoint: 'https://auth.sandbox.banking.infinitepay.io/oauth2/token',
+            resourceEndpoint: 'https://api.sandbox.banking.infinitepay.io/open-banking'
         }
     }
 };
@@ -396,6 +305,75 @@ class OpenFinanceController {
             res.status(500).json({ error: 'Erro ao obter status de conexão' });
         }
     }
+
+    /**
+     * Listar contas (Mock/Real dependendo do ambiente)
+     */
+    static async getAccounts(req, res) {
+        try {
+            const userId = req.userId;
+            // Em um cenário real, buscaríamos da API do InfinitePay usando o token salvo
+            // Por agora, retornamos um mock estruturado para o frontend
+            const accounts = [
+                {
+                    id: 'acc_infinitepay_001',
+                    name: 'Conta Digital InfinitePay',
+                    type: 'digital',
+                    balance: 1250.75,
+                    currency: 'BRL',
+                    bank: 'infinitepay',
+                    bankName: 'InfinitePay (CloudWalk)'
+                }
+            ];
+            
+            res.json({ success: true, accounts });
+        } catch (error) {
+            res.status(500).json({ error: 'Erro ao buscar contas' });
+        }
+    }
+
+    /**
+     * Listar cartões
+     */
+    static async getCreditCards(req, res) {
+        try {
+            const cards = [
+                {
+                    id: 'card_infinitepay_001',
+                    name: 'InfiniteCard Visa',
+                    brand: 'Visa',
+                    limit: 5000,
+                    availableLimit: 4200.50,
+                    dueDay: 10,
+                    bank: 'infinitepay'
+                }
+            ];
+            res.json({ success: true, creditCards: cards });
+        } catch (error) {
+            res.status(500).json({ error: 'Erro ao buscar cartões' });
+        }
+    }
+
+    /**
+     * Listar transações
+     */
+    static async getTransactions(req, res) {
+        try {
+            const transactions = [
+                { id: 'tx_001', description: 'Venda InfinitePay', value: 150.00, type: 'receita', date: new Date().toISOString(), category: 'Salário' },
+                { id: 'tx_002', description: 'Fornecedor ABC', value: 45.90, type: 'despesa', date: new Date().toISOString(), category: 'Outros' }
+            ];
+            res.json({ success: true, transactions });
+        } catch (error) {
+            res.status(500).json({ error: 'Erro ao buscar transações' });
+        }
+    }
+
+    static async getAccountBalance(req, res) { res.json({ success: true, balance: 1250.75 }); }
+    static async getCreditCardBill(req, res) { res.json({ success: true, bills: [] }); }
+    static async getCreditCardTransactions(req, res) { res.json({ success: true, transactions: [] }); }
+    static async getConsents(req, res) { res.json({ success: true, consents: [] }); }
+    static async revokeConsent(req, res) { res.json({ success: true, message: 'Consentimento revogado' }); }
 }
 
 module.exports = OpenFinanceController;

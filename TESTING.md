@@ -27,15 +27,14 @@ curl http://localhost:3000/api/openfinance/banks
   "success": true,
   "banks": [
     {
-      "id": "nubank",
-      "name": "Nubank",
+      "id": "infinitepay",
+      "name": "InfinitePay (CloudWalk)",
       "logo": "https://...",
-      "color": "#820AD1",
+      "color": "#00FF00",
       "available": true
-    },
-    ...
+    }
   ],
-  "total": 8
+  "total": 1
 }
 ```
 
@@ -55,7 +54,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 {
   "success": true,
   "message": "Usuário registrado com sucesso",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "id": "...",
     "email": "usuario@example.com",
@@ -86,7 +85,7 @@ curl -X POST http://localhost:3000/api/openfinance/connect \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer SEU_TOKEN" \
   -d '{
-    "bank": "nubank"
+    "bank": "infinitepay"
   }'
 ```
 
@@ -94,7 +93,7 @@ curl -X POST http://localhost:3000/api/openfinance/connect \
 ```json
 {
   "success": true,
-  "authUrl": "https://auth.nubank.com.br/oauth2/authorize?...",
+  "authUrl": "https://auth.banking.infinitepay.io/oauth2/authorize?...",
   "state": "abc123...",
   "expiresIn": 600
 }
@@ -152,7 +151,7 @@ curl -H "Authorization: Bearer SEU_TOKEN" \
        "email": "teste@example.com",
        "name": "Teste",
        "password": "senha123"
-     }' | jq -r '.token')
+     }' | jq -r '.accessToken')
    ```
 
 2. **Verificar dados do usuário**
@@ -234,7 +233,7 @@ time curl http://localhost:3000/health
 - [ ] Registro de usuário funciona
 - [ ] Login funciona e retorna token
 - [ ] Endpoints protegidos requerem token
-- [ ] Listar bancos retorna 8 bancos
+- [ ] Listar bancos retorna apenas InfinitePay
 - [ ] Iniciar conexão gera authUrl válida
 - [ ] Analytics retorna dados corretos
 - [ ] Rate limiting funciona

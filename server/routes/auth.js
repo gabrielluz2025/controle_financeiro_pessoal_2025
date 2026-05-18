@@ -10,9 +10,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const crypto = require('crypto');
+const User = require('../models/User');
 
-// Armazenamento temporário (em produção, usar MongoDB)
-const users = new Map();
+// Armazenamento temporário para tokens de atualização
 const refreshTokens = new Map();
 
 // Validações
@@ -41,7 +41,8 @@ router.post('/register', registerValidation, async (req, res) => {
         const { email, password, name } = req.body;
         
         // Verificar se usuário já existe
-        if (users.has(email)) {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
             return res.status(409).json({ error: 'E-mail já cadastrado' });
         }
         
@@ -49,22 +50,19 @@ router.post('/register', registerValidation, async (req, res) => {
         const salt = await bcrypt.genSalt(12);
         const hashedPassword = await bcrypt.hash(password, salt);
         
-        // Criar usuário
-        const userId = crypto.randomBytes(16).toString('hex');
-        const user = {
-            id: userId,
+        // Criar usuário no MongoDB
+        const user = new User({
             email,
             name,
             password: hashedPassword,
-            createdAt: new Date().toISOString(),
-            settings: {
+            preferences: {
                 currency: 'BRL',
-                language: 'pt-BR',
-                notifications: true
+                language: 'pt-BR'
             }
-        };
+        });
         
-        users.set(email, user);
+        await user.save();
+        const userId = user._id.toString();
         
         // Gerar tokens
         const accessToken = jwt.sign(
@@ -103,8 +101,8 @@ router.post('/login', loginValidation, async (req, res) => {
         
         const { email, password } = req.body;
         
-        // Buscar usuário
-        const user = users.get(email);
+        // Buscar usuário no MongoDB
+        const user = await User.findOne({ email });
         if (!user) {
             return res.status(401).json({ error: 'E-mail ou senha inválidos' });
         }
@@ -115,19 +113,21 @@ router.post('/login', loginValidation, async (req, res) => {
             return res.status(401).json({ error: 'E-mail ou senha inválidos' });
         }
         
+        const userId = user._id.toString();
+        
         // Gerar tokens
         const accessToken = jwt.sign(
-            { userId: user.id, email: user.email, name: user.name },
+            { userId, email: user.email, name: user.name },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
         );
         
         const refreshToken = crypto.randomBytes(64).toString('hex');
-        refreshTokens.set(refreshToken, { userId: user.id, createdAt: Date.now() });
+        refreshTokens.set(refreshToken, { userId, createdAt: Date.now() });
         
         res.json({
             success: true,
-            user: { id: user.id, email: user.email, name: user.name },
+            user: { id: userId, email: user.email, name: user.name },
             accessToken,
             refreshToken
         });
@@ -161,14 +161,8 @@ router.post('/refresh', async (req, res) => {
             return res.status(401).json({ error: 'Refresh token expirado' });
         }
         
-        // Buscar usuário
-        let user = null;
-        for (const [email, u] of users.entries()) {
-            if (u.id === tokenData.userId) {
-                user = u;
-                break;
-            }
-        }
+        // Buscar usuário no MongoDB
+        const user = await User.findById(tokenData.userId);
         
         if (!user) {
             return res.status(401).json({ error: 'Usuário não encontrado' });
@@ -207,7 +201,7 @@ router.post('/logout', (req, res) => {
  * GET /api/auth/me
  * Dados do usuário atual
  */
-router.get('/me', (req, res) => {
+router.get('/me', async (req, res) => {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -219,14 +213,8 @@ router.get('/me', (req, res) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
-        // Buscar dados atualizados do usuário
-        let user = null;
-        for (const [email, u] of users.entries()) {
-            if (u.id === decoded.userId) {
-                user = u;
-                break;
-            }
-        }
+        // Buscar dados atualizados do usuário no MongoDB
+        const user = await User.findById(decoded.userId);
         
         if (!user) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
@@ -238,7 +226,7 @@ router.get('/me', (req, res) => {
                 id: user.id,
                 email: user.email,
                 name: user.name,
-                settings: user.settings,
+                preferences: user.preferences,
                 createdAt: user.createdAt
             }
         });
@@ -272,16 +260,8 @@ router.put('/password', async (req, res) => {
             return res.status(400).json({ error: 'Nova senha deve ter no mínimo 8 caracteres' });
         }
         
-        // Buscar usuário
-        let user = null;
-        let userEmail = null;
-        for (const [email, u] of users.entries()) {
-            if (u.id === decoded.userId) {
-                user = u;
-                userEmail = email;
-                break;
-            }
-        }
+        // Buscar usuário no MongoDB
+        const user = await User.findById(decoded.userId);
         
         if (!user) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
@@ -296,7 +276,7 @@ router.put('/password', async (req, res) => {
         // Atualizar senha
         const salt = await bcrypt.genSalt(12);
         user.password = await bcrypt.hash(newPassword, salt);
-        users.set(userEmail, user);
+        await user.save();
         
         res.json({ success: true, message: 'Senha alterada com sucesso' });
         

@@ -5,10 +5,7 @@
 class OpenFinanceService {
     constructor() {
         this.apiEndpoints = {
-            nubank: 'https://api.nubank.com.br/mex',
-            itau: 'https://api.itau.com.br/openbanking/v1',
-            bradesco: 'https://api.bradesco.com.br/openbanking/v2',
-            santander: 'https://api.santander.com.br/openbanking/v1'
+            infinitepay: 'https://api.banking.infinitepay.io/open-banking/v1'
         };
         
         this.oauthConfig = {
@@ -167,113 +164,35 @@ class OpenFinanceService {
      */
     generateMockData(bankId) {
         const mockData = {
-            nubank: {
+            infinitepay: {
                 accounts: [
                     {
-                        id: 'nu_account_001',
-                        name: 'Conta Nubank',
+                        id: 'inf_account_001',
+                        name: 'Conta InfinitePay Business',
                         type: 'digital',
-                        balance: 8542.35,
-                        initialBalance: 5000.00,
-                        bankLogo: 'https://logodownload.org/wp-content/uploads/2019/10/nubank-logo-0.png',
-                        currency: 'BRL'
-                    }
-                ],
-                creditCards: [
-                    {
-                        id: 'nu_card_001',
-                        name: 'Cartão Nubank Ultravioleta',
-                        limit: 10000.00,
-                        availableLimit: 6234.50,
-                        dueDay: 15,
-                        brand: 'Mastercard',
-                        linkedAccountId: 'nu_account_001',
-                        currency: 'BRL'
-                    }
-                ],
-                transactions: this.generateMockTransactions(bankId, 50)
-            },
-            itau: {
-                accounts: [
-                    {
-                        id: 'itau_account_001',
-                        name: 'Conta Corrente Itaú',
-                        type: 'corrente',
-                        balance: 15420.80,
+                        balance: 12450.75,
                         initialBalance: 10000.00,
-                        bankLogo: 'https://logodownload.org/wp-content/uploads/2019/02/logo-itau.png',
+                        bankLogo: 'https://www.infinitepay.io/favicon.ico',
                         currency: 'BRL'
                     }
                 ],
                 creditCards: [
                     {
-                        id: 'itau_card_001',
-                        name: 'Cartão Itaú Uniclass',
-                        limit: 8000.00,
-                        availableLimit: 5100.00,
-                        dueDay: 10,
+                        id: 'inf_card_001',
+                        name: 'Cartão InfinitePay Smart',
+                        limit: 20000.00,
+                        availableLimit: 15400.00,
+                        dueDay: 20,
                         brand: 'Visa',
-                        linkedAccountId: 'itau_account_001',
-                        currency: 'BRL'
-                    }
-                ],
-                transactions: this.generateMockTransactions(bankId, 75)
-            },
-            bradesco: {
-                accounts: [
-                    {
-                        id: 'bradesco_account_001',
-                        name: 'Conta Bradesco Prime',
-                        type: 'corrente',
-                        balance: 12350.00,
-                        initialBalance: 8000.00,
-                        bankLogo: 'https://logodownload.org/wp-content/uploads/2019/03/logo-bradesco-0.png',
-                        currency: 'BRL'
-                    }
-                ],
-                creditCards: [
-                    {
-                        id: 'bradesco_card_001',
-                        name: 'Cartão Bradesco Visa Infinite',
-                        limit: 15000.00,
-                        availableLimit: 11200.00,
-                        dueDay: 5,
-                        brand: 'Visa',
-                        linkedAccountId: 'bradesco_account_001',
+                        linkedAccountId: 'inf_account_001',
                         currency: 'BRL'
                     }
                 ],
                 transactions: this.generateMockTransactions(bankId, 60)
-            },
-            santander: {
-                accounts: [
-                    {
-                        id: 'santander_account_001',
-                        name: 'Conta Santander Select',
-                        type: 'corrente',
-                        balance: 9875.50,
-                        initialBalance: 5000.00,
-                        bankLogo: 'https://logodownload.org/wp-content/uploads/2019/03/logo-santander-0.png',
-                        currency: 'BRL'
-                    }
-                ],
-                creditCards: [
-                    {
-                        id: 'santander_card_001',
-                        name: 'Cartão Santander Elite',
-                        limit: 12000.00,
-                        availableLimit: 8900.00,
-                        dueDay: 8,
-                        brand: 'Mastercard',
-                        linkedAccountId: 'santander_account_001',
-                        currency: 'BRL'
-                    }
-                ],
-                transactions: this.generateMockTransactions(bankId, 45)
             }
         };
         
-        return mockData[bankId] || mockData.nubank;
+        return mockData[bankId] || mockData.infinitepay;
     }
 
     /**
@@ -288,18 +207,18 @@ class OpenFinanceService {
         ];
         
         const descriptions = {
-            'Alimentação': ['Supermercado Carrefour', 'Restaurante Outback', 'iFood - Pizza Hut', 'Mercado Extra', 'Padaria Pão de Açúcar'],
+            'Alimentação': ['InfinitePay *Restaurante', 'InfinitePay *Supermercado', 'iFood - Pizza Hut', 'Mercado Extra', 'Padaria Pão de Açúcar'],
             'Transporte': ['Uber *Viagem', '99 Taxi *Corrida', 'Posto Ipiranga', 'Metrô Bilhete', 'Estacionamento Shopping'],
             'Moradia': ['Aluguel Apartamento', 'Condomínio Edifício', 'Conta de Luz', 'Internet Net', 'Gás Encantrado'],
             'Lazer': ['Netflix *Assinatura', 'Spotify *Premium', 'Cinema Kinoplex', 'Gym Academia', 'Clube'],
             'Saúde': ['Farmácia Droga Raia', 'Médico Consulta', 'Exame Laboratorial', 'Plano de Saúde', 'Dentista'],
             'Educação': ['Faculdade Mensalidade', 'Curso Online', 'Livraria Saraiva', 'Material Escolar'],
-            'Salário': ['Salário Mensal', '13º Salário', 'Adiantamento', 'PLR', 'Bônus'],
-            'Investimentos': ['Rendimento CDB', 'Dividendos Ações', 'Tesouro Direto', 'Fundos Imobiliários'],
+            'Salário': ['Venda InfinitePay', 'Recebimento InfinitePay', 'Adiantamento', 'PLR', 'Bônus'],
+            'Investimentos': ['Rendimento InfinitePay', 'Dividendos Ações', 'Tesouro Direto', 'Fundos Imobiliários'],
             'Contas Fixas': ['Seguro Residencial', 'Seguro Carro', 'Clube Assinatura', 'Streaming'],
             'Compras': ['Amazon Compra', 'Loja Magazine', 'Shopee Pedido', 'Mercado Livre'],
-            'Pagamento de Fatura': ['Pagamento Nubank', 'Pagamento Itaú', 'Pagamento Bradesco'],
-            'Outros': ['Saque Caixa 24h', 'Transferência TED', 'DOC Banco', 'Pix Transferência']
+            'Pagamento de Fatura': ['Pagamento InfinitePay'],
+            'Outros': ['Saque InfinitePay', 'Transferência TED', 'DOC Banco', 'Pix Transferência']
         };
         
         for (let i = 0; i < count; i++) {
@@ -339,10 +258,7 @@ class OpenFinanceService {
      */
     buildAuthUrl(bankId) {
         const endpoints = {
-            nubank: 'https://auth.nubank.com.br/authorize',
-            itau: 'https://openbanking.itau.com.br/auth',
-            bradesco: 'https://openbanking.bradescobank.com.br/auth',
-            santander: 'https://openbanking.santander.com.br/auth'
+            infinitepay: 'https://auth.banking.infinitepay.io/oauth2/authorize'
         };
         
         const params = new URLSearchParams({
@@ -353,7 +269,7 @@ class OpenFinanceService {
             state: this.generateState(bankId)
         });
         
-        return `${endpoints[bankId]}?${params.toString()}`;
+        return `${endpoints[bankId] || endpoints.infinitepay}?${params.toString()}`;
     }
 
     /**

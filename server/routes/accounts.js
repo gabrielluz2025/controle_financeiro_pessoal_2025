@@ -7,12 +7,13 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
-const crypto = require('crypto');
+const Account = require('../models/Account');
+const Transaction = require('../models/Transaction');
+const Card = require('../models/Card');
+const { validateToken } = require('../middleware/auth');
 
-// Armazenamento temporário (em produção, usar MongoDB)
-const accountsStore = new Map();
-const transactionsStore = new Map();
-const cardsStore = new Map();
+// Middleware de autenticação obrigatório para todas as rotas
+router.use(validateToken);
 
 // ================================================
 // CONTAS
@@ -22,11 +23,10 @@ const cardsStore = new Map();
  * GET /api/accounts
  * Lista todas as contas do usuário
  */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const userId = req.userId;
-        const accounts = accountsStore.get(userId) || [];
-        
+        const accounts = await Account.find({ userId });
         res.json({ success: true, accounts, total: accounts.length });
     } catch (error) {
         console.error('Erro ao listar contas:', error);
@@ -42,7 +42,7 @@ router.post('/', [
     body('name').trim().notEmpty(),
     body('type').isIn(['corrente', 'poupanca', 'investimento', 'carteira', 'digital']),
     body('initialBalance').isNumeric()
-], (req, res) => {
+], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -52,23 +52,18 @@ router.post('/', [
         const userId = req.userId;
         const { name, type, initialBalance, bankName, bankLogo, color } = req.body;
         
-        const account = {
-            id: crypto.randomBytes(8).toString('hex'),
+        const account = new Account({
+            userId,
             name,
             type,
             balance: parseFloat(initialBalance),
             initialBalance: parseFloat(initialBalance),
-            bankName: bankName || null,
-            bankLogo: bankLogo || null,
-            color: color || '#6366f1',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
+            bankName,
+            bankLogo,
+            color
+        });
         
-        const accounts = accountsStore.get(userId) || [];
-        accounts.push(account);
-        accountsStore.set(userId, accounts);
-        
+        await account.save();
         res.status(201).json({ success: true, account });
     } catch (error) {
         console.error('Erro ao criar conta:', error);
@@ -80,28 +75,23 @@ router.post('/', [
  * PUT /api/accounts/:id
  * Atualizar conta
  */
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const userId = req.userId;
         const { id } = req.params;
         const updates = req.body;
         
-        const accounts = accountsStore.get(userId) || [];
-        const index = accounts.findIndex(a => a.id === id);
+        const account = await Account.findOneAndUpdate(
+            { _id: id, userId },
+            { ...updates },
+            { new: true }
+        );
         
-        if (index === -1) {
+        if (!account) {
             return res.status(404).json({ error: 'Conta não encontrada' });
         }
         
-        accounts[index] = {
-            ...accounts[index],
-            ...updates,
-            updatedAt: new Date().toISOString()
-        };
-        
-        accountsStore.set(userId, accounts);
-        
-        res.json({ success: true, account: accounts[index] });
+        res.json({ success: true, account });
     } catch (error) {
         console.error('Erro ao atualizar conta:', error);
         res.status(500).json({ error: 'Erro interno do servidor' });
@@ -112,19 +102,15 @@ router.put('/:id', (req, res) => {
  * DELETE /api/accounts/:id
  * Excluir conta
  */
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const userId = req.userId;
         const { id } = req.params;
         
-        const accounts = accountsStore.get(userId) || [];
-        const filtered = accounts.filter(a => a.id !== id);
-        
-        if (filtered.length === accounts.length) {
+        const result = await Account.deleteOne({ _id: id, userId });
+        if (result.deletedCount === 0) {
             return res.status(404).json({ error: 'Conta não encontrada' });
         }
-        
-        accountsStore.set(userId, filtered);
         
         res.json({ success: true, message: 'Conta excluída' });
     } catch (error) {
@@ -141,33 +127,22 @@ router.delete('/:id', (req, res) => {
  * GET /api/accounts/transactions
  * Lista todas as transações
  */
-router.get('/transactions', (req, res) => {
+router.get('/transactions', async (req, res) => {
     try {
         const userId = req.userId;
         const { startDate, endDate, type, category, accountId } = req.query;
         
-        let transactions = transactionsStore.get(userId) || [];
+        const query = { userId };
+        if (startDate || endDate) {
+            query.date = {};
+            if (startDate) query.date.$gte = new Date(startDate);
+            if (endDate) query.date.$lte = new Date(endDate);
+        }
+        if (type) query.type = type;
+        if (category) query.category = category;
+        if (accountId) query.accountId = accountId;
         
-        // Filtros
-        if (startDate) {
-            transactions = transactions.filter(t => t.date >= startDate);
-        }
-        if (endDate) {
-            transactions = transactions.filter(t => t.date <= endDate);
-        }
-        if (type) {
-            transactions = transactions.filter(t => t.type === type);
-        }
-        if (category) {
-            transactions = transactions.filter(t => t.category === category);
-        }
-        if (accountId) {
-            transactions = transactions.filter(t => t.accountId === accountId);
-        }
-        
-        // Ordenar por data (mais recente primeiro)
-        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
+        const transactions = await Transaction.find(query).sort({ date: -1 });
         res.json({ success: true, transactions, total: transactions.length });
     } catch (error) {
         console.error('Erro ao listar transações:', error);
@@ -185,7 +160,7 @@ router.post('/transactions', [
     body('type').isIn(['receita', 'despesa', 'transferencia']),
     body('date').isISO8601(),
     body('accountId').notEmpty()
-], (req, res) => {
+], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -195,35 +170,30 @@ router.post('/transactions', [
         const userId = req.userId;
         const { description, value, type, date, category, accountId, isPaid, notes } = req.body;
         
-        const transaction = {
-            id: crypto.randomBytes(8).toString('hex'),
+        const transaction = new Transaction({
+            userId,
+            accountId,
             description,
             value: parseFloat(value),
             type,
             date,
-            category: category || 'Outros',
-            accountId,
+            category,
             isPaid: isPaid !== false,
-            notes: notes || '',
-            createdAt: new Date().toISOString()
-        };
+            notes
+        });
         
-        const transactions = transactionsStore.get(userId) || [];
-        transactions.push(transaction);
-        transactionsStore.set(userId, transactions);
+        await transaction.save();
         
         // Atualizar saldo da conta
         if (transaction.isPaid) {
-            const accounts = accountsStore.get(userId) || [];
-            const account = accounts.find(a => a.id === accountId);
+            const account = await Account.findById(accountId);
             if (account) {
                 if (type === 'receita') {
                     account.balance += transaction.value;
                 } else if (type === 'despesa') {
                     account.balance -= transaction.value;
                 }
-                account.updatedAt = new Date().toISOString();
-                accountsStore.set(userId, accounts);
+                await account.save();
             }
         }
         
@@ -238,35 +208,30 @@ router.post('/transactions', [
  * DELETE /api/accounts/transactions/:id
  * Excluir transação
  */
-router.delete('/transactions/:id', (req, res) => {
+router.delete('/transactions/:id', async (req, res) => {
     try {
         const userId = req.userId;
         const { id } = req.params;
         
-        const transactions = transactionsStore.get(userId) || [];
-        const transaction = transactions.find(t => t.id === id);
-        
+        const transaction = await Transaction.findOne({ _id: id, userId });
         if (!transaction) {
             return res.status(404).json({ error: 'Transação não encontrada' });
         }
         
         // Reverter saldo se necessário
         if (transaction.isPaid) {
-            const accounts = accountsStore.get(userId) || [];
-            const account = accounts.find(a => a.id === transaction.accountId);
+            const account = await Account.findById(transaction.accountId);
             if (account) {
                 if (transaction.type === 'receita') {
                     account.balance -= transaction.value;
                 } else if (transaction.type === 'despesa') {
                     account.balance += transaction.value;
                 }
-                accountsStore.set(userId, accounts);
+                await account.save();
             }
         }
         
-        const filtered = transactions.filter(t => t.id !== id);
-        transactionsStore.set(userId, filtered);
-        
+        await Transaction.deleteOne({ _id: id, userId });
         res.json({ success: true, message: 'Transação excluída' });
     } catch (error) {
         console.error('Erro ao excluir transação:', error);
@@ -282,11 +247,10 @@ router.delete('/transactions/:id', (req, res) => {
  * GET /api/accounts/cards
  * Lista cartões de crédito
  */
-router.get('/cards', (req, res) => {
+router.get('/cards', async (req, res) => {
     try {
         const userId = req.userId;
-        const cards = cardsStore.get(userId) || [];
-        
+        const cards = await Card.find({ userId });
         res.json({ success: true, cards, total: cards.length });
     } catch (error) {
         console.error('Erro ao listar cartões:', error);
@@ -302,7 +266,7 @@ router.post('/cards', [
     body('name').trim().notEmpty(),
     body('limit').isNumeric(),
     body('dueDay').isInt({ min: 1, max: 31 })
-], (req, res) => {
+], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -312,23 +276,19 @@ router.post('/cards', [
         const userId = req.userId;
         const { name, limit, dueDay, closingDay, brand, color, linkedAccountId } = req.body;
         
-        const card = {
-            id: crypto.randomBytes(8).toString('hex'),
+        const card = new Card({
+            userId,
             name,
             limit: parseFloat(limit),
             availableLimit: parseFloat(limit),
             dueDay: parseInt(dueDay),
-            closingDay: closingDay || dueDay - 7,
-            brand: brand || 'Visa',
-            color: color || '#1a1a2e',
-            linkedAccountId: linkedAccountId || null,
-            createdAt: new Date().toISOString()
-        };
+            closingDay,
+            brand,
+            color,
+            linkedAccountId
+        });
         
-        const cards = cardsStore.get(userId) || [];
-        cards.push(card);
-        cardsStore.set(userId, cards);
-        
+        await card.save();
         res.status(201).json({ success: true, card });
     } catch (error) {
         console.error('Erro ao criar cartão:', error);
@@ -340,19 +300,15 @@ router.post('/cards', [
  * DELETE /api/accounts/cards/:id
  * Excluir cartão
  */
-router.delete('/cards/:id', (req, res) => {
+router.delete('/cards/:id', async (req, res) => {
     try {
         const userId = req.userId;
         const { id } = req.params;
         
-        const cards = cardsStore.get(userId) || [];
-        const filtered = cards.filter(c => c.id !== id);
-        
-        if (filtered.length === cards.length) {
+        const result = await Card.deleteOne({ _id: id, userId });
+        if (result.deletedCount === 0) {
             return res.status(404).json({ error: 'Cartão não encontrado' });
         }
-        
-        cardsStore.set(userId, filtered);
         
         res.json({ success: true, message: 'Cartão excluído' });
     } catch (error) {
@@ -369,7 +325,7 @@ router.delete('/cards/:id', (req, res) => {
  * GET /api/accounts/summary
  * Resumo financeiro do usuário
  */
-router.get('/summary', (req, res) => {
+router.get('/summary', async (req, res) => {
     try {
         const userId = req.userId;
         const { month, year } = req.query;
@@ -378,15 +334,17 @@ router.get('/summary', (req, res) => {
         const targetMonth = parseInt(month) || currentDate.getMonth() + 1;
         const targetYear = parseInt(year) || currentDate.getFullYear();
         
-        const accounts = accountsStore.get(userId) || [];
-        const transactions = transactionsStore.get(userId) || [];
-        const cards = cardsStore.get(userId) || [];
-        
-        // Filtrar transações do mês
-        const monthTransactions = transactions.filter(t => {
-            const tDate = new Date(t.date);
-            return tDate.getMonth() + 1 === targetMonth && tDate.getFullYear() === targetYear;
-        });
+        const [accounts, cards, monthTransactions] = await Promise.all([
+            Account.find({ userId }),
+            Card.find({ userId }),
+            Transaction.find({
+                userId,
+                date: { 
+                    $gte: new Date(targetYear, targetMonth - 1, 1), 
+                    $lte: new Date(targetYear, targetMonth, 0, 23, 59, 59) 
+                }
+            })
+        ]);
         
         // Calcular totais
         const income = monthTransactions
@@ -398,7 +356,6 @@ router.get('/summary', (req, res) => {
             .reduce((sum, t) => sum + t.value, 0);
             
         const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
-        
         const totalCreditLimit = cards.reduce((sum, c) => sum + c.limit, 0);
         const totalCreditUsed = cards.reduce((sum, c) => sum + (c.limit - c.availableLimit), 0);
         

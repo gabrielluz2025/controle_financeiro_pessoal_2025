@@ -1,37 +1,49 @@
 const express = require('express');
 const router = express.Router();
 const { validateToken } = require('../middleware/auth');
+const Transaction = require('../models/Transaction');
 
-// Simulação de dados de análise (em produção, viria do banco de dados)
-router.get('/summary', validateToken, (req, res) => {
+// Obter resumo real baseado no MongoDB
+router.get('/summary', validateToken, async (req, res) => {
     try {
-        // Dados simulados de análise
-        const summary = {
-            totalIncome: 5000,
-            totalExpenses: 2150,
-            balance: 2850,
-            categories: [
-                { name: 'Alimentação', value: 650, percentage: 30 },
-                { name: 'Transporte', value: 400, percentage: 19 },
-                { name: 'Moradia', value: 800, percentage: 37 },
-                { name: 'Lazer', value: 150, percentage: 7 },
-                { name: 'Saúde', value: 150, percentage: 7 }
-            ],
-            monthlyTrend: [
-                { month: 'Jan', income: 5000, expenses: 2000 },
-                { month: 'Fev', income: 5000, expenses: 2100 },
-                { month: 'Mar', income: 5000, expenses: 2150 }
-            ],
-            topTransactions: [
-                { description: 'Aluguel', value: 800, date: '2026-05-01', category: 'Moradia' },
-                { description: 'Supermercado', value: 350, date: '2026-05-15', category: 'Alimentação' },
-                { description: 'Combustível', value: 200, date: '2026-05-10', category: 'Transporte' }
-            ]
-        };
+        const userId = req.userId;
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
+        const transactions = await Transaction.find({
+            userId,
+            date: { $gte: startOfMonth }
+        }).sort({ date: -1 });
+
+        const totalIncome = transactions
+            .filter(t => t.type === 'receita')
+            .reduce((sum, t) => sum + t.value, 0);
+            
+        const totalExpenses = transactions
+            .filter(t => t.type === 'despesa')
+            .reduce((sum, t) => sum + t.value, 0);
+
+        // Agrupar por categoria
+        const categoryMap = {};
+        transactions.filter(t => t.type === 'despesa').forEach(t => {
+            categoryMap[t.category] = (categoryMap[t.category] || 0) + t.value;
+        });
+
+        const categories = Object.entries(categoryMap).map(([name, value]) => ({
+            name,
+            value,
+            percentage: totalExpenses > 0 ? Math.round((value / totalExpenses) * 100) : 0
+        }));
+
         res.json({
             success: true,
-            data: summary
+            data: {
+                totalIncome,
+                totalExpenses,
+                balance: totalIncome - totalExpenses,
+                categories,
+                topTransactions: transactions.slice(0, 5)
+            }
         });
     } catch (error) {
         console.error('Erro ao obter análise:', error);

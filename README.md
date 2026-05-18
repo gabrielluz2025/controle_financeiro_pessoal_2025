@@ -15,7 +15,7 @@ Sistema completo de gestão financeira pessoal com integração real ao **Open F
 - Previsão de gastos com IA
 
 ### 🏦 Open Finance Brasil
-- **Integração com 8+ bancos**: Nubank, Itaú, Bradesco, Santander, Banco do Brasil, Caixa, Inter, C6 Bank
+- **Integração Exclusiva com InfinitePay (CloudWalk)**: Sincronização nativa e segura.
 - Sincronização automática de contas e saldos
 - Importação de transações em tempo real
 - Cartões de crédito e faturas
@@ -44,7 +44,7 @@ controle_financeiro_pessoal_2025/
 │       └── deploy.yml          # CI/CD GitHub Actions
 ├── server/
 │   ├── controllers/
-│   │   └── OpenFinanceController.js
+│   │   └── OpenFinanceControllerV2.js
 │   ├── middleware/
 │   │   ├── auth.js
 │   │   ├── errorHandler.js
@@ -129,15 +129,10 @@ Para integração real com bancos, você precisa:
 ### Variáveis de Ambiente
 
 ```env
-# Nubank
-NUBANK_CLIENT_ID=seu_client_id
-NUBANK_CLIENT_SECRET=seu_client_secret
-NUBANK_REDIRECT_URI=http://localhost:3000/api/openfinance/callback/nubank
-
-# Itaú
-ITAU_CLIENT_ID=seu_client_id
-ITAU_CLIENT_SECRET=seu_client_secret
-# ... outros bancos
+# InfinitePay (CloudWalk)
+INFINITEPAY_CLIENT_ID=seu_client_id
+INFINITEPAY_CLIENT_SECRET=seu_client_secret
+INFINITEPAY_REDIRECT_URI=http://localhost:3000/api/openfinance/callback/infinitepay
 ```
 
 ## 🔐 Segurança

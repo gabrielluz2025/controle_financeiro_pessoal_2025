@@ -20,47 +20,17 @@ const OpenFinanceConfig = {
     
     // Endpoints dos bancos (produção e sandbox)
     endpoints: {
-        nubank: {
+        infinitepay: {
             // Sandbox para desenvolvimento
-            auth: 'https://sandbox.auth.nubank.com.br/oauth2/auth',
-            token: 'https://sandbox.auth.nubank.com.br/oauth2/token',
-            api: 'https://sandbox.api.nubank.com.br/mex',
-            openbanking: 'https://sandbox.openbanking.nubank.com.br/v1',
-            // Produção (comentado para desenvolvimento)
-            // auth: 'https://auth.nubank.com.br/oauth2/auth',
-            // token: 'https://auth.nubank.com.br/oauth2/token',
-            // api: 'https://api.nubank.com.br/mex',
-            // openbanking: 'https://openbanking.nubank.com.br/v1'
-        },
-        itau: {
-            // Sandbox para desenvolvimento
-            auth: 'https://openbanking.sandbox.itau.com.br/auth',
-            token: 'https://openbanking.sandbox.itau.com.br/oauth/token',
-            api: 'https://api.sandbox.itau.com.br/openbanking/v1',
+            auth: 'https://auth.sandbox.banking.infinitepay.io/oauth2/authorize',
+            token: 'https://auth.sandbox.banking.infinitepay.io/oauth2/token',
+            api: 'https://api.sandbox.banking.infinitepay.io/open-banking/v1',
+            openbanking: 'https://api.sandbox.banking.infinitepay.io/open-banking/v1',
             // Produção
-            // auth: 'https://openbanking.itau.com.br/auth',
-            // token: 'https://openbanking.itau.com.br/oauth/token',
-            // api: 'https://openbanking.itau.com.br/v1'
-        },
-        bradesco: {
-            // Sandbox para desenvolvimento
-            auth: 'https://openbanking.sandbox.bradescobank.com.br/auth',
-            token: 'https://openbanking.sandbox.bradescobank.com.br/oauth/token',
-            api: 'https://api.sandbox.bradescobank.com.br/openbanking/v2',
-            // Produção
-            // auth: 'https://openbanking.bradescobank.com.br/auth',
-            // token: 'https://openbanking.bradescobank.com.br/oauth/token',
-            // api: 'https://openbanking.bradescobank.com.br/v2'
-        },
-        santander: {
-            // Sandbox para desenvolvimento
-            auth: 'https://openbanking.sandbox.santander.com.br/auth',
-            token: 'https://openbanking.sandbox.santander.com.br/oauth/token',
-            api: 'https://api.sandbox.santander.com.br/openbanking/v1',
-            // Produção
-            // auth: 'https://openbanking.santander.com.br/auth',
-            // token: 'https://openbanking.santander.com.br/oauth/token',
-            // api: 'https://openbanking.santander.com.br/v1'
+            // auth: 'https://auth.banking.infinitepay.io/oauth2/authorize',
+            // token: 'https://auth.banking.infinitepay.io/oauth2/token',
+            // api: 'https://api.banking.infinitepay.io/open-banking/v1',
+            // openbanking: 'https://api.banking.infinitepay.io/open-banking/v1'
         }
     },
     
@@ -95,7 +65,7 @@ const OpenFinanceConfig = {
     development: {
         useMockData: false, // TEMPO REAL - Usar APIs reais
         mockDelay: 0,
-        enableSandbox: false // Usar endpoints de produção
+        enableSandbox: true // Usar endpoints de sandbox por padrão
     },
     
     // URL do backend

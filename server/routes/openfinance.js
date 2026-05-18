@@ -8,11 +8,11 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
-const OpenFinanceController = require('../controllers/OpenFinanceController');
+const OpenFinanceController = require('../controllers/OpenFinanceControllerV2');
 
 // Validação de banco
 const validateBank = body('bank')
-    .isIn(['nubank', 'itau', 'bradesco', 'santander', 'bb', 'caixa', 'inter', 'c6bank'])
+    .isIn(['infinitepay'])
     .withMessage('Banco não suportado');
 
 // ================================================

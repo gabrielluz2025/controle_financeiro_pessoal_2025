@@ -46,7 +46,7 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://*.nubank.com.br", "https://*.itau.com.br", "https://*.bradesco.com.br", "https://*.santander.com.br", "https://*.bb.com.br", "https://*.caixa.gov.br"]
+            connectSrc: ["'self'", "https://*.infinitepay.io", "https://*.cloudwalk.io"]
         }
     },
     crossOriginEmbedderPolicy: false

@@ -9,7 +9,7 @@ const bankTokenSchema = new mongoose.Schema({
     bank: {
         type: String,
         required: true,
-        enum: ['nubank', 'itau', 'bradesco', 'santander', 'bb', 'caixa', 'inter', 'c6bank']
+        enum: ['infinitepay', 'nubank', 'itau', 'bradesco', 'santander', 'bb', 'caixa', 'inter', 'c6bank']
     },
     accessToken: {
         type: String,
