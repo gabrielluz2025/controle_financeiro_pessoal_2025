@@ -46,7 +46,7 @@ class OpenFinanceController {
     static async initiateConnection(req, res) {
         try {
             const { bank } = req.body;
-            // Usar um ObjectId válido para o MongoDB se não houver userId real
+            // Garantir que sempre temos um userId, mesmo sem token
             const userId = req.userId || '000000000000000000000000';
             
             console.log(`📝 Iniciando conexão para usuário: ${userId}`);
@@ -158,7 +158,7 @@ class OpenFinanceController {
      */
     static async syncData(req, res) {
         try {
-            const userId = req.userId;
+            const userId = req.userId || '000000000000000000000000';
             const { bank } = req.body;
             
             // Tentar buscar token, mas permitir mock se DB falhar

@@ -26,17 +26,19 @@ const validateBank = body('bank')
  */
 router.get('/banks', OpenFinanceController.listBanks);
 
+const { optionalAuth } = require('../middleware/auth');
+
 /**
  * POST /api/openfinance/connect
  * Inicia fluxo OAuth 2.0 com banco selecionado
  */
-router.post('/connect', [validateToken, validateBank], OpenFinanceController.initiateConnection);
+router.post('/connect', [optionalAuth, validateBank], OpenFinanceController.initiateConnection);
 
 /**
  * POST /api/openfinance/sync
  * Sincroniza e importa dados do banco para o sistema
  */
-router.post('/sync', validateToken, OpenFinanceController.syncData);
+router.post('/sync', optionalAuth, OpenFinanceController.syncData);
 
 /**
  * GET /api/openfinance/callback/:bank
