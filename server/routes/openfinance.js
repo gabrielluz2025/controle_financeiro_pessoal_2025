@@ -8,6 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
+const { validateToken } = require('../middleware/auth');
 const OpenFinanceController = require('../controllers/OpenFinanceControllerV2');
 
 // Validação de banco
@@ -16,7 +17,7 @@ const validateBank = body('bank')
     .withMessage('Banco não suportado');
 
 // ================================================
-// ROTAS DE CONEXÃO
+// ROTAS DE CONEXÃO (Protegidas por Token)
 // ================================================
 
 /**
@@ -29,7 +30,13 @@ router.get('/banks', OpenFinanceController.listBanks);
  * POST /api/openfinance/connect
  * Inicia fluxo OAuth 2.0 com banco selecionado
  */
-router.post('/connect', validateBank, OpenFinanceController.initiateConnection);
+router.post('/connect', [validateToken, validateBank], OpenFinanceController.initiateConnection);
+
+/**
+ * POST /api/openfinance/sync
+ * Sincroniza e importa dados do banco para o sistema
+ */
+router.post('/sync', validateToken, OpenFinanceController.syncData);
 
 /**
  * GET /api/openfinance/callback/:bank

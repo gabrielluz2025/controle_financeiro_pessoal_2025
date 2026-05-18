@@ -33,20 +33,21 @@ class OAuthCallbackHandler {
      */
     handleSuccess(code, state) {
         try {
-            // Extrair bankId do state
-            const [bankId] = state.split('_');
-            
             // Enviar mensagem para janela principal
-            window.opener.postMessage({
-                type: 'oauth_success',
-                code: code,
-                state: state,
-                bankId: bankId
-            }, window.location.origin);
-            
-            // Fechar popup
-            window.close();
-            
+            if (window.opener) {
+                window.opener.postMessage({
+                    type: 'oauth_success',
+                    code: code,
+                    state: state,
+                    bankId: 'infinitepay'
+                }, window.location.origin);
+                
+                // Fechar popup após um pequeno delay para garantir o envio
+                setTimeout(() => window.close(), 500);
+            } else {
+                // Se não houver opener, redirecionar para a home
+                window.location.href = '/';
+            }
         } catch (error) {
             console.error('❌ Erro ao processar sucesso:', error);
             this.handleError('internal_error');
