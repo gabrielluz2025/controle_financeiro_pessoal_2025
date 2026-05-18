@@ -170,6 +170,17 @@ class OpenFinanceController {
             }
 
             console.log(`📥 Iniciando importação de dados do ${bank} para o usuário ${userId}`);
+            
+            // Se temos um token real, tentar sincronizar dados reais
+            if (bankToken && bankToken.accessToken && bankToken.accessToken !== 'mock_access_token') {
+                try {
+                    const InfinitepayRealController = require('./InfinitepayRealController');
+                    const realSyncResult = await InfinitepayRealController.syncRealData(userId, bankToken.accessToken);
+                    return res.json(realSyncResult);
+                } catch (error) {
+                    console.warn('⚠️ Erro ao sincronizar dados reais, usando fallback:', error.message);
+                }
+            }
 
             // 1. Buscar dados da API do Banco (Simulado ou Real)
             // Em um cenário real, usaríamos axios com bankToken.accessToken

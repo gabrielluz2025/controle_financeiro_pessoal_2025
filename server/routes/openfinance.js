@@ -41,6 +41,15 @@ router.post('/connect', [optionalAuth, validateBank], OpenFinanceController.init
 router.post('/sync', optionalAuth, OpenFinanceController.syncData);
 
 /**
+ * POST /api/openfinance/webhook/infinitepay
+ * Webhook para receber notificações de pagamentos em tempo real
+ */
+router.post('/webhook/infinitepay', async (req, res) => {
+    const InfinitepayRealController = require('../controllers/InfinitepayRealController');
+    await InfinitepayRealController.handlePaymentWebhook(req, res);
+});
+
+/**
  * GET /api/openfinance/callback/:bank
  * Callback OAuth do banco após autorização do usuário
  */
