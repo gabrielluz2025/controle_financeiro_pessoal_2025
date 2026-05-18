@@ -1118,22 +1118,13 @@ const UI = {
                             </svg>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <button class="openfinance-bank-btn bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-4 hover:bg-white/30 transition-all" data-bank="nubank">
-                            <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center text-white font-bold mb-2">N</div>
-                            <p class="text-sm font-medium">Nubank</p>
-                        </button>
-                        <button class="openfinance-bank-btn bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-4 hover:bg-white/30 transition-all" data-bank="itau">
-                            <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold mb-2">I</div>
-                            <p class="text-sm font-medium">Itaú</p>
-                        </button>
-                        <button class="openfinance-bank-btn bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-4 hover:bg-white/30 transition-all" data-bank="bradesco">
-                            <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center text-white font-bold mb-2">B</div>
-                            <p class="text-sm font-medium">Bradesco</p>
-                        </button>
-                        <button class="openfinance-bank-btn bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-4 hover:bg-white/30 transition-all" data-bank="santander">
-                            <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center text-white font-bold mb-2">S</div>
-                            <p class="text-sm font-medium">Santander</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button class="openfinance-bank-btn bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-4 hover:bg-white/30 transition-all flex items-center space-x-4" data-bank="infinitepay">
+                            <img src="https://www.infinitepay.io/favicon.ico" alt="InfinitePay" class="w-10 h-10 rounded-lg">
+                            <div class="text-left">
+                                <p class="text-lg font-bold">InfinitePay</p>
+                                <p class="text-xs opacity-80">Conectar conta PJ</p>
+                            </div>
                         </button>
                     </div>
                     <div id="openfinance-status" class="mt-4 text-sm">
@@ -1244,7 +1235,7 @@ const UI = {
         statusElement.innerHTML = `
             <span class="inline-flex items-center">
                 <span class="w-2 h-2 bg-blue-400 rounded-full mr-2 animate-pulse"></span>
-                Iniciando conexão com ${bank.charAt(0).toUpperCase() + bank.slice(1)}...
+                Iniciando conexão com InfinitePay...
             </span>
         `;
         
@@ -1260,7 +1251,7 @@ const UI = {
                 statusElement.innerHTML = `
                     <span class="inline-flex items-center">
                         <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-                        Conectado com ${bank.charAt(0).toUpperCase() + bank.slice(1)} ${isMock ? '(dados demo)' : '(dados reais)'}
+                        Conectado com InfinitePay ${isMock ? '(dados demo)' : '(dados reais)'}
                     </span>
                 `;
                 
@@ -1269,8 +1260,8 @@ const UI = {
                 bankBtn.classList.add('bg-green-500/20', 'border-green-400');
                 
                 // Adicionar checkmark
-                const icon = bankBtn.querySelector('.w-8');
-                icon.innerHTML = '✓';
+                const icon = bankBtn.querySelector('img');
+                if (icon) icon.classList.add('ring-2', 'ring-green-400');
                 
                 // Sincronizar dados reais
                 this.syncRealOpenFinanceData(result.data);
@@ -1278,8 +1269,8 @@ const UI = {
                 // Mostrar feedback
                 const feedbackType = isMock ? 'warning' : 'success';
                 const feedbackMessage = isMock ? 
-                    `Conectado ao ${bank.charAt(0).toUpperCase() + bank.slice(1)} com dados de demonstração!` :
-                    `Conectado com sucesso ao ${bank.charAt(0).toUpperCase() + bank.slice(1)}!`;
+                    `Conectado ao InfinitePay com dados de demonstração!` :
+                    `Conectado com sucesso ao InfinitePay!`;
                 
                 this.showFeedback(feedbackMessage, feedbackType);
                 
