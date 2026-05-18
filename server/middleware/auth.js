@@ -25,7 +25,7 @@ const validateToken = (req, res, next) => {
         try {
             // Suporte a sessão temporária para Open Finance
             if (token === 'temporary_session_token') {
-                req.userId = 'temp_user_id';
+                req.userId = '000000000000000000000000';
                 req.userEmail = 'temp@example.com';
                 req.userName = 'Usuário Temporário';
                 return next();
