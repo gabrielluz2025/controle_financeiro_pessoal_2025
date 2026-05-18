@@ -46,7 +46,9 @@ class OpenFinanceController {
     static async initiateConnection(req, res) {
         try {
             const { bank } = req.body;
-            const userId = req.userId;
+            const userId = req.userId || 'temp_user_id';
+            
+            console.log(`📝 Iniciando conexão para usuário: ${userId}`);
             
             if (!BANK_CONFIG[bank]) return res.status(400).json({ error: 'Banco não suportado' });
             
@@ -60,7 +62,7 @@ class OpenFinanceController {
             
             stateStore.set(state, {
                 bank,
-                userId,
+                userId: userId || 'temp_user_id',
                 codeVerifier,
                 expiresAt: Date.now() + 10 * 60 * 1000
             });
