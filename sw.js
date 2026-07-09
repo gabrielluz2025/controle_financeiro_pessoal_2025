@@ -1,17 +1,19 @@
-// Finanças+ Service Worker — v2 (network-first para HTML/JS)
-const CACHE = 'financas-plus-v2';
+// Finanças+ Service Worker — v3
+const CACHE = 'financas-plus-v3';
 const STATIC = [
     '/',
     '/index.html',
+    '/css/enhanced-styles.css',
     '/js/ofx-importer.js',
     '/js/csv-importer.js',
     '/js/voice-input.js',
     '/js/quick-input-form.js',
     '/js/receipt-scanner.js',
     '/js/theme-manager.js',
+    '/manifest.json',
 ];
 
-const NETWORK_FIRST = ['/index.html', '/js/', '/css/'];
+const NETWORK_FIRST = ['/index.html', '/js/', '/css/', '/sw.js'];
 
 function isNetworkFirst(url) {
     return NETWORK_FIRST.some(p => url.includes(p));

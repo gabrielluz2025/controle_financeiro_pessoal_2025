@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Enhanced Styles -->
-    <link rel="stylesheet" href="css/enhanced-styles.css">
+    <link rel="stylesheet" href="css/enhanced-styles.css?v=3">
     <!-- Importadores de Extrato -->
     <script src="js/ofx-importer.js"></script>
     <script src="js/csv-importer.js"></script>
@@ -436,6 +436,63 @@
         .receipt-field-input:focus { outline: 2px solid rgba(99,102,241,.35); border-color: #6366f1; }
         textarea.receipt-field-input { min-height: 3rem; resize: vertical; }
 
+        /* ── Mobile crítico (inline — garante no celular mesmo com cache antigo) ── */
+        @media (max-width: 767px) {
+            .header-btn-hide-mobile,
+            .header-btn-hide-sm { display: none !important; }
+            .header-btn-text { display: none !important; }
+            .header-separator { display: none !important; }
+            .header-subtitle { display: none !important; }
+            .app-header {
+                padding: 0.5rem 0.75rem !important;
+                padding-top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
+            }
+            #page-title { font-size: 1rem !important; }
+            .header-actions { gap: 0.25rem !important; }
+            #page-container {
+                padding: 0.625rem !important;
+                padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
+            }
+            .summary-cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.5rem !important; }
+            .summary-card { padding: 0.75rem !important; }
+            .summary-card-value { font-size: 1rem !important; }
+            .summary-card > div[style*="position:absolute"] { display: none !important; }
+            .summary-card > div[style*="width:2.5rem"] { width: 1.75rem !important; height: 1.75rem !important; margin-bottom: 0.4rem !important; }
+            .summary-card > div[style*="width:2.5rem"] svg { width: 14px !important; height: 14px !important; }
+            .mobile-quick-actions { display: flex !important; }
+            #quick-fab-container {
+                bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px)) !important;
+                right: calc(0.85rem + env(safe-area-inset-right, 0px)) !important;
+            }
+            #fab-toast {
+                bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px)) !important;
+                right: calc(0.85rem + env(safe-area-inset-right, 0px)) !important;
+                max-width: min(280px, calc(100vw - 1.5rem)) !important;
+            }
+            .dashboard-toolbar { flex-direction: column; align-items: stretch !important; }
+            #get-analysis-btn { width: 100%; justify-content: center; }
+        }
+        .mobile-quick-actions {
+            display: none;
+            gap: 0.5rem;
+            margin-bottom: 0.875rem;
+        }
+        .mobile-quick-btn {
+            flex: 1;
+            display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+            padding: 0.65rem 0.5rem;
+            border-radius: 0.625rem;
+            border: 1px solid var(--border, #e2e8f0);
+            background: var(--surface, #fff);
+            color: var(--text, #0f172a);
+            font-size: 0.78rem; font-weight: 700;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,.06));
+        }
+        .mobile-quick-btn:active { transform: scale(0.98); }
+        .mobile-quick-btn.mq-voice { background: linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border:none; }
+        .mobile-quick-btn.mq-photo { background: linear-gradient(135deg,#10b981,#34d399); color:#fff; border:none; }
+
         /* ── Cards animados ─────────────────────────────────────────────────── */
         .summary-card { transition: transform .2s, box-shadow .2s; }
         .summary-card:hover { transform: translateY(-3px); }
@@ -610,7 +667,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     <span class="header-btn-text">Importar</span>
                 </button>
-                <button id="clear-data-btn" class="header-btn header-btn-danger header-btn-hide-sm" title="Limpar dados">
+                <button id="clear-data-btn" class="header-btn header-btn-danger header-btn-hide-mobile header-btn-hide-sm" title="Limpar dados">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     <span class="header-btn-text">Limpar</span>
                 </button>
@@ -634,8 +691,25 @@
         </header>
         <div id="page-container" class="flex-1 page-container">
             <section id="dashboard-page">
+                <!-- Atalhos rápidos mobile: Voz / Foto / Nova -->
+                <div class="mobile-quick-actions">
+                    <button type="button" class="mobile-quick-btn mq-voice" id="dash-voice-btn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
+                        Voz
+                    </button>
+                    <button type="button" class="mobile-quick-btn mq-photo" id="dash-photo-btn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        Cupom
+                    </button>
+                    <button type="button" class="mobile-quick-btn" id="dash-new-btn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                        Nova
+                    </button>
+                </div>
+                <input type="file" id="dash-photo-input" accept="image/*" capture="environment" class="hidden">
+
                 <!-- Toolbar -->
-                <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
+                <div class="dashboard-toolbar flex flex-wrap justify-between items-center gap-3 mb-4">
                     <div class="period-selector-container">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-3)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         <select class="period-month-select"></select>
@@ -649,7 +723,7 @@
                 </div>
 
                 <!-- Summary Cards -->
-                <div id="summary-cards-container" class="summary-cards-grid grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 mb-4"></div>
+                <div id="summary-cards-container" class="summary-cards-grid grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 mb-4"></div>
 
                 <!-- Score de Saúde + Alertas de Anomalia -->
                 <div id="health-anomaly-row" class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
@@ -5876,7 +5950,6 @@ const QuickFAB = {
 
     init() {
         const mainBtn   = document.getElementById('fab-main-btn');
-        const actions   = document.getElementById('fab-actions');
         const voiceBtn  = document.getElementById('fab-voice-btn');
         const cameraBtn = document.getElementById('fab-camera-btn');
         const manualBtn = document.getElementById('fab-manual-btn');
@@ -5885,88 +5958,95 @@ const QuickFAB = {
 
         mainBtn.addEventListener('click', () => this.toggle());
 
-        // Fechar ao clicar fora do FAB
         document.addEventListener('click', (e) => {
             const fab = document.getElementById('quick-fab-container');
             if (fab && !fab.contains(e.target) && this._open) this.close();
         });
 
-        // ── Voz ──────────────────────────────────────────────────────────────
-        voiceBtn && voiceBtn.addEventListener('click', () => {
-            this.close();
-            if (!VoiceInput.isSupported()) {
-                this.toast('❌ Voz não suportada. Use Chrome ou Edge.', 4000);
-                return;
-            }
-            if (VoiceInput.isListening) { VoiceInput.stop(); return; }
-
-            mainBtn.classList.add('rec');
-            this.toast('🎤 Ouvindo… diga a transação', 0);
-
-            VoiceInput.start(
-                (transcript, parsed) => {
-                    mainBtn.classList.remove('rec');
-                    this.toast(`✓ "${transcript}"`, 3500);
-                    try {
-                        UI.renderNewTransactionModal(parsed);
-                    } catch (err) {
-                        console.error(err);
-                        this.toast('❌ Erro ao abrir formulário. Tente pelo menu Nova Transação.', 4000);
-                    }
-                },
-                (err) => {
-                    mainBtn.classList.remove('rec');
-                    if (err) this.toast('❌ ' + err, 4000);
-                },
-                () => mainBtn.classList.remove('rec')
-            );
-        });
-
-        // ── Câmera ────────────────────────────────────────────────────────────
-        cameraBtn && cameraBtn.addEventListener('click', () => {
-            this.close();
-            camInput && camInput.click();
-        });
-
-        camInput && camInput.addEventListener('change', async (e) => {
+        voiceBtn && voiceBtn.addEventListener('click', () => { this.close(); this.startVoice(); });
+        cameraBtn && cameraBtn.addEventListener('click', () => { this.close(); camInput && camInput.click(); });
+        camInput && camInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (!file) return;
-            this.toast('📷 Lendo cupom fiscal…', 0);
-            try {
-                const result = await ReceiptScanner.scanFile(file, (pct, msg) => {
-                    this.toast(`📷 ${msg || 'Processando…'} ${pct}%`, 0);
-                });
-                const ok = result.value || result.description || result.merchant || result.cnpj || result.accessKey;
-                if (ok) {
-                    this.toast(`✓ ${result.description || result.merchant || 'Cupom lido'}${result.value ? ` — R$ ${Number(result.value).toFixed(2)}` : ''}`, 3000);
-                    UI.renderNewTransactionModal({
-                        ...result,
-                        fromScan: true,
-                        fundamentalType: 'despesa',
-                        category: result.category || 'Outros',
-                    });
-                } else {
-                    this.toast('⚠ Leitura parcial. Complete os campos do cupom.', 3500);
-                    UI.renderNewTransactionModal({
-                        ...result,
-                        fromScan: true,
-                        fundamentalType: 'despesa',
-                        category: result.category || 'Outros',
-                        receipt: { notes: result.rawText?.slice(0, 500) || '' },
-                    });
-                }
-            } catch (err) {
-                this.toast('❌ ' + err.message, 4000);
-            } finally {
-                camInput.value = '';
-            }
+            if (file) this.processPhoto(file);
+            camInput.value = '';
         });
+        manualBtn && manualBtn.addEventListener('click', () => { this.close(); this.openManual(); });
 
-        // ── Manual ────────────────────────────────────────────────────────────
-        manualBtn && manualBtn.addEventListener('click', () => {
-            this.close();
-            UI.renderNewTransactionModal({});
+        // Atalhos visíveis no dashboard (celular)
+        document.getElementById('dash-voice-btn')?.addEventListener('click', () => this.startVoice());
+        document.getElementById('dash-photo-btn')?.addEventListener('click', () => {
+            document.getElementById('dash-photo-input')?.click();
         });
+        document.getElementById('dash-photo-input')?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) this.processPhoto(file);
+            e.target.value = '';
+        });
+        document.getElementById('dash-new-btn')?.addEventListener('click', () => this.openManual());
+    },
+
+    startVoice() {
+        const mainBtn = document.getElementById('fab-main-btn');
+        if (!VoiceInput.isSupported()) {
+            this.toast('❌ ' + VoiceInput.unsupportedMessage(), 5000);
+            return;
+        }
+        if (VoiceInput.isListening) { VoiceInput.stop(); return; }
+
+        mainBtn?.classList.add('rec');
+        this.toast('🎤 Ouvindo… ex: "Gastei 50 reais no mercado"', 0);
+
+        VoiceInput.start(
+            (transcript, parsed) => {
+                mainBtn?.classList.remove('rec');
+                this.toast(`✓ "${transcript}"`, 3500);
+                try {
+                    UI.renderNewTransactionModal(parsed);
+                } catch (err) {
+                    console.error(err);
+                    this.toast('❌ Erro ao abrir formulário.', 4000);
+                }
+            },
+            (err) => {
+                mainBtn?.classList.remove('rec');
+                if (err) this.toast('❌ ' + err, 4500);
+            },
+            () => mainBtn?.classList.remove('rec')
+        );
+    },
+
+    async processPhoto(file) {
+        this.toast('📷 Lendo cupom fiscal…', 0);
+        try {
+            const result = await ReceiptScanner.scanFile(file, (pct, msg) => {
+                this.toast(`📷 ${msg || 'Processando…'} ${pct}%`, 0);
+            });
+            const ok = result.value || result.description || result.merchant || result.cnpj || result.accessKey;
+            if (ok) {
+                this.toast(`✓ ${result.description || result.merchant || 'Cupom lido'}${result.value ? ` — R$ ${Number(result.value).toFixed(2)}` : ''}`, 3000);
+                UI.renderNewTransactionModal({
+                    ...result,
+                    fromScan: true,
+                    fundamentalType: 'despesa',
+                    category: result.category || 'Outros',
+                });
+            } else {
+                this.toast('⚠ Leitura parcial. Complete os campos do cupom.', 3500);
+                UI.renderNewTransactionModal({
+                    ...result,
+                    fromScan: true,
+                    fundamentalType: 'despesa',
+                    category: result.category || 'Outros',
+                    receipt: { notes: result.rawText?.slice(0, 500) || '' },
+                });
+            }
+        } catch (err) {
+            this.toast('❌ ' + err.message, 4500);
+        }
+    },
+
+    openManual() {
+        UI.renderNewTransactionModal({});
     },
 
     toggle() { this._open ? this.close() : this.open(); },

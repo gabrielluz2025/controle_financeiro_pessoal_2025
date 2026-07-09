@@ -14,6 +14,14 @@ const VoiceInput = {
         return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
     },
 
+    unsupportedMessage() {
+        const ua = navigator.userAgent || '';
+        if (/iPhone|iPad|iPod/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua)) {
+            return 'No iPhone (Safari), use o botão Cupom ou Nova. Voz funciona no Chrome Android ou no computador.';
+        }
+        return 'Voz não suportada neste navegador. Use Cupom ou Nova transação.';
+    },
+
     init() {
         if (!this.isSupported()) return false;
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;

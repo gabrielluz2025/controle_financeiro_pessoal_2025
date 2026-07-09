@@ -10,7 +10,8 @@ on:
       - 'api/**'
       - 'database/**'
       - 'scripts/**'
-      - '.htaccess'
+      - 'manifest.json'
+      - 'sw.js'
       - 'CNAME'
       - '.github/workflows/deploy-hostinger.yml'
   workflow_dispatch:
@@ -41,6 +42,8 @@ jobs:
           cp index.html deploy/
           cp -r css js database deploy/
           cp -r api/. deploy/api/
+          [ -f "manifest.json" ] && cp manifest.json deploy/
+          [ -f "sw.js" ] && cp sw.js deploy/
           [ -f ".htaccess" ] && cp .htaccess deploy/
           [ -f "CNAME" ] && cp CNAME deploy/
           node scripts/generate-deploy-config.js
