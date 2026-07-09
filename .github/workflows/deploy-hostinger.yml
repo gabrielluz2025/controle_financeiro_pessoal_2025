@@ -8,6 +8,7 @@ on:
       - 'css/**'
       - 'js/**'
       - 'services/**'
+      - 'api/**'
       - '.github/workflows/deploy-hostinger.yml'
   workflow_dispatch:
 
@@ -24,7 +25,16 @@ jobs:
         run: |
           mkdir -p deploy
           cp index.html deploy/
-          cp -r css js services deploy/
+          cp -r css js services api deploy/
+          cat > deploy/api/config.php <<EOF
+          <?php
+          return [
+              'db_host' => 'localhost',
+              'db_name' => '${{ secrets.DB_NAME }}',
+              'db_user' => '${{ secrets.DB_USER }}',
+              'db_pass' => '${{ secrets.DB_PASSWORD }}',
+          ];
+          EOF
 
       - name: Deploy via FTP para Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

@@ -271,8 +271,53 @@ const AppState = {
     displayYear: new Date().getFullYear(),
     selectedTransactionIds: [],
     selectedFaturaCardId: null,
+
+    useRemoteDb() {
+        return window.location.hostname.includes('financasmais.com');
+    },
+
+    saveAllLocal() {
+        localStorage.setItem('app_accounts_v3', JSON.stringify(this.accounts));
+        localStorage.setItem('app_creditCards_v3', JSON.stringify(this.creditCards));
+        localStorage.setItem('app_transactions_v3', JSON.stringify(this.transactions));
+        localStorage.setItem('app_categories_v3', JSON.stringify(this.categories));
+        localStorage.setItem('app_budgets_v3', JSON.stringify(this.budgets));
+    },
+
+    async loadFromServer() {
+        try {
+            const response = await fetch('/api/sync.php', { cache: 'no-store' });
+            if (!response.ok) return false;
+
+            const data = await response.json();
+            if (!data || !Array.isArray(data.accounts)) return false;
+
+            this.accounts = data.accounts || [];
+            this.creditCards = data.creditCards || [];
+            this.transactions = data.transactions || [];
+            this.budgets = data.budgets || [];
+            if (data.categories && data.categories.length) {
+                this.categories = data.categories;
+            }
+            this.saveAllLocal();
+            return true;
+        } catch (error) {
+            console.warn('Não foi possível carregar dados do MySQL:', error);
+            return false;
+        }
+    },
     
-    init() {
+    async init() {
+        if (this.useRemoteDb()) {
+            const loaded = await this.loadFromServer();
+            if (loaded) {
+                if (!this.categories.includes("Outros")) this.categories.push("Outros");
+                if (!this.categories.includes("Pagamento de Fatura")) this.categories.push("Pagamento de Fatura");
+                this.recalculateAllBalances();
+                return;
+            }
+        }
+
         this.accounts = JSON.parse(localStorage.getItem('app_accounts_v3')) || [];
         this.creditCards = JSON.parse(localStorage.getItem('app_creditCards_v3')) || [];
         this.transactions = JSON.parse(localStorage.getItem('app_transactions_v3')) || [];
@@ -334,12 +379,26 @@ const AppState = {
         });
     },
 
-    saveAll() {
-        localStorage.setItem('app_accounts_v3', JSON.stringify(this.accounts));
-        localStorage.setItem('app_creditCards_v3', JSON.stringify(this.creditCards));
-        localStorage.setItem('app_transactions_v3', JSON.stringify(this.transactions));
-        localStorage.setItem('app_categories_v3', JSON.stringify(this.categories));
-        localStorage.setItem('app_budgets_v3', JSON.stringify(this.budgets));
+    async saveAll() {
+        this.saveAllLocal();
+
+        if (!this.useRemoteDb()) return;
+
+        try {
+            await fetch('/api/sync.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    accounts: this.accounts,
+                    creditCards: this.creditCards,
+                    transactions: this.transactions,
+                    categories: this.categories,
+                    budgets: this.budgets,
+                }),
+            });
+        } catch (error) {
+            console.warn('Não foi possível salvar dados no MySQL:', error);
+        }
     },
     
     clearAllData() {
@@ -3733,8 +3792,8 @@ const Handlers = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    AppState.init();
+document.addEventListener('DOMContentLoaded', async () => {
+    await AppState.init();
     UI.init();
     Handlers.init();
 });
