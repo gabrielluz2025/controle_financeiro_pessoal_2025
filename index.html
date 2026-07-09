@@ -4093,12 +4093,16 @@ const PluggyManager = {
             });
             const data = await resp.json();
             if (!data.connectToken) {
-                UI.showFeedback(data.error || 'Erro ao obter token.', 'error');
+                // Se faltar credenciais no servidor, mostrar modal com instruções de como configurar
+                if (data.error && data.error.includes('credentials')) {
+                    this.showServerCredentialsModal();
+                } else {
+                    UI.showFeedback(data.error || 'Erro ao obter token.', 'error');
+                }
                 return;
             }
             this.loadWidget(data.connectToken, bankId);
         } catch (e) {
-            // Fallback: mostrar modal de configuração manual
             UI.showFeedback('Backend offline. Configure suas credenciais Pluggy.', 'warning');
             this.showSetupModal();
         }
@@ -4251,6 +4255,46 @@ const PluggyManager = {
     // ── Fallback manual (quando widget não carrega) ──────────────────────────
     showManualFallback() {
         UI.showFeedback('Use o botão "Manual" para adicionar contas manualmente.', 'info');
+    },
+
+    // ── Instruções para configurar credenciais no servidor ───────────────────
+    showServerCredentialsModal() {
+        const cid = localStorage.getItem('pluggy_client_id') || '(não salvo)';
+        const content = `
+            <div class="space-y-4">
+                <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:.75rem;padding:1rem;border:1px solid #bae6fd;">
+                    <p style="font-weight:700;color:#0369a1;font-size:.875rem;margin-bottom:.5rem;">✅ Credenciais salvas no browser</p>
+                    <p style="font-size:.8rem;color:#0c4a6e;">O sistema reconhece seu Client ID mas o <strong>servidor PHP</strong> precisa das credenciais para gerar o token de conexão com segurança.</p>
+                </div>
+
+                <p style="font-size:.875rem;font-weight:600;color:var(--text);">Escolha como configurar o servidor:</p>
+
+                <div style="border:2px solid #10b981;border-radius:.75rem;padding:1rem;background:#f0fdf4;">
+                    <p style="font-weight:700;color:#065f46;margin-bottom:.5rem;">⚡ Opção 1 — Hostinger File Manager (mais rápida)</p>
+                    <ol style="font-size:.8rem;color:#064e3b;padding-left:1.25rem;line-height:2;">
+                        <li>Abra o <a href="https://hpanel.hostinger.com" target="_blank" style="color:#10b981;font-weight:700;">Painel Hostinger</a> → <strong>File Manager</strong></li>
+                        <li>Navegue até <code>public_html/api/</code></li>
+                        <li>Crie o arquivo <strong>pluggy-credentials.php</strong> com o conteúdo abaixo</li>
+                    </ol>
+                    <pre style="background:#dcfce7;padding:.75rem;border-radius:.5rem;font-size:.75rem;margin-top:.5rem;overflow-x:auto;">&lt;?php
+define('PLUGGY_CLIENT_ID',     '${cid}');
+define('PLUGGY_CLIENT_SECRET', 'SEU_CLIENT_SECRET');</pre>
+                </div>
+
+                <div style="border:1px solid var(--border);border-radius:.75rem;padding:1rem;background:var(--surface-2);">
+                    <p style="font-weight:700;color:var(--text);margin-bottom:.5rem;">🔄 Opção 2 — GitHub Secrets (automático)</p>
+                    <ol style="font-size:.8rem;color:var(--text-2);padding-left:1.25rem;line-height:2;">
+                        <li>Vá em <strong>GitHub → Settings → Secrets → Actions</strong></li>
+                        <li>Adicione <code>PLUGGY_CLIENT_ID</code> e <code>PLUGGY_CLIENT_SECRET</code></li>
+                        <li>O próximo deploy cria o arquivo automaticamente</li>
+                    </ol>
+                </div>
+            </div>`;
+        UI.showModal('⚙️ Configurar Servidor para Open Finance', content, '', 'pluggy-server-form');
+        setTimeout(() => {
+            const footer = document.querySelector('.modal-footer');
+            if (footer) footer.style.display = 'none';
+        }, 50);
     }
 };
 </script>
