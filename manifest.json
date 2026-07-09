@@ -1,11 +1,11 @@
 {
   "name": "Finanças+",
   "short_name": "Finanças+",
-  "description": "Controle financeiro pessoal completo",
+  "description": "Controle financeiro pessoal — copiloto financeiro",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#6366f1",
+  "background_color": "#0b0b14",
+  "theme_color": "#0b0b14",
   "orientation": "portrait-primary",
   "categories": ["finance", "productivity"],
   "lang": "pt-BR",
@@ -23,13 +23,12 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [],
   "shortcuts": [
     {
       "name": "Nova Transação",
-      "short_name": "Transação",
+      "short_name": "Lançar",
       "description": "Lançar nova despesa ou receita",
-      "url": "/?action=new-transaction",
+      "url": "/",
       "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' rx='16' fill='%2310b981'/><text y='68' x='48' text-anchor='middle' font-size='60' font-family='system-ui' fill='white'>+</text></svg>", "sizes": "96x96" }]
     }
   ]

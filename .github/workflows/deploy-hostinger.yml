@@ -5,6 +5,7 @@ on:
     branches: [ main, master ]
     paths:
       - 'index.html'
+      - 'classico.html'
       - 'nova.html'
       - 'css/**'
       - 'js/**'
@@ -41,6 +42,7 @@ jobs:
         run: |
           mkdir -p deploy/api
           cp index.html deploy/
+          [ -f "classico.html" ] && cp classico.html deploy/
           cp -r css js database deploy/
           cp -r api/. deploy/api/
           [ -f "nova.html" ] && cp nova.html deploy/
