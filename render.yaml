@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: financasmais-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: FRONTEND_URL
+        value: https://financasmais.com
+      - key: JWT_SECRET
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: INFINITEPAY_CLIENT_ID
+        sync: false
+      - key: INFINITEPAY_CLIENT_SECRET
+        sync: false
+      - key: INFINITEPAY_REDIRECT_URI
+        value: https://api.financasmais.com/api/openfinance/callback/infinitepay

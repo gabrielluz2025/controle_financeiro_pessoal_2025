@@ -69,7 +69,16 @@ const OpenFinanceConfig = {
     },
     
     // URL do backend
-    apiBaseUrl: 'http://localhost:3000/api'
+    apiBaseUrl: (() => {
+        const host = window.location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1') {
+            return 'http://localhost:3000/api';
+        }
+        if (host.includes('financasmais.com')) {
+            return 'https://api.financasmais.com/api';
+        }
+        return `${window.location.origin}/api`;
+    })()
 };
 
 // Exportar configuração

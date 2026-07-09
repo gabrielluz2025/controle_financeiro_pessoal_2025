@@ -1,0 +1,36 @@
+name: Deploy Frontend para Hostinger
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'index.html'
+      - 'css/**'
+      - 'js/**'
+      - 'services/**'
+      - '.github/workflows/deploy-hostinger.yml'
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Preparar arquivos do frontend
+        run: |
+          mkdir -p deploy
+          cp index.html deploy/
+          cp -r css js services deploy/
+
+      - name: Deploy via FTP para Hostinger
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./deploy/
+          server-dir: /public_html/
+          security: loose

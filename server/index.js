@@ -53,8 +53,14 @@ app.use(helmet({
 }));
 
 // CORS - Configuração segura
+const productionOrigins = [
+    'https://financasmais.com',
+    'https://www.financasmais.com'
+];
+const corsOrigin = process.env.FRONTEND_URL
+    || (process.env.NODE_ENV === 'production' ? productionOrigins : 'http://localhost:8001');
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:8001',
+    origin: corsOrigin,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
     credentials: true
@@ -125,11 +131,16 @@ app.post('/api/infinitepay-direct/sync', InfinitePayDirectController.sync);
 // ERROR HANDLING
 // ================================================
 
-// 404 - Rota não encontrada
-app.use((req, res, next) => {
-    res.status(404).json({ 
-        error: 'Rota não encontrada',
-        path: req.path 
+// SPA fallback: rotas não-API servem o frontend
+app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({
+            error: 'Rota não encontrada',
+            path: req.path
+        });
+    }
+    res.sendFile('index.html', { root: '.' }, (err) => {
+        if (err) next(err);
     });
 });
 

@@ -4,7 +4,8 @@
  */
 class InfinitePayDirectService {
     constructor() {
-        this.apiBaseUrl = 'http://localhost:3000/api/infinitepay-direct';
+        const baseUrl = window.OpenFinanceConfig?.apiBaseUrl || `${window.location.origin}/api`;
+        this.apiBaseUrl = `${baseUrl}/infinitepay-direct`;
     }
 
     /**
