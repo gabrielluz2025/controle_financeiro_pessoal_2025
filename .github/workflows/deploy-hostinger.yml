@@ -22,19 +22,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Preparar arquivos do frontend
+        env:
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           mkdir -p deploy
           cp index.html deploy/
           cp -r css js services api deploy/
-          cat > deploy/api/config.php <<EOF
-          <?php
-          return [
-              'db_host' => 'localhost',
-              'db_name' => '${{ secrets.DB_NAME }}',
-              'db_user' => '${{ secrets.DB_USER }}',
-              'db_pass' => '${{ secrets.DB_PASSWORD }}',
-          ];
-          EOF
+          node -e "const fs=require('fs'); const esc=v=>String(v??'').replace(/\\/g,'\\\\').replace(/'/g,\"\\\\'\"); const cfg={db_host:'localhost',db_name:process.env.DB_NAME,db_user:process.env.DB_USER,db_pass:process.env.DB_PASSWORD}; const php='<?php\\nreturn [\\n'+Object.entries(cfg).map(([k,v])=>`    '${k}' => '${esc(v)}'`).join(',\\n')+'\\n];\\n'; fs.writeFileSync('deploy/api/config.php', php);"
 
       - name: Deploy via FTP para Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
