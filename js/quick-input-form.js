@@ -44,6 +44,12 @@ const TransactionFormFill = {
         this._set('receipt-series', data.series);
         this._set('receipt-access-key', data.accessKey);
         this._set('receipt-time', data.time);
+        this._set('receipt-doc-type', data.docType);
+        this._set('receipt-beneficiary', data.beneficiary);
+        this._set('receipt-pix-id', data.transactionId);
+        this._set('receipt-due-date', data.dueDate || '');
+        this._set('receipt-barcode', data.barcode);
+        this._set('receipt-bank-auth', data.bankAuth);
 
         if (data.subtotal != null && data.subtotal !== '' && !isNaN(Number(data.subtotal))) {
             this._set('receipt-subtotal', Number(data.subtotal).toFixed(2));
@@ -56,7 +62,7 @@ const TransactionFormFill = {
         this._set('receipt-address', data.address);
         this._set('receipt-items', data.items);
 
-        const notes = data.rawText ? String(data.rawText).slice(0, 500) : (data.receipt?.notes || '');
+        const notes = data.notes || (data.rawText ? String(data.rawText).slice(0, 500) : (data.receipt?.notes || ''));
         if (notes) this._set('receipt-notes', notes);
 
         const fromScan = opts.fromScan || data.fromScan;

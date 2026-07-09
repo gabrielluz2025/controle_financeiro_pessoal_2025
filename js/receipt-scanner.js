@@ -1,10 +1,18 @@
 /**
- * ReceiptScanner — OCR robusto para cupom fiscal / NFC-e / NF-e (Brasil)
- * Extrai campos obrigatórios e complementares do comprovante.
+ * ReceiptScanner — OCR para cupom fiscal, Pix, boleto e comprovante bancário (Brasil)
+ * Detecta o tipo de documento e extrai campos específicos de cada modelo.
  */
 const ReceiptScanner = {
 
     _tesseractLoaded: false,
+
+    DOC_TYPES: {
+        cupom_fiscal: 'Cupom / Nota Fiscal',
+        pix: 'Comprovante Pix',
+        boleto: 'Boleto',
+        comprovante_bancario: 'Comprovante bancário',
+        outro: 'Comprovante',
+    },
 
     TESSERACT_OPTS: {
         workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/worker.min.js',
@@ -280,7 +288,207 @@ const ReceiptScanner = {
         return 'Compras';
     },
 
-    parse(text) {
+    _detectDocType(text) {
+        const t = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const score = { pix: 0, boleto: 0, comprovante_bancario: 0, cupom_fiscal: 0 };
+        if (/pix|transferencia instantanea|transacao pix|qr code pix|chave pix|e2e|end to end|id da transacao/i.test(t)) score.pix += 3;
+        if (/comprovante.*pix|pix enviado|pix recebido|pagamento via pix/i.test(t)) score.pix += 4;
+        if (/boleto|linha digitavel|codigo de barras|cod\. de barras|cedente|sacado|nosso numero|valor do documento|valor cobrado/i.test(t)) score.boleto += 3;
+        if (/vencimento/i.test(t) && /beneficiario|cedente|sacador/i.test(t)) score.boleto += 2;
+        if (/comprovante de (transferencia|pagamento|ted|doc)|internet banking|autenticacao|agencia|conta corrente|conta poupanca|comprovante bancario/i.test(t)) score.comprovante_bancario += 3;
+        if (/ted\b|doc\b|transferencia eletronica/i.test(t)) score.comprovante_bancario += 2;
+        if (/nfce|nfe|cupom fiscal|nota fiscal|danfe|\bsat\b|\becf\b|doc\. fiscal|consumidor/i.test(t)) score.cupom_fiscal += 3;
+        if (/chave de acesso|\d{44}/.test(text.replace(/\s/g, '')) && score.cupom_fiscal === 0 && score.pix < 2) score.cupom_fiscal += 2;
+        const best = Object.entries(score).sort((a, b) => b[1] - a[1])[0];
+        return best[1] >= 2 ? best[0] : 'outro';
+    },
+
+    _extractByPatterns(text, patterns) {
+        for (const pat of patterns) {
+            const m = text.match(pat);
+            if (m && m[1]?.trim()) return m[1].trim().slice(0, 120);
+        }
+        return '';
+    },
+
+    _extractPixBeneficiary(text) {
+        return this._extractByPatterns(text, [
+            /(?:para|favorecido|recebedor|destinat[aá]rio|nome do recebedor|benefici[aá]rio)[:\s]*\n?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9][^\n]{2,70})/i,
+            /(?:para|favorecido)[:\s]+([^\n\d]{3,70})/i,
+        ]);
+    },
+
+    _extractPixPayer(text) {
+        return this._extractByPatterns(text, [
+            /(?:de|pagador|remetente|origem|nome do pagador)[:\s]*\n?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n]{2,70})/i,
+        ]);
+    },
+
+    _extractPixTransactionId(text) {
+        const e2e = text.match(/\b(E[0-9]{8}[A-Z0-9]{23,32})\b/);
+        if (e2e) return e2e[1];
+        return this._extractByPatterns(text, [
+            /(?:id\s*(?:da\s*)?transa[cç][aã]o|identificador|e2e|end\s*to\s*end|codigo da transacao)[:\s]*([A-Za-z0-9\.\-]{8,40})/i,
+        ]);
+    },
+
+    _extractPixValue(text) {
+        const patterns = [
+            /valor\s*(?:do\s*)?(?:pix|transferido|pago|da\s*transa[cç][aã]o)\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
+            /(?:transferido|enviado|recebido)\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
+        ];
+        for (const pat of patterns) {
+            const m = text.match(pat);
+            if (m) {
+                const v = this._parseMoney(m[1]);
+                if (!isNaN(v) && v > 0) return v;
+            }
+        }
+        return null;
+    },
+
+    _extractBoletoBeneficiary(text) {
+        return this._extractByPatterns(text, [
+            /(?:benefici[aá]rio(?:\s*final)?|cedente|sacador(?:\s*vendedor)?)[:\s]*\n?\s*([^\n]{3,80})/i,
+        ]);
+    },
+
+    _extractDueDate(text) {
+        const m = text.match(/(?:vencimento|data\s*de\s*vencimento|venc\.?)[:\s]*(\d{2}[\/\-]\d{2}[\/\-]\d{2,4})/i);
+        if (!m) return '';
+        let d = m[1];
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
+            const [dd, mm, yyyy] = d.split('/');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        if (/^\d{2}-\d{2}-\d{4}$/.test(d)) {
+            const [dd, mm, yyyy] = d.split('-');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        return d;
+    },
+
+    _extractLinhaDigitavel(text) {
+        const compact = text.replace(/[^\d\s.]/g, ' ').replace(/\s+/g, ' ').trim();
+        const groups = compact.match(/(?:\d{5}[.\s]?\d{5}[.\s]?\d{5}[.\s]?\d{6}[.\s]?\d{5}[.\s]?\d{6}[.\s]?\d{1}[.\s]?\d{14}|\d{47,48})/);
+        if (groups) return groups[0].replace(/\s/g, '').replace(/\./g, '');
+        const digits = text.replace(/\D/g, '');
+        const m47 = digits.match(/(\d{47,48})/);
+        return m47 ? m47[1] : '';
+    },
+
+    _extractBankBeneficiary(text) {
+        return this._extractByPatterns(text, [
+            /(?:favorecido|benefici[aá]rio|nome do favorecido|credito em favor de)[:\s]*\n?\s*([^\n]{3,80})/i,
+            /(?:para|destino)[:\s]*\n?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n]{3,70})/i,
+        ]);
+    },
+
+    _extractBankAuth(text) {
+        return this._extractByPatterns(text, [
+            /(?:autentica[cç][aã]o|autenticacao|cod\.?\s*autentica[cç][aã]o|nsu|protocolo)[:\s]*([A-Za-z0-9\.\-\s]{6,50})/i,
+        ]);
+    },
+
+    _extractBankValue(text) {
+        const patterns = [
+            /valor\s*(?:transferido|pago|creditado|da\s*operacao|l[ií]quido)?\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
+            /(?:ted|doc|transferencia)\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
+        ];
+        for (const pat of patterns) {
+            const m = text.match(pat);
+            if (m) {
+                const v = this._parseMoney(m[1]);
+                if (!isNaN(v) && v > 0) return v;
+            }
+        }
+        return null;
+    },
+
+    _extractBoletoValue(text) {
+        const patterns = [
+            /valor\s*(?:do\s*)?(?:documento|cobrado|boleto|titulo)\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
+            /(?:\(\=\)\s*)?valor\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
+        ];
+        for (const pat of patterns) {
+            const m = text.match(pat);
+            if (m) {
+                const v = this._parseMoney(m[1]);
+                if (!isNaN(v) && v > 0) return v;
+            }
+        }
+        return null;
+    },
+
+    _parsePix(text) {
+        const beneficiary = this._extractPixBeneficiary(text);
+        const payer = this._extractPixPayer(text);
+        const value = this._extractPixValue(text) ?? this._extractTotal(text);
+        const transactionId = this._extractPixTransactionId(text);
+        const date = this._extractDate(text);
+        const time = this._extractTime(text);
+        const merchant = beneficiary || payer || 'Pix';
+        return {
+            description: merchant,
+            merchant,
+            beneficiary,
+            payer,
+            value,
+            date,
+            time,
+            paymentMethod: 'Pix',
+            transactionId,
+            category: this.guessCategory(merchant, text),
+            notes: transactionId ? `ID Pix: ${transactionId}` : '',
+        };
+    },
+
+    _parseBoleto(text) {
+        const beneficiary = this._extractBoletoBeneficiary(text);
+        const value = this._extractBoletoValue(text) ?? this._extractTotal(text);
+        const dueDate = this._extractDueDate(text);
+        const barcode = this._extractLinhaDigitavel(text);
+        const date = this._extractDate(text);
+        const cnpj = this._extractCnpj(text);
+        const merchant = beneficiary || 'Boleto';
+        return {
+            description: merchant,
+            merchant,
+            beneficiary,
+            value,
+            date,
+            dueDate,
+            barcode,
+            cnpj,
+            paymentMethod: 'Outro',
+            category: 'Contas Fixas',
+            notes: barcode ? `Linha digitável: ${barcode}` : '',
+        };
+    },
+
+    _parseBank(text) {
+        const beneficiary = this._extractBankBeneficiary(text);
+        const value = this._extractBankValue(text) ?? this._extractTotal(text);
+        const bankAuth = this._extractBankAuth(text);
+        const date = this._extractDate(text);
+        const time = this._extractTime(text);
+        const paymentMethod = this._extractPaymentMethod(text) || 'Outro';
+        const merchant = beneficiary || this._extractMerchant(text);
+        return {
+            description: merchant === 'Compra' ? (beneficiary || 'Transferência bancária') : merchant,
+            merchant: beneficiary || merchant,
+            beneficiary,
+            value,
+            date,
+            time,
+            paymentMethod,
+            bankAuth,
+            category: 'Contas Fixas',
+            notes: bankAuth ? `Autenticação: ${bankAuth}` : '',
+        };
+    },
+
+    _parseFiscal(text) {
         const merchant = this._extractMerchant(text);
         const total = this._extractTotal(text);
         const subtotal = this._extractSubtotal(text);
@@ -331,6 +539,33 @@ const ReceiptScanner = {
         };
     },
 
+    parse(text) {
+        const docType = this._detectDocType(text);
+        let result = this._parseFiscal(text);
+        result.docType = docType;
+
+        if (docType === 'pix') {
+            const pix = this._parsePix(text);
+            result = { ...result, ...pix, docType: 'pix', paymentMethod: 'Pix', fromScan: true };
+            result.confidence = { ...result.confidence, docType: 0.9, transactionId: pix.transactionId ? 0.85 : 0 };
+        } else if (docType === 'boleto') {
+            const boleto = this._parseBoleto(text);
+            result = { ...result, ...boleto, docType: 'boleto', fromScan: true };
+            result.confidence = { ...result.confidence, docType: 0.88, dueDate: boleto.dueDate ? 0.85 : 0, barcode: boleto.barcode ? 0.9 : 0 };
+        } else if (docType === 'comprovante_bancario') {
+            const bank = this._parseBank(text);
+            result = { ...result, ...bank, docType: 'comprovante_bancario', fromScan: true };
+            result.confidence = { ...result.confidence, docType: 0.85, bankAuth: bank.bankAuth ? 0.8 : 0 };
+        } else if (docType === 'cupom_fiscal') {
+            result.docType = 'cupom_fiscal';
+            result.confidence = { ...result.confidence, docType: 0.85 };
+        } else {
+            result.docType = 'outro';
+        }
+
+        return result;
+    },
+
     async scanFile(file, onProgress) {
         const ok = await this._ensureTesseract();
         if (!ok) throw new Error('Não foi possível carregar o leitor OCR. Verifique sua conexão.');
@@ -346,7 +581,7 @@ const ReceiptScanner = {
                 ...this.TESSERACT_OPTS,
                 logger: (m) => {
                     if (m.status === 'recognizing text' && m.progress != null) {
-                        onProgress && onProgress(Math.round(m.progress * 85) + 10, 'Lendo cupom fiscal...');
+                        onProgress && onProgress(Math.round(m.progress * 85) + 10, 'Lendo comprovante...');
                     }
                 },
             });
@@ -363,7 +598,7 @@ const ReceiptScanner = {
                     ...this.TESSERACT_OPTS,
                     logger: (m) => {
                         if (m.status === 'recognizing text' && m.progress != null) {
-                            onProgress && onProgress(Math.round(m.progress * 85) + 10, 'Lendo cupom fiscal...');
+                            onProgress && onProgress(Math.round(m.progress * 85) + 10, 'Lendo comprovante...');
                         }
                     },
                 });
@@ -377,12 +612,12 @@ const ReceiptScanner = {
         const parsed = this.parse(text);
 
         // Segunda passagem se poucos dados
-        if (!parsed.value && !parsed.cnpj && file !== processed) {
+        if (!parsed.value && !parsed.cnpj && !parsed.transactionId && !parsed.barcode && file !== processed) {
             onProgress && onProgress(99, 'Tentando leitura alternativa...');
             try {
                 const r2 = await Tesseract.recognize(file, 'por');
                 const p2 = this.parse(r2.data.text || '');
-                if ((p2.value && !parsed.value) || (p2.cnpj && !parsed.cnpj)) {
+                if ((p2.value && !parsed.value) || (p2.cnpj && !parsed.cnpj) || (p2.transactionId && !parsed.transactionId) || (p2.barcode && !parsed.barcode)) {
                     Object.assign(parsed, {
                         ...p2,
                         rawText: `${parsed.rawText}\n---\n${p2.rawText}`,
@@ -408,18 +643,33 @@ const ReceiptScanner = {
         if (!el) return;
         const conf = parsed.confidence || {};
         const pct = (v) => v ? `${Math.round(v * 100)}%` : '—';
+        const docLabel = this.DOC_TYPES[parsed.docType] || this.DOC_TYPES.outro;
         const fields = [
-            ['Estabelecimento', parsed.merchant, conf.merchant],
-            ['Valor total', parsed.value ? `R$ ${Number(parsed.value).toFixed(2)}` : '', conf.value],
-            ['CNPJ', parsed.cnpj, conf.cnpj],
-            ['Nº NF', parsed.nfNumber, conf.nfNumber],
-            ['Chave', parsed.accessKey ? '✓ Detectada' : '', conf.accessKey],
-        ].filter(([, val]) => val);
+            ['Tipo', docLabel, conf.docType || 0.8],
+            ['Descrição', parsed.merchant || parsed.description, conf.merchant],
+            ['Valor', parsed.value ? `R$ ${Number(parsed.value).toFixed(2)}` : '', conf.value],
+        ];
+        if (parsed.docType === 'pix') {
+            fields.push(['Favorecido', parsed.beneficiary, conf.merchant]);
+            if (parsed.transactionId) fields.push(['ID Pix', parsed.transactionId, conf.transactionId]);
+        } else if (parsed.docType === 'boleto') {
+            fields.push(['Beneficiário', parsed.beneficiary, conf.merchant]);
+            if (parsed.dueDate) fields.push(['Vencimento', parsed.dueDate, conf.dueDate]);
+            if (parsed.barcode) fields.push(['Linha digitável', '✓ Detectada', conf.barcode]);
+        } else if (parsed.docType === 'comprovante_bancario') {
+            fields.push(['Favorecido', parsed.beneficiary, conf.merchant]);
+            if (parsed.bankAuth) fields.push(['Autenticação', parsed.bankAuth.slice(0, 20) + (parsed.bankAuth.length > 20 ? '…' : ''), conf.bankAuth]);
+        } else {
+            if (parsed.cnpj) fields.push(['CNPJ', parsed.cnpj, conf.cnpj]);
+            if (parsed.nfNumber) fields.push(['Nº NF', parsed.nfNumber, conf.nfNumber]);
+            if (parsed.accessKey) fields.push(['Chave', '✓ Detectada', conf.accessKey]);
+        }
+        const visible = fields.filter(([, val]) => val);
 
-        el.innerHTML = fields.length ? `
+        el.innerHTML = visible.length ? `
             <p class="receipt-scan-title">Leitura automática — confira os campos abaixo</p>
             <div class="receipt-scan-tags">
-                ${fields.map(([label, val, c]) =>
+                ${visible.map(([label, val, c]) =>
                     `<span class="receipt-scan-tag" title="Confiança ${pct(c)}">${label}: <b>${val}</b></span>`
                 ).join('')}
             </div>` : '';
@@ -429,12 +679,18 @@ const ReceiptScanner = {
     collectReceiptFromForm(form) {
         const q = (sel) => form.querySelector(sel)?.value?.trim() || '';
         const receipt = {
+            docType: q('#receipt-doc-type'),
             merchant: q('#trans-description'),
+            beneficiary: q('#receipt-beneficiary'),
             cnpj: q('#receipt-cnpj'),
             cpf: q('#receipt-cpf'),
             nfNumber: q('#receipt-nf-number'),
             series: q('#receipt-series'),
             accessKey: q('#receipt-access-key'),
+            transactionId: q('#receipt-pix-id'),
+            dueDate: q('#receipt-due-date'),
+            barcode: q('#receipt-barcode'),
+            bankAuth: q('#receipt-bank-auth'),
             time: q('#receipt-time'),
             subtotal: parseFloat(q('#receipt-subtotal')) || null,
             discount: parseFloat(q('#receipt-discount')) || null,

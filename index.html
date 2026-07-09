@@ -491,7 +491,7 @@ function viewMore(){
       <div class="stat"><div class="k">Dívida cartão</div><div class="v num" style="color:var(--neg)">${kk(-cardDebt())}</div></div>
       <div class="stat"><div class="k">Líquido</div><div class="v num" style="color:var(--pos)">${kk(netWorth())}</div></div></div></div>
   <div class="sec reveal d1">
-    <div class="more-item" onclick="openTxSheetWithPhoto()"><div class="mi">📷</div><div style="flex:1">Escanear cupom / comprovante</div><span style="color:var(--txt3)">›</span></div>
+    <div class="more-item" onclick="openTxSheetWithPhoto()"><div class="mi">📷</div><div style="flex:1">Escanear comprovante (Pix, boleto, NF…)</div><span style="color:var(--txt3)">›</span></div>
     <div class="more-item" onclick="openTxSheetWithVoice()"><div class="mi">🎤</div><div style="flex:1">Lançar por voz</div><span style="color:var(--txt3)">›</span></div>
     <div class="more-item" onclick="exportData()"><div class="mi">⬇️</div><div style="flex:1">Exportar backup (.json)</div><span style="color:var(--txt3)">›</span></div>
     <div class="more-item" onclick="doLogout()"><div class="mi">🚪</div><div style="flex:1;color:var(--neg)">Sair</div></div>
@@ -530,11 +530,15 @@ const TransactionFormFill={
     this._set('receipt-cnpj',data.cnpj);this._set('receipt-cpf',data.cpf);
     this._set('receipt-nf-number',data.nfNumber);this._set('receipt-series',data.series);
     this._set('receipt-access-key',data.accessKey);this._set('receipt-time',data.time);
+    this._set('receipt-doc-type',data.docType);this._set('receipt-beneficiary',data.beneficiary);
+    this._set('receipt-pix-id',data.transactionId);this._set('receipt-due-date',data.dueDate||'');
+    this._set('receipt-barcode',data.barcode);this._set('receipt-bank-auth',data.bankAuth);
     if(data.subtotal!=null&&!isNaN(Number(data.subtotal)))this._set('receipt-subtotal',Number(data.subtotal));
     if(data.discount!=null&&!isNaN(Number(data.discount)))this._set('receipt-discount',Number(data.discount));
     this._setSel('receipt-payment-method',data.paymentMethod);
     this._set('receipt-address',data.address);this._set('receipt-items',data.items);
-    if(data.rawText)this._set('receipt-notes',String(data.rawText).slice(0,500));
+    if(data.notes)this._set('receipt-notes',String(data.notes).slice(0,500));
+    else if(data.rawText)this._set('receipt-notes',String(data.rawText).slice(0,500));
     if(opts.fromScan||data.fromScan){
       this._set('receipt-scanned-at',new Date().toISOString());
       document.getElementById('receipt-body')?.classList.add('open');
@@ -556,10 +560,18 @@ function setQiStatus(msg,cls=''){
 }
 function receiptSectionHtml(r={},open=false){
   const pay=(typeof ReceiptScanner!=='undefined'&&ReceiptScanner.PAYMENT_METHODS)?ReceiptScanner.PAYMENT_METHODS:['Pix','Cartão de Crédito','Cartão de Débito','Dinheiro','Vale','Outro'];
+  const docs=(typeof ReceiptScanner!=='undefined'&&ReceiptScanner.DOC_TYPES)?ReceiptScanner.DOC_TYPES:{outro:'Comprovante'};
+  const docOpts=Object.entries(docs).map(([k,l])=>`<option value="${k}" ${r.docType===k?'selected':''}>${l}</option>`).join('');
   return `<input type="hidden" id="receipt-scanned-at" value="${esc(r.scannedAt||'')}">
     <div id="receipt-scan-summary" class="receipt-scan-summary hidden"></div>
-    <button type="button" class="receipt-toggle" id="receipt-toggle"><span>📄 Dados do comprovante</span><span>CNPJ · NF-e · chave · itens</span></button>
+    <button type="button" class="receipt-toggle" id="receipt-toggle"><span>📄 Dados do comprovante</span><span>Pix · boleto · NF-e · banco</span></button>
     <div class="receipt-body ${open?'open':''}" id="receipt-body"><div class="receipt-grid">
+      <div class="fld full"><label>Tipo de documento</label><select id="receipt-doc-type">${docOpts}</select></div>
+      <div class="fld full"><label>Favorecido / beneficiário</label><input id="receipt-beneficiary" type="text" placeholder="Nome do recebedor ou cedente" value="${esc(r.beneficiary||'')}"></div>
+      <div class="fld"><label>ID transação Pix</label><input id="receipt-pix-id" type="text" placeholder="E2E / identificador" value="${esc(r.transactionId||'')}"></div>
+      <div class="fld"><label>Vencimento (boleto)</label><input id="receipt-due-date" type="date" value="${esc(r.dueDate||'')}"></div>
+      <div class="fld full"><label>Linha digitável / código barras</label><input id="receipt-barcode" type="text" placeholder="47 ou 48 dígitos" value="${esc(r.barcode||'')}"></div>
+      <div class="fld full"><label>Autenticação bancária</label><input id="receipt-bank-auth" type="text" placeholder="NSU / protocolo / autenticação" value="${esc(r.bankAuth||'')}"></div>
       <div class="fld"><label>CNPJ emitente</label><input id="receipt-cnpj" type="text" placeholder="00.000.000/0000-00" value="${esc(r.cnpj||'')}" maxlength="18"></div>
       <div class="fld"><label>CPF consumidor</label><input id="receipt-cpf" type="text" placeholder="000.000.000-00" value="${esc(r.cpf||'')}"></div>
       <div class="fld"><label>Nº NF / NFC-e</label><input id="receipt-nf-number" type="text" placeholder="Número" value="${esc(r.nfNumber||'')}"></div>
@@ -576,7 +588,9 @@ function receiptSectionHtml(r={},open=false){
 }
 function collectReceiptFromSheet(){
   const q=id=>document.getElementById(id)?.value?.trim()||'';
-  const receipt={cnpj:q('receipt-cnpj'),cpf:q('receipt-cpf'),nfNumber:q('receipt-nf-number'),series:q('receipt-series'),
+  const receipt={docType:q('receipt-doc-type'),beneficiary:q('receipt-beneficiary'),transactionId:q('receipt-pix-id'),
+    dueDate:q('receipt-due-date'),barcode:q('receipt-barcode'),bankAuth:q('receipt-bank-auth'),
+    cnpj:q('receipt-cnpj'),cpf:q('receipt-cpf'),nfNumber:q('receipt-nf-number'),series:q('receipt-series'),
     accessKey:q('receipt-access-key'),time:q('receipt-time'),paymentMethod:q('receipt-payment-method'),
     subtotal:parseFloat(q('receipt-subtotal'))||null,discount:parseFloat(q('receipt-discount'))||null,
     address:q('receipt-address'),items:q('receipt-items'),notes:q('receipt-notes'),scannedAt:q('receipt-scanned-at')||null};
@@ -611,8 +625,9 @@ function bindTxSheetQuickInput(){
           if(st)st.innerHTML=`<span class="busy">📷 ${msg} (${pct}%)</span><div class="ocr-bar"><i style="width:${pct}%"></i></div>`;
         });
         ReceiptScanner.fillTransactionForm({...result,fundamentalType:'despesa',category:result.category||'Outros'});
-        const ok=result.value||result.description||result.cnpj||result.accessKey;
-        setQiStatus(ok?`✓ Lido: ${result.description||'Comprovante'}${result.value?' — '+BRL(result.value):''}. Confira os campos.`:'Leitura parcial. Complete manualmente.',ok?'ok':'err');
+        const typeLabel=ReceiptScanner.DOC_TYPES[result.docType]||'Comprovante';
+        const ok=result.value||result.description||result.cnpj||result.accessKey||result.transactionId||result.barcode;
+        setQiStatus(ok?`✓ ${typeLabel}: ${result.description||'lido'}${result.value?' — '+BRL(result.value):''}. Confira os campos.`:'Leitura parcial. Complete manualmente.',ok?'ok':'err');
       }catch(err){setQiStatus(err.message||String(err),'err')}
       finally{photoBtn.disabled=false;photoInput.value=''}
     };
@@ -626,14 +641,14 @@ function openTxSheet(id,opts={}){
   txSheetFlags={photo:!!opts.photo,voice:!!opts.voice};
   if(!S.accounts.length&&!S.cards.length){alert('Crie uma conta antes de lançar.');go('accounts');return}
   const t=id?S.txs.find(x=>x.id===id):null;editTxId=id||null;addType=t?t.fundamentalType:'despesa';
-  const r=t?.receipt||{};const receiptOpen=!!(t?.fromScan||r.cnpj||r.accessKey||r.nfNumber);
+  const r=t?.receipt||{};const receiptOpen=!!(t?.fromScan||r.cnpj||r.accessKey||r.nfNumber||r.transactionId||r.barcode||r.docType);
   openSheet(`<div class="sheet-head"><h3>${t?'Editar lançamento':'Novo lançamento'}</h3>${t?`<button class="del-btn" onclick="deleteTx('${t.id}')">Excluir</button>`:''}</div>
     <div class="qi-row">
-      <button type="button" class="qi-btn qi-btn-photo" id="qi-photo-btn">📷 Foto / Cupom</button>
+      <button type="button" class="qi-btn qi-btn-photo" id="qi-photo-btn">📷 Foto / Comprovante</button>
       <button type="button" class="qi-btn qi-btn-voice" id="qi-voice-btn">🎤 Voz</button>
       <input type="file" id="qi-photo-input" accept="image/*" capture="environment" hidden>
     </div>
-    <div class="qi-status" id="qi-status">Tire foto do cupom ou fale: "gastei 50 reais no mercado"</div>
+    <div class="qi-status" id="qi-status">Pix, boleto, cupom fiscal ou comprovante bancário — tire foto ou envie imagem</div>
     <div class="type-tog" id="type-tog">
       <button data-t="despesa" class="${addType==='despesa'?'on-exp':''}">− Despesa</button>
       <button data-t="receita" class="${addType==='receita'?'on-inc':''}">+ Receita</button></div>
@@ -722,7 +737,7 @@ window.openAccSheet=openAccSheet;window.saveAcc=saveAcc;window.deleteAcc=deleteA
 window.openCardSheet=openCardSheet;window.saveCard=saveCard;window.deleteCard=deleteCard;
 window.exportData=exportData;window.doLogout=doLogout;
 init();
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=8').then(r=>r.update()).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=9').then(r=>r.update()).catch(()=>{})}
 </script>
 </body>
 </html>
