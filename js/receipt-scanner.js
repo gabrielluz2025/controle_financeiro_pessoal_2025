@@ -824,3 +824,16 @@ const ReceiptScanner = {
         return hasAny ? receipt : null;
     },
 };
+
+// Garante API pública mesmo com cache parcial de versões antigas
+if (typeof window !== 'undefined') {
+    window.ReceiptScanner = ReceiptScanner;
+    if (typeof ReceiptScanner.fillTransactionForm !== 'function') {
+        ReceiptScanner.fillTransactionForm = function (parsed) {
+            if (typeof TransactionFormFill !== 'undefined') {
+                TransactionFormFill.apply(parsed, { fromScan: true });
+            }
+            ReceiptScanner._showScanSummary && ReceiptScanner._showScanSummary(parsed);
+        };
+    }
+}

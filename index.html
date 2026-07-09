@@ -284,8 +284,8 @@ body::after{content:'';position:fixed;bottom:-20%;right:-25%;width:80%;height:55
 <div class="sheet-bg" id="sheet-bg"></div>
 <div class="sheet" id="sheet"></div>
 
-<script src="js/voice-input.js"></script>
-<script src="js/receipt-scanner.js"></script>
+<script src="js/voice-input.js?v=11"></script>
+<script src="js/receipt-scanner.js?v=11"></script>
 <script>
 /* ─────────── Data layer (compatível com o app clássico) ─────────── */
 const K={acc:'app_accounts_v3',card:'app_creditCards_v3',tx:'app_transactions_v3',cat:'app_categories_v3',budg:'app_budgets_v3'};
@@ -548,7 +548,12 @@ const TransactionFormFill={
   }
 };
 
-function syncTypeTog(){
+function applyScanResult(result){
+  TransactionFormFill.apply(result,{fromScan:true});
+  if(typeof ReceiptScanner!=='undefined'&&typeof ReceiptScanner._showScanSummary==='function'){
+    ReceiptScanner._showScanSummary(result);
+  }
+}
   document.querySelectorAll('#type-tog button').forEach(b=>{
     b.className=b.dataset.t===addType?(addType==='despesa'?'on-exp':'on-inc'):'';
   });
@@ -626,7 +631,8 @@ function bindTxSheetQuickInput(){
           const st=document.getElementById('qi-status');
           if(st)st.innerHTML=`<span class="busy">📷 ${msg} (${pct}%)</span><div class="ocr-bar"><i style="width:${pct}%"></i></div>`;
         });
-        ReceiptScanner.fillTransactionForm({...result,fundamentalType:'despesa',category:result.category||'Outros'});
+        ReceiptScanner.fillTransactionForm=ReceiptScanner.fillTransactionForm||function(p){applyScanResult(p)};
+        applyScanResult({...result,fundamentalType:'despesa',category:result.category||'Outros'});
         const typeLabel=(ReceiptScanner.DOC_TYPES&&ReceiptScanner.DOC_TYPES[result.docType])||'Comprovante';
         const ok=result.value||result.description||result.cnpj||result.accessKey||result.transactionId||result.barcode||result.beneficiary;
         setQiStatus(ok?`✓ ${typeLabel}: ${result.description||'lido'}${result.value?' — '+BRL(result.value):''}. Confira os campos.`:'Leitura parcial. Complete manualmente.',ok?'ok':'err');
@@ -742,7 +748,7 @@ window.openAccSheet=openAccSheet;window.saveAcc=saveAcc;window.deleteAcc=deleteA
 window.openCardSheet=openCardSheet;window.saveCard=saveCard;window.deleteCard=deleteCard;
 window.exportData=exportData;window.doLogout=doLogout;
 init();
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=10').then(r=>r.update()).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=11').then(r=>r.update()).catch(()=>{})}
 </script>
 </body>
 </html>

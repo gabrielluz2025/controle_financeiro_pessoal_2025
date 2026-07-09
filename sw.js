@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v10 (fix OCR Pix mobile)
-const CACHE = 'financas-plus-v10';
+// Finanças+ Service Worker — v11 (fix fillTransactionForm cache)
+const CACHE = 'financas-plus-v11';
 const STATIC = ['/', '/index.html', '/classico.html', '/nova.html', '/manifest.json', '/css/enhanced-styles.css'];
 
 const NETWORK_FIRST = ['.html', '/js/', '/css/', '/sw.js'];
