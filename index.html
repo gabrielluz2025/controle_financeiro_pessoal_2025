@@ -4168,9 +4168,11 @@ const PluggyManager = {
             return;
         }
 
-        // Tentar 3 formatos de URL conhecidos do Pluggy Connect
-        const token = connectToken;
-        const url = `https://connect.pluggy.ai?connectToken=${token}${bankId ? '&connectorId='+bankId : ''}`;
+        console.log('[Pluggy] connectToken recebido:', connectToken.substring(0,30) + '...' , 'length:', connectToken.length);
+
+        // Pluggy Connect lê o token via hash (#connectToken=...)
+        const token = encodeURIComponent(connectToken);
+        const url = `https://connect.pluggy.ai/#connectToken=${token}${bankId ? '&connectorId='+encodeURIComponent(bankId) : ''}`;
 
         const overlay = document.createElement('div');
         overlay.id = 'pluggy-popup-overlay';
