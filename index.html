@@ -628,6 +628,9 @@ const AuthManager = {
         this.user = user;
         localStorage.setItem('auth_token', token);
         localStorage.setItem('auth_user', JSON.stringify(user));
+        // Limpa dados locais de outro usuário ou de sessão anterior
+        ['app_accounts_v3','app_creditCards_v3','app_transactions_v3',
+         'app_categories_v3','app_budgets_v3'].forEach(k => localStorage.removeItem(k));
         this._updateUserUI();
         this.hideLoginScreen();
         AppState.init().then(() => {
@@ -765,7 +768,7 @@ const AppState = {
             if (loaded) {
                 if (!this.categories.includes("Outros")) this.categories.push("Outros");
                 if (!this.categories.includes("Pagamento de Fatura")) this.categories.push("Pagamento de Fatura");
-                await this.seedIfEmpty();
+                // Não carrega dados de demonstração para usuários autenticados
                 this.recalculateAllBalances();
                 return;
             }
