@@ -6,6 +6,12 @@ const ReceiptScanner = {
 
     _tesseractLoaded: false,
 
+    TESSERACT_OPTS: {
+        workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/worker.min.js',
+        langPath: 'https://tessdata.projectnaptha.com/4.0.0_best',
+        corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/tesseract-core-simd.wasm.js',
+    },
+
     PAYMENT_METHODS: ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Vale', 'Outro'],
 
     CATEGORY_KEYWORDS: {
@@ -337,6 +343,7 @@ const ReceiptScanner = {
         let text = '';
         try {
             const worker = await Tesseract.createWorker('por', 1, {
+                ...this.TESSERACT_OPTS,
                 logger: (m) => {
                     if (m.status === 'recognizing text' && m.progress != null) {
                         onProgress && onProgress(Math.round(m.progress * 85) + 10, 'Lendo cupom fiscal...');
@@ -350,15 +357,20 @@ const ReceiptScanner = {
             const { data } = await worker.recognize(processed);
             text = data.text || '';
             await worker.terminate();
-        } catch {
-            const result = await Tesseract.recognize(processed, 'por', {
-                logger: (m) => {
-                    if (m.status === 'recognizing text') {
-                        onProgress && onProgress(Math.round(m.progress * 85) + 10, 'Lendo cupom fiscal...');
-                    }
-                },
-            });
-            text = result.data.text || '';
+        } catch (err1) {
+            try {
+                const result = await Tesseract.recognize(processed, 'por', {
+                    ...this.TESSERACT_OPTS,
+                    logger: (m) => {
+                        if (m.status === 'recognizing text' && m.progress != null) {
+                            onProgress && onProgress(Math.round(m.progress * 85) + 10, 'Lendo cupom fiscal...');
+                        }
+                    },
+                });
+                text = result.data.text || '';
+            } catch (err2) {
+                throw new Error('Falha ao ler a imagem. Verifique a conexão e tente outra foto.');
+            }
         }
 
         onProgress && onProgress(98, 'Extraindo dados...');
@@ -385,46 +397,10 @@ const ReceiptScanner = {
 
     /** Preenche campos do formulário de transação com dados do scan */
     fillTransactionForm(parsed) {
-        const set = (id, val) => {
-            const el = document.getElementById(id);
-            if (el && val != null && val !== '') el.value = val;
-        };
-        if (parsed.description || parsed.merchant) set('trans-description', parsed.merchant || parsed.description);
-        if (parsed.value) set('trans-value', Number(parsed.value).toFixed(2));
-        if (parsed.date) set('trans-date', parsed.date);
-        if (parsed.fundamentalType) {
-            const sel = document.getElementById('trans-type');
-            if (sel) sel.value = parsed.fundamentalType;
+        if (typeof TransactionFormFill !== 'undefined') {
+            TransactionFormFill.apply(parsed, { fromScan: true });
         }
-        if (parsed.category) {
-            const sel = document.getElementById('trans-category');
-            if (sel) {
-                const opt = [...sel.options].find(o => o.value === parsed.category);
-                if (opt) sel.value = parsed.category;
-            }
-        }
-        set('receipt-cnpj', parsed.cnpj);
-        set('receipt-cpf', parsed.cpf);
-        set('receipt-nf-number', parsed.nfNumber);
-        set('receipt-series', parsed.series);
-        set('receipt-access-key', parsed.accessKey);
-        set('receipt-time', parsed.time);
-        if (parsed.subtotal !== '' && parsed.subtotal != null) set('receipt-subtotal', Number(parsed.subtotal).toFixed(2));
-        if (parsed.discount !== '' && parsed.discount != null) set('receipt-discount', Number(parsed.discount).toFixed(2));
-        set('receipt-payment-method', parsed.paymentMethod);
-        set('receipt-address', parsed.address);
-        set('receipt-items', parsed.items);
-        set('receipt-notes', parsed.rawText ? parsed.rawText.slice(0, 500) : '');
-
-        const section = document.getElementById('receipt-fields-body');
-        const wrap = document.getElementById('receipt-fields-section');
-        if (section) section.classList.remove('hidden');
-        if (wrap) wrap.classList.add('receipt-expanded');
-
         this._showScanSummary(parsed);
-
-        const scannedAt = document.getElementById('receipt-scanned-at');
-        if (scannedAt) scannedAt.value = new Date().toISOString();
     },
 
     _showScanSummary(parsed) {

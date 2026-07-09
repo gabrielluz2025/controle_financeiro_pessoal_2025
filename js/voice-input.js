@@ -20,7 +20,7 @@ const VoiceInput = {
         this.recognition = new SR();
         this.recognition.lang = 'pt-BR';
         this.recognition.continuous = false;
-        this.recognition.interimResults = false;
+        this.recognition.interimResults = true;
         this.recognition.maxAlternatives = 3;
         return true;
     },
@@ -120,9 +120,20 @@ const VoiceInput = {
         if (this.isListening) { this.stop(); return; }
 
         this.isListening = true;
+        let handled = false;
 
         this.recognition.onresult = (e) => {
-            const transcript = e.results[0][0].transcript;
+            let transcript = '';
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                if (e.results[i].isFinal) {
+                    transcript = e.results[i][0].transcript;
+                }
+            }
+            if (!transcript) {
+                transcript = e.results[e.results.length - 1][0].transcript;
+            }
+            if (!transcript || handled) return;
+            handled = true;
             const parsed = this.parse(transcript);
             onResult && onResult(transcript, parsed);
         };

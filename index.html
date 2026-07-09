@@ -19,6 +19,7 @@
     <script src="js/csv-importer.js"></script>
     <!-- Entrada por Voz & Scanner de Comprovantes -->
     <script src="js/voice-input.js"></script>
+    <script src="js/quick-input-form.js"></script>
     <script src="js/receipt-scanner.js"></script>
     <!-- Theme Manager & New Features -->
     <script src="js/theme-manager.js"></script>
@@ -952,6 +953,7 @@ const AuthManager = {
             if (!this._appInitialized) {
                 UI.init();
                 Handlers.init();
+                VoiceInput.init();
                 this._appInitialized = true;
             } else {
                 // Re-login: apenas re-renderiza com novos dados
@@ -2564,6 +2566,7 @@ const UI = {
     },
 
     renderNewTransactionModal(data = {}) {
+        const esc = (v) => (typeof TransactionFormFill !== 'undefined' ? TransactionFormFill.esc(v) : (v == null ? '' : String(v)));
         const tx = {
             date: new Date().toISOString().slice(0, 10),
             fundamentalType: 'despesa',
@@ -2575,9 +2578,12 @@ const UI = {
             ...data
         };
         const r = tx.receipt || {};
-        const receiptExpanded = tx.fromScan || tx.receipt || r.cnpj || r.accessKey;
-        const payOpts = ReceiptScanner.PAYMENT_METHODS.map(p =>
-            `<option value="${p}" ${(tx.paymentMethod || r.paymentMethod) === p ? 'selected' : ''}>${p}</option>`
+        const receiptExpanded = tx.fromScan || tx.receipt || r.cnpj || r.accessKey || tx.cnpj || tx.accessKey;
+        const payMethods = (typeof ReceiptScanner !== 'undefined' && ReceiptScanner.PAYMENT_METHODS)
+            ? ReceiptScanner.PAYMENT_METHODS
+            : ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Vale', 'Outro'];
+        const payOpts = payMethods.map(p =>
+            `<option value="${esc(p)}" ${(tx.paymentMethod || r.paymentMethod) === p ? 'selected' : ''}>${esc(p)}</option>`
         ).join('');
         
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
@@ -2607,16 +2613,16 @@ const UI = {
 
                 <div>
                     <label for="trans-description" class="block text-sm font-medium text-gray-700">Estabelecimento / Descrição <span class="req" style="color:#ef4444">*</span></label>
-                    <input type="text" id="trans-description" value="${tx.description || tx.merchant || ''}" required placeholder="Nome do estabelecimento" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <input type="text" id="trans-description" value="${esc(tx.description || tx.merchant || '')}" required placeholder="Nome do estabelecimento" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="trans-value" class="block text-sm font-medium text-gray-700">Valor Total (R$) <span style="color:#ef4444">*</span></label>
-                        <input type="number" id="trans-value" value="${tx.value !== '' && tx.value != null ? tx.value : ''}" step="0.01" required placeholder="0,00" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <input type="number" id="trans-value" value="${tx.value !== '' && tx.value != null ? esc(tx.value) : ''}" step="0.01" required placeholder="0,00" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     </div>
                     <div>
                         <label for="trans-date" class="block text-sm font-medium text-gray-700">Data <span style="color:#ef4444">*</span></label>
-                        <input type="date" id="trans-date" value="${tx.date}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <input type="date" id="trans-date" value="${esc(tx.date)}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     </div>
                 </div>
 
@@ -2630,27 +2636,27 @@ const UI = {
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                             <div>
                                 <label class="receipt-field-label" for="receipt-cnpj">CNPJ do emitente</label>
-                                <input type="text" id="receipt-cnpj" class="receipt-field-input" placeholder="00.000.000/0000-00" value="${r.cnpj || tx.cnpj || ''}" maxlength="18">
+                                <input type="text" id="receipt-cnpj" class="receipt-field-input" placeholder="00.000.000/0000-00" value="${esc(r.cnpj || tx.cnpj || '')}" maxlength="18">
                             </div>
                             <div>
                                 <label class="receipt-field-label" for="receipt-cpf">CPF do consumidor</label>
-                                <input type="text" id="receipt-cpf" class="receipt-field-input" placeholder="000.000.000-00" value="${r.cpf || tx.cpf || ''}">
+                                <input type="text" id="receipt-cpf" class="receipt-field-input" placeholder="000.000.000-00" value="${esc(r.cpf || tx.cpf || '')}">
                             </div>
                             <div>
                                 <label class="receipt-field-label" for="receipt-nf-number">Nº NF / NFC-e / Cupom</label>
-                                <input type="text" id="receipt-nf-number" class="receipt-field-input" placeholder="Número do documento" value="${r.nfNumber || tx.nfNumber || ''}">
+                                <input type="text" id="receipt-nf-number" class="receipt-field-input" placeholder="Número do documento" value="${esc(r.nfNumber || tx.nfNumber || '')}">
                             </div>
                             <div>
                                 <label class="receipt-field-label" for="receipt-series">Série</label>
-                                <input type="text" id="receipt-series" class="receipt-field-input" placeholder="Série" value="${r.series || tx.series || ''}">
+                                <input type="text" id="receipt-series" class="receipt-field-input" placeholder="Série" value="${esc(r.series || tx.series || '')}">
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="receipt-field-label" for="receipt-access-key">Chave de acesso (44 dígitos)</label>
-                                <input type="text" id="receipt-access-key" class="receipt-field-input" placeholder="Chave NFC-e / NF-e" value="${r.accessKey || tx.accessKey || ''}" maxlength="54">
+                                <input type="text" id="receipt-access-key" class="receipt-field-input" placeholder="Chave NFC-e / NF-e" value="${esc(r.accessKey || tx.accessKey || '')}" maxlength="54">
                             </div>
                             <div>
                                 <label class="receipt-field-label" for="receipt-time">Hora da emissão</label>
-                                <input type="time" id="receipt-time" class="receipt-field-input" value="${r.time || tx.time || ''}">
+                                <input type="time" id="receipt-time" class="receipt-field-input" value="${esc(r.time || tx.time || '')}">
                             </div>
                             <div>
                                 <label class="receipt-field-label" for="receipt-payment-method">Forma de pagamento</label>
@@ -2661,23 +2667,23 @@ const UI = {
                             </div>
                             <div>
                                 <label class="receipt-field-label" for="receipt-subtotal">Subtotal (R$)</label>
-                                <input type="number" id="receipt-subtotal" class="receipt-field-input" step="0.01" placeholder="0,00" value="${r.subtotal || tx.subtotal || ''}">
+                                <input type="number" id="receipt-subtotal" class="receipt-field-input" step="0.01" placeholder="0,00" value="${r.subtotal || tx.subtotal ? esc(r.subtotal || tx.subtotal) : ''}">
                             </div>
                             <div>
                                 <label class="receipt-field-label" for="receipt-discount">Desconto (R$)</label>
-                                <input type="number" id="receipt-discount" class="receipt-field-input" step="0.01" placeholder="0,00" value="${r.discount || tx.discount || ''}">
+                                <input type="number" id="receipt-discount" class="receipt-field-input" step="0.01" placeholder="0,00" value="${r.discount || tx.discount ? esc(r.discount || tx.discount) : ''}">
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="receipt-field-label" for="receipt-address">Endereço do estabelecimento</label>
-                                <input type="text" id="receipt-address" class="receipt-field-input" placeholder="Rua, número, cidade" value="${r.address || tx.address || ''}">
+                                <input type="text" id="receipt-address" class="receipt-field-input" placeholder="Rua, número, cidade" value="${esc(r.address || tx.address || '')}">
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="receipt-field-label" for="receipt-items">Itens do cupom (opcional)</label>
-                                <textarea id="receipt-items" class="receipt-field-input" rows="2" placeholder="Produtos detectados ou digite manualmente">${r.items || tx.items || ''}</textarea>
+                                <textarea id="receipt-items" class="receipt-field-input" rows="2" placeholder="Produtos detectados ou digite manualmente">${esc(r.items || tx.items || '')}</textarea>
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="receipt-field-label" for="receipt-notes">Observações / texto OCR</label>
-                                <textarea id="receipt-notes" class="receipt-field-input" rows="2" placeholder="Informações adicionais">${r.notes || ''}</textarea>
+                                <textarea id="receipt-notes" class="receipt-field-input" rows="2" placeholder="Informações adicionais">${esc(r.notes || tx.rawText?.slice(0, 500) || '')}</textarea>
                             </div>
                         </div>
                         <p style="font-size:.7rem;color:var(--text-3);margin:0;">Campos não lidos na foto podem ser preenchidos manualmente. Obrigatórios para lançar: estabelecimento, valor e data.</p>
@@ -2740,9 +2746,10 @@ const UI = {
              document.getElementById('trans-account').value = data.accountId;
         }
 
-        if (data.fromScan && data.confidence) {
-            ReceiptScanner._showScanSummary(data);
-        }
+        requestAnimationFrame(() => {
+            TransactionFormFill.apply(tx, { fromScan: !!data.fromScan });
+            if (data.fromScan && data.confidence) ReceiptScanner._showScanSummary(data);
+        });
 
         document.getElementById('receipt-fields-toggle')?.addEventListener('click', () => {
             document.getElementById('receipt-fields-body')?.classList.toggle('hidden');
@@ -2756,6 +2763,7 @@ const UI = {
         const statusEl  = document.getElementById('qi-status');
 
         const setStatus = (msg, cls = '') => {
+            if (!statusEl) return;
             statusEl.textContent = msg;
             statusEl.className = `qi-status ${cls}`;
         };
@@ -2773,7 +2781,7 @@ const UI = {
                     VoiceInput.start(
                         (transcript, parsed) => {
                             setStatus(`✓ "${transcript}"`, 'success');
-                            ReceiptScanner.fillTransactionForm(parsed);
+                            TransactionFormFill.apply(parsed);
                             voiceBtn.classList.remove('recording');
                         },
                         (err) => {
@@ -2796,8 +2804,7 @@ const UI = {
                 setStatus('📷 Carregando leitor...', '');
                 try {
                     const result = await ReceiptScanner.scanFile(file, (pct, msg) => {
-                        setStatus(`📷 ${msg} (${pct}%)`, '');
-                        // Mini progress bar no status
+                        if (!statusEl) return;
                         statusEl.innerHTML = `
                             <span>📷 ${msg}</span>
                             <div class="ocr-progress-bar" style="flex:1">
@@ -5594,6 +5601,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     AuthManager._appInitialized = true;
     document.dispatchEvent(new Event('app-ready'));
 
+    VoiceInput.init();
+
     // Sincronizar ao retomar foco da aba (cross-device)
     window.addEventListener('focus', async () => {
         if (!AppState.useRemoteDb() || !AuthManager.getToken()) return;
@@ -5898,7 +5907,12 @@ const QuickFAB = {
                 (transcript, parsed) => {
                     mainBtn.classList.remove('rec');
                     this.toast(`✓ "${transcript}"`, 3500);
-                    UI.renderNewTransactionModal(parsed);
+                    try {
+                        UI.renderNewTransactionModal(parsed);
+                    } catch (err) {
+                        console.error(err);
+                        this.toast('❌ Erro ao abrir formulário. Tente pelo menu Nova Transação.', 4000);
+                    }
                 },
                 (err) => {
                     mainBtn.classList.remove('rec');
@@ -5922,17 +5936,24 @@ const QuickFAB = {
                 const result = await ReceiptScanner.scanFile(file, (pct, msg) => {
                     this.toast(`📷 ${msg || 'Processando…'} ${pct}%`, 0);
                 });
-                const ok = result.value || result.description || result.cnpj || result.accessKey;
+                const ok = result.value || result.description || result.merchant || result.cnpj || result.accessKey;
                 if (ok) {
                     this.toast(`✓ ${result.description || result.merchant || 'Cupom lido'}${result.value ? ` — R$ ${Number(result.value).toFixed(2)}` : ''}`, 3000);
                     UI.renderNewTransactionModal({
                         ...result,
+                        fromScan: true,
                         fundamentalType: 'despesa',
                         category: result.category || 'Outros',
                     });
                 } else {
                     this.toast('⚠ Leitura parcial. Complete os campos do cupom.', 3500);
-                    UI.renderNewTransactionModal({ fromScan: true, receipt: { notes: result.rawText?.slice(0, 500) || '' } });
+                    UI.renderNewTransactionModal({
+                        ...result,
+                        fromScan: true,
+                        fundamentalType: 'despesa',
+                        category: result.category || 'Outros',
+                        receipt: { notes: result.rawText?.slice(0, 500) || '' },
+                    });
                 }
             } catch (err) {
                 this.toast('❌ ' + err.message, 4000);

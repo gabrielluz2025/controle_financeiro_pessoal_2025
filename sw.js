@@ -1,14 +1,21 @@
-// Finanças+ Service Worker — v1.0
-const CACHE = 'financas-plus-v1';
+// Finanças+ Service Worker — v2 (network-first para HTML/JS)
+const CACHE = 'financas-plus-v2';
 const STATIC = [
     '/',
     '/index.html',
     '/js/ofx-importer.js',
     '/js/csv-importer.js',
     '/js/voice-input.js',
+    '/js/quick-input-form.js',
     '/js/receipt-scanner.js',
     '/js/theme-manager.js',
 ];
+
+const NETWORK_FIRST = ['/index.html', '/js/', '/css/'];
+
+function isNetworkFirst(url) {
+    return NETWORK_FIRST.some(p => url.includes(p));
+}
 
 self.addEventListener('install', e => {
     e.waitUntil(
@@ -25,8 +32,20 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-    // Não cachear chamadas à API
     if (e.request.url.includes('/api/')) return;
+
+    if (isNetworkFirst(e.request.url)) {
+        e.respondWith(
+            fetch(e.request).then(res => {
+                if (res && res.status === 200 && res.type === 'basic') {
+                    const clone = res.clone();
+                    caches.open(CACHE).then(c => c.put(e.request, clone));
+                }
+                return res;
+            }).catch(() => caches.match(e.request).then(c => c || caches.match('/index.html')))
+        );
+        return;
+    }
 
     e.respondWith(
         caches.match(e.request).then(cached => {
@@ -38,7 +57,6 @@ self.addEventListener('fetch', e => {
                 }
                 return res;
             }).catch(() => {
-                // Offline fallback
                 if (e.request.destination === 'document') {
                     return caches.match('/index.html');
                 }
