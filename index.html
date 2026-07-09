@@ -67,13 +67,18 @@
             margin-left: 0 !important;
         }
         @media (max-width: 1023px) {
+            .app-body {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
             #sidebar {
                 position: fixed !important;
                 left: 0; top: 0; bottom: 0;
                 flex: none !important;
-                width: 18rem !important;
+                width: min(18rem, 88vw) !important;
                 min-width: 0 !important;
-                max-width: 85vw !important;
+                max-width: 88vw !important;
                 transform: translateX(-105%);
                 z-index: 50;
             }
@@ -82,9 +87,16 @@
             }
             body.sidebar-collapsed #sidebar {
                 flex: none !important;
-                width: 18rem !important;
+                width: min(18rem, 88vw) !important;
                 min-width: 0 !important;
-                max-width: 85vw !important;
+                max-width: 88vw !important;
+            }
+            main {
+                flex: 1 1 100% !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                overflow-x: hidden !important;
             }
         }
         @media (min-width: 1024px) {
@@ -552,11 +564,11 @@
                     <svg id="theme-icon-light" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l-2.12-2.12a4 4 0 00-5.656 0l-2.12 2.12a1 1 0 001.414 1.414l2.12-2.12a2 2 0 012.828 0l2.12 2.12a1 1 0 001.414-1.414zM2.05 5.464l2.12 2.12a4 4 0 005.656 0l2.12-2.12a1 1 0 00-1.414-1.414l-2.12 2.12a2 2 0 01-2.828 0l-2.12-2.12a1 1 0 00-1.414 1.414z"/></svg>
                     <svg id="theme-icon-dark" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
                 </button>
-                <button id="export-data-btn" class="header-btn" title="Backup">
+                <button id="export-data-btn" class="header-btn header-btn-hide-mobile" title="Backup">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     <span class="header-btn-text">Backup</span>
                 </button>
-                <button id="import-data-btn" class="header-btn" title="Importar">
+                <button id="import-data-btn" class="header-btn header-btn-hide-mobile" title="Importar">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     <span class="header-btn-text">Importar</span>
                 </button>
@@ -3571,7 +3583,7 @@ const UI = {
                 <svg width="20" height="20" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="${icons[activeColor] || icons.blue}"/></svg>
             </div>
             <p style="font-size:.65rem;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;">${title}</p>
-            <p style="font-size:1.4rem;font-weight:800;color:white;letter-spacing:-.03em;line-height:1.1;" ${countupAttr}>${formattedValue}</p>
+            <p class="summary-card-value" style="font-size:1.4rem;font-weight:800;color:white;letter-spacing:-.03em;line-height:1.1;" ${countupAttr}>${formattedValue}</p>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.375rem;">
                 <p style="font-size:.68rem;color:rgba(255,255,255,.6);">${subLabels[title] || ''}</p>
                 ${delta ? `<span style="font-size:.68rem;font-weight:700;padding:.1rem .45rem;border-radius:.4rem;background:rgba(255,255,255,.18);color:white;display:flex;align-items:center;gap:.2rem;">${delta.up ? '▲' : '▼'} ${delta.pct}%</span>` : ''}
@@ -4331,7 +4343,19 @@ const ResponsiveUI = {
 
     isMobile() { return window.innerWidth < this.breakpoint; },
 
+    applyLayout() {
+        if (this.isMobile()) {
+            document.body.classList.remove('sidebar-collapsed');
+            AppState.isSidebarCollapsed = false;
+        } else {
+            this.closeMobileSidebar();
+            document.body.classList.toggle('sidebar-collapsed', AppState.isSidebarCollapsed);
+        }
+    },
+
     init() {
+        this.applyLayout();
+
         document.getElementById('mobile-menu-btn')?.addEventListener('click', () => this.toggleMobileSidebar());
         document.getElementById('sidebar-backdrop')?.addEventListener('click', () => this.closeMobileSidebar());
         document.getElementById('sidebar-close-mobile')?.addEventListener('click', e => {
@@ -4339,9 +4363,7 @@ const ResponsiveUI = {
             this.closeMobileSidebar();
         });
 
-        window.addEventListener('resize', () => {
-            if (!this.isMobile()) this.closeMobileSidebar();
-        });
+        window.addEventListener('resize', () => this.applyLayout());
 
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') this.closeMobileSidebar();
