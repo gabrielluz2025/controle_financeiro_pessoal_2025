@@ -24,16 +24,29 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
+      - name: Verificar secrets configurados
+        run: |
+          if [ -z "${{ secrets.FTP_SERVER }}" ]; then echo "❌ FTP_SERVER não configurado"; exit 1; fi
+          if [ -z "${{ secrets.FTP_USERNAME }}" ]; then echo "❌ FTP_USERNAME não configurado"; exit 1; fi
+          if [ -z "${{ secrets.FTP_PASSWORD }}" ]; then echo "❌ FTP_PASSWORD não configurado"; exit 1; fi
+          echo "✅ Secrets FTP verificados"
+
       - name: Preparar arquivos do frontend
         env:
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
-          mkdir -p deploy
-          cp index.html .htaccess deploy/
-          cp -r css js api database deploy/
+          mkdir -p deploy/api
+          cp index.html deploy/
+          cp -r css js database deploy/
+          cp -r api/. deploy/api/
+          if [ -f ".htaccess" ]; then cp .htaccess deploy/; fi
+          if [ -f "CNAME" ]; then cp CNAME deploy/; fi
           node scripts/generate-deploy-config.js
+          echo "✅ Arquivos preparados:"
+          ls -la deploy/
+          ls -la deploy/api/
 
       - name: Deploy via FTP para Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -44,3 +57,5 @@ jobs:
           local-dir: ./deploy/
           server-dir: ./
           security: loose
+          timeout: 60000
+          log-level: verbose
