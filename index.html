@@ -14,6 +14,8 @@
     <script src="services/openfinance-infinitepay-only.js"></script>
     <script src="services/infinitepay-direct.js"></script>
     <script src="services/oauth-callback.js"></script>
+    <!-- OFX Importer -->
+    <script src="js/ofx-importer.js"></script>
     <!-- Theme Manager & New Features -->
     <script src="js/theme-manager.js"></script>
     <style>
@@ -1320,6 +1322,10 @@ const UI = {
                             <button id="pluggy-sync-btn" style="background:rgba(255,255,255,.15);color:white;font-size:.8rem;font-weight:600;padding:.5rem 1rem;border-radius:.625rem;border:1px solid rgba(255,255,255,.25);cursor:pointer;display:flex;align-items:center;gap:.375rem;" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">
                                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                 Sincronizar Todos
+                            </button>
+                            <button id="ofx-import-btn" style="background:rgba(16,185,129,.25);color:white;font-size:.8rem;font-weight:600;padding:.5rem 1rem;border-radius:.625rem;border:1px solid rgba(16,185,129,.4);cursor:pointer;display:flex;align-items:center;gap:.375rem;" onmouseover="this.style.background='rgba(16,185,129,.4)'" onmouseout="this.style.background='rgba(16,185,129,.25)'">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+                                Importar OFX
                             </button>
                         </div>
                     </div>
@@ -4074,6 +4080,9 @@ const PluggyManager = {
         if (connectBtn) connectBtn.addEventListener('click', () => this.openConnect());
         if (syncBtn)    syncBtn.addEventListener('click',    () => this.syncAll());
         if (setupBtn)   setupBtn.addEventListener('click',   () => this.showSetupModal());
+
+        const ofxBtn = document.getElementById('ofx-import-btn');
+        if (ofxBtn) ofxBtn.addEventListener('click', () => OFXImportUI.showModal());
     },
 
     // ── Abrir Pluggy Connect Widget ──────────────────────────────────────────
@@ -4436,6 +4445,226 @@ define('PLUGGY_CLIENT_SECRET', 'SEU_CLIENT_SECRET');</pre>
             if (footer) footer.style.display = 'none';
         }, 50);
     }
+};
+
+// ════════════════════════════════════════════════════════════════
+//  OFX Import UI
+// ════════════════════════════════════════════════════════════════
+const OFXImportUI = {
+
+    bankGuides: [
+        { id: 'nubank',    name: 'Nubank',     color: '#8b5cf6', logo: 'https://logospng.org/download/nubank/logo-nubank-icon-256.png',
+          steps: ['Abra o app Nubank', 'Vá em <b>Meu Perfil → Extrato</b>', 'Toque no período desejado', '<b>Baixar extrato → Formato OFX</b>'] },
+        { id: 'itau',      name: 'Itaú',       color: '#ff8c00', logo: 'https://logospng.org/download/itau/logo-itau-256.png',
+          steps: ['Acesse <b>itau.com.br</b> ou o app', 'Menu <b>Extrato e lançamentos</b>', 'Selecione o período', '<b>Exportar → OFX</b>'] },
+        { id: 'bradesco',  name: 'Bradesco',   color: '#cc0000', logo: '',
+          steps: ['Acesse <b>bradesco.com.br</b>', 'Internet Banking → <b>Extrato</b>', 'Selecione período', '<b>Exportar → Arquivo OFX</b>'] },
+        { id: 'bb',        name: 'Banco do Brasil', color: '#f5c518', logo: '',
+          steps: ['Acesse <b>bb.com.br</b> ou app BB', '<b>Extrato</b> → Selecione conta e período', 'Clique em <b>Exportar</b>', 'Escolha formato <b>OFX</b>'] },
+        { id: 'caixa',     name: 'Caixa',      color: '#005ca9', logo: '',
+          steps: ['Acesse <b>caixa.gov.br</b>', 'Menu <b>Extrato</b>', 'Selecione o período desejado', '<b>Exportar em OFX</b>'] },
+        { id: 'santander', name: 'Santander',  color: '#ec0000', logo: '',
+          steps: ['Acesse o Internet Banking do Santander', 'Menu <b>Conta Corrente → Extrato</b>', 'Selecione o período', '<b>Exportar → OFX</b>'] },
+        { id: 'inter',     name: 'Inter',      color: '#ff7a00', logo: '',
+          steps: ['No app Inter, acesse <b>Extrato</b>', 'Selecione o período e filtre', 'Toque em <b>Compartilhar → OFX</b>'] },
+        { id: 'c6',        name: 'C6 Bank',    color: '#212121', logo: '',
+          steps: ['Abra o app C6 Bank', 'Vá em <b>Extrato</b>', 'Toque nos 3 pontinhos (⋮)', '<b>Exportar extrato → OFX</b>'] },
+        { id: 'outro',     name: 'Outro banco',color: '#6b7280', logo: '',
+          steps: ['Acesse o Internet Banking do seu banco', 'Procure a opção <b>Extrato</b>', 'Selecione o período desejado', 'Exporte como <b>OFX</b> ou <b>QFX</b>'] },
+    ],
+
+    selectedBank: null,
+    pendingTxs: [],
+
+    showModal() {
+        const content = `
+            <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+                <!-- Step 1: Escolher banco -->
+                <div id="ofx-step1">
+                    <p style="font-size:.875rem;font-weight:700;color:var(--text);margin-bottom:.75rem;">
+                        1. Qual banco você quer importar?
+                    </p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;">
+                        ${this.bankGuides.map(b => `
+                            <button onclick="OFXImportUI.selectBank('${b.id}')" id="ofx-bank-${b.id}"
+                                style="padding:.625rem .5rem;border-radius:.625rem;border:2px solid var(--border);background:var(--surface-2);cursor:pointer;font-size:.8rem;font-weight:600;color:var(--text);transition:all .15s;text-align:center;">
+                                <div style="width:28px;height:28px;border-radius:50%;background:${b.color};margin:0 auto .375rem;display:flex;align-items:center;justify-content:center;color:white;font-size:.7rem;font-weight:800;">
+                                    ${b.name.substring(0,2).toUpperCase()}
+                                </div>
+                                ${b.name}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Step 2: Instruções (oculto inicialmente) -->
+                <div id="ofx-step2" style="display:none;">
+                    <div id="ofx-bank-instructions" style="background:var(--surface-2);border-radius:.75rem;padding:1rem;border:1px solid var(--border);">
+                    </div>
+                </div>
+
+                <!-- Step 3: Upload -->
+                <div id="ofx-step3" style="display:none;">
+                    <p style="font-size:.875rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">
+                        2. Selecione o arquivo OFX exportado
+                    </p>
+                    <label id="ofx-dropzone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--border);border-radius:.75rem;padding:2rem;cursor:pointer;transition:border-color .15s;gap:.5rem;"
+                        onmouseover="this.style.borderColor='#6366f1'" onmouseout="this.style.borderColor='var(--border)'">
+                        <svg width="40" height="40" fill="none" stroke="#6366f1" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+                        <span style="font-size:.875rem;font-weight:600;color:#6366f1;">Clique para selecionar</span>
+                        <span style="font-size:.75rem;color:var(--text-2);">Formatos aceitos: .ofx, .qfx</span>
+                        <input type="file" id="ofx-file-input" accept=".ofx,.qfx,.OFX,.QFX" style="display:none;" onchange="OFXImportUI.handleFile(this.files[0])">
+                    </label>
+                    <div id="ofx-parse-result" style="display:none;margin-top:.75rem;"></div>
+                </div>
+
+                <!-- Step 4: Preview transações -->
+                <div id="ofx-step4" style="display:none;">
+                    <div id="ofx-tx-preview"></div>
+                </div>
+            </div>`;
+
+        UI.showModal('📥 Importar Extrato Bancário (OFX)', content, '<button id="ofx-confirm-btn" style="display:none;background:#6366f1;color:white;font-size:.875rem;font-weight:600;padding:.625rem 1.25rem;border-radius:.625rem;border:none;cursor:pointer;" onclick="OFXImportUI.confirmImport()">✅ Importar Transações</button>', 'ofx-import-form');
+        // Click no dropzone abre o input
+        setTimeout(() => {
+            const dz = document.getElementById('ofx-dropzone');
+            if (dz) dz.addEventListener('click', () => document.getElementById('ofx-file-input')?.click());
+        }, 50);
+    },
+
+    selectBank(bankId) {
+        this.selectedBank = bankId;
+        const bank = this.bankGuides.find(b => b.id === bankId);
+        if (!bank) return;
+
+        // Highlight do banco selecionado
+        this.bankGuides.forEach(b => {
+            const el = document.getElementById('ofx-bank-' + b.id);
+            if (el) {
+                el.style.borderColor = b.id === bankId ? bank.color : 'var(--border)';
+                el.style.background  = b.id === bankId ? bank.color + '18' : 'var(--surface-2)';
+            }
+        });
+
+        // Mostrar instruções
+        const step2 = document.getElementById('ofx-step2');
+        const step3 = document.getElementById('ofx-step3');
+        const instr = document.getElementById('ofx-bank-instructions');
+        if (instr) {
+            instr.innerHTML = `
+                <p style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.625rem;">
+                    Como exportar OFX do <span style="color:${bank.color}">${bank.name}</span>:
+                </p>
+                <ol style="font-size:.8rem;color:var(--text-2);padding-left:1.25rem;line-height:2;">
+                    ${bank.steps.map(s => `<li>${s}</li>`).join('')}
+                </ol>`;
+        }
+        if (step2) step2.style.display = 'block';
+        if (step3) step3.style.display = 'block';
+    },
+
+    async handleFile(file) {
+        if (!file) return;
+        const result = document.getElementById('ofx-parse-result');
+        if (result) {
+            result.style.display = 'block';
+            result.innerHTML = `<p style="font-size:.8rem;color:#6366f1;">⏳ Lendo arquivo...</p>`;
+        }
+
+        try {
+            const parsed = await OFXImporter.readFile(file);
+            this.pendingTxs = parsed.transactions;
+            this.showPreview(parsed);
+        } catch (e) {
+            if (result) result.innerHTML = `<p style="font-size:.8rem;color:#ef4444;">❌ ${e.message}</p>`;
+        }
+    },
+
+    showPreview(parsed) {
+        const step4 = document.getElementById('ofx-step4');
+        const preview = document.getElementById('ofx-tx-preview');
+        const confirmBtn = document.getElementById('ofx-confirm-btn');
+        const result = document.getElementById('ofx-parse-result');
+
+        const receipts = parsed.transactions.filter(t => t.fundamentalType === 'receita');
+        const expenses = parsed.transactions.filter(t => t.fundamentalType === 'despesa');
+        const totalIn  = receipts.reduce((s, t) => s + t.value, 0);
+        const totalOut = expenses.reduce((s, t) => s + t.value, 0);
+
+        if (result) result.innerHTML = `<p style="font-size:.8rem;color:#10b981;font-weight:600;">✅ ${parsed.count} transações encontradas</p>`;
+
+        if (preview) {
+            const rows = parsed.transactions.slice(0, 15).map(t => `
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:.375rem .5rem;font-size:.75rem;color:var(--text-2);">${t.date}</td>
+                    <td style="padding:.375rem .5rem;font-size:.75rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.description}">${t.description}</td>
+                    <td style="padding:.375rem .5rem;font-size:.75rem;color:var(--text-2);">${t.category}</td>
+                    <td style="padding:.375rem .5rem;font-size:.75rem;font-weight:700;text-align:right;color:${t.fundamentalType === 'receita' ? '#10b981' : '#ef4444'};">
+                        ${t.fundamentalType === 'receita' ? '+' : '-'}R$ ${t.value.toFixed(2)}
+                    </td>
+                </tr>`).join('');
+
+            preview.innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem;">
+                    <div style="background:#f0fdf4;border-radius:.625rem;padding:.625rem .75rem;border:1px solid #bbf7d0;">
+                        <div style="font-size:.7rem;color:#065f46;">Entradas</div>
+                        <div style="font-size:1rem;font-weight:700;color:#10b981;">+R$ ${totalIn.toFixed(2)}</div>
+                    </div>
+                    <div style="background:#fef2f2;border-radius:.625rem;padding:.625rem .75rem;border:1px solid #fecaca;">
+                        <div style="font-size:.7rem;color:#7f1d1d;">Saídas</div>
+                        <div style="font-size:1rem;font-weight:700;color:#ef4444;">-R$ ${totalOut.toFixed(2)}</div>
+                    </div>
+                </div>
+                <p style="font-size:.75rem;color:var(--text-2);margin-bottom:.375rem;">Prévia (${Math.min(15, parsed.count)} de ${parsed.count} transações):</p>
+                <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:.625rem;">
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead style="background:var(--surface-2);position:sticky;top:0;">
+                            <tr>
+                                <th style="padding:.375rem .5rem;font-size:.7rem;text-align:left;color:var(--text-2);font-weight:600;">Data</th>
+                                <th style="padding:.375rem .5rem;font-size:.7rem;text-align:left;color:var(--text-2);font-weight:600;">Descrição</th>
+                                <th style="padding:.375rem .5rem;font-size:.7rem;text-align:left;color:var(--text-2);font-weight:600;">Categoria</th>
+                                <th style="padding:.375rem .5rem;font-size:.7rem;text-align:right;color:var(--text-2);font-weight:600;">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                ${parsed.count > 15 ? `<p style="font-size:.7rem;color:var(--text-2);margin-top:.25rem;">...e mais ${parsed.count - 15} transações</p>` : ''}
+            `;
+        }
+
+        if (step4) step4.style.display = 'block';
+        if (confirmBtn) confirmBtn.style.display = 'inline-flex';
+    },
+
+    confirmImport() {
+        if (!this.pendingTxs.length) return;
+
+        let imported = 0, skipped = 0;
+        const existing = new Set((AppState.transactions || []).map(t => t.ofxId).filter(Boolean));
+
+        for (const tx of this.pendingTxs) {
+            if (tx.ofxId && existing.has(tx.ofxId)) { skipped++; continue; }
+            AppState.transactions.push({
+                id:          tx.id || ('ofx-' + Date.now() + '-' + Math.random()),
+                description: tx.description,
+                value:       tx.value,
+                type:        tx.fundamentalType,
+                category:    tx.category,
+                date:        tx.date,
+                isPaid:      true,
+                ofxId:       tx.ofxId,
+            });
+            imported++;
+        }
+
+        Storage.save();
+        UI.closeModal();
+        UI.showFeedback(`✅ ${imported} transações importadas${skipped ? ` (${skipped} duplicatas ignoradas)` : ''}!`, 'success');
+        UI.render();
+        this.pendingTxs = [];
+    },
 };
 </script>
 </body>
