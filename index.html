@@ -36,19 +36,6 @@
         .sidebar-icon { stroke-width: 2; }
         #sidebar, main { transition: all 0.3s ease-in-out; }
 
-        /* Estilos da Sidebar Recolhida */
-        body.sidebar-collapsed #sidebar { width: 5rem; /* 80px */ }
-        body.sidebar-collapsed main { margin-left: 5rem; }
-        body.sidebar-collapsed #sidebar .sidebar-logo-text,
-        body.sidebar-collapsed #sidebar .nav-text,
-        body.sidebar-collapsed #sidebar .add-transaction-text,
-        body.sidebar-collapsed #sidebar #sidebar-toggle-btn .nav-text-label { display: none; }
-        
-        body.sidebar-collapsed #sidebar .nav-link,
-        body.sidebar-collapsed #sidebar .sidebar-footer button { justify-content: center; }
-        
-        body.sidebar-collapsed #sidebar .sidebar-footer button svg { margin-right: 0; }
-        body.sidebar-collapsed #sidebar #sidebar-toggle-btn svg { transform: rotate(180deg); }
 
         /* Estilo para tabelas */
         .custom-table { border-collapse: separate; border-spacing: 0 0.5rem; }
@@ -407,7 +394,7 @@
     </div>
 
     <!-- Sidebar de Navegação -->
-    <aside id="sidebar" class="w-64 flex flex-col flex-shrink-0" style="width:16rem;background:linear-gradient(145deg,#0f0c29 0%,#302b63 50%,#24243e 100%);box-shadow:4px 0 24px rgba(0,0,0,.3);position:relative;z-index:30;">
+    <aside id="sidebar" class="flex flex-col flex-shrink-0">
         <div id="logo-container" class="flex items-center h-20 px-4 gap-3 cursor-pointer" style="border-bottom:1px solid rgba(255,255,255,.08);">
             <div style="width:2.25rem;height:2.25rem;border-radius:.625rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(99,102,241,.4);">
                 <svg width="18" height="18" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01"/></svg>
@@ -416,63 +403,63 @@
         </div>
         <nav class="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
             <p class="px-3 mb-2 text-xs font-semibold uppercase tracking-widest nav-text" style="color:rgba(255,255,255,.35);letter-spacing:.1em;">Principal</p>
-            <a href="#" id="nav-dashboard" class="nav-link active" style="color:#c4c9e4;">
+            <a href="#" id="nav-dashboard" class="nav-link active" title="Dashboard" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(99,102,241,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 </span>
                 <span class="nav-text">Dashboard</span>
             </a>
-            <a href="#" id="nav-transactions" class="nav-link" style="color:#c4c9e4;">
+            <a href="#" id="nav-transactions" class="nav-link" title="Transações" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(16,185,129,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </span>
                 <span class="nav-text">Transações</span>
             </a>
-            <a href="#" id="nav-faturas" class="nav-link" style="color:#c4c9e4;">
+            <a href="#" id="nav-faturas" class="nav-link" title="Faturas" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(244,63,94,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 </span>
                 <span class="nav-text">Faturas</span>
             </a>
-            <a href="#" id="nav-accounts" class="nav-link" style="color:#c4c9e4;">
+            <a href="#" id="nav-accounts" class="nav-link" title="Contas e Cartões" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(14,165,233,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                 </span>
                 <span class="nav-text">Contas e Cartões</span>
             </a>
             <p class="px-3 mt-4 mb-2 text-xs font-semibold uppercase tracking-widest nav-text" style="color:rgba(255,255,255,.35);letter-spacing:.1em;">Planejamento</p>
-            <a href="#" id="nav-budgets" class="nav-link" style="color:#c4c9e4;">
+            <a href="#" id="nav-budgets" class="nav-link" title="Orçamentos" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(245,158,11,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 </span>
                 <span class="nav-text">Orçamentos</span>
             </a>
-            <a href="#" id="nav-categories" class="nav-link" style="color:#c4c9e4;">
+            <a href="#" id="nav-categories" class="nav-link" title="Categorias" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(139,92,246,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
                 </span>
                 <span class="nav-text">Categorias</span>
             </a>
-            <a href="#" id="nav-reports" class="nav-link" style="color:#c4c9e4;">
+            <a href="#" id="nav-reports" class="nav-link" title="Relatórios" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(251,146,60,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 </span>
                 <span class="nav-text">Relatórios</span>
             </a>
-            <a href="#" id="nav-goals" class="nav-link" style="color:#c4c9e4;">
+            <a href="#" id="nav-goals" class="nav-link" title="Metas" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(236,72,153,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                 </span>
                 <span class="nav-text">Metas</span>
             </a>
         </nav>
-        <div class="px-3 py-4" style="border-top:1px solid rgba(255,255,255,.08);">
-            <button id="add-new-transaction-btn" class="w-full flex items-center justify-center px-4 py-3 mb-3 text-white font-semibold rounded-xl text-sm" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 8px 24px rgba(99,102,241,.4);border:none;cursor:pointer;transition:opacity .2s;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:.5rem;flex-shrink:0;"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        <div class="sidebar-footer">
+            <button id="add-new-transaction-btn" class="sidebar-add-btn" title="Nova Transação">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                 <span class="add-transaction-text">Nova Transação</span>
             </button>
-            <button id="sidebar-toggle-btn" class="w-full flex items-center px-3 py-2 text-sm rounded-lg" style="color:rgba(255,255,255,.5);background:transparent;border:none;cursor:pointer;transition:background .2s;" onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='transparent'">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:.5rem;transition:transform .2s;flex-shrink:0;"><path d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+            <button id="sidebar-toggle-btn" class="sidebar-collapse-btn" title="Recolher menu">
+                <svg class="sidebar-collapse-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
                 <span class="nav-text nav-text-label">Recolher</span>
             </button>
         </div>
@@ -4290,6 +4277,8 @@ const Handlers = {
         document.getElementById('sidebar-toggle-btn').addEventListener('click', () => {
             AppState.isSidebarCollapsed = !AppState.isSidebarCollapsed;
             document.body.classList.toggle('sidebar-collapsed', AppState.isSidebarCollapsed);
+            const btn = document.getElementById('sidebar-toggle-btn');
+            if (btn) btn.title = AppState.isSidebarCollapsed ? 'Expandir menu' : 'Recolher menu';
         });
 
         document.getElementById('add-new-transaction-btn').addEventListener('click', () => UI.renderNewTransactionModal());
