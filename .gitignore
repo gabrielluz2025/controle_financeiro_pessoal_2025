@@ -60,6 +60,5 @@ tokens.json
 credentials.json
 secrets/
 api/config.php
-api/pluggy-credentials.php
 deploy/
 financasmais-frontend.zip

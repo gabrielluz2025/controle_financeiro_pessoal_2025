@@ -7,7 +7,6 @@ on:
       - 'index.html'
       - 'css/**'
       - 'js/**'
-      - 'services/**'
       - 'api/**'
       - 'database/**'
       - 'scripts/**'
@@ -30,12 +29,10 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          PLUGGY_CLIENT_ID: ${{ secrets.PLUGGY_CLIENT_ID }}
-          PLUGGY_CLIENT_SECRET: ${{ secrets.PLUGGY_CLIENT_SECRET }}
         run: |
           mkdir -p deploy
           cp index.html .htaccess deploy/
-          cp -r css js services api database deploy/
+          cp -r css js api database deploy/
           node scripts/generate-deploy-config.js
 
       - name: Deploy via FTP para Hostinger
