@@ -554,6 +554,7 @@ function applyScanResult(result){
     ReceiptScanner._showScanSummary(result);
   }
 }
+function syncTypeTog(){
   document.querySelectorAll('#type-tog button').forEach(b=>{
     b.className=b.dataset.t===addType?(addType==='despesa'?'on-exp':'on-inc'):'';
   });
