@@ -12,6 +12,9 @@
     <!-- Importadores de Extrato -->
     <script src="js/ofx-importer.js"></script>
     <script src="js/csv-importer.js"></script>
+    <!-- Entrada por Voz & Scanner de Comprovantes -->
+    <script src="js/voice-input.js"></script>
+    <script src="js/receipt-scanner.js"></script>
     <!-- Theme Manager & New Features -->
     <script src="js/theme-manager.js"></script>
     <style>
@@ -203,6 +206,66 @@
         .sync-indicator.syncing { color: #6366f1; background: rgba(99,102,241,.1); }
         .sync-indicator.saved { color: #10b981; background: rgba(16,185,129,.1); }
         .sync-indicator.error { color: #ef4444; background: rgba(239,68,68,.1); }
+
+        /* ── Quick Input Toolbar (Voz + Foto) ──────────────────────────────── */
+        .quick-input-toolbar {
+            display: flex; gap: .5rem; margin-bottom: 1rem;
+            padding: .75rem; border-radius: .75rem;
+            background: linear-gradient(135deg,rgba(99,102,241,.06),rgba(139,92,246,.06));
+            border: 1px solid rgba(99,102,241,.15);
+        }
+        .qi-btn {
+            flex: 1; display: flex; align-items: center; justify-content: center; gap: .4rem;
+            padding: .55rem .75rem; border-radius: .5rem; border: 1px solid;
+            font-size: .8rem; font-weight: 600; cursor: pointer; transition: all .2s;
+            white-space: nowrap;
+        }
+        .qi-btn-voice {
+            background: rgba(99,102,241,.1); border-color: rgba(99,102,241,.3); color: #6366f1;
+        }
+        .qi-btn-voice:hover, .qi-btn-voice.active {
+            background: #6366f1; color: #fff; border-color: #6366f1;
+            box-shadow: 0 4px 14px rgba(99,102,241,.4);
+        }
+        .qi-btn-voice.recording {
+            background: #ef4444; color: #fff; border-color: #ef4444;
+            animation: pulse-record 1s infinite;
+        }
+        .qi-btn-photo {
+            background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.3); color: #10b981;
+        }
+        .qi-btn-photo:hover { background: #10b981; color: #fff; border-color: #10b981; box-shadow: 0 4px 14px rgba(16,185,129,.4); }
+        .qi-status {
+            flex: 2; padding: .4rem .7rem; border-radius: .45rem;
+            background: rgba(0,0,0,.04); font-size: .78rem; color: #6b7280;
+            display: flex; align-items: center; gap: .4rem; min-height: 2rem;
+        }
+        .qi-status.listening { color: #6366f1; background: rgba(99,102,241,.08); }
+        .qi-status.success   { color: #10b981; background: rgba(16,185,129,.08); }
+        .qi-status.error     { color: #ef4444; background: rgba(239,68,68,.08); }
+        @keyframes pulse-record {
+            0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.4); }
+            50%      { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+        }
+
+        /* ── OCR Progress ───────────────────────────────────────────────────── */
+        .ocr-progress-bar { height: 4px; border-radius: 2px; background: #e5e7eb; overflow: hidden; margin-top: .5rem; }
+        .ocr-progress-fill { height: 100%; background: linear-gradient(90deg,#6366f1,#10b981); transition: width .3s; }
+
+        /* ── Cards animados ─────────────────────────────────────────────────── */
+        .summary-card { transition: transform .2s, box-shadow .2s; }
+        .summary-card:hover { transform: translateY(-3px); }
+        .count-up { display: inline-block; }
+
+        /* ── Relatórios ─────────────────────────────────────────────────────── */
+        .report-kpi {
+            padding: 1rem 1.25rem; border-radius: .875rem;
+            background: var(--surface); border: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: .25rem;
+        }
+        .report-kpi-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); }
+        .report-kpi-value { font-size: 1.4rem; font-weight: 800; color: var(--text); }
+        .report-kpi-sub   { font-size: .78rem; color: var(--text-2); }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -1518,74 +1581,235 @@ const UI = {
 
     renderReportsPage() {
         const page = document.getElementById('reports-page');
-        const now = new Date();
-        const yearOptions = Array.from({length: 5}, (_, i) => now.getFullYear() - i).map(y => `<option value="${y}" ${y === now.getFullYear() ? 'selected' : ''}>${y}</option>`).join('');
+        const now  = new Date();
+        const year = now.getFullYear();
+        const yearOptions  = Array.from({length: 5}, (_, i) => year - i).map(y => `<option value="${y}" ${y === year ? 'selected' : ''}>${y}</option>`).join('');
         const monthOptions = Array.from({length: 12}, (_, i) => `<option value="${i}" ${i === now.getMonth() ? 'selected' : ''}>${new Date(0, i).toLocaleString('pt-BR', {month: 'long'})}</option>`).join('');
-        
-        page.innerHTML = `
-            <div class="space-y-5">
-                <!-- Análise IA CTA -->
-                <div style="background:var(--grad-brand);border-radius:var(--radius-xl);padding:1.5rem;color:white;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;position:relative;overflow:hidden;">
-                    <div style="position:absolute;bottom:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,.07);border-radius:50%;pointer-events:none;"></div>
-                    <div>
-                        <p class="text-xs font-bold uppercase opacity-70 mb-1">Powered by Gemini AI</p>
-                        <h3 class="text-xl font-extrabold">Análise Financeira Inteligente</h3>
-                        <p class="text-sm opacity-80 mt-1">Dicas personalizadas baseadas nos seus gastos do último mês.</p>
-                    </div>
-                    <button id="get-analysis-btn" style="background:white;color:#4f46e5;font-weight:700;font-size:.875rem;padding:.625rem 1.25rem;border-radius:.75rem;border:none;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:.5rem;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                        Analisar Agora
-                    </button>
-                </div>
 
-                <!-- Filtros -->
-                <div class="section-card p-5">
-                    <p class="text-xs font-bold uppercase tracking-wider mb-4" style="color:var(--text-3)">Gerar Relatório</p>
-                    <div id="report-filters" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-                        <div>
-                            <label class="form-label">Tipo de Relatório</label>
-                            <select id="report-mode">
-                                <option value="simple" selected>Simples</option>
-                                <option value="comparative">Comparativo</option>
-                            </select>
-                        </div>
-                        <div id="period-1-filters" class="contents">
-                            <div>
-                                <label class="form-label">Ano (Período 1)</label>
-                                <select id="report-year-1">${yearOptions}</select>
-                            </div>
-                            <div>
-                                <label class="form-label">Mês (Período 1)</label>
-                                <select id="report-month-1">${monthOptions}</select>
-                            </div>
-                        </div>
-                        <div id="period-2-filters" class="hidden contents">
-                            <div>
-                                <label class="form-label">Ano (Período 2)</label>
-                                <select id="report-year-2">${yearOptions}</select>
-                            </div>
-                            <div>
-                                <label class="form-label">Mês (Período 2)</label>
-                                <select id="report-month-2">${monthOptions}</select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="form-label">Tipo</label>
-                            <select id="report-type">
-                                <option value="despesa" selected>Despesas</option>
-                                <option value="receita">Receitas</option>
-                            </select>
-                        </div>
-                        <div class="lg:col-span-full flex justify-end">
-                            <button id="generate-report-btn" class="btn btn-primary">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                Gerar Relatório
-                            </button>
-                        </div>
+        // ── KPIs do ano ──────────────────────────────────────────────────────
+        const yearTxs    = AppState.transactions.filter(t => t.date && t.date.startsWith(String(year)));
+        const totalRec   = yearTxs.filter(t => t.fundamentalType === 'receita').reduce((s, t) => s + t.value, 0);
+        const totalDesp  = yearTxs.filter(t => t.fundamentalType === 'despesa').reduce((s, t) => s + t.value, 0);
+        const saldoAno   = totalRec - totalDesp;
+        const txCount    = yearTxs.length;
+        const avgDesp    = txCount ? (totalDesp / 12) : 0;
+
+        // ── Tendência mensal (12 meses) ───────────────────────────────────────
+        const months = Array.from({length: 12}, (_, i) => {
+            const m = i < 10 ? `0${i}` : `${i}`;
+            const prefix = `${year}-${m}`;
+            const mTxs = AppState.transactions.filter(t => t.date && t.date.startsWith(prefix));
+            return {
+                label: new Date(year, i, 1).toLocaleString('pt-BR', {month: 'short'}),
+                receita: mTxs.filter(t => t.fundamentalType === 'receita').reduce((s, t) => s + t.value, 0),
+                despesa: mTxs.filter(t => t.fundamentalType === 'despesa').reduce((s, t) => s + t.value, 0),
+            };
+        });
+
+        // ── Top categorias de despesa ─────────────────────────────────────────
+        const catMap = {};
+        yearTxs.filter(t => t.fundamentalType === 'despesa').forEach(t => {
+            catMap[t.category || 'Outros'] = (catMap[t.category || 'Outros'] || 0) + t.value;
+        });
+        const topCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+        // ── Top 5 maiores despesas ────────────────────────────────────────────
+        const topTxs = [...yearTxs]
+            .filter(t => t.fundamentalType === 'despesa')
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5);
+
+        const kpiColor = saldoAno >= 0 ? '#10b981' : '#ef4444';
+        const fmt = v => this.formatCurrency(v);
+
+        page.innerHTML = `
+        <div class="space-y-5">
+
+            <!-- Análise IA CTA -->
+            <div style="background:var(--grad-brand);border-radius:var(--radius-xl);padding:1.5rem;color:white;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;position:relative;overflow:hidden;">
+                <div style="position:absolute;bottom:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,.07);border-radius:50%;pointer-events:none;"></div>
+                <div>
+                    <p class="text-xs font-bold uppercase opacity-70 mb-1">Powered by Gemini AI</p>
+                    <h3 class="text-xl font-extrabold">Análise Financeira Inteligente</h3>
+                    <p class="text-sm opacity-80 mt-1">Dicas personalizadas baseadas nos seus gastos.</p>
+                </div>
+                <button id="get-analysis-btn" style="background:white;color:#4f46e5;font-weight:700;font-size:.875rem;padding:.625rem 1.25rem;border-radius:.75rem;border:none;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:.5rem;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    Analisar Agora
+                </button>
+            </div>
+
+            <!-- KPIs anuais -->
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider mb-3" style="color:var(--text-3)">Resumo ${year}</p>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="report-kpi">
+                        <span class="report-kpi-label">Receitas no Ano</span>
+                        <span class="report-kpi-value" style="color:#10b981">${fmt(totalRec)}</span>
+                        <span class="report-kpi-sub">${yearTxs.filter(t=>t.fundamentalType==='receita').length} lançamentos</span>
+                    </div>
+                    <div class="report-kpi">
+                        <span class="report-kpi-label">Despesas no Ano</span>
+                        <span class="report-kpi-value" style="color:#ef4444">${fmt(totalDesp)}</span>
+                        <span class="report-kpi-sub">${yearTxs.filter(t=>t.fundamentalType==='despesa').length} lançamentos</span>
+                    </div>
+                    <div class="report-kpi">
+                        <span class="report-kpi-label">Saldo do Ano</span>
+                        <span class="report-kpi-value" style="color:${kpiColor}">${fmt(saldoAno)}</span>
+                        <span class="report-kpi-sub">${saldoAno >= 0 ? 'Superávit' : 'Déficit'}</span>
+                    </div>
+                    <div class="report-kpi">
+                        <span class="report-kpi-label">Média Mensal Gasta</span>
+                        <span class="report-kpi-value" style="color:var(--text)">${fmt(avgDesp)}</span>
+                        <span class="report-kpi-sub">${txCount} transações no ano</span>
                     </div>
                 </div>
-                <div id="report-output"></div>
-            </div>`;
+            </div>
+
+            <!-- Gráfico de tendência mensal + donut de categorias -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div class="section-card p-5 lg:col-span-2">
+                    <p class="text-xs font-bold uppercase tracking-wider mb-4" style="color:var(--text-3)">Receitas vs Despesas — ${year}</p>
+                    <div style="position:relative;height:260px">
+                        <canvas id="report-trend-chart"></canvas>
+                    </div>
+                </div>
+                <div class="section-card p-5">
+                    <p class="text-xs font-bold uppercase tracking-wider mb-4" style="color:var(--text-3)">Despesas por Categoria</p>
+                    <div style="position:relative;height:200px">
+                        <canvas id="report-donut-chart"></canvas>
+                    </div>
+                    <div class="mt-3 space-y-1" id="donut-legend"></div>
+                </div>
+            </div>
+
+            <!-- Top 5 maiores despesas -->
+            <div class="section-card p-5">
+                <p class="text-xs font-bold uppercase tracking-wider mb-4" style="color:var(--text-3)">Top 5 Maiores Despesas — ${year}</p>
+                ${topTxs.length === 0 ? `<p style="color:var(--text-3);text-align:center;padding:2rem">Nenhuma despesa registrada em ${year}</p>` : `
+                <div class="space-y-2">
+                    ${topTxs.map((t, i) => `
+                    <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--bg)">
+                        <div style="width:1.75rem;height:1.75rem;border-radius:50%;background:rgba(99,102,241,.12);color:#6366f1;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;">${i+1}</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-sm truncate" style="color:var(--text)">${t.description}</p>
+                            <p class="text-xs" style="color:var(--text-3)">${t.category} · ${t.date}</p>
+                        </div>
+                        <span class="font-bold text-sm" style="color:#ef4444">${fmt(t.value)}</span>
+                    </div>`).join('')}
+                </div>`}
+            </div>
+
+            <!-- Relatório personalizado por período -->
+            <div class="section-card p-5">
+                <p class="text-xs font-bold uppercase tracking-wider mb-4" style="color:var(--text-3)">Relatório por Período</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="form-label">Tipo de Relatório</label>
+                        <select id="report-mode">
+                            <option value="simple" selected>Simples</option>
+                            <option value="comparative">Comparativo</option>
+                        </select>
+                    </div>
+                    <div id="period-1-filters" class="contents">
+                        <div>
+                            <label class="form-label">Ano</label>
+                            <select id="report-year-1">${yearOptions}</select>
+                        </div>
+                        <div>
+                            <label class="form-label">Mês</label>
+                            <select id="report-month-1">${monthOptions}</select>
+                        </div>
+                    </div>
+                    <div id="period-2-filters" class="hidden contents">
+                        <div>
+                            <label class="form-label">Ano (2)</label>
+                            <select id="report-year-2">${yearOptions}</select>
+                        </div>
+                        <div>
+                            <label class="form-label">Mês (2)</label>
+                            <select id="report-month-2">${monthOptions}</select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Tipo</label>
+                        <select id="report-type">
+                            <option value="despesa" selected>Despesas</option>
+                            <option value="receita">Receitas</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="generate-report-btn" class="btn btn-primary flex-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            Gerar
+                        </button>
+                        <button id="print-report-btn" class="btn" title="Imprimir / Salvar PDF" style="background:var(--surface);border:1px solid var(--border);color:var(--text)" onclick="window.print()">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="report-output"></div>
+        </div>`;
+
+        // ── Renderizar gráfico de tendência ───────────────────────────────────
+        setTimeout(() => {
+            const tCtx = document.getElementById('report-trend-chart');
+            if (tCtx) {
+                if (window._reportTrendChart) window._reportTrendChart.destroy();
+                window._reportTrendChart = new Chart(tCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: months.map(m => m.label),
+                        datasets: [
+                            { label: 'Receitas', data: months.map(m => m.receita), backgroundColor: 'rgba(16,185,129,.7)', borderColor: '#10b981', borderWidth: 1, borderRadius: 4 },
+                            { label: 'Despesas', data: months.map(m => m.despesa), backgroundColor: 'rgba(239,68,68,.65)', borderColor: '#ef4444', borderWidth: 1, borderRadius: 4 },
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } } },
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { grid: { color: 'rgba(0,0,0,.05)' }, ticks: { callback: v => 'R$' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) } }
+                        }
+                    }
+                });
+            }
+
+            // ── Donut de categorias ───────────────────────────────────────────
+            const dCtx = document.getElementById('report-donut-chart');
+            if (dCtx && topCats.length > 0) {
+                if (window._reportDonutChart) window._reportDonutChart.destroy();
+                const palette = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
+                window._reportDonutChart = new Chart(dCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: topCats.map(([cat]) => cat),
+                        datasets: [{ data: topCats.map(([,v]) => v), backgroundColor: palette, borderWidth: 2, hoverOffset: 6 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: '65%',
+                        plugins: { legend: { display: false } }
+                    }
+                });
+                // Legenda manual
+                const legendEl = document.getElementById('donut-legend');
+                if (legendEl) {
+                    const totalD = topCats.reduce((s,[,v]) => s+v, 0);
+                    legendEl.innerHTML = topCats.map(([cat, val], i) => `
+                        <div class="flex items-center justify-between text-xs gap-2">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span style="width:8px;height:8px;border-radius:50%;background:${palette[i]};flex-shrink:0;display:inline-block"></span>
+                                <span class="truncate" style="color:var(--text-2)">${cat}</span>
+                            </div>
+                            <span style="color:var(--text);font-weight:600;flex-shrink:0">${totalD > 0 ? Math.round(val/totalD*100) : 0}%</span>
+                        </div>`).join('');
+                }
+            } else if (dCtx) {
+                document.getElementById('donut-legend').innerHTML = `<p style="color:var(--text-3);font-size:.8rem;text-align:center">Sem despesas em ${year}</p>`;
+            }
+        }, 50);
     },
 
     renderReportResults({data1, data2, title, p1Label, p2Label}) {
@@ -2023,6 +2247,21 @@ const UI = {
         const content = `
             <form id="transaction-modal-form" class="space-y-4">
                 <input type="hidden" name="isImported" value="${data.isImported ? 'true' : ''}" data-import-index="${data.importIndex || ''}">
+
+                <!-- Quick Input Toolbar -->
+                <div class="quick-input-toolbar">
+                    <button type="button" class="qi-btn qi-btn-voice" id="qi-voice-btn" title="Entrada por voz">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
+                        Voz
+                    </button>
+                    <button type="button" class="qi-btn qi-btn-photo" id="qi-photo-btn" title="Digitalizar comprovante">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        Foto / Comprovante
+                    </button>
+                    <input type="file" id="qi-photo-input" accept="image/*" capture="environment" class="hidden">
+                    <span class="qi-status" id="qi-status">Clique em <b>Voz</b> ou <b>Foto</b> para preencher automaticamente</span>
+                </div>
+
                 <div>
                     <label for="trans-description" class="block text-sm font-medium text-gray-700">Descrição</label>
                     <input type="text" id="trans-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
@@ -2084,6 +2323,94 @@ const UI = {
 
         if (data.accountId) {
              document.getElementById('trans-account').value = data.accountId;
+        }
+
+        // ── Quick Input: Voz ──────────────────────────────────────────────────
+        const voiceBtn  = document.getElementById('qi-voice-btn');
+        const photoBtn  = document.getElementById('qi-photo-btn');
+        const photoInput = document.getElementById('qi-photo-input');
+        const statusEl  = document.getElementById('qi-status');
+
+        const setStatus = (msg, cls = '') => {
+            statusEl.textContent = msg;
+            statusEl.className = `qi-status ${cls}`;
+        };
+        const fillForm = (parsed) => {
+            if (parsed.description) document.getElementById('trans-description').value = parsed.description;
+            if (parsed.value)       document.getElementById('trans-value').value = parsed.value.toFixed(2);
+            if (parsed.date)        document.getElementById('trans-date').value = parsed.date;
+            if (parsed.fundamentalType) {
+                const sel = document.getElementById('trans-type');
+                if (sel) sel.value = parsed.fundamentalType;
+            }
+            if (parsed.category) {
+                const sel = document.getElementById('trans-category');
+                if (sel) {
+                    const opt = [...sel.options].find(o => o.value === parsed.category);
+                    if (opt) sel.value = parsed.category;
+                }
+            }
+        };
+
+        if (voiceBtn) {
+            if (!VoiceInput.isSupported()) {
+                voiceBtn.disabled = true;
+                voiceBtn.title = 'Reconhecimento de voz não suportado neste navegador. Use Chrome ou Edge.';
+                voiceBtn.style.opacity = '.4';
+            } else {
+                voiceBtn.addEventListener('click', () => {
+                    if (VoiceInput.isListening) { VoiceInput.stop(); return; }
+                    voiceBtn.classList.add('recording');
+                    setStatus('🎤 Ouvindo... fale a transação', 'listening');
+                    VoiceInput.start(
+                        (transcript, parsed) => {
+                            setStatus(`✓ "${transcript}"`, 'success');
+                            fillForm(parsed);
+                            voiceBtn.classList.remove('recording');
+                        },
+                        (err) => {
+                            setStatus(err, 'error');
+                            voiceBtn.classList.remove('recording');
+                        },
+                        () => { voiceBtn.classList.remove('recording'); }
+                    );
+                });
+            }
+        }
+
+        // ── Quick Input: Foto / Comprovante ───────────────────────────────────
+        if (photoBtn && photoInput) {
+            photoBtn.addEventListener('click', () => photoInput.click());
+            photoInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                photoBtn.disabled = true;
+                setStatus('📷 Carregando leitor...', '');
+                try {
+                    const result = await ReceiptScanner.scanFile(file, (pct, msg) => {
+                        setStatus(`📷 ${msg} (${pct}%)`, '');
+                        // Mini progress bar no status
+                        statusEl.innerHTML = `
+                            <span>📷 ${msg}</span>
+                            <div class="ocr-progress-bar" style="flex:1">
+                                <div class="ocr-progress-fill" style="width:${pct}%"></div>
+                            </div>
+                            <span>${pct}%</span>`;
+                    });
+
+                    if (result.value || result.description) {
+                        fillForm({ ...result, fundamentalType: 'despesa', category: 'Compras' });
+                        setStatus(`✓ Comprovante lido: ${result.description || ''} ${result.value ? `R$ ${result.value.toFixed(2)}` : ''}`, 'success');
+                    } else {
+                        setStatus('Não foi possível extrair dados. Preencha manualmente.', 'error');
+                    }
+                } catch (err) {
+                    setStatus(err.message, 'error');
+                } finally {
+                    photoBtn.disabled = false;
+                    photoInput.value = '';
+                }
+            });
         }
     },
     
@@ -2862,6 +3189,26 @@ const UI = {
             ${this.createSummaryCard('Total Pago no Mês', paidExpenses, 'yellow')}
             ${this.createSummaryCard('Despesas em Atraso', overdueCount, 'orange', false, true)}
         `;
+        // Animação count-up nos valores monetários
+        container.querySelectorAll('[data-countup]').forEach(el => {
+            const target = parseFloat(el.dataset.countup);
+            const isNeg  = target < 0;
+            const abs    = Math.abs(target);
+            const dur    = 700;
+            const steps  = 30;
+            let step = 0;
+            const timer = setInterval(() => {
+                step++;
+                const pct = step / steps;
+                const ease = 1 - Math.pow(1 - pct, 3);
+                const cur  = abs * ease;
+                el.textContent = (isNeg ? '-' : '') + 'R$ ' + cur.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+                if (step >= steps) {
+                    clearInterval(timer);
+                    el.textContent = (isNeg ? '-' : '') + 'R$ ' + abs.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+                }
+            }, dur / steps);
+        });
     },
     createSummaryCard(title, value, color, isNegative = false, isCount = false) {
         const icons = {
@@ -2904,6 +3251,7 @@ const UI = {
         const bg  = gradients[activeColor] || gradients.blue;
         const shd = shadows[activeColor]   || shadows.blue;
         const formattedValue = isCount ? `${value}` : this.formatCurrency(value);
+        const countupAttr   = isCount ? '' : `data-countup="${value}"`;
 
         return `<div class="summary-card animate-slide-in stagger-item" data-type="${typeMap[title]}"
             style="background:${bg};box-shadow:${shd};border-radius:.875rem;padding:1.25rem;position:relative;overflow:hidden;cursor:pointer;transition:transform .18s,box-shadow .18s;"
@@ -2914,7 +3262,7 @@ const UI = {
                 <svg width="20" height="20" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="${icons[activeColor] || icons.blue}"/></svg>
             </div>
             <p style="font-size:.65rem;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;">${title}</p>
-            <p style="font-size:1.4rem;font-weight:800;color:white;letter-spacing:-.03em;line-height:1.1;">${formattedValue}</p>
+            <p style="font-size:1.4rem;font-weight:800;color:white;letter-spacing:-.03em;line-height:1.1;" ${countupAttr}>${formattedValue}</p>
             <p style="font-size:.68rem;color:rgba(255,255,255,.6);margin-top:.375rem;">${subLabels[title] || ''}</p>
         </div>`;
     },
