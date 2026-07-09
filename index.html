@@ -19,7 +19,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7fafc;
+            background-color: var(--bg, #f7fafc);
         }
         /* Scrollbar customizada */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -2570,44 +2570,58 @@ const UI = {
         `;
     },
     createSummaryCard(title, value, color, isNegative = false, isCount = false) {
-        const icons = { 
-            blue: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01', 
-            green: 'M7 11l5-5m0 0l5 5m-5-5v12', 
-            red: 'M17 13l-5 5m0 0l-5-5m5 5V6', 
+        const icons = {
+            blue:   'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01',
+            green:  'M7 11l5-5m0 0l5 5m-5-5v12',
+            red:    'M17 13l-5 5m0 0l-5-5m5 5V6',
             yellow: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
             orange: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
         };
-        const colorClasses = {
-            blue:   'stat-card-blue',
-            green:  'stat-card-green',
-            red:    isNegative ? 'stat-card-red' : 'stat-card-red',
-            yellow: 'stat-card-yellow',
-            orange: 'stat-card-orange'
+        // Gradientes inline — não dependem do CSS externo
+        const gradients = {
+            blue:   'linear-gradient(135deg,#6366f1 0%,#818cf8 100%)',
+            green:  'linear-gradient(135deg,#10b981 0%,#34d399 100%)',
+            red:    'linear-gradient(135deg,#f43f5e 0%,#fb7185 100%)',
+            yellow: 'linear-gradient(135deg,#f59e0b 0%,#fbbf24 100%)',
+            orange: 'linear-gradient(135deg,#fb923c 0%,#f97316 100%)',
         };
-        const typeMap = { 
-            'Saldo Total': 'total-balance', 
-            'Receitas no Mês': 'monthly-income', 
-            'Despesas no Mês': 'monthly-expenses', 
-            'Total Pago no Mês': 'monthly-paid',
+        const shadows = {
+            blue:   '0 8px 24px rgba(99,102,241,.4)',
+            green:  '0 8px 24px rgba(16,185,129,.4)',
+            red:    '0 8px 24px rgba(244,63,94,.4)',
+            yellow: '0 8px 24px rgba(245,158,11,.4)',
+            orange: '0 8px 24px rgba(249,115,22,.4)',
+        };
+        const typeMap = {
+            'Saldo Total':        'total-balance',
+            'Receitas no Mês':    'monthly-income',
+            'Despesas no Mês':    'monthly-expenses',
+            'Total Pago no Mês':  'monthly-paid',
             'Despesas em Atraso': 'monthly-overdue'
         };
-        const formattedValue = isCount ? `${value}` : this.formatCurrency(value);
-        const cardClass = isNegative ? 'stat-card-red' : colorClasses[color];
         const subLabels = {
-            'Saldo Total': 'em todas as contas',
-            'Receitas no Mês': 'entradas no período',
-            'Despesas no Mês': 'saídas no período',
-            'Total Pago no Mês': 'despesas quitadas',
-            'Despesas em Atraso': isCount === 1 ? 'conta em atraso' : 'contas em atraso'
+            'Saldo Total':        'em todas as contas',
+            'Receitas no Mês':    'entradas no período',
+            'Despesas no Mês':    'saídas no período',
+            'Total Pago no Mês':  'despesas quitadas',
+            'Despesas em Atraso': value === 1 ? 'conta em atraso' : 'contas em atraso'
         };
+        const activeColor = isNegative ? 'red' : color;
+        const bg  = gradients[activeColor] || gradients.blue;
+        const shd = shadows[activeColor]   || shadows.blue;
+        const formattedValue = isCount ? `${value}` : this.formatCurrency(value);
 
-        return `<div class="stat-card ${cardClass} summary-card animate-slide-in stagger-item" data-type="${typeMap[title]}">
-            <div style="width:2.75rem;height:2.75rem;border-radius:.625rem;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.2);margin-bottom:.875rem;flex-shrink:0;">
-                <svg width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="${icons[color]}"/></svg>
+        return `<div class="summary-card animate-slide-in stagger-item" data-type="${typeMap[title]}"
+            style="background:${bg};box-shadow:${shd};border-radius:.875rem;padding:1.25rem;position:relative;overflow:hidden;cursor:pointer;transition:transform .18s,box-shadow .18s;"
+            onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='${shd.replace('.4)','.6)')}';"
+            onmouseout="this.style.transform='';this.style.boxShadow='${shd}';">
+            <div style="position:absolute;bottom:-30px;right:-20px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.1);pointer-events:none;"></div>
+            <div style="width:2.5rem;height:2.5rem;border-radius:.625rem;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.22);margin-bottom:.875rem;flex-shrink:0;">
+                <svg width="20" height="20" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="${icons[activeColor] || icons.blue}"/></svg>
             </div>
-            <p style="font-size:.7rem;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.25rem;">${title}</p>
-            <p style="font-size:1.5rem;font-weight:800;color:white;letter-spacing:-.03em;line-height:1;">${formattedValue}</p>
-            <p style="font-size:.7rem;color:rgba(255,255,255,.6);margin-top:.375rem;">${subLabels[title] || ''}</p>
+            <p style="font-size:.65rem;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;">${title}</p>
+            <p style="font-size:1.4rem;font-weight:800;color:white;letter-spacing:-.03em;line-height:1.1;">${formattedValue}</p>
+            <p style="font-size:.68rem;color:rgba(255,255,255,.6);margin-top:.375rem;">${subLabels[title] || ''}</p>
         </div>`;
     },
     renderBalanceChart() {
