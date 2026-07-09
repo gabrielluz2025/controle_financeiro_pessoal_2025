@@ -39,11 +39,17 @@ class OpenFinanceServiceInfinitePay {
      * Testa se o backend está disponível
      */
     async checkBackendAvailability() {
+        if (window.OpenFinanceConfig?.standaloneMode) {
+            return false;
+        }
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
             const response = await fetch(`${this.apiBaseUrl}/openfinance/banks`, {
                 method: 'GET',
-                timeout: 3000
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
             return response.ok;
         } catch (error) {
             console.warn('⚠️ Backend não disponível, usando modo demonstração');

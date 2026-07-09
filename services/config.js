@@ -69,6 +69,10 @@ const OpenFinanceConfig = {
     },
     
     // URL do backend
+    standaloneMode: (() => {
+        const host = window.location.hostname;
+        return host.includes('financasmais.com');
+    })(),
     apiBaseUrl: (() => {
         const host = window.location.hostname;
         if (host === 'localhost' || host === '127.0.0.1') {
