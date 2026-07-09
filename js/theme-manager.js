@@ -44,13 +44,18 @@ const ThemeManager = {
     },
     
     updateThemeToggleIcon() {
-        const themeToggleBtn = document.getElementById('theme-toggle-btn');
-        if (!themeToggleBtn) return;
-        
         const isDark = this.getCurrentTheme() === 'dark';
-        themeToggleBtn.innerHTML = isDark 
-            ? '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>'
-            : '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l-2.12-2.12a4 4 0 00-5.656 0l-2.12 2.12a1 1 0 001.414 1.414l2.12-2.12a2 2 0 012.828 0l2.12 2.12a1 1 0 001.414-1.414zM2.05 5.464l2.12 2.12a4 4 0 005.656 0l2.12-2.12a1 1 0 00-1.414-1.414l-2.12 2.12a2 2 0 01-2.828 0l-2.12-2.12a1 1 0 00-1.414 1.414z" clip-rule="evenodd"></path></svg>';
+        const lightIcon = document.getElementById('theme-icon-light');
+        const darkIcon  = document.getElementById('theme-icon-dark');
+        if (lightIcon) lightIcon.classList.toggle('hidden', isDark);
+        if (darkIcon)  darkIcon.classList.toggle('hidden', !isDark);
+        /* Also regenerate charts with correct palette after toggle */
+        setTimeout(() => {
+            if (typeof UI !== 'undefined' && AppState.currentView === 'dashboard') {
+                UI.renderBalanceChart();
+                UI.renderExpensesChart();
+            }
+        }, 50);
     }
 };
 
