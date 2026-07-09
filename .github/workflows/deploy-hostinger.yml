@@ -9,6 +9,7 @@ on:
       - 'js/**'
       - 'services/**'
       - 'api/**'
+      - 'scripts/**'
       - '.github/workflows/deploy-hostinger.yml'
   workflow_dispatch:
 
@@ -30,7 +31,7 @@ jobs:
           mkdir -p deploy
           cp index.html deploy/
           cp -r css js services api deploy/
-          node -e "const fs=require('fs'); const esc=v=>String(v??'').replace(/\\/g,'\\\\').replace(/'/g,\"\\\\'\"); const cfg={db_host:'localhost',db_name:process.env.DB_NAME,db_user:process.env.DB_USER,db_pass:process.env.DB_PASSWORD}; const php='<?php\\nreturn [\\n'+Object.entries(cfg).map(([k,v])=>`    '${k}' => '${esc(v)}'`).join(',\\n')+'\\n];\\n'; fs.writeFileSync('deploy/api/config.php', php);"
+          node scripts/generate-deploy-config.js
 
       - name: Deploy via FTP para Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
