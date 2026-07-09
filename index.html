@@ -273,7 +273,8 @@ const AppState = {
     selectedFaturaCardId: null,
 
     useRemoteDb() {
-        return window.location.hostname.includes('financasmais.com');
+        const host = window.location.hostname;
+        return host.includes('financasmais.com') && host !== 'financasmais.com';
     },
 
     saveAllLocal() {

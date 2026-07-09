@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Forcar HTTPS
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Redirecionar dominio sem www para www (usa CDN da Hostinger)
+RewriteCond %{HTTP_HOST} ^financasmais\.com$ [NC]
+RewriteRule ^(.*)$ https://www.financasmais.com/$1 [L,R=301]

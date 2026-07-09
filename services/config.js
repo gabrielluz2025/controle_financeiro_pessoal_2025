@@ -71,7 +71,8 @@ const OpenFinanceConfig = {
     // URL do backend
     standaloneMode: (() => {
         const host = window.location.hostname;
-        return host.includes('financasmais.com');
+        if (host.includes('github.io')) return true;
+        return host === 'financasmais.com';
     })(),
     apiBaseUrl: (() => {
         const host = window.location.hostname;
@@ -79,7 +80,7 @@ const OpenFinanceConfig = {
             return 'http://localhost:3000/api';
         }
         if (host.includes('financasmais.com')) {
-            return 'https://api.financasmais.com/api';
+            return 'https://www.financasmais.com/api';
         }
         return `${window.location.origin}/api`;
     })()
