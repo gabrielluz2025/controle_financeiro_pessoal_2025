@@ -4089,11 +4089,15 @@ const PluggyManager = {
             const resp = await fetch('/api/pluggy.php?action=connect_token', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({})
+                // Envia as credenciais salvas no browser para o PHP usar caso
+                // o pluggy-credentials.php não exista no servidor
+                body: JSON.stringify({
+                    clientId:     localStorage.getItem('pluggy_client_id')     || '',
+                    clientSecret: localStorage.getItem('pluggy_client_secret') || ''
+                })
             });
             const data = await resp.json();
             if (!data.connectToken) {
-                // Se faltar credenciais no servidor, mostrar modal com instruções de como configurar
                 if (data.error && data.error.includes('credentials')) {
                     this.showServerCredentialsModal();
                 } else {
@@ -4150,7 +4154,14 @@ const PluggyManager = {
         const statusText = document.getElementById('status-text');
         if (statusText) statusText.textContent = '🔄 Sincronizando...';
         try {
-            const resp = await fetch('/api/pluggy.php?action=sync_all');
+            const resp = await fetch('/api/pluggy.php?action=sync_all', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clientId:     localStorage.getItem('pluggy_client_id')     || '',
+                    clientSecret: localStorage.getItem('pluggy_client_secret') || ''
+                })
+            });
             const data = await resp.json();
 
             if (data.error === 'credentials_missing') {

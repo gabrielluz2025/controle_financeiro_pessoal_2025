@@ -6,13 +6,20 @@ header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
-// Carregar credenciais Pluggy (pluggy-credentials.php tem prioridade, depois env vars)
+// Ler body da requisição (pode conter clientId/clientSecret enviados pelo frontend)
+$rawInput = file_get_contents('php://input');
+$inputData = json_decode($rawInput, true) ?? [];
+
+// Ordem de prioridade para credenciais:
+// 1. Arquivo pluggy-credentials.php no servidor (mais seguro)
+// 2. Variáveis de ambiente
+// 3. Credenciais enviadas pelo frontend via POST (para uso pessoal, sobre HTTPS)
 if (file_exists(__DIR__ . '/pluggy-credentials.php')) {
     require_once __DIR__ . '/pluggy-credentials.php';
 }
 
-$PLUGGY_CLIENT_ID     = defined('PLUGGY_CLIENT_ID')     ? PLUGGY_CLIENT_ID     : (getenv('PLUGGY_CLIENT_ID')     ?: '');
-$PLUGGY_CLIENT_SECRET = defined('PLUGGY_CLIENT_SECRET') ? PLUGGY_CLIENT_SECRET : (getenv('PLUGGY_CLIENT_SECRET') ?: '');
+$PLUGGY_CLIENT_ID     = defined('PLUGGY_CLIENT_ID')     ? PLUGGY_CLIENT_ID     : (getenv('PLUGGY_CLIENT_ID')     ?: ($inputData['clientId']     ?? ''));
+$PLUGGY_CLIENT_SECRET = defined('PLUGGY_CLIENT_SECRET') ? PLUGGY_CLIENT_SECRET : (getenv('PLUGGY_CLIENT_SECRET') ?: ($inputData['clientSecret'] ?? ''));
 $PLUGGY_API           = 'https://api.pluggy.ai';
 
 function pluggy_request(string $method, string $path, array $body = [], string $apiKey = ''): array {
