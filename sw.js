@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v6 (nova UI como index.html)
-const CACHE = 'financas-plus-v6';
+// Finanças+ Service Worker — v7 (layout responsivo desktop/tablet)
+const CACHE = 'financas-plus-v7';
 const STATIC = ['/', '/index.html', '/classico.html', '/nova.html', '/manifest.json', '/css/enhanced-styles.css'];
 
 const NETWORK_FIRST = ['.html', '/js/', '/css/', '/sw.js'];
