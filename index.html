@@ -150,8 +150,9 @@ body::after{content:'';position:fixed;bottom:-20%;right:-25%;width:80%;height:55
 .fld{margin-bottom:13px}
 .fld.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fld label{display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
-.fld input,.fld select{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--card-brd);border-radius:12px;padding:13px 14px;color:var(--txt);font-size:15px;font-family:inherit;outline:none;transition:.2s}
-.fld input:focus,.fld select:focus{border-color:var(--brand)}
+.fld input,.fld select,.fld textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--card-brd);border-radius:12px;padding:13px 14px;color:var(--txt);font-size:15px;font-family:inherit;outline:none;transition:.2s}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--brand)}
+.fld textarea{min-height:3.2rem;resize:vertical}
 .big-in{font-size:26px!important;font-weight:800;text-align:center}
 .chk{display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,.04);border-radius:12px;margin-bottom:13px;cursor:pointer}
 .chk input{width:20px;height:20px;accent-color:var(--brand)}
@@ -161,6 +162,33 @@ body::after{content:'';position:fixed;bottom:-20%;right:-25%;width:80%;height:55
 .more-item{display:flex;align-items:center;gap:13px;padding:15px 4px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;font-size:14px;font-weight:600}
 .more-item:last-child{border-bottom:0}
 .more-item .mi{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:18px}
+
+/* Entrada rápida: foto / voz / OCR */
+.qi-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.qi-btn{border:1px solid var(--card-brd);background:rgba(255,255,255,.05);color:var(--txt);font-weight:800;font-size:12px;padding:12px 10px;border-radius:12px;cursor:pointer;font-family:inherit;transition:.15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.qi-btn:active{transform:scale(.98)}
+.qi-btn:disabled{opacity:.45;cursor:not-allowed}
+.qi-btn-voice{background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(139,92,246,.2));border-color:rgba(124,123,255,.35)}
+.qi-btn-photo{background:linear-gradient(135deg,rgba(52,211,153,.18),rgba(16,185,129,.12));border-color:rgba(52,211,153,.35)}
+.qi-btn.recording{animation:pulse-voice 1s infinite;border-color:var(--neg)}
+@keyframes pulse-voice{0%,100%{box-shadow:0 0 0 0 rgba(251,113,133,.35)}50%{box-shadow:0 0 0 8px rgba(251,113,133,0)}}
+.qi-status{font-size:11px;color:var(--txt3);font-weight:600;margin-bottom:12px;line-height:1.45;min-height:1.2em}
+.qi-status.ok{color:var(--pos)}.qi-status.err{color:var(--neg)}.qi-status.busy{color:var(--brand)}
+.ocr-bar{height:4px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:6px}
+.ocr-bar i{display:block;height:100%;background:var(--grad);width:0;transition:width .25s}
+.receipt-scan-summary{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.22);border-radius:12px;padding:10px 12px;margin-bottom:12px}
+.receipt-scan-summary.hidden{display:none}
+.receipt-scan-title{font-size:11px;font-weight:800;color:var(--pos);margin-bottom:6px}
+.receipt-scan-tags{display:flex;flex-wrap:wrap;gap:5px}
+.receipt-scan-tag{font-size:10px;font-weight:700;background:rgba(255,255,255,.06);padding:4px 8px;border-radius:999px;color:var(--txt2)}
+.receipt-scan-tag b{color:var(--txt);font-weight:800}
+.receipt-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--card-brd);background:rgba(255,255,255,.04);color:var(--txt);font-weight:700;font-size:12px;padding:11px 12px;border-radius:12px;cursor:pointer;font-family:inherit;margin-bottom:10px}
+.receipt-toggle span:last-child{font-size:10px;color:var(--txt3);font-weight:600}
+.receipt-body{display:none;margin-bottom:4px}
+.receipt-body.open{display:block}
+.receipt-grid{display:grid;gap:10px;grid-template-columns:1fr}
+@media(min-width:520px){.receipt-grid{grid-template-columns:1fr 1fr}}
+.receipt-grid .full{grid-column:1/-1}
 
 .reveal{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
@@ -256,6 +284,8 @@ body::after{content:'';position:fixed;bottom:-20%;right:-25%;width:80%;height:55
 <div class="sheet-bg" id="sheet-bg"></div>
 <div class="sheet" id="sheet"></div>
 
+<script src="js/voice-input.js"></script>
+<script src="js/receipt-scanner.js"></script>
 <script>
 /* ─────────── Data layer (compatível com o app clássico) ─────────── */
 const K={acc:'app_accounts_v3',card:'app_creditCards_v3',tx:'app_transactions_v3',cat:'app_categories_v3',budg:'app_budgets_v3'};
@@ -323,7 +353,7 @@ function renderTop(){
   try{const u=JSON.parse(localStorage.getItem('auth_user')||'null');if(u&&u.name){name=u.name.split(' ')[0];ini=u.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()}}catch(e){}
   document.getElementById('top').innerHTML=`<div class="top">
     <div class="hi">👋 ${greet}<b>${name}</b></div>
-    <div class="top-actions"><a class="chip-link" href="classico.html">Clássico</a><div class="ava">${ini}</div></div></div>`;
+    <div class="top-actions"><div class="ava">${ini}</div></div></div>`;
 }
 
 /* ─────────── Nav ─────────── */
@@ -461,11 +491,9 @@ function viewMore(){
       <div class="stat"><div class="k">Dívida cartão</div><div class="v num" style="color:var(--neg)">${kk(-cardDebt())}</div></div>
       <div class="stat"><div class="k">Líquido</div><div class="v num" style="color:var(--pos)">${kk(netWorth())}</div></div></div></div>
   <div class="sec reveal d1">
-    <div class="more-item" onclick="location.href='classico.html#goals'"><div class="mi">🎯</div><div style="flex:1">Metas financeiras</div><span style="color:var(--txt3)">›</span></div>
-    <div class="more-item" onclick="location.href='classico.html'"><div class="mi">📊</div><div style="flex:1">Relatórios e orçamentos</div><span style="color:var(--txt3)">›</span></div>
-    <div class="more-item" onclick="location.href='classico.html'"><div class="mi">📷</div><div style="flex:1">Ler cupom por foto</div><span style="color:var(--txt3)">›</span></div>
+    <div class="more-item" onclick="openTxSheetWithPhoto()"><div class="mi">📷</div><div style="flex:1">Escanear cupom / comprovante</div><span style="color:var(--txt3)">›</span></div>
+    <div class="more-item" onclick="openTxSheetWithVoice()"><div class="mi">🎤</div><div style="flex:1">Lançar por voz</div><span style="color:var(--txt3)">›</span></div>
     <div class="more-item" onclick="exportData()"><div class="mi">⬇️</div><div style="flex:1">Exportar backup (.json)</div><span style="color:var(--txt3)">›</span></div>
-    <div class="more-item" onclick="location.href='classico.html'"><div class="mi">🖥️</div><div style="flex:1">Abrir modo clássico</div><span style="color:var(--txt3)">›</span></div>
     <div class="more-item" onclick="doLogout()"><div class="mi">🚪</div><div style="flex:1;color:var(--neg)">Sair</div></div>
   </div>
   <p style="text-align:center;color:var(--txt3);font-size:11px;margin-top:8px">Finanças+ · Nova Experiência (beta)</p>`;
@@ -483,16 +511,129 @@ function openSheet(html){SH.innerHTML='<div class="grab"></div>'+html;SB.classLi
 function closeSheet(){SB.classList.remove('open');SH.classList.remove('open')}
 SB.onclick=closeSheet;
 
-let editTxId=null,addType='despesa';
-function catOptions(sel){return S.cats.map(c=>`<option value="${esc(c)}" ${c===sel?'selected':''}>${esc(c)}</option>`).join('')}
-function accOptions(sel){const a=S.accounts.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.name)}</option>`).join('');
-  const c=S.cards.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.name)} (cartão)</option>`).join('');
-  return `<option value="">Sem conta</option>${a?`<optgroup label="Contas">${a}</optgroup>`:''}${c?`<optgroup label="Cartões">${c}</optgroup>`:''}`}
+let editTxId=null,addType='despesa',txSheetFlags={photo:false,voice:false};
 
-function openTxSheet(id){
+window.AppState=window.AppState||{};
+Object.defineProperty(AppState,'categories',{get:()=>S.cats});
+
+const TransactionFormFill={
+  _set(id,v){const el=document.getElementById(id);if(el&&v!=null&&v!=='')el.value=v},
+  _setSel(id,v){const el=document.getElementById(id);if(el&&v&&[...el.options].some(o=>o.value===v))el.value=v},
+  apply(data={},opts={}){
+    if(!data||typeof data!=='object')return;
+    const desc=data.merchant||data.description;
+    if(desc)this._set('in-desc',desc);
+    if(data.value!=null&&!isNaN(Number(data.value)))this._set('in-val',Number(data.value));
+    if(data.date)this._set('in-date',data.date);
+    if(data.category)this._setSel('in-cat',data.category);
+    if(data.fundamentalType){addType=data.fundamentalType;syncTypeTog()}
+    this._set('receipt-cnpj',data.cnpj);this._set('receipt-cpf',data.cpf);
+    this._set('receipt-nf-number',data.nfNumber);this._set('receipt-series',data.series);
+    this._set('receipt-access-key',data.accessKey);this._set('receipt-time',data.time);
+    if(data.subtotal!=null&&!isNaN(Number(data.subtotal)))this._set('receipt-subtotal',Number(data.subtotal));
+    if(data.discount!=null&&!isNaN(Number(data.discount)))this._set('receipt-discount',Number(data.discount));
+    this._setSel('receipt-payment-method',data.paymentMethod);
+    this._set('receipt-address',data.address);this._set('receipt-items',data.items);
+    if(data.rawText)this._set('receipt-notes',String(data.rawText).slice(0,500));
+    if(opts.fromScan||data.fromScan){
+      this._set('receipt-scanned-at',new Date().toISOString());
+      document.getElementById('receipt-body')?.classList.add('open');
+      ReceiptScanner._showScanSummary(data);
+    }
+  }
+};
+
+function syncTypeTog(){
+  document.querySelectorAll('#type-tog button').forEach(b=>{
+    b.className=b.dataset.t===addType?(addType==='despesa'?'on-exp':'on-inc'):'';
+  });
+}
+function setQiStatus(msg,cls=''){
+  const el=document.getElementById('qi-status');
+  if(!el)return;
+  el.textContent=msg;
+  el.className='qi-status'+(cls?' '+cls:'');
+}
+function receiptSectionHtml(r={},open=false){
+  const pay=(typeof ReceiptScanner!=='undefined'&&ReceiptScanner.PAYMENT_METHODS)?ReceiptScanner.PAYMENT_METHODS:['Pix','Cartão de Crédito','Cartão de Débito','Dinheiro','Vale','Outro'];
+  return `<input type="hidden" id="receipt-scanned-at" value="${esc(r.scannedAt||'')}">
+    <div id="receipt-scan-summary" class="receipt-scan-summary hidden"></div>
+    <button type="button" class="receipt-toggle" id="receipt-toggle"><span>📄 Dados do comprovante</span><span>CNPJ · NF-e · chave · itens</span></button>
+    <div class="receipt-body ${open?'open':''}" id="receipt-body"><div class="receipt-grid">
+      <div class="fld"><label>CNPJ emitente</label><input id="receipt-cnpj" type="text" placeholder="00.000.000/0000-00" value="${esc(r.cnpj||'')}" maxlength="18"></div>
+      <div class="fld"><label>CPF consumidor</label><input id="receipt-cpf" type="text" placeholder="000.000.000-00" value="${esc(r.cpf||'')}"></div>
+      <div class="fld"><label>Nº NF / NFC-e</label><input id="receipt-nf-number" type="text" placeholder="Número" value="${esc(r.nfNumber||'')}"></div>
+      <div class="fld"><label>Série</label><input id="receipt-series" type="text" placeholder="Série" value="${esc(r.series||'')}"></div>
+      <div class="fld full"><label>Chave de acesso (44 dígitos)</label><input id="receipt-access-key" type="text" placeholder="Chave NFC-e / NF-e" value="${esc(r.accessKey||'')}" maxlength="54"></div>
+      <div class="fld"><label>Hora emissão</label><input id="receipt-time" type="time" value="${esc(r.time||'')}"></div>
+      <div class="fld"><label>Forma pagamento</label><select id="receipt-payment-method">${pay.map(p=>`<option value="${esc(p)}" ${r.paymentMethod===p?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+      <div class="fld"><label>Subtotal (R$)</label><input id="receipt-subtotal" type="number" step="0.01" placeholder="0,00" value="${r.subtotal!=null?esc(r.subtotal):''}"></div>
+      <div class="fld"><label>Desconto (R$)</label><input id="receipt-discount" type="number" step="0.01" placeholder="0,00" value="${r.discount!=null?esc(r.discount):''}"></div>
+      <div class="fld full"><label>Endereço estabelecimento</label><input id="receipt-address" type="text" placeholder="Rua, cidade" value="${esc(r.address||'')}"></div>
+      <div class="fld full"><label>Itens do cupom</label><textarea id="receipt-items" rows="2" placeholder="Produtos detectados">${esc(r.items||'')}</textarea></div>
+      <div class="fld full"><label>Observações / texto OCR</label><textarea id="receipt-notes" rows="2" placeholder="Informações adicionais">${esc(r.notes||'')}</textarea></div>
+    </div></div>`;
+}
+function collectReceiptFromSheet(){
+  const q=id=>document.getElementById(id)?.value?.trim()||'';
+  const receipt={cnpj:q('receipt-cnpj'),cpf:q('receipt-cpf'),nfNumber:q('receipt-nf-number'),series:q('receipt-series'),
+    accessKey:q('receipt-access-key'),time:q('receipt-time'),paymentMethod:q('receipt-payment-method'),
+    subtotal:parseFloat(q('receipt-subtotal'))||null,discount:parseFloat(q('receipt-discount'))||null,
+    address:q('receipt-address'),items:q('receipt-items'),notes:q('receipt-notes'),scannedAt:q('receipt-scanned-at')||null};
+  return Object.entries(receipt).some(([k,v])=>k!=='scannedAt'&&v!=null&&v!=='')?receipt:null;
+}
+function bindTxSheetQuickInput(){
+  const voiceBtn=document.getElementById('qi-voice-btn');
+  const photoBtn=document.getElementById('qi-photo-btn');
+  const photoInput=document.getElementById('qi-photo-input');
+  document.getElementById('receipt-toggle')?.addEventListener('click',()=>document.getElementById('receipt-body')?.classList.toggle('open'));
+  if(voiceBtn){
+    if(!VoiceInput.isSupported()){voiceBtn.disabled=true;voiceBtn.title=VoiceInput.unsupportedMessage()}
+    else voiceBtn.onclick=()=>{
+      if(VoiceInput.isListening){VoiceInput.stop();return}
+      voiceBtn.classList.add('recording');setQiStatus('🎤 Ouvindo… fale o lançamento','busy');
+      VoiceInput.start((transcript,parsed)=>{
+        TransactionFormFill.apply(parsed);
+        setQiStatus('✓ "'+transcript+'"','ok');
+        voiceBtn.classList.remove('recording');
+      },err=>{setQiStatus(err,'err');voiceBtn.classList.remove('recording')},
+      ()=>voiceBtn.classList.remove('recording'));
+    };
+  }
+  if(photoBtn&&photoInput){
+    photoBtn.onclick=()=>photoInput.click();
+    photoInput.onchange=async e=>{
+      const file=e.target.files[0];if(!file)return;
+      photoBtn.disabled=true;setQiStatus('📷 Preparando leitor…','busy');
+      try{
+        const result=await ReceiptScanner.scanFile(file,(pct,msg)=>{
+          const st=document.getElementById('qi-status');
+          if(st)st.innerHTML=`<span class="busy">📷 ${msg} (${pct}%)</span><div class="ocr-bar"><i style="width:${pct}%"></i></div>`;
+        });
+        ReceiptScanner.fillTransactionForm({...result,fundamentalType:'despesa',category:result.category||'Outros'});
+        const ok=result.value||result.description||result.cnpj||result.accessKey;
+        setQiStatus(ok?`✓ Lido: ${result.description||'Comprovante'}${result.value?' — '+BRL(result.value):''}. Confira os campos.`:'Leitura parcial. Complete manualmente.',ok?'ok':'err');
+      }catch(err){setQiStatus(err.message||String(err),'err')}
+      finally{photoBtn.disabled=false;photoInput.value=''}
+    };
+    if(txSheetFlags.photo)setTimeout(()=>photoInput.click(),350);
+    if(txSheetFlags.photo)txSheetFlags.photo=false;
+  }
+  if(txSheetFlags.voice){txSheetFlags.voice=false;setTimeout(()=>voiceBtn?.click(),400)}
+}
+
+function openTxSheet(id,opts={}){
+  txSheetFlags={photo:!!opts.photo,voice:!!opts.voice};
   if(!S.accounts.length&&!S.cards.length){alert('Crie uma conta antes de lançar.');go('accounts');return}
   const t=id?S.txs.find(x=>x.id===id):null;editTxId=id||null;addType=t?t.fundamentalType:'despesa';
+  const r=t?.receipt||{};const receiptOpen=!!(t?.fromScan||r.cnpj||r.accessKey||r.nfNumber);
   openSheet(`<div class="sheet-head"><h3>${t?'Editar lançamento':'Novo lançamento'}</h3>${t?`<button class="del-btn" onclick="deleteTx('${t.id}')">Excluir</button>`:''}</div>
+    <div class="qi-row">
+      <button type="button" class="qi-btn qi-btn-photo" id="qi-photo-btn">📷 Foto / Cupom</button>
+      <button type="button" class="qi-btn qi-btn-voice" id="qi-voice-btn">🎤 Voz</button>
+      <input type="file" id="qi-photo-input" accept="image/*" capture="environment" hidden>
+    </div>
+    <div class="qi-status" id="qi-status">Tire foto do cupom ou fale: "gastei 50 reais no mercado"</div>
     <div class="type-tog" id="type-tog">
       <button data-t="despesa" class="${addType==='despesa'?'on-exp':''}">− Despesa</button>
       <button data-t="receita" class="${addType==='receita'?'on-inc':''}">+ Receita</button></div>
@@ -501,25 +642,34 @@ function openTxSheet(id){
     <div class="fld row2"><div><label>Conta</label><select id="in-acc">${accOptions(t?t.accountId:'')}</select></div>
       <div><label>Categoria</label><select id="in-cat">${catOptions(t?t.category:'Outros')}</select></div></div>
     <div class="fld"><label>Data</label><input id="in-date" type="date" value="${t?iso(parseD(t.date)):iso(new Date())}"></div>
+    ${receiptSectionHtml(r,receiptOpen)}
     <label class="chk"><input type="checkbox" id="in-paid" ${!t||t.isPaid?'checked':''}><span>Já foi pago / recebido</span></label>
     <button class="save" onclick="saveTx()">${t?'Salvar alterações':'Adicionar'}</button>`);
-  document.querySelectorAll('#type-tog button').forEach(b=>b.onclick=()=>{addType=b.dataset.t;
-    document.querySelectorAll('#type-tog button').forEach(x=>x.className='');b.className=addType==='despesa'?'on-exp':'on-inc'});
+  document.querySelectorAll('#type-tog button').forEach(b=>b.onclick=()=>{addType=b.dataset.t;syncTypeTog()});
+  bindTxSheetQuickInput();
   setTimeout(()=>document.getElementById('in-val').focus(),300);
 }
+function openTxSheetWithPhoto(){openTxSheet(null,{photo:true})}
+function openTxSheetWithVoice(){openTxSheet(null,{voice:true})}
 function saveTx(){
   const val=parseFloat(document.getElementById('in-val').value);if(!val||val<=0){document.getElementById('in-val').focus();return}
   const accId=document.getElementById('in-acc').value;const isCard=S.cards.some(c=>c.id===accId);
   const paid=document.getElementById('in-paid').checked;
+  const receipt=collectReceiptFromSheet();
   const base={description:document.getElementById('in-desc').value||(addType==='receita'?'Receita':'Despesa'),
     value:val,date:document.getElementById('in-date').value||iso(new Date()),fundamentalType:addType,
     category:document.getElementById('in-cat').value||'Outros',accountId:accId||null,isCreditCard:isCard,
     isPaid:addType==='receita'?true:paid,
     paidByAccountId:(addType==='despesa'&&paid&&!isCard)?accId:null,paidByIsCreditCard:isCard};
+  if(receipt){base.receipt=receipt;base.fromScan=!!receipt.scannedAt}
   if(editTxId){const t=S.txs.find(x=>x.id===editTxId);Object.assign(t,base)}
   else S.txs.push({id:uid(),installments:null,groupId:null,isRecurring:false,...base});
   persist();closeSheet();render();
 }
+function catOptions(sel){return S.cats.map(c=>`<option value="${esc(c)}" ${c===sel?'selected':''}>${esc(c)}</option>`).join('')}
+function accOptions(sel){const a=S.accounts.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.name)}</option>`).join('');
+  const c=S.cards.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.name)} (cartão)</option>`).join('');
+  return `<option value="">Sem conta</option>${a?`<optgroup label="Contas">${a}</optgroup>`:''}${c?`<optgroup label="Cartões">${c}</optgroup>`:''}`}
 function deleteTx(id){if(!confirm('Excluir este lançamento?'))return;S.txs=S.txs.filter(t=>t.id!==id);persist();closeSheet();render()}
 
 function openAccSheet(id){const a=id?S.accounts.find(x=>x.id===id):null;
@@ -567,12 +717,12 @@ function init(){
   render();
   window.addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(render,200)});
 }
-window.go=go;window.openTxSheet=openTxSheet;window.saveTx=saveTx;window.deleteTx=deleteTx;
+window.go=go;window.openTxSheet=openTxSheet;window.openTxSheetWithPhoto=openTxSheetWithPhoto;window.openTxSheetWithVoice=openTxSheetWithVoice;window.saveTx=saveTx;window.deleteTx=deleteTx;
 window.openAccSheet=openAccSheet;window.saveAcc=saveAcc;window.deleteAcc=deleteAcc;
 window.openCardSheet=openCardSheet;window.saveCard=saveCard;window.deleteCard=deleteCard;
 window.exportData=exportData;window.doLogout=doLogout;
 init();
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=6').then(r=>r.update()).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=8').then(r=>r.update()).catch(()=>{})}
 </script>
 </body>
 </html>
