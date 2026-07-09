@@ -34,7 +34,67 @@
         ::-webkit-scrollbar-thumb:hover { background-color: #718096; }
 
         .sidebar-icon { stroke-width: 2; }
-        #sidebar, main, .app-shell { transition: flex-basis 0.3s ease, width 0.3s ease, min-width 0.3s ease; }
+
+        /* Layout crítico — garante sidebar + conteúdo lado a lado */
+        .app-body {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            margin: 0;
+        }
+        #login-overlay,
+        #sidebar-backdrop {
+            position: fixed;
+        }
+        #sidebar {
+            flex: 0 0 16rem;
+            width: 16rem;
+            min-width: 16rem;
+            max-width: 16rem;
+        }
+        body.sidebar-collapsed #sidebar {
+            flex: 0 0 4.25rem;
+            width: 4.25rem;
+            min-width: 4.25rem;
+            max-width: 4.25rem;
+        }
+        main {
+            flex: 1 1 0;
+            min-width: 0;
+            margin-left: 0 !important;
+        }
+        @media (max-width: 1023px) {
+            #sidebar {
+                position: fixed !important;
+                left: 0; top: 0; bottom: 0;
+                flex: none !important;
+                width: 18rem !important;
+                min-width: 0 !important;
+                max-width: 85vw !important;
+                transform: translateX(-105%);
+                z-index: 50;
+            }
+            body.mobile-sidebar-open #sidebar {
+                transform: translateX(0);
+            }
+            body.sidebar-collapsed #sidebar {
+                flex: none !important;
+                width: 18rem !important;
+                min-width: 0 !important;
+                max-width: 85vw !important;
+            }
+        }
+        @media (min-width: 1024px) {
+            #sidebar {
+                position: relative !important;
+                transform: none !important;
+            }
+        }
+
+        #sidebar, main { transition: width .3s ease, min-width .3s ease, flex-basis .3s ease; }
 
 
         /* Estilo para tabelas */
@@ -342,7 +402,7 @@
         .report-kpi-sub   { font-size: .78rem; color: var(--text-2); }
     </style>
 </head>
-<body class="h-screen overflow-hidden">
+<body class="app-body">
 
     <!-- ─── Tela de Login / Registro ─────────────────────────────────────── -->
     <div id="login-overlay">
@@ -396,8 +456,6 @@
     <!-- Overlay mobile (fecha sidebar ao tocar fora) -->
     <div id="sidebar-backdrop" aria-hidden="true"></div>
 
-    <!-- App Shell: sidebar + conteúdo -->
-    <div id="app-shell" class="app-shell">
     <!-- Sidebar de Navegação -->
     <aside id="sidebar" class="flex flex-col flex-shrink-0">
         <div id="logo-container" class="flex items-center h-20 px-4 gap-3 cursor-pointer" style="border-bottom:1px solid rgba(255,255,255,.08);">
@@ -606,7 +664,6 @@
             <section id="reports-page" class="hidden"></section>
         </div>
     </main>
-    </div><!-- /app-shell -->
 
     <div id="modal-container"></div>
     <div id="feedback-message" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50"></div>
