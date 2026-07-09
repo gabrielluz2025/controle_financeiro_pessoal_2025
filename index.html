@@ -4118,61 +4118,16 @@ const PluggyManager = {
             UI.showFeedback('Token de conexão inválido. Tente novamente.', 'error');
             return;
         }
-        // Tentar SDK via CDN confiável (jsDelivr), com fallback para popup iframe
-        const CDNS = [
-            'https://cdn.jsdelivr.net/npm/@pluggy/connect@2/dist/pluggy-connect.min.js',
-            'https://unpkg.com/@pluggy/connect@2/dist/pluggy-connect.min.js',
-            'https://cdn.pluggy.ai/pluggy-connect/v2/pluggy-connect.min.js',
-        ];
-        if (window.PluggyConnect) {
-            this._initSDK(connectToken, bankId);
-            return;
-        }
-        const tryLoad = (urls, idx = 0) => {
-            if (idx >= urls.length) {
-                // Todos os CDNs falharam — usar popup iframe
-                this.openConnectPopup(connectToken, bankId);
-                return;
-            }
-            const s = document.createElement('script');
-            s.src = urls[idx];
-            s.onload  = () => this._initSDK(connectToken, bankId);
-            s.onerror = () => tryLoad(urls, idx + 1);
-            document.head.appendChild(s);
-        };
-        tryLoad(CDNS);
-    },
-
-    _initSDK(connectToken, bankId = null) {
-        try {
-            const opts = {
-                connectToken,
-                onSuccess: (item) => this.onItemConnected(item),
-                onError:   (err)  => UI.showFeedback('Erro: ' + (err.message || err), 'error'),
-                onClose:   ()     => {},
-            };
-            if (bankId) opts.connectorId = bankId;
-            new window.PluggyConnect(opts).init();
-        } catch (e) {
-            // SDK carregou mas falhou ao iniciar — fallback iframe
-            this.openConnectPopup(connectToken, bankId);
-        }
+        console.log('[Pluggy] token OK, length:', connectToken.length);
+        this.openConnectPopup(connectToken, bankId);
     },
 
     openConnectPopup(connectToken, bankId = null) {
-        // Remove popup existente
         document.getElementById('pluggy-popup-overlay')?.remove();
 
-        if (!connectToken) {
-            UI.showFeedback('Erro: token de conexão inválido. Tente novamente.', 'error');
-            return;
-        }
-
-        console.log('[Pluggy] connectToken recebido:', connectToken.substring(0,30) + '...' , 'length:', connectToken.length);
-
-        // Pluggy Connect lê o token via hash (#connectToken=...)
-        const token = encodeURIComponent(connectToken);
-        const url = `https://connect.pluggy.ai/#connectToken=${token}${bankId ? '&connectorId='+encodeURIComponent(bankId) : ''}`;
+        // Abrir connect.pluggy.ai sem token na URL — enviamos via postMessage após carregamento
+        const baseUrl = 'https://connect.pluggy.ai/';
+        const url = baseUrl;
 
         const overlay = document.createElement('div');
         overlay.id = 'pluggy-popup-overlay';
@@ -4192,7 +4147,7 @@ const PluggyManager = {
                 <iframe id="pluggy-iframe" src="${url}" style="flex:1;border:none;width:100%;" allow="camera; microphone"></iframe>
                 <div style="padding:.625rem 1.25rem;background:#f9fafb;border-top:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
                     <span style="font-size:.72rem;color:#9ca3af;">🔒 Conexão segura · Regulado pelo Banco Central</span>
-                    <a href="${url}" target="_blank" rel="noopener" style="font-size:.72rem;color:#6366f1;font-weight:600;text-decoration:none;" title="Abrir em nova aba caso o iframe não funcione">↗ Abrir em nova aba</a>
+                    <a id="pluggy-newtab-link" href="${baseUrl}?connectToken=${encodeURIComponent(connectToken)}${bankId?'&connectorId='+bankId:''}" target="_blank" rel="noopener" style="font-size:.72rem;color:#6366f1;font-weight:600;text-decoration:none;">↗ Abrir em nova aba</a>
                 </div>
             </div>`;
 
@@ -4209,11 +4164,29 @@ const PluggyManager = {
             }
         });
 
+        // Enviar token via postMessage quando o iframe carregar
+        const iframe = document.getElementById('pluggy-iframe');
+        const sendToken = () => {
+            try {
+                // Formato postMessage do Pluggy Connect
+                iframe.contentWindow.postMessage({
+                    type: 'pluggy:connect:init',
+                    connectToken,
+                    connectorId: bankId || undefined,
+                }, 'https://connect.pluggy.ai');
+                console.log('[Pluggy] postMessage enviado com token');
+            } catch(e) {
+                console.warn('[Pluggy] postMessage falhou:', e.message);
+            }
+        };
+        iframe.addEventListener('load', () => setTimeout(sendToken, 500));
+
         // Escutar mensagens do iframe (Pluggy postMessage)
         const msgHandler = (event) => {
             if (!event.origin.includes('pluggy.ai')) return;
+            console.log('[Pluggy] mensagem recebida:', event.data);
             const data = event.data;
-            if (data?.type === 'pluggy:connect:success' || data?.event === 'CONNECTED') {
+            if (data?.type === 'pluggy:connect:success' || data?.event === 'CONNECTED' || data?.type === 'SUCCESS') {
                 window.removeEventListener('message', msgHandler);
                 overlay.remove();
                 this.onItemConnected(data.item || data.data || { id: data.itemId, connector: { name: 'Banco' } });
