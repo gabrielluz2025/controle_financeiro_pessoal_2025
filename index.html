@@ -4114,17 +4114,63 @@ const PluggyManager = {
 
     // ── Carregar Pluggy Connect Widget ───────────────────────────────────────
     loadWidget(connectToken, bankId = null) {
-        // Abre o Pluggy Connect como popup inline (iframe modal) — não depende de CDN externo
-        this.openConnectPopup(connectToken, bankId);
+        if (!connectToken) {
+            UI.showFeedback('Token de conexão inválido. Tente novamente.', 'error');
+            return;
+        }
+        // Tentar SDK via CDN confiável (jsDelivr), com fallback para popup iframe
+        const CDNS = [
+            'https://cdn.jsdelivr.net/npm/@pluggy/connect@2/dist/pluggy-connect.min.js',
+            'https://unpkg.com/@pluggy/connect@2/dist/pluggy-connect.min.js',
+            'https://cdn.pluggy.ai/pluggy-connect/v2/pluggy-connect.min.js',
+        ];
+        if (window.PluggyConnect) {
+            this._initSDK(connectToken, bankId);
+            return;
+        }
+        const tryLoad = (urls, idx = 0) => {
+            if (idx >= urls.length) {
+                // Todos os CDNs falharam — usar popup iframe
+                this.openConnectPopup(connectToken, bankId);
+                return;
+            }
+            const s = document.createElement('script');
+            s.src = urls[idx];
+            s.onload  = () => this._initSDK(connectToken, bankId);
+            s.onerror = () => tryLoad(urls, idx + 1);
+            document.head.appendChild(s);
+        };
+        tryLoad(CDNS);
+    },
+
+    _initSDK(connectToken, bankId = null) {
+        try {
+            const opts = {
+                connectToken,
+                onSuccess: (item) => this.onItemConnected(item),
+                onError:   (err)  => UI.showFeedback('Erro: ' + (err.message || err), 'error'),
+                onClose:   ()     => {},
+            };
+            if (bankId) opts.connectorId = bankId;
+            new window.PluggyConnect(opts).init();
+        } catch (e) {
+            // SDK carregou mas falhou ao iniciar — fallback iframe
+            this.openConnectPopup(connectToken, bankId);
+        }
     },
 
     openConnectPopup(connectToken, bankId = null) {
         // Remove popup existente
         document.getElementById('pluggy-popup-overlay')?.remove();
 
-        // URL do Pluggy Connect hospedado
-        let url = `https://connect.pluggy.ai/?connectToken=${encodeURIComponent(connectToken)}`;
-        if (bankId) url += `&connectorSearch=${encodeURIComponent(bankId)}`;
+        if (!connectToken) {
+            UI.showFeedback('Erro: token de conexão inválido. Tente novamente.', 'error');
+            return;
+        }
+
+        // Tentar 3 formatos de URL conhecidos do Pluggy Connect
+        const token = connectToken;
+        const url = `https://connect.pluggy.ai?connectToken=${token}${bankId ? '&connectorId='+bankId : ''}`;
 
         const overlay = document.createElement('div');
         overlay.id = 'pluggy-popup-overlay';
@@ -4141,9 +4187,10 @@ const PluggyManager = {
                     </div>
                     <button id="pluggy-popup-close" style="width:2rem;height:2rem;border-radius:.5rem;border:1px solid #e5e7eb;background:white;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;color:#6b7280;" title="Fechar">&times;</button>
                 </div>
-                <iframe id="pluggy-iframe" src="${url}" style="flex:1;border:none;width:100%;" allow="camera; microphone" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation"></iframe>
-                <div style="padding:.625rem 1.25rem;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:.72rem;color:#9ca3af;text-align:center;">
-                    🔒 Conexão segura · Regulado pelo Banco Central · Powered by Pluggy
+                <iframe id="pluggy-iframe" src="${url}" style="flex:1;border:none;width:100%;" allow="camera; microphone"></iframe>
+                <div style="padding:.625rem 1.25rem;background:#f9fafb;border-top:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:.72rem;color:#9ca3af;">🔒 Conexão segura · Regulado pelo Banco Central</span>
+                    <a href="${url}" target="_blank" rel="noopener" style="font-size:.72rem;color:#6366f1;font-weight:600;text-decoration:none;" title="Abrir em nova aba caso o iframe não funcione">↗ Abrir em nova aba</a>
                 </div>
             </div>`;
 
