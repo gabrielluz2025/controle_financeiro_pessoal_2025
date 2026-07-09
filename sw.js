@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v9 (OCR Pix, boleto, banco)
-const CACHE = 'financas-plus-v9';
+// Finanças+ Service Worker — v10 (fix OCR Pix mobile)
+const CACHE = 'financas-plus-v10';
 const STATIC = ['/', '/index.html', '/classico.html', '/nova.html', '/manifest.json', '/css/enhanced-styles.css'];
 
 const NETWORK_FIRST = ['.html', '/js/', '/css/', '/sw.js'];

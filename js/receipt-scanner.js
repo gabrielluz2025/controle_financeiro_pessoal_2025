@@ -16,9 +16,20 @@ const ReceiptScanner = {
 
     TESSERACT_OPTS: {
         workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/worker.min.js',
-        langPath: 'https://tessdata.projectnaptha.com/4.0.0_best',
+        langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/por/4.0.0_best',
         corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/tesseract-core-simd.wasm.js',
     },
+
+    TESSERACT_OPTS_FALLBACK: {
+        workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/worker.min.js',
+        langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/por/4.0.0_best',
+        corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/tesseract-core.wasm.js',
+    },
+
+    TESSERACT_SCRIPT_URLS: [
+        'https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/tesseract.min.js',
+        'https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js',
+    ],
 
     PAYMENT_METHODS: ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Vale', 'Outro'],
 
@@ -35,51 +46,170 @@ const ReceiptScanner = {
 
     async _ensureTesseract() {
         if (window.Tesseract) { this._tesseractLoaded = true; return true; }
-        return new Promise((resolve) => {
-            const script = document.createElement('script');
-            script.src = 'https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js';
-            script.onload = () => { this._tesseractLoaded = true; resolve(true); };
-            script.onerror = () => resolve(false);
-            document.head.appendChild(script);
-        });
+        for (const url of this.TESSERACT_SCRIPT_URLS) {
+            const ok = await new Promise((resolve) => {
+                const existing = document.querySelector(`script[data-tesseract="${url}"]`);
+                if (existing) {
+                    existing.addEventListener('load', () => resolve(!!window.Tesseract));
+                    existing.addEventListener('error', () => resolve(false));
+                    if (window.Tesseract) resolve(true);
+                    return;
+                }
+                const script = document.createElement('script');
+                script.src = url;
+                script.dataset.tesseract = url;
+                script.onload = () => resolve(!!window.Tesseract);
+                script.onerror = () => resolve(false);
+                document.head.appendChild(script);
+            });
+            if (ok) { this._tesseractLoaded = true; return true; }
+        }
+        return false;
+    },
+
+    _isHeic(file) {
+        const n = (file.name || '').toLowerCase();
+        const t = (file.type || '').toLowerCase();
+        return t.includes('heic') || t.includes('heif') || n.endsWith('.heic') || n.endsWith('.heif');
+    },
+
+    _asFile(input, name = 'scan.jpg') {
+        if (input instanceof File) return input;
+        if (input instanceof Blob) return new File([input], name, { type: input.type || 'image/jpeg' });
+        return input;
     },
 
     /** Pré-processa imagem: escala, contraste e escala de cinza para melhorar OCR */
     async _preprocessImage(file) {
-        if (!file.type.startsWith('image/')) return file;
-        return new Promise((resolve) => {
+        const f = this._asFile(file);
+        if (this._isHeic(f)) {
+            throw new Error('Foto HEIC não suportada neste aparelho. Use “Enviar imagem” e escolha JPG/PNG, ou tire print da tela do comprovante.');
+        }
+        const mime = (f.type || '').toLowerCase();
+        if (mime && !mime.startsWith('image/')) return f;
+
+        return new Promise((resolve, reject) => {
             const img = new Image();
-            const url = URL.createObjectURL(file);
+            const url = URL.createObjectURL(f);
+            const timeout = setTimeout(() => {
+                URL.revokeObjectURL(url);
+                resolve(f);
+            }, 12000);
+
             img.onload = () => {
-                const maxW = 2200;
-                const scale = Math.min(1, maxW / Math.max(img.width, 1));
-                const w = Math.round(img.width * scale);
-                const h = Math.round(img.height * scale);
-                const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(0, 0, w, h);
-                ctx.filter = 'contrast(1.35) brightness(1.08)';
-                ctx.drawImage(img, 0, 0, w, h);
-                // Segunda passada em grayscale
-                const imgData = ctx.getImageData(0, 0, w, h);
-                const d = imgData.data;
-                for (let i = 0; i < d.length; i += 4) {
-                    const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-                    const v = g < 140 ? Math.max(0, g - 20) : Math.min(255, g + 15);
-                    d[i] = d[i + 1] = d[i + 2] = v;
-                }
-                ctx.putImageData(imgData, 0, 0);
-                canvas.toBlob((blob) => {
+                clearTimeout(timeout);
+                try {
+                    const isMobile = window.innerWidth < 768 || /Android|iPhone|iPad/i.test(navigator.userAgent);
+                    const maxW = isMobile ? 1400 : 2200;
+                    const scale = Math.min(1, maxW / Math.max(img.width, 1));
+                    const w = Math.round(img.width * scale);
+                    const h = Math.round(img.height * scale);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(0, 0, w, h);
+                    try {
+                        ctx.filter = 'contrast(1.35) brightness(1.08)';
+                        ctx.drawImage(img, 0, 0, w, h);
+                    } catch {
+                        ctx.filter = 'none';
+                        ctx.drawImage(img, 0, 0, w, h);
+                    }
+                    const imgData = ctx.getImageData(0, 0, w, h);
+                    const d = imgData.data;
+                    for (let i = 0; i < d.length; i += 4) {
+                        const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                        const v = g < 140 ? Math.max(0, g - 20) : Math.min(255, g + 15);
+                        d[i] = d[i + 1] = d[i + 2] = v;
+                    }
+                    ctx.putImageData(imgData, 0, 0);
+                    canvas.toBlob((blob) => {
+                        URL.revokeObjectURL(url);
+                        resolve(blob ? this._asFile(blob, 'scan.jpg') : f);
+                    }, 'image/jpeg', 0.9);
+                } catch (err) {
                     URL.revokeObjectURL(url);
-                    resolve(blob || file);
-                }, 'image/jpeg', 0.92);
+                    resolve(f);
+                }
             };
-            img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+            img.onerror = () => {
+                clearTimeout(timeout);
+                URL.revokeObjectURL(url);
+                reject(new Error('Não foi possível abrir a imagem. Tente JPG/PNG ou um print da tela do comprovante Pix.'));
+            };
             img.src = url;
         });
+    },
+
+    async _recognizeImage(image, onProgress) {
+        const img = this._asFile(image);
+        const configs = [this.TESSERACT_OPTS, this.TESSERACT_OPTS_FALLBACK, {}];
+        let lastErr = null;
+
+        for (const opts of configs) {
+            try {
+                const worker = await Tesseract.createWorker('por', 1, {
+                    ...opts,
+                    logger: (m) => {
+                        if (m.status === 'recognizing text' && m.progress != null) {
+                            onProgress && onProgress(Math.round(m.progress * 85) + 10, 'Lendo comprovante...');
+                        }
+                    },
+                });
+                try {
+                    await worker.setParameters({
+                        tessedit_pageseg_mode: '6',
+                        preserve_interword_spaces: '1',
+                    });
+                    const { data } = await worker.recognize(img);
+                    await worker.terminate();
+                    if (data?.text?.trim()) return data.text;
+                } catch (inner) {
+                    await worker.terminate().catch(() => {});
+                    throw inner;
+                }
+            } catch (err) {
+                lastErr = err;
+            }
+
+            try {
+                const result = await Tesseract.recognize(img, 'por', {
+                    ...opts,
+                    logger: (m) => {
+                        if (m.status === 'recognizing text' && m.progress != null) {
+                            onProgress && onProgress(Math.round(m.progress * 85) + 10, 'Lendo comprovante...');
+                        }
+                    },
+                });
+                if (result?.data?.text?.trim()) return result.data.text;
+            } catch (err) {
+                lastErr = err;
+            }
+        }
+
+        throw lastErr || new Error('Falha ao ler a imagem.');
+    },
+
+    _safeParse(text) {
+        try {
+            return this.parse(text || '');
+        } catch (err) {
+            console.error('[ReceiptScanner] parse error', err);
+            return {
+                description: 'Comprovante',
+                merchant: 'Comprovante',
+                value: null,
+                date: new Date().toISOString().slice(0, 10),
+                category: 'Outros',
+                fundamentalType: 'despesa',
+                docType: 'outro',
+                rawText: text || '',
+                confidence: {},
+                fromScan: true,
+            };
+        }
     },
 
     _parseMoney(str) {
@@ -148,11 +278,11 @@ const ReceiptScanner = {
 
     _extractDate(text) {
         const patterns = [
+            /(?:data|emiss[aã]o|realizado|pagamento|transfer[eê]ncia)[:\s]*(\d{2}\/\d{2}\/\d{4})/i,
             /(\d{2}\/\d{2}\/\d{4})/,
             /(\d{2}-\d{2}-\d{4})/,
             /(\d{2}\/\d{2}\/\d{2})\b/,
             /(\d{4}-\d{2}-\d{2})/,
-            /(?:emiss[aã]o|data)[:\s]*(\d{2}\/\d{2}\/\d{4})/i,
         ];
         for (const pat of patterns) {
             const m = text.match(pat);
@@ -313,8 +443,8 @@ const ReceiptScanner = {
 
     _extractPixBeneficiary(text) {
         return this._extractByPatterns(text, [
-            /(?:para|favorecido|recebedor|destinat[aá]rio|nome do recebedor|benefici[aá]rio)[:\s]*\n?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9][^\n]{2,70})/i,
-            /(?:para|favorecido)[:\s]+([^\n\d]{3,70})/i,
+            /(?:para|favorecido|recebedor|destinat[aá]rio|nome do recebedor|benefici[aá]rio|nome)[:\s]*\n?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç0-9 .&\-]{2,70})/i,
+            /(?:para|favorecido)[:\s]+([^\n\dR$]{3,70})/i,
         ]);
     },
 
@@ -336,6 +466,8 @@ const ReceiptScanner = {
         const patterns = [
             /valor\s*(?:do\s*)?(?:pix|transferido|pago|da\s*transa[cç][aã]o)\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
             /(?:transferido|enviado|recebido)\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
+            /(?:^|\n)\s*valor\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/im,
+            /r\$\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
         ];
         for (const pat of patterns) {
             const m = text.match(pat);
@@ -567,61 +699,44 @@ const ReceiptScanner = {
     },
 
     async scanFile(file, onProgress) {
+        if (!file) throw new Error('Nenhuma imagem selecionada.');
         const ok = await this._ensureTesseract();
-        if (!ok) throw new Error('Não foi possível carregar o leitor OCR. Verifique sua conexão.');
+        if (!ok) throw new Error('Não foi possível carregar o leitor OCR. Verifique sua conexão com a internet e tente novamente.');
 
         onProgress && onProgress(3, 'Preparando imagem...');
-        const processed = await this._preprocessImage(file);
+        let processed;
+        try {
+            processed = await this._preprocessImage(file);
+        } catch (err) {
+            throw err;
+        }
 
         onProgress && onProgress(8, 'Iniciando leitura OCR...');
-
         let text = '';
         try {
-            const worker = await Tesseract.createWorker('por', 1, {
-                ...this.TESSERACT_OPTS,
-                logger: (m) => {
-                    if (m.status === 'recognizing text' && m.progress != null) {
-                        onProgress && onProgress(Math.round(m.progress * 85) + 10, 'Lendo comprovante...');
-                    }
-                },
-            });
-            await worker.setParameters({
-                tessedit_pageseg_mode: '6',
-                preserve_interword_spaces: '1',
-            });
-            const { data } = await worker.recognize(processed);
-            text = data.text || '';
-            await worker.terminate();
+            text = await this._recognizeImage(processed, onProgress);
         } catch (err1) {
             try {
-                const result = await Tesseract.recognize(processed, 'por', {
-                    ...this.TESSERACT_OPTS,
-                    logger: (m) => {
-                        if (m.status === 'recognizing text' && m.progress != null) {
-                            onProgress && onProgress(Math.round(m.progress * 85) + 10, 'Lendo comprovante...');
-                        }
-                    },
-                });
-                text = result.data.text || '';
+                text = await this._recognizeImage(this._asFile(file), onProgress);
             } catch (err2) {
-                throw new Error('Falha ao ler a imagem. Verifique a conexão e tente outra foto.');
+                const msg = String(err2?.message || err1?.message || '');
+                if (/network|fetch|failed to load|wasm|worker/i.test(msg)) {
+                    throw new Error('Erro de conexão ao ler a imagem. Verifique a internet ou tente enviar a foto pela galeria (JPG/PNG).');
+                }
+                throw new Error('Falha ao ler a imagem. Tente outra foto, mais luz ou um print da tela do comprovante Pix.');
             }
         }
 
         onProgress && onProgress(98, 'Extraindo dados...');
-        const parsed = this.parse(text);
+        const parsed = this._safeParse(text);
 
-        // Segunda passagem se poucos dados
-        if (!parsed.value && !parsed.cnpj && !parsed.transactionId && !parsed.barcode && file !== processed) {
+        if (!parsed.value && !parsed.cnpj && !parsed.transactionId && !parsed.barcode && !parsed.beneficiary) {
             onProgress && onProgress(99, 'Tentando leitura alternativa...');
             try {
-                const r2 = await Tesseract.recognize(file, 'por');
-                const p2 = this.parse(r2.data.text || '');
-                if ((p2.value && !parsed.value) || (p2.cnpj && !parsed.cnpj) || (p2.transactionId && !parsed.transactionId) || (p2.barcode && !parsed.barcode)) {
-                    Object.assign(parsed, {
-                        ...p2,
-                        rawText: `${parsed.rawText}\n---\n${p2.rawText}`,
-                    });
+                const text2 = await this._recognizeImage(this._asFile(file), onProgress);
+                const p2 = this._safeParse(text2);
+                if ((p2.value && !parsed.value) || (p2.transactionId && !parsed.transactionId) || (p2.beneficiary && !parsed.beneficiary)) {
+                    Object.assign(parsed, p2, { rawText: `${parsed.rawText}\n---\n${p2.rawText}` });
                 }
             } catch { /* ignore */ }
         }
@@ -632,10 +747,15 @@ const ReceiptScanner = {
 
     /** Preenche campos do formulário de transação com dados do scan */
     fillTransactionForm(parsed) {
-        if (typeof TransactionFormFill !== 'undefined') {
-            TransactionFormFill.apply(parsed, { fromScan: true });
+        try {
+            if (typeof TransactionFormFill !== 'undefined') {
+                TransactionFormFill.apply(parsed, { fromScan: true });
+            }
+            this._showScanSummary(parsed);
+        } catch (err) {
+            console.error('[ReceiptScanner] fillTransactionForm', err);
+            throw new Error('Leitura OK, mas houve erro ao preencher o formulário. Complete os campos manualmente.');
         }
-        this._showScanSummary(parsed);
     },
 
     _showScanSummary(parsed) {

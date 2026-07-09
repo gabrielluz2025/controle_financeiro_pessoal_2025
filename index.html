@@ -523,14 +523,15 @@ const TransactionFormFill={
     if(!data||typeof data!=='object')return;
     const desc=data.merchant||data.description;
     if(desc)this._set('in-desc',desc);
-    if(data.value!=null&&!isNaN(Number(data.value)))this._set('in-val',Number(data.value));
+    if(data.value!=null&&data.value!==''&&!isNaN(Number(data.value)))this._set('in-val',Number(data.value));
     if(data.date)this._set('in-date',data.date);
     if(data.category)this._setSel('in-cat',data.category);
     if(data.fundamentalType){addType=data.fundamentalType;syncTypeTog()}
+    this._setSel('receipt-doc-type',data.docType);
+    this._set('receipt-beneficiary',data.beneficiary||data.merchant);
     this._set('receipt-cnpj',data.cnpj);this._set('receipt-cpf',data.cpf);
     this._set('receipt-nf-number',data.nfNumber);this._set('receipt-series',data.series);
     this._set('receipt-access-key',data.accessKey);this._set('receipt-time',data.time);
-    this._set('receipt-doc-type',data.docType);this._set('receipt-beneficiary',data.beneficiary);
     this._set('receipt-pix-id',data.transactionId);this._set('receipt-due-date',data.dueDate||'');
     this._set('receipt-barcode',data.barcode);this._set('receipt-bank-auth',data.bankAuth);
     if(data.subtotal!=null&&!isNaN(Number(data.subtotal)))this._set('receipt-subtotal',Number(data.subtotal));
@@ -620,15 +621,19 @@ function bindTxSheetQuickInput(){
       const file=e.target.files[0];if(!file)return;
       photoBtn.disabled=true;setQiStatus('📷 Preparando leitor…','busy');
       try{
+        if(typeof ReceiptScanner==='undefined')throw new Error('Leitor OCR não carregou. Recarregue a página.');
         const result=await ReceiptScanner.scanFile(file,(pct,msg)=>{
           const st=document.getElementById('qi-status');
           if(st)st.innerHTML=`<span class="busy">📷 ${msg} (${pct}%)</span><div class="ocr-bar"><i style="width:${pct}%"></i></div>`;
         });
         ReceiptScanner.fillTransactionForm({...result,fundamentalType:'despesa',category:result.category||'Outros'});
-        const typeLabel=ReceiptScanner.DOC_TYPES[result.docType]||'Comprovante';
-        const ok=result.value||result.description||result.cnpj||result.accessKey||result.transactionId||result.barcode;
+        const typeLabel=(ReceiptScanner.DOC_TYPES&&ReceiptScanner.DOC_TYPES[result.docType])||'Comprovante';
+        const ok=result.value||result.description||result.cnpj||result.accessKey||result.transactionId||result.barcode||result.beneficiary;
         setQiStatus(ok?`✓ ${typeLabel}: ${result.description||'lido'}${result.value?' — '+BRL(result.value):''}. Confira os campos.`:'Leitura parcial. Complete manualmente.',ok?'ok':'err');
-      }catch(err){setQiStatus(err.message||String(err),'err')}
+      }catch(err){
+        console.error('[OCR]',err);
+        setQiStatus(err.message||'Erro ao ler imagem. Tente JPG/PNG ou print da tela.','err');
+      }
       finally{photoBtn.disabled=false;photoInput.value=''}
     };
     if(txSheetFlags.photo)setTimeout(()=>photoInput.click(),350);
@@ -646,9 +651,9 @@ function openTxSheet(id,opts={}){
     <div class="qi-row">
       <button type="button" class="qi-btn qi-btn-photo" id="qi-photo-btn">📷 Foto / Comprovante</button>
       <button type="button" class="qi-btn qi-btn-voice" id="qi-voice-btn">🎤 Voz</button>
-      <input type="file" id="qi-photo-input" accept="image/*" capture="environment" hidden>
+      <input type="file" id="qi-photo-input" accept="image/jpeg,image/png,image/webp,image/*" hidden>
     </div>
-    <div class="qi-status" id="qi-status">Pix, boleto, cupom fiscal ou comprovante bancário — tire foto ou envie imagem</div>
+    <div class="qi-status" id="qi-status">Pix, boleto ou cupom — envie JPG/PNG ou print da tela do comprovante</div>
     <div class="type-tog" id="type-tog">
       <button data-t="despesa" class="${addType==='despesa'?'on-exp':''}">− Despesa</button>
       <button data-t="receita" class="${addType==='receita'?'on-inc':''}">+ Receita</button></div>
@@ -737,7 +742,7 @@ window.openAccSheet=openAccSheet;window.saveAcc=saveAcc;window.deleteAcc=deleteA
 window.openCardSheet=openCardSheet;window.saveCard=saveCard;window.deleteCard=deleteCard;
 window.exportData=exportData;window.doLogout=doLogout;
 init();
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=9').then(r=>r.update()).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=10').then(r=>r.update()).catch(()=>{})}
 </script>
 </body>
 </html>
