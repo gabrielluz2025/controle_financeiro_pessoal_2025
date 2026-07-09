@@ -4242,7 +4242,7 @@ const PluggyManager = {
                     <p style="font-size:.75rem;color:#166534;">💡 Adicione também ao <code>api/config.php</code>:<br>
                     <code style="background:#dcfce7;padding:.1rem .3rem;border-radius:.25rem;display:block;margin-top:.25rem;">define('PLUGGY_CLIENT_ID', 'seu-id');<br>define('PLUGGY_CLIENT_SECRET', 'seu-secret');</code></p>
                 </div>
-                <button type="button" id="pluggy-save-btn" class="btn btn-primary w-full">Salvar e Ativar Open Finance</button>
+                <button type="button" id="pluggy-save-btn" class="btn btn-primary w-full">🔒 Salvar Permanentemente no Servidor</button>
             </form>`;
         UI.showModal('Configurar Open Finance', content, '', 'pluggy-setup-form');
         // Esconder botão padrão de submit e usar o próprio botão do form
@@ -4254,10 +4254,45 @@ const PluggyManager = {
                 const id  = document.getElementById('pluggy-client-id')?.value.trim();
                 const sec = document.getElementById('pluggy-client-secret')?.value.trim();
                 if (!id || !sec) { UI.showFeedback('Preencha ambos os campos.', 'error'); return; }
+
+                // Feedback imediato
+                saveBtn.disabled = true;
+                saveBtn.textContent = '⏳ Validando e salvando...';
+
+                // Salvar no browser (fallback imediato)
                 localStorage.setItem('pluggy_client_id',     id);
                 localStorage.setItem('pluggy_client_secret', sec);
-                UI.closeModal();
-                UI.showFeedback('✓ Credenciais salvas! Clique em "Conectar Banco" para começar.', 'success');
+
+                try {
+                    // Tentar salvar no servidor permanentemente
+                    const resp = await fetch('/api/pluggy.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'save_credentials', clientId: id, clientSecret: sec })
+                    });
+                    const data = await resp.json();
+
+                    UI.closeModal();
+
+                    if (data.error) {
+                        // Credenciais inválidas
+                        localStorage.removeItem('pluggy_client_id');
+                        localStorage.removeItem('pluggy_client_secret');
+                        UI.showFeedback('❌ ' + data.error, 'error');
+                        return;
+                    }
+
+                    if (data.saved) {
+                        UI.showFeedback('✅ Credenciais salvas no servidor! Não precisa configurar novamente.', 'success');
+                    } else if (data.warning) {
+                        UI.showFeedback('✅ Credenciais validadas e salvas no browser. ' + (data.warning.includes('permissão') ? '' : ''), 'success');
+                    }
+                } catch (e) {
+                    // Servidor offline — salvo só no browser
+                    UI.closeModal();
+                    UI.showFeedback('✅ Credenciais salvas no browser. Conecte-se para ativar.', 'success');
+                }
+
                 UI.render();
             });
         }, 50);

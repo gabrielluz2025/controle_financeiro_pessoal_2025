@@ -47,10 +47,41 @@ function get_api_key(string $clientId, string $clientSecret): string {
     return $res['apiKey'] ?? '';
 }
 
-$action = $_GET['action'] ?? $_POST['action'] ?? 'connect_token';
+$action = $_GET['action'] ?? ($inputData['action'] ?? 'connect_token');
 
 try {
     switch ($action) {
+
+        // ── Salvar credenciais permanentemente no servidor ─────────────────
+        case 'save_credentials': {
+            $id  = trim($inputData['clientId']     ?? '');
+            $sec = trim($inputData['clientSecret'] ?? '');
+            if (!$id || !$sec) {
+                http_response_code(400);
+                echo json_encode(['error' => 'clientId e clientSecret são obrigatórios']);
+                exit;
+            }
+            // Validar credenciais antes de salvar — tenta obter um API key
+            $testRes = pluggy_request('POST', '/auth', ['clientId' => $id, 'clientSecret' => $sec]);
+            if (empty($testRes['apiKey'])) {
+                http_response_code(401);
+                echo json_encode(['error' => 'Credenciais inválidas. Verifique o Client ID e Client Secret no dashboard.pluggy.ai']);
+                exit;
+            }
+            // Escrever arquivo de credenciais permanente no servidor
+            $credFile = __DIR__ . '/pluggy-credentials.php';
+            $content  = "<?php\n"
+                . "// Gerado automaticamente pelo Finanças+ — NÃO edite manualmente\n"
+                . "define('PLUGGY_CLIENT_ID',     '" . addslashes($id)  . "');\n"
+                . "define('PLUGGY_CLIENT_SECRET', '" . addslashes($sec) . "');\n";
+            if (file_put_contents($credFile, $content) === false) {
+                // Permissão negada — fallback gracioso
+                echo json_encode(['saved' => false, 'apiKey' => $testRes['apiKey'], 'warning' => 'Credenciais válidas mas não foi possível salvar no servidor (permissão). Elas continuarão sendo enviadas pelo browser.']);
+            } else {
+                echo json_encode(['saved' => true, 'apiKey' => $testRes['apiKey']]);
+            }
+            break;
+        }
 
         // ── Criar connect token (para abrir o Pluggy Widget) ──────────────
         case 'connect_token': {
@@ -59,10 +90,9 @@ try {
                 echo json_encode(['error' => 'Pluggy credentials not configured. Add PLUGGY_CLIENT_ID and PLUGGY_CLIENT_SECRET to api/config.php']);
                 exit;
             }
-            $apiKey   = get_api_key($PLUGGY_CLIENT_ID, $PLUGGY_CLIENT_SECRET);
-            $body     = ['clientUserId' => 'financasmais-user'];
-            $input    = json_decode(file_get_contents('php://input'), true);
-            if (!empty($input['itemId'])) $body['itemId'] = $input['itemId'];
+            $apiKey = get_api_key($PLUGGY_CLIENT_ID, $PLUGGY_CLIENT_SECRET);
+            $body   = ['clientUserId' => 'financasmais-user'];
+            if (!empty($inputData['itemId'])) $body['itemId'] = $inputData['itemId'];
             $res = pluggy_request('POST', '/connect_token', $body, $apiKey);
             echo json_encode(['connectToken' => $res['accessToken'] ?? null, 'error' => $res['error'] ?? null]);
             break;
