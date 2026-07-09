@@ -273,8 +273,7 @@ const AppState = {
     selectedFaturaCardId: null,
 
     useRemoteDb() {
-        const host = window.location.hostname;
-        return host.includes('financasmais.com') && host !== 'financasmais.com';
+        return window.location.hostname.includes('financasmais.com');
     },
 
     saveAllLocal() {
@@ -307,6 +306,29 @@ const AppState = {
             return false;
         }
     },
+
+    isEmpty() {
+        return !this.accounts.length && !this.transactions.length;
+    },
+
+    async seedIfEmpty() {
+        if (!this.isEmpty()) return;
+        try {
+            const response = await fetch('/database/seed-data.json', { cache: 'no-store' });
+            if (!response.ok) return;
+            const seed = await response.json();
+            this.accounts = seed.accounts || [];
+            this.creditCards = seed.creditCards || [];
+            this.transactions = seed.transactions || [];
+            if (seed.categories?.length) this.categories = seed.categories;
+            this.budgets = seed.budgets || [];
+            await this.saveAll();
+            this.recalculateAllBalances();
+            console.info('Dados iniciais carregados no MySQL.');
+        } catch (error) {
+            console.warn('Não foi possível carregar dados iniciais:', error);
+        }
+    },
     
     async init() {
         if (this.useRemoteDb()) {
@@ -314,6 +336,7 @@ const AppState = {
             if (loaded) {
                 if (!this.categories.includes("Outros")) this.categories.push("Outros");
                 if (!this.categories.includes("Pagamento de Fatura")) this.categories.push("Pagamento de Fatura");
+                await this.seedIfEmpty();
                 this.recalculateAllBalances();
                 return;
             }
@@ -427,17 +450,17 @@ const AppState = {
 
     importData(file) {
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             try {
                 const importedData = JSON.parse(event.target.result);
                 if (importedData.accounts && importedData.creditCards && importedData.transactions) {
-                    UI.showConfirmationModal('Importar Dados', 'Isto irá substituir todos os seus dados atuais. Deseja continuar?', () => {
+                    UI.showConfirmationModal('Importar Dados', 'Isto irá substituir todos os seus dados atuais. Deseja continuar?', async () => {
                         this.accounts = importedData.accounts || [];
                         this.creditCards = importedData.creditCards || [];
                         this.transactions = importedData.transactions || [];
                         this.categories = importedData.categories || ["Outros"];
                         this.budgets = importedData.budgets || [];
-                        this.saveAll();
+                        await this.saveAll();
                         this.recalculateAllBalances();
                         UI.render();
                         UI.showFeedback('Dados importados com sucesso!', 'success');

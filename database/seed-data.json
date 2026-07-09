@@ -1,0 +1,120 @@
+{
+  "accounts": [
+    {
+      "id": "acc-nubank-001",
+      "name": "Conta Corrente Nubank",
+      "type": "corrente",
+      "balance": 4850,
+      "initialBalance": 3500,
+      "bankName": "Nubank"
+    },
+    {
+      "id": "acc-poupanca-002",
+      "name": "Poupança Caixa",
+      "type": "poupanca",
+      "balance": 12000,
+      "initialBalance": 12000,
+      "bankName": "Caixa"
+    }
+  ],
+  "creditCards": [
+    {
+      "id": "card-nubank-001",
+      "name": "Nubank Ultravioleta",
+      "brand": "Mastercard",
+      "limit": 8000,
+      "availableLimit": 6200,
+      "dueDay": 10
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx-salario-001",
+      "description": "Salário Julho",
+      "value": 5500,
+      "fundamentalType": "receita",
+      "category": "Salário",
+      "date": "2026-07-05",
+      "isPaid": true,
+      "accountId": "acc-nubank-001",
+      "isCreditCard": false
+    },
+    {
+      "id": "tx-aluguel-001",
+      "description": "Aluguel",
+      "value": 1500,
+      "fundamentalType": "despesa",
+      "category": "Moradia",
+      "date": "2026-07-08",
+      "isPaid": true,
+      "accountId": "acc-nubank-001",
+      "isCreditCard": false,
+      "paidByAccountId": "acc-nubank-001"
+    },
+    {
+      "id": "tx-super-001",
+      "description": "Supermercado",
+      "value": 450,
+      "fundamentalType": "despesa",
+      "category": "Alimentação",
+      "date": "2026-07-10",
+      "isPaid": true,
+      "accountId": "card-nubank-001",
+      "isCreditCard": true
+    },
+    {
+      "id": "tx-transporte-001",
+      "description": "Combustível",
+      "value": 280,
+      "fundamentalType": "despesa",
+      "category": "Transporte",
+      "date": "2026-07-12",
+      "isPaid": true,
+      "accountId": "acc-nubank-001",
+      "isCreditCard": false,
+      "paidByAccountId": "acc-nubank-001"
+    },
+    {
+      "id": "tx-lazer-001",
+      "description": "Restaurante",
+      "value": 180,
+      "fundamentalType": "despesa",
+      "category": "Lazer",
+      "date": "2026-07-15",
+      "isPaid": false,
+      "accountId": "card-nubank-001",
+      "isCreditCard": true
+    }
+  ],
+  "categories": [
+    "Alimentação",
+    "Transporte",
+    "Moradia",
+    "Lazer",
+    "Saúde",
+    "Educação",
+    "Salário",
+    "Investimentos",
+    "Contas Fixas",
+    "Compras",
+    "Pagamento de Fatura",
+    "Outros"
+  ],
+  "budgets": [
+    {
+      "id": "budget-alim-001",
+      "category": "Alimentação",
+      "amount": 800
+    },
+    {
+      "id": "budget-trans-001",
+      "category": "Transporte",
+      "amount": 400
+    },
+    {
+      "id": "budget-lazer-001",
+      "category": "Lazer",
+      "amount": 300
+    }
+  ]
+}

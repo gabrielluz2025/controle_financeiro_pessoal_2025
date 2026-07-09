@@ -9,6 +9,7 @@ on:
       - 'js/**'
       - 'services/**'
       - 'api/**'
+      - 'database/**'
       - 'scripts/**'
       - '.htaccess'
       - 'CNAME'
@@ -32,7 +33,7 @@ jobs:
         run: |
           mkdir -p deploy
           cp index.html .htaccess deploy/
-          cp -r css js services api deploy/
+          cp -r css js services api database deploy/
           node scripts/generate-deploy-config.js
 
       - name: Deploy via FTP para Hostinger
