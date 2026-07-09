@@ -14,8 +14,8 @@ body {
 #sidebar, main { transition: all 0.3s ease-in-out; }
 
 /* Estilos da Sidebar Recolhida */
-body.sidebar-collapsed #sidebar { width: 5rem; /* 80px */ }
-body.sidebar-collapsed main { margin-left: 5rem; }
+body.sidebar-collapsed #sidebar { width: 5rem; /* legacy — não usar margin no main */ }
+body.sidebar-collapsed main { margin-left: 0; }
 body.sidebar-collapsed #sidebar .sidebar-logo-text,
 body.sidebar-collapsed #sidebar .nav-text,
 body.sidebar-collapsed #sidebar .add-transaction-text,

@@ -27,6 +27,7 @@
     --sidebar-text:    #c4c9e4;
     --sidebar-text-muted: #6b7280;
     --sidebar-width:   16rem;
+    --sidebar-collapsed-width: 4.25rem;
 
     /* Superfícies (light) */
     --bg:         #f0f2ff;
@@ -117,15 +118,32 @@ body {
     border-radius: var(--radius-sm);
 }
 
+body.sidebar-collapsed {
+    --sidebar-width: var(--sidebar-collapsed-width);
+}
+
+/* App shell — sidebar + main lado a lado */
+.app-shell {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    min-width: 0;
+}
+
 /* ── SIDEBAR ──────────────────────────────────────────────── */
 #sidebar {
+    flex: 0 0 var(--sidebar-width);
     width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    max-width: var(--sidebar-width);
     background: var(--grad-dark);
     border-right: 1px solid var(--sidebar-border);
     box-shadow: 4px 0 24px rgba(0,0,0,.3);
     position: relative;
     z-index: 30;
-    transition: width var(--t);
+    transition: width var(--t), min-width var(--t), max-width var(--t), flex-basis var(--t);
     overflow: hidden;
 }
 
@@ -294,9 +312,7 @@ body {
     transition: transform var(--t);
 }
 
-/* Sidebar collapsed */
-body.sidebar-collapsed #sidebar { width: 4.25rem; }
-
+/* Sidebar collapsed — largura via variável CSS (--sidebar-width) */
 body.sidebar-collapsed #sidebar .sidebar-logo-text,
 body.sidebar-collapsed #sidebar .nav-text,
 body.sidebar-collapsed #sidebar .add-transaction-text,
@@ -434,6 +450,10 @@ body.dark-mode .header-btn:hover {
 
 /* ── MAIN CONTENT ─────────────────────────────────────────── */
 main {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    margin-left: 0 !important;
     background: var(--bg);
     transition: background var(--t);
 }
@@ -1045,7 +1065,10 @@ body.mobile-sidebar-open { overflow: hidden; }
         top: 0;
         bottom: 0;
         z-index: 50;
+        flex: none;
         width: min(18rem, 85vw) !important;
+        min-width: min(18rem, 85vw) !important;
+        max-width: min(18rem, 85vw) !important;
         transform: translateX(-105%);
         transition: transform .28s cubic-bezier(.4,0,.2,1);
         box-shadow: 8px 0 32px rgba(0,0,0,.35);
@@ -1055,8 +1078,10 @@ body.mobile-sidebar-open { overflow: hidden; }
         transform: translateX(0);
     }
 
-    /* No mobile, recolher = fechar drawer */
-    body.sidebar-collapsed #sidebar { width: min(18rem, 85vw) !important; }
+    /* No mobile drawer, ignora estado recolhido de desktop */
+    body.sidebar-collapsed {
+        --sidebar-width: min(18rem, 85vw);
+    }
 
     /* Esconde botão recolher no mobile — usa hamburger no header */
     #sidebar .sidebar-collapse-btn { display: none; }
@@ -1207,9 +1232,18 @@ body.mobile-sidebar-open { overflow: hidden; }
 @media (min-width: 1024px) {
     #sidebar-backdrop { display: none !important; }
     body.mobile-sidebar-open #sidebar { transform: none; }
+
+    #sidebar {
+        position: relative;
+        flex: 0 0 var(--sidebar-width);
+        width: var(--sidebar-width);
+        min-width: var(--sidebar-width);
+        max-width: var(--sidebar-width);
+        transform: none !important;
+    }
+
     .sidebar-close-mobile { display: none !important; }
 
-    /* Notebook: sidebar recolhida por padrão opcional — mantém expandida */
     .chart-container { height: 320px; }
 }
 
