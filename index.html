@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -85,12 +85,12 @@
         .modal-body { padding: 1.5rem; overflow-y: auto; }
         .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; background-color: #f7fafc; }
         
-        /* Estilos da AnÃ¡lise AI Visual */
+        /* Estilos da Análise AI Visual */
         .ai-analysis-content h3 { font-size: 1.25rem; font-weight: 700; color: #1d4ed8; margin-bottom: 0.5rem; }
         .ai-analysis-content h4 { font-weight: 600; font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #1e40af; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.25rem;}
         .ai-analysis-content ul { list-style-type: none; padding-left: 0.5rem; }
         .ai-analysis-content li { margin-bottom: 0.75rem; display: flex; align-items: flex-start; }
-        .ai-analysis-content li::before { content: 'ðŸ”¹'; color: #3b82f6; margin-right: 0.75rem; font-size: 0.8rem; line-height: 1.75; }
+        .ai-analysis-content li::before { content: '🔹'; color: #3b82f6; margin-right: 0.75rem; font-size: 0.8rem; line-height: 1.75; }
         .ai-analysis-content strong { font-weight: 700; color: #1e3a8a; }
         .ai-analysis-content .loading-spinner {
             border: 4px solid #f3f3f3;
@@ -102,7 +102,7 @@
             margin: 2rem auto;
         }
         
-        /* Estilos de OrÃ§amento */
+        /* Estilos de Orçamento */
         .budget-progress-bar {
             background-color: #e5e7eb;
             border-radius: 0.5rem;
@@ -128,13 +128,13 @@
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <!-- Sidebar de NavegaÃ§Ã£o -->
+    <!-- Sidebar de Navegação -->
     <aside id="sidebar" class="w-64 flex flex-col flex-shrink-0" style="width:16rem;background:linear-gradient(145deg,#0f0c29 0%,#302b63 50%,#24243e 100%);box-shadow:4px 0 24px rgba(0,0,0,.3);position:relative;z-index:30;">
         <div id="logo-container" class="flex items-center h-20 px-4 gap-3 cursor-pointer" style="border-bottom:1px solid rgba(255,255,255,.08);">
             <div style="width:2.25rem;height:2.25rem;border-radius:.625rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(99,102,241,.4);">
                 <svg width="18" height="18" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01"/></svg>
             </div>
-            <span class="sidebar-logo-text" style="font-size:1.2rem;font-weight:800;background:linear-gradient(90deg,#fff 0%,#a5b4fc 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.02em;">FinanÃ§as+</span>
+            <span class="sidebar-logo-text" style="font-size:1.2rem;font-weight:800;background:linear-gradient(90deg,#fff 0%,#a5b4fc 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.02em;">Finanças+</span>
         </div>
         <nav class="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
             <p class="px-3 mb-2 text-xs font-semibold uppercase tracking-widest nav-text" style="color:rgba(255,255,255,.35);letter-spacing:.1em;">Principal</p>
@@ -148,7 +148,7 @@
                 <span class="nav-icon-pill" style="background:rgba(16,185,129,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </span>
-                <span class="nav-text">TransaÃ§Ãµes</span>
+                <span class="nav-text">Transações</span>
             </a>
             <a href="#" id="nav-faturas" class="nav-link" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(244,63,94,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -160,14 +160,14 @@
                 <span class="nav-icon-pill" style="background:rgba(14,165,233,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                 </span>
-                <span class="nav-text">Contas e CartÃµes</span>
+                <span class="nav-text">Contas e Cartões</span>
             </a>
             <p class="px-3 mt-4 mb-2 text-xs font-semibold uppercase tracking-widest nav-text" style="color:rgba(255,255,255,.35);letter-spacing:.1em;">Planejamento</p>
             <a href="#" id="nav-budgets" class="nav-link" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(245,158,11,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 </span>
-                <span class="nav-text">OrÃ§amentos</span>
+                <span class="nav-text">Orçamentos</span>
             </a>
             <a href="#" id="nav-categories" class="nav-link" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(139,92,246,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -179,13 +179,13 @@
                 <span class="nav-icon-pill" style="background:rgba(251,146,60,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 </span>
-                <span class="nav-text">RelatÃ³rios</span>
+                <span class="nav-text">Relatórios</span>
             </a>
         </nav>
         <div class="px-3 py-4" style="border-top:1px solid rgba(255,255,255,.08);">
             <button id="add-new-transaction-btn" class="w-full flex items-center justify-center px-4 py-3 mb-3 text-white font-semibold rounded-xl text-sm" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 8px 24px rgba(99,102,241,.4);border:none;cursor:pointer;transition:opacity .2s;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:.5rem;flex-shrink:0;"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                <span class="add-transaction-text">Nova TransaÃ§Ã£o</span>
+                <span class="add-transaction-text">Nova Transação</span>
             </button>
             <button id="sidebar-toggle-btn" class="w-full flex items-center px-3 py-2 text-sm rounded-lg" style="color:rgba(255,255,255,.5);background:transparent;border:none;cursor:pointer;transition:background .2s;" onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='transparent'">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:.5rem;transition:transform .2s;flex-shrink:0;"><path d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
@@ -194,7 +194,7 @@
         </div>
     </aside>
 
-    <!-- ConteÃºdo Principal -->
+    <!-- Conteúdo Principal -->
     <main class="flex-1 flex flex-col bg-gray-50 overflow-y-auto">
         <!-- Container de Alertas -->
         <div id="alerts-container" class="fixed top-4 right-4 z-50 space-y-2 max-w-sm"></div>
@@ -203,7 +203,7 @@
             <div class="flex items-center gap-3">
                 <div>
                     <h2 id="page-title" class="font-extrabold" style="font-size:1.25rem;color:var(--text);letter-spacing:-0.03em;">Dashboard</h2>
-                    <p id="header-subtitle" class="text-xs" style="color:var(--text-3);">VisÃ£o geral das suas finanÃ§as</p>
+                    <p id="header-subtitle" class="text-xs" style="color:var(--text-3);">Visão geral das suas finanças</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -238,7 +238,7 @@
                     </div>
                     <button id="get-analysis-btn" class="btn btn-primary text-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                        AnÃ¡lise IA
+                        Análise IA
                     </button>
                 </div>
 
@@ -249,21 +249,21 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
                     <div class="lg:col-span-2 space-y-4">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-sm font-bold uppercase tracking-wider" style="color:var(--text-2)">Faturas de CartÃ£o</h3>
+                            <h3 class="text-sm font-bold uppercase tracking-wider" style="color:var(--text-2)">Faturas de Cartão</h3>
                         </div>
                         <div id="card-summary-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                     </div>
                     <div class="space-y-4">
                         <div>
-                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--text-2)">Resumo dos OrÃ§amentos</h3>
+                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--text-2)">Resumo dos Orçamentos</h3>
                             <div id="budget-progress-container" class="section-card p-4 space-y-4"></div>
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--text-2)">PrÃ³ximas Contas</h3>
+                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--text-2)">Próximas Contas</h3>
                             <div id="upcoming-bills-container" class="section-card p-4 space-y-3"></div>
                         </div>
                         <div id="overdue-bills-section" class="hidden">
-                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--danger)">âš  Contas em Atraso</h3>
+                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--danger)">⚠ Contas em Atraso</h3>
                             <div id="overdue-bills-container" class="p-4 rounded-xl space-y-3 cursor-pointer" style="background:var(--danger-bg);border-left:3px solid var(--danger);" title="Clique para ver todas"></div>
                         </div>
                     </div>
@@ -272,13 +272,13 @@
                 <!-- Charts row -->
                 <div class="grid grid-cols-1 gap-5 lg:grid-cols-5">
                     <div class="chart-container lg:col-span-3">
-                        <h3>EvoluÃ§Ã£o do Saldo â€” Ãšltimos 6 Meses</h3>
+                        <h3>Evolução do Saldo — Últimos 6 Meses</h3>
                         <canvas id="balance-chart"></canvas>
                     </div>
                     <div class="chart-container lg:col-span-2">
                         <h3>Despesas por Categoria</h3>
                         <canvas id="expenses-chart"></canvas>
-                        <p id="no-expenses-msg" class="hidden text-center text-sm pt-8" style="color:var(--text-3)">Sem despesas neste perÃ­odo.</p>
+                        <p id="no-expenses-msg" class="hidden text-center text-sm pt-8" style="color:var(--text-3)">Sem despesas neste período.</p>
                     </div>
                 </div>
             </section>
@@ -295,10 +295,10 @@
     <div id="feedback-message" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50"></div>
     
 <script>
-// MÃ³dulo de Estado da AplicaÃ§Ã£o
+// Módulo de Estado da Aplicação
 const AppState = {
     accounts: [], creditCards: [], transactions: [], budgets: [],
-    categories: ["AlimentaÃ§Ã£o", "Transporte", "Moradia", "Lazer", "SaÃºde", "EducaÃ§Ã£o", "SalÃ¡rio", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"],
+    categories: ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"],
     currentView: 'dashboard', isSidebarCollapsed: false,
     displayMonth: new Date().getMonth(),
     displayYear: new Date().getFullYear(),
@@ -335,7 +335,7 @@ const AppState = {
             this.saveAllLocal();
             return true;
         } catch (error) {
-            console.warn('NÃ£o foi possÃ­vel carregar dados do MySQL:', error);
+            console.warn('Não foi possível carregar dados do MySQL:', error);
             return false;
         }
     },
@@ -359,7 +359,7 @@ const AppState = {
             this.recalculateAllBalances();
             console.info('Dados iniciais carregados no MySQL.');
         } catch (error) {
-            console.warn('NÃ£o foi possÃ­vel carregar dados iniciais:', error);
+            console.warn('Não foi possível carregar dados iniciais:', error);
         }
     },
     
@@ -454,13 +454,13 @@ const AppState = {
                 }),
             });
         } catch (error) {
-            console.warn('NÃ£o foi possÃ­vel salvar dados no MySQL:', error);
+            console.warn('Não foi possível salvar dados no MySQL:', error);
         }
     },
     
     clearAllData() {
         this.accounts = []; this.creditCards = []; this.transactions = []; this.budgets = [];
-        this.categories = ["AlimentaÃ§Ã£o", "Transporte", "Moradia", "Lazer", "SaÃºde", "EducaÃ§Ã£o", "SalÃ¡rio", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"];
+        this.categories = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"];
         this.saveAll();
     },
 
@@ -487,7 +487,7 @@ const AppState = {
             try {
                 const importedData = JSON.parse(event.target.result);
                 if (importedData.accounts && importedData.creditCards && importedData.transactions) {
-                    UI.showConfirmationModal('Importar Dados', 'Isto irÃ¡ substituir todos os seus dados atuais. Deseja continuar?', async () => {
+                    UI.showConfirmationModal('Importar Dados', 'Isto irá substituir todos os seus dados atuais. Deseja continuar?', async () => {
                         this.accounts = importedData.accounts || [];
                         this.creditCards = importedData.creditCards || [];
                         this.transactions = importedData.transactions || [];
@@ -499,10 +499,10 @@ const AppState = {
                         UI.showFeedback('Dados importados com sucesso!', 'success');
                     });
                 } else {
-                    UI.showFeedback('Ficheiro JSON invÃ¡lido ou mal formatado.', 'error');
+                    UI.showFeedback('Ficheiro JSON inválido ou mal formatado.', 'error');
                 }
             } catch (error) {
-                UI.showFeedback('Erro ao ler o ficheiro. Verifique se Ã© um ficheiro JSON vÃ¡lido.', 'error');
+                UI.showFeedback('Erro ao ler o ficheiro. Verifique se é um ficheiro JSON válido.', 'error');
             }
         };
         reader.readAsText(file);
@@ -539,7 +539,7 @@ const AppState = {
         const prevMonthData = calculateMetricsForPeriod(prevMonthStart, prevMonthEnd);
         
         if (lastMonthData.income === 0 && lastMonthData.expenses === 0 && prevMonthData.income === 0 && prevMonthData.expenses === 0) {
-            return { error: "NÃ£o hÃ¡ dados suficientes dos Ãºltimos dois meses para gerar uma anÃ¡lise. Adicione algumas transaÃ§Ãµes e tente novamente." };
+            return { error: "Não há dados suficientes dos últimos dois meses para gerar uma análise. Adicione algumas transações e tente novamente." };
         }
 
         return { lastMonthData, prevMonthData };
@@ -622,7 +622,7 @@ const AppState = {
     }
 };
 
-// MÃ³dulo de UI
+// Módulo de UI
 const UI = {
     banks: [
         { name: 'Nenhum', logo: '' },
@@ -643,8 +643,8 @@ const UI = {
         const activePage = document.getElementById(`${AppState.currentView}-page`);
         if (activePage) {
             activePage.classList.remove('hidden');
-            const titles = { dashboard: 'Dashboard', transactions: 'TransaÃ§Ãµes', budgets: 'OrÃ§amentos', faturas: 'Faturas', accounts: 'Contas & CartÃµes', reports: 'RelatÃ³rios', categories: 'Categorias' };
-            const subtitles = { dashboard: 'VisÃ£o geral das suas finanÃ§as', transactions: 'HistÃ³rico de receitas e despesas', budgets: 'Controle de gastos por categoria', faturas: 'Faturas dos seus cartÃµes', accounts: 'Suas contas e cartÃµes de crÃ©dito', reports: 'AnÃ¡lises e relatÃ³rios detalhados', categories: 'Gerenciar categorias de gastos' };
+            const titles = { dashboard: 'Dashboard', transactions: 'Transações', budgets: 'Orçamentos', faturas: 'Faturas', accounts: 'Contas & Cartões', reports: 'Relatórios', categories: 'Categorias' };
+            const subtitles = { dashboard: 'Visão geral das suas finanças', transactions: 'Histórico de receitas e despesas', budgets: 'Controle de gastos por categoria', faturas: 'Faturas dos seus cartões', accounts: 'Suas contas e cartões de crédito', reports: 'Análises e relatórios detalhados', categories: 'Gerenciar categorias de gastos' };
             document.getElementById('page-title').textContent = titles[AppState.currentView] || 'Dashboard';
             const subtitleEl = document.getElementById('header-subtitle');
             if (subtitleEl) subtitleEl.textContent = subtitles[AppState.currentView] || '';
@@ -655,7 +655,7 @@ const UI = {
     },
     
     capitalize: s => s.charAt(0).toUpperCase() + s.slice(1),
-    getPageTitle: v => ({ dashboard: 'Dashboard', transactions: 'TransaÃ§Ãµes', budgets: 'OrÃ§amentos', faturas: 'Faturas', accounts: 'Contas & CartÃµes', reports: 'RelatÃ³rios', categories: 'Categorias' }[v] || 'Dashboard'),
+    getPageTitle: v => ({ dashboard: 'Dashboard', transactions: 'Transações', budgets: 'Orçamentos', faturas: 'Faturas', accounts: 'Contas & Cartões', reports: 'Relatórios', categories: 'Categorias' }[v] || 'Dashboard'),
     
     updateNavLinks() {
         document.querySelectorAll('aside nav a.nav-link').forEach(l => {
@@ -718,7 +718,7 @@ const UI = {
                     </div>
                     <div class="relative w-full md:w-64">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-3)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <input type="text" id="transactions-search" placeholder="Buscar transaÃ§Ã£o..." style="padding-left:2.25rem;background:var(--surface-2);border:1.5px solid var(--border);color:var(--text);border-radius:.625rem;padding-top:.5rem;padding-bottom:.5rem;width:100%;font-size:.875rem;" />
+                        <input type="text" id="transactions-search" placeholder="Buscar transação..." style="padding-left:2.25rem;background:var(--surface-2);border:1.5px solid var(--border);color:var(--text);border-radius:.625rem;padding-top:.5rem;padding-bottom:.5rem;width:100%;font-size:.875rem;" />
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -727,19 +727,19 @@ const UI = {
                             <tr>
                                 <th class="w-10 pl-4"><input type="checkbox" id="select-all-txs" style="accent-color:var(--brand-500);width:1rem;height:1rem;cursor:pointer;"></th>
                                 <th>Data</th>
-                                <th>DescriÃ§Ã£o</th>
+                                <th>Descrição</th>
                                 <th>Valor</th>
                                 <th>Categoria</th>
-                                <th>Conta/CartÃ£o</th>
+                                <th>Conta/Cartão</th>
                                 <th>Status</th>
-                                <th class="text-right pr-4">AÃ§Ãµes</th>
+                                <th class="text-right pr-4">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="transactions-table-body"></tbody>
                     </table>
                     <p id="no-transactions-found" class="text-center py-12 hidden" style="color:var(--text-3)">
                         <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        Nenhuma transaÃ§Ã£o encontrada.
+                        Nenhuma transação encontrada.
                     </p>
                 </div>
             </div>`;
@@ -895,7 +895,7 @@ const UI = {
 
             let accountNameHTML = `<span class="text-gray-400">N/A</span>`;
             if (tx.accountId) {
-                let name = 'Conta/CartÃ£o ExcluÃ­do';
+                let name = 'Conta/Cartão Excluído';
                 let iconHTML = `<svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
                 if (tx.isCreditCard) {
@@ -916,7 +916,7 @@ const UI = {
                 if (tx.fundamentalType === 'receita') {
                     accountNameHTML = `<div class="flex items-center text-yellow-600">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span class="font-medium">NÃ£o Alocada</span>
+                        <span class="font-medium">Não Alocada</span>
                     </div>`;
                 }
             }
@@ -932,7 +932,7 @@ const UI = {
                 <td class="pl-4"><input type="checkbox" class="tx-select-checkbox" data-id="${tx.id}" ${isSelected ? 'checked' : ''} style="accent-color:var(--brand-500);width:1rem;height:1rem;cursor:pointer;"></td>
                 <td class="text-xs" style="color:var(--text-3);white-space:nowrap;">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                 <td class="font-medium description" style="color:var(--text);max-width:220px;">${descriptionWithInstallment}</td>
-                <td class="font-bold whitespace-nowrap" style="color:${tx.fundamentalType==='receita'?'var(--success)':'var(--danger)'};">${tx.fundamentalType==='receita'?'+':'âˆ’'}${this.formatCurrency(tx.value)}</td>
+                <td class="font-bold whitespace-nowrap" style="color:${tx.fundamentalType==='receita'?'var(--success)':'var(--danger)'};">${tx.fundamentalType==='receita'?'+':'−'}${this.formatCurrency(tx.value)}</td>
                 <td><span style="display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .55rem;border-radius:99px;font-size:.7rem;font-weight:600;background:${catColor}1a;color:${catColor};">${tx.category}</span></td>
                 <td>${accountNameHTML}</td>
                 ${statusHTML}
@@ -955,7 +955,7 @@ const UI = {
         page.innerHTML = `
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
                 <div class="lg:col-span-1 section-card p-4 overflow-y-auto">
-                    <p class="text-xs font-bold uppercase tracking-wider mb-3" style="color:var(--text-3)">Meus CartÃµes</p>
+                    <p class="text-xs font-bold uppercase tracking-wider mb-3" style="color:var(--text-3)">Meus Cartões</p>
                     <div id="fatura-card-list" class="space-y-2"></div>
                 </div>
                 <div id="fatura-details-container" class="lg:col-span-3 section-card p-5 overflow-y-auto"></div>
@@ -964,7 +964,7 @@ const UI = {
         if (AppState.selectedFaturaCardId) {
             this.renderInvoiceListForCard(AppState.selectedFaturaCardId);
         } else {
-            document.getElementById('fatura-details-container').innerHTML = `<div class="flex items-center justify-center h-full text-gray-500"><svg class="w-10 h-10 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg> Selecione um cartÃ£o para ver as faturas.</div>`;
+            document.getElementById('fatura-details-container').innerHTML = `<div class="flex items-center justify-center h-full text-gray-500"><svg class="w-10 h-10 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg> Selecione um cartão para ver as faturas.</div>`;
         }
     },
 
@@ -973,7 +973,7 @@ const UI = {
         if (!container) return;
 
         if (AppState.creditCards.length === 0) {
-            container.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cartÃ£o cadastrado.</p>`;
+            container.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cartão cadastrado.</p>`;
             return;
         }
 
@@ -1019,7 +1019,7 @@ const UI = {
         
         container.innerHTML = `
             <h3 class="text-2xl font-bold text-gray-800 mb-6">Faturas de ${card.name}</h3>
-            ${sortedMonths.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhuma fatura encontrada para este cartÃ£o.</p>` : `
+            ${sortedMonths.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhuma fatura encontrada para este cartão.</p>` : `
             <div class="space-y-4">
                 ${sortedMonths.map(monthYear => {
                     const invoice = transactionsByMonth[monthYear];
@@ -1069,7 +1069,7 @@ const UI = {
                 </div>
             </div>
             <div class="space-y-2">
-                ${transactions.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhum lanÃ§amento nesta fatura.</p>` :
+                ${transactions.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhum lançamento nesta fatura.</p>` :
                 transactions.map(tx => {
                     const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
                     const valuePrefix = tx.fundamentalType === 'receita' ? '+' : '-';
@@ -1103,13 +1103,13 @@ const UI = {
         
         page.innerHTML = `
             <div class="space-y-5">
-                <!-- AnÃ¡lise IA CTA -->
+                <!-- Análise IA CTA -->
                 <div style="background:var(--grad-brand);border-radius:var(--radius-xl);padding:1.5rem;color:white;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;position:relative;overflow:hidden;">
                     <div style="position:absolute;bottom:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,.07);border-radius:50%;pointer-events:none;"></div>
                     <div>
                         <p class="text-xs font-bold uppercase opacity-70 mb-1">Powered by Gemini AI</p>
-                        <h3 class="text-xl font-extrabold">AnÃ¡lise Financeira Inteligente</h3>
-                        <p class="text-sm opacity-80 mt-1">Dicas personalizadas baseadas nos seus gastos do Ãºltimo mÃªs.</p>
+                        <h3 class="text-xl font-extrabold">Análise Financeira Inteligente</h3>
+                        <p class="text-sm opacity-80 mt-1">Dicas personalizadas baseadas nos seus gastos do último mês.</p>
                     </div>
                     <button id="get-analysis-btn" style="background:white;color:#4f46e5;font-weight:700;font-size:.875rem;padding:.625rem 1.25rem;border-radius:.75rem;border:none;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:.5rem;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
@@ -1119,10 +1119,10 @@ const UI = {
 
                 <!-- Filtros -->
                 <div class="section-card p-5">
-                    <p class="text-xs font-bold uppercase tracking-wider mb-4" style="color:var(--text-3)">Gerar RelatÃ³rio</p>
+                    <p class="text-xs font-bold uppercase tracking-wider mb-4" style="color:var(--text-3)">Gerar Relatório</p>
                     <div id="report-filters" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                         <div>
-                            <label class="form-label">Tipo de RelatÃ³rio</label>
+                            <label class="form-label">Tipo de Relatório</label>
                             <select id="report-mode">
                                 <option value="simple" selected>Simples</option>
                                 <option value="comparative">Comparativo</option>
@@ -1130,21 +1130,21 @@ const UI = {
                         </div>
                         <div id="period-1-filters" class="contents">
                             <div>
-                                <label class="form-label">Ano (PerÃ­odo 1)</label>
+                                <label class="form-label">Ano (Período 1)</label>
                                 <select id="report-year-1">${yearOptions}</select>
                             </div>
                             <div>
-                                <label class="form-label">MÃªs (PerÃ­odo 1)</label>
+                                <label class="form-label">Mês (Período 1)</label>
                                 <select id="report-month-1">${monthOptions}</select>
                             </div>
                         </div>
                         <div id="period-2-filters" class="hidden contents">
                             <div>
-                                <label class="form-label">Ano (PerÃ­odo 2)</label>
+                                <label class="form-label">Ano (Período 2)</label>
                                 <select id="report-year-2">${yearOptions}</select>
                             </div>
                             <div>
-                                <label class="form-label">MÃªs (PerÃ­odo 2)</label>
+                                <label class="form-label">Mês (Período 2)</label>
                                 <select id="report-month-2">${monthOptions}</select>
                             </div>
                         </div>
@@ -1158,7 +1158,7 @@ const UI = {
                         <div class="lg:col-span-full flex justify-end">
                             <button id="generate-report-btn" class="btn btn-primary">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                Gerar RelatÃ³rio
+                                Gerar Relatório
                             </button>
                         </div>
                     </div>
@@ -1220,7 +1220,7 @@ const UI = {
                 <thead class="text-xs text-gray-700 uppercase"><tr>
                     <th class="py-3 px-6">Categoria</th>
                     <th class="py-3 px-6 text-right">${p1Label || 'Valor'}</th>
-                    ${isComparative ? `<th class="py-3 px-6 text-right">${p2Label}</th><th class="py-3 px-6 text-right">DiferenÃ§a (R$)</th><th class="py-3 px-6 text-right">DiferenÃ§a (%)</th>` : '<th class="py-3 px-6 text-right">% do Total</th>'}
+                    ${isComparative ? `<th class="py-3 px-6 text-right">${p2Label}</th><th class="py-3 px-6 text-right">Diferença (R$)</th><th class="py-3 px-6 text-right">Diferença (%)</th>` : '<th class="py-3 px-6 text-right">% do Total</th>'}
                 </tr></thead><tbody>`;
         
         const total1 = Object.values(data1).reduce((s, v) => s + v, 0);
@@ -1258,39 +1258,18 @@ const UI = {
         const myBanks = JSON.parse(localStorage.getItem('my_banks') || '[]');
         const importHistory = JSON.parse(localStorage.getItem('import_history') || '{}');
         const today = new Date();
-
-        const allBanks = [
-            { id:'nubank',    name:'Nubank',           color:'#820AD1', initials:'NU' },
-            { id:'itau',      name:'ItaÃº',              color:'#EC7000', initials:'IT' },
-            { id:'bradesco',  name:'Bradesco',          color:'#CC092F', initials:'BR' },
-            { id:'santander', name:'Santander',         color:'#EC0000', initials:'SN' },
-            { id:'bb',        name:'Banco do Brasil',   color:'#DDAA00', initials:'BB' },
-            { id:'caixa',     name:'Caixa EconÃ´mica',   color:'#005B9C', initials:'CX' },
-            { id:'inter',     name:'Banco Inter',       color:'#FF7A00', initials:'IN' },
-            { id:'c6',        name:'C6 Bank',           color:'#444444', initials:'C6' },
-            { id:'btg',       name:'BTG Pactual',       color:'#001E62', initials:'BT' },
-            { id:'xp',        name:'XP Investimentos',  color:'#111111', initials:'XP' },
-            { id:'picpay',    name:'PicPay',            color:'#11C76F', initials:'PP' },
-            { id:'neon',      name:'Neon',              color:'#00AACC', initials:'NE' },
-            { id:'sicoob',    name:'Sicoob',            color:'#008B3B', initials:'SC' },
-            { id:'sicredi',   name:'Sicredi',           color:'#007E3A', initials:'SI' },
-            { id:'original',  name:'Original',          color:'#00A859', initials:'OR' },
-            { id:'safra',     name:'Safra',             color:'#003DA5', initials:'SF' },
-            { id:'outro',     name:'Outro banco',       color:'#6b7280', initials:'+' },
-        ];
-
         const totalImported = Object.values(importHistory).reduce((s, h) => s + (h.count || 0), 0);
 
-        // Montar cartÃµes "Meus Bancos"
+        const allBanks = BankImportUI.allBanks;
+
         const myBankCards = myBanks.map(bankId => {
             const bank = allBanks.find(b => b.id === bankId) || { id: bankId, name: bankId, color: '#6b7280', initials: '?' };
             const hist = importHistory[bankId];
-            let daysAgo = null, alertBadge = '', lastImportLabel = 'Nunca importado';
+            let alertBadge = '', lastImportLabel = 'Nunca importado';
             if (hist?.date) {
                 const diff = Math.floor((today - new Date(hist.date)) / 86400000);
-                daysAgo = diff;
-                lastImportLabel = diff === 0 ? 'Hoje' : diff === 1 ? 'Ontem' : `HÃ¡ ${diff} dias`;
-                alertBadge = diff >= 7 ? `<span style="background:#fef3c7;color:#92400e;font-size:.65rem;font-weight:700;padding:.15rem .4rem;border-radius:99px;margin-left:.25rem;">âš  Atualizar</span>` : '';
+                lastImportLabel = diff === 0 ? 'Hoje' : diff === 1 ? 'Ontem' : `Há ${diff} dias`;
+                alertBadge = diff >= 7 ? `<span style="background:#fef3c7;color:#92400e;font-size:.65rem;font-weight:700;padding:.15rem .4rem;border-radius:99px;margin-left:.25rem;">⚠ Atualizar</span>` : '';
             }
             return `
             <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:1rem;padding:1rem;display:flex;flex-direction:column;gap:.75rem;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 18px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
@@ -1298,7 +1277,7 @@ const UI = {
                     <div style="width:2.5rem;height:2.5rem;border-radius:.75rem;background:${bank.color};color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0;">${bank.initials}</div>
                     <div style="flex:1;min-width:0;">
                         <p style="font-size:.875rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${bank.name}${alertBadge}</p>
-                        <p style="font-size:.72rem;color:var(--text-3);">${hist?.count ? hist.count + ' transaÃ§Ãµes Â· ' : ''}${lastImportLabel}</p>
+                        <p style="font-size:.72rem;color:var(--text-3);">${hist?.count ? hist.count + ' transações · ' : ''}${lastImportLabel}</p>
                     </div>
                     <button onclick="BankImportUI.removeBank('${bankId}')" style="background:none;border:none;cursor:pointer;color:var(--text-3);padding:.25rem;border-radius:.375rem;" title="Remover banco" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--text-3)'">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -1316,8 +1295,8 @@ const UI = {
                 <!-- Header -->
                 <div class="flex flex-wrap justify-between items-center gap-3">
                     <div>
-                        <h2 style="font-size:1.25rem;font-weight:800;color:var(--text);letter-spacing:-.02em;">Contas & CartÃµes</h2>
-                        <p class="text-sm" style="color:var(--text-2)">Importe extratos de qualquer banco â€” grÃ¡tis, sem APIs</p>
+                        <h2 style="font-size:1.25rem;font-weight:800;color:var(--text);letter-spacing:-.02em;">Contas &amp; Cartões</h2>
+                        <p class="text-sm" style="color:var(--text-2)">Importe extratos de qualquer banco — grátis, sem APIs</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="BankImportUI.openImport()" style="background:linear-gradient(135deg,#10b981,#059669);color:white;font-size:.85rem;font-weight:700;padding:.625rem 1.125rem;border-radius:.75rem;border:none;cursor:pointer;display:flex;align-items:center;gap:.375rem;box-shadow:0 2px 8px rgba(16,185,129,.3);">
@@ -1331,7 +1310,7 @@ const UI = {
                     </div>
                 </div>
 
-                <!-- Central de ImportaÃ§Ã£o hero -->
+                <!-- Central de Importação hero -->
                 <div style="background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%);border-radius:1.25rem;padding:1.5rem 1.75rem;color:white;position:relative;overflow:hidden;">
                     <div style="position:absolute;top:-50px;right:-50px;width:180px;height:180px;background:rgba(16,185,129,.2);border-radius:50%;pointer-events:none;"></div>
                     <div style="position:absolute;bottom:-30px;left:-30px;width:120px;height:120px;background:rgba(5,150,105,.2);border-radius:50%;pointer-events:none;"></div>
@@ -1339,13 +1318,13 @@ const UI = {
                         <div>
                             <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.625rem;">
                                 <svg width="28" height="28" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                <h3 style="font-size:1.25rem;font-weight:800;letter-spacing:-.02em;">Central de ImportaÃ§Ã£o</h3>
+                                <h3 style="font-size:1.25rem;font-weight:800;letter-spacing:-.02em;">Central de Importação</h3>
                             </div>
-                            <p style="font-size:.875rem;opacity:.85;max-width:440px;line-height:1.6;">Importe extratos <strong>OFX ou CSV</strong> de qualquer banco brasileiro. Funciona com <strong>100% dos bancos</strong> â€” sem mensalidade, sem API.</p>
+                            <p style="font-size:.875rem;opacity:.85;max-width:440px;line-height:1.6;">Importe extratos <strong>OFX ou CSV</strong> de qualquer banco brasileiro. Funciona com <strong>100% dos bancos</strong> — sem mensalidade, sem API.</p>
                             <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:.875rem;">
-                                <span style="font-size:.8rem;opacity:.8;">âœ“ Nubank, ItaÃº, Bradesco...</span>
-                                <span style="font-size:.8rem;opacity:.8;">âœ“ OFX + CSV</span>
-                                <span style="font-size:.8rem;opacity:.8;">âœ“ ${totalImported} transaÃ§Ãµes importadas</span>
+                                <span style="font-size:.8rem;opacity:.8;">✓ Nubank, Itaú, Bradesco...</span>
+                                <span style="font-size:.8rem;opacity:.8;">✓ OFX + CSV</span>
+                                <span style="font-size:.8rem;opacity:.8;">✓ ${totalImported} transações importadas</span>
                             </div>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:.5rem;align-items:flex-end;">
@@ -1383,24 +1362,24 @@ const UI = {
                         <svg width="24" height="24" fill="none" stroke="var(--text-3)" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                     </div>
                     <p style="font-weight:700;color:var(--text);margin-bottom:.25rem;">Nenhum banco cadastrado</p>
-                    <p style="font-size:.8rem;color:var(--text-3);margin-bottom:1rem;">Cadastre seus bancos para manter o controle das importaÃ§Ãµes</p>
+                    <p style="font-size:.8rem;color:var(--text-3);margin-bottom:1rem;">Cadastre seus bancos para acompanhar as importações</p>
                     <button onclick="BankImportUI.addBankModal()" style="background:var(--brand-500);color:white;font-size:.85rem;font-weight:600;padding:.625rem 1.25rem;border-radius:.75rem;border:none;cursor:pointer;">
                         + Adicionar Meu Primeiro Banco
                     </button>
                 </div>`}
 
-                <!-- Contas e CartÃµes manuais -->
+                <!-- Contas e Cartões manuais -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     <div class="section-card overflow-hidden">
                         <div class="px-5 py-4 border-b flex items-center justify-between" style="border-color:var(--border)">
-                            <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Contas BancÃ¡rias</p>
+                            <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Contas Bancárias</p>
                             <span class="badge badge-neutral">${AppState.accounts.length}</span>
                         </div>
                         <div id="accounts-list" class="divide-y" style="border-color:var(--border)"></div>
                     </div>
                     <div class="section-card overflow-hidden">
                         <div class="px-5 py-4 border-b flex items-center justify-between" style="border-color:var(--border)">
-                            <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">CartÃµes de CrÃ©dito</p>
+                            <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Cartões de Crédito</p>
                             <span class="badge badge-neutral">${AppState.creditCards.length}</span>
                         </div>
                         <div id="cards-list" class="divide-y" style="border-color:var(--border)"></div>
@@ -1428,7 +1407,7 @@ const UI = {
                     <div style="width:2.5rem;height:2.5rem;border-radius:.625rem;background:${bg}22;color:${bg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0;">${initials}</div>
                     <div>
                         <p class="font-semibold text-sm" style="color:var(--text)">${acc.name}</p>
-                        <p class="text-xs" style="color:var(--text-3)">${this.capitalize((acc.type||'').replace('corrente','Conta Corrente').replace('poupanca','PoupanÃ§a'))}</p>
+                        <p class="text-xs" style="color:var(--text-3)">${this.capitalize((acc.type||'').replace('corrente','Conta Corrente').replace('poupanca','Poupança'))}</p>
                     </div>
                 </div>
                 <div class="text-right pointer-events-none mr-3">
@@ -1451,7 +1430,7 @@ const UI = {
         const container = document.getElementById('cards-list');
         if (!container) return;
         if (AppState.creditCards.length === 0) {
-            container.innerHTML = `<div class="text-center py-10 text-sm" style="color:var(--text-3)">Nenhum cartÃ£o adicionado.</div>`; return;
+            container.innerHTML = `<div class="text-center py-10 text-sm" style="color:var(--text-3)">Nenhum cartão adicionado.</div>`; return;
         }
         container.innerHTML = AppState.creditCards.map(card => {
             const linkedAcc = AppState.accounts.find(a => a.id === card.linkedAccountId);
@@ -1466,7 +1445,7 @@ const UI = {
                         </div>
                         <div>
                             <p class="font-semibold text-sm" style="color:var(--text)">${card.name} <span class="badge badge-neutral ml-1">${card.brand||'N/A'}</span></p>
-                            <p class="text-xs" style="color:var(--text-3)">Venc. dia ${card.dueDay}${linkedAcc?` Â· vinc. ${linkedAcc.name}`:''}</p>
+                            <p class="text-xs" style="color:var(--text-3)">Venc. dia ${card.dueDay}${linkedAcc?` · vinc. ${linkedAcc.name}`:''}</p>
                         </div>
                     </div>
                     <div class="text-right mr-3">
@@ -1553,7 +1532,7 @@ const UI = {
                             <label for="acc-type" class="block text-sm font-medium text-gray-700">Tipo de Conta</label>
                             <select id="acc-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" ${isEditing && type === 'card' ? 'disabled' : ''}>
                                 <option value="corrente" ${accountData.type === 'corrente' ? 'selected' : ''}>Conta Corrente</option>
-                                <option value="poupanca" ${accountData.type === 'poupanca' ? 'selected' : ''}>PoupanÃ§a</option>
+                                <option value="poupanca" ${accountData.type === 'poupanca' ? 'selected' : ''}>Poupança</option>
                                 <option value="cash" ${accountData.type === 'cash' ? 'selected' : ''}>Dinheiro</option>
                             </select>
                         </div>
@@ -1571,15 +1550,15 @@ const UI = {
                 <div class="p-3 bg-gray-50 rounded-lg">
                     <div class="flex items-center">
                         <input id="has-card-checkbox" type="checkbox" ${hasCard ? 'checked' : ''} ${isEditing && type === 'card' ? 'disabled' : ''} class="h-4 w-4 text-purple-600 border-gray-300 rounded">
-                        <label for="has-card-checkbox" class="ml-2 block text-sm font-medium text-gray-700">Possui CartÃ£o de CrÃ©dito vinculado?</label>
+                        <label for="has-card-checkbox" class="ml-2 block text-sm font-medium text-gray-700">Possui Cartão de Crédito vinculado?</label>
                     </div>
                     <div id="card-fields-container" class="space-y-4 mt-4 ${!hasCard ? 'hidden' : ''}">
                         <div>
-                            <label for="card-name" class="block text-sm font-medium text-gray-700">Nome do CartÃ£o</label>
+                            <label for="card-name" class="block text-sm font-medium text-gray-700">Nome do Cartão</label>
                             <input type="text" id="card-name" value="${cardData.name || ''}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                         <div>
-                            <label for="card-brand" class="block text-sm font-medium text-gray-700">Bandeira do CartÃ£o</label>
+                            <label for="card-brand" class="block text-sm font-medium text-gray-700">Bandeira do Cartão</label>
                             <select id="card-brand" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                                 <option value="Visa" ${cardData.brand === 'Visa' ? 'selected' : ''}>Visa</option>
                                 <option value="Mastercard" ${cardData.brand === 'Mastercard' ? 'selected' : ''}>Mastercard</option>
@@ -1590,7 +1569,7 @@ const UI = {
                             </select>
                         </div>
                         <div>
-                            <label for="card-limit" class="block text-sm font-medium text-gray-700">Limite do CartÃ£o (R$)</label>
+                            <label for="card-limit" class="block text-sm font-medium text-gray-700">Limite do Cartão (R$)</label>
                             <input type="number" id="card-limit" value="${cardData.limit || 0}" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                         <div>
@@ -1601,7 +1580,7 @@ const UI = {
                 </div>
             </form>
         `;
-        this.showModal(isEditing ? 'Editar Item' : 'Adicionar Conta/CartÃ£o', content, 'Salvar', 'account-modal-form');
+        this.showModal(isEditing ? 'Editar Item' : 'Adicionar Conta/Cartão', content, 'Salvar', 'account-modal-form');
     },
 
     renderNewTransactionModal(data = {}) {
@@ -1617,14 +1596,14 @@ const UI = {
         };
         
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (CartÃ£o)</option>`).join('');
+        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (Cartão)</option>`).join('');
         const categoryOptions = AppState.categories.map(c => `<option value="${c}" ${tx.category === c ? 'selected' : ''}>${c}</option>`).join('');
 
         const content = `
             <form id="transaction-modal-form" class="space-y-4">
                 <input type="hidden" name="isImported" value="${data.isImported ? 'true' : ''}" data-import-index="${data.importIndex || ''}">
                 <div>
-                    <label for="trans-description" class="block text-sm font-medium text-gray-700">DescriÃ§Ã£o</label>
+                    <label for="trans-description" class="block text-sm font-medium text-gray-700">Descrição</label>
                     <input type="text" id="trans-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -1633,7 +1612,7 @@ const UI = {
                         <input type="number" id="trans-value" value="${tx.value}" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     </div>
                     <div>
-                        <label for="trans-date" class="block text-sm font-medium text-gray-700">Data da 1Âª Parcela</label>
+                        <label for="trans-date" class="block text-sm font-medium text-gray-700">Data da 1ª Parcela</label>
                         <input type="date" id="trans-date" value="${tx.date}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     </div>
                 </div>
@@ -1641,11 +1620,11 @@ const UI = {
                     <h4 class="font-semibold text-gray-600 mb-2">Parcelamento</h4>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="trans-installments-total" class="block text-sm font-medium text-gray-700">NÂº de Parcelas</label>
+                            <label for="trans-installments-total" class="block text-sm font-medium text-gray-700">Nº de Parcelas</label>
                             <input type="number" id="trans-installments-total" value="${tx.installmentsTotal}" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                         <div>
-                            <label for="trans-installments-paid" class="block text-sm font-medium text-gray-700">Parcelas jÃ¡ Pagas</label>
+                            <label for="trans-installments-paid" class="block text-sm font-medium text-gray-700">Parcelas já Pagas</label>
                             <input type="number" id="trans-installments-paid" value="${tx.installmentsPaid}" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                     </div>
@@ -1662,19 +1641,19 @@ const UI = {
                     <select id="trans-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
                  <div>
-                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / CartÃ£o</label>
+                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
                     <select id="trans-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="">Nenhuma</option>
                         ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
-                        ${AppState.creditCards.length > 0 ? `<optgroup label="CartÃµes">${cardOptions}</optgroup>` : ''}
+                        ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
                     </select>
                     <p id="income-account-helper" class="text-xs text-gray-500 mt-1 hidden">
-                        Selecione onde o dinheiro entrou. Para dinheiro em espÃ©cie, crie uma conta "Dinheiro". Deixar em branco marcarÃ¡ a receita como "NÃ£o Alocada".
+                        Selecione onde o dinheiro entrou. Para dinheiro em espécie, crie uma conta "Dinheiro". Deixar em branco marcará a receita como "Não Alocada".
                     </p>
                 </div>
             </form>
         `;
-        this.showModal('Nova TransaÃ§Ã£o', content, 'Salvar', 'transaction-modal-form');
+        this.showModal('Nova Transação', content, 'Salvar', 'transaction-modal-form');
         
         const transTypeSelect = document.getElementById('trans-type');
         const helperText = document.getElementById('income-account-helper');
@@ -1689,7 +1668,7 @@ const UI = {
     
     renderEditTransactionModal(tx, options = {}) {
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}" ${tx.accountId === a.id && !tx.isCreditCard ? 'selected' : ''}>${a.name}</option>`).join('');
-        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}" ${tx.accountId === c.id && tx.isCreditCard ? 'selected' : ''}>${c.name} (CartÃ£o)</option>`).join('');
+        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}" ${tx.accountId === c.id && tx.isCreditCard ? 'selected' : ''}>${c.name} (Cartão)</option>`).join('');
         const categoryOptions = AppState.categories.map(c => `<option value="${c}" ${tx.category === c ? 'selected' : ''}>${c}</option>`).join('');
 
         const content = `
@@ -1700,7 +1679,7 @@ const UI = {
                 <input type="hidden" id="edit-context-year" value="${options.year || ''}">
                 <input type="hidden" id="edit-context-month" value="${options.month || ''}">
                 <div>
-                    <label for="edit-trans-description" class="block text-sm font-medium text-gray-700">DescriÃ§Ã£o ${tx.installments || ''}</label>
+                    <label for="edit-trans-description" class="block text-sm font-medium text-gray-700">Descrição ${tx.installments || ''}</label>
                     <input type="text" id="edit-trans-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
                  <div class="grid grid-cols-2 gap-4">
@@ -1718,11 +1697,11 @@ const UI = {
                     <select id="edit-trans-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
                  <div>
-                    <label for="edit-trans-account" class="block text-sm font-medium text-gray-700">Conta / CartÃ£o</label>
+                    <label for="edit-trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
                     <select id="edit-trans-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="">Nenhum</option>
                         ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
-                        ${AppState.creditCards.length > 0 ? `<optgroup label="CartÃµes">${cardOptions}</optgroup>` : ''}
+                        ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
                     </select>
                 </div>
                 <div class="flex items-center">
@@ -1731,7 +1710,7 @@ const UI = {
                 </div>
             </form>
         `;
-        this.showModal(`Editar ${tx.installments ? `Parcela` : 'TransaÃ§Ã£o'}`, content, 'Salvar', 'edit-transaction-form');
+        this.showModal(`Editar ${tx.installments ? `Parcela` : 'Transação'}`, content, 'Salvar', 'edit-transaction-form');
     },
     
     renderEditSeriesModal(tx) {
@@ -1740,7 +1719,7 @@ const UI = {
             <form id="edit-series-form" class="space-y-4">
                  <input type="hidden" id="editing-group-id" value="${tx.groupId}">
                 <div>
-                    <label for="edit-series-description" class="block text-sm font-medium text-gray-700">DescriÃ§Ã£o</label>
+                    <label for="edit-series-description" class="block text-sm font-medium text-gray-700">Descrição</label>
                     <input type="text" id="edit-series-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div>
@@ -1752,49 +1731,49 @@ const UI = {
                     <select id="edit-series-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
                  <div>
-                    <label for="edit-series-start-date" class="block text-sm font-medium text-gray-700">Alterar data de inÃ­cio dos pagamentos</label>
+                    <label for="edit-series-start-date" class="block text-sm font-medium text-gray-700">Alterar data de início dos pagamentos</label>
                     <input type="date" id="edit-series-start-date" value="${tx.date}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
             </form>
         `;
-        this.showModal('Editar SÃ©rie de Parcelas', content, 'Salvar AlteraÃ§Ãµes', 'edit-series-form');
+        this.showModal('Editar Série de Parcelas', content, 'Salvar Alterações', 'edit-series-form');
     },
 
     renderBulkEditModal() {
         const categoryOptions = AppState.categories.map(c => `<option value="${c}">${c}</option>`).join('');
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (CartÃ£o)</option>`).join('');
+        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (Cartão)</option>`).join('');
 
         const content = `
             <form id="bulk-edit-modal-form" class="space-y-4">
-                <p class="text-sm text-gray-600">Altere apenas os campos que deseja aplicar a todas as transaÃ§Ãµes selecionadas. Os campos deixados em "NÃ£o Alterar" nÃ£o serÃ£o modificados.</p>
+                <p class="text-sm text-gray-600">Altere apenas os campos que deseja aplicar a todas as transações selecionadas. Os campos deixados em "Não Alterar" não serão modificados.</p>
                 <div>
                     <label for="bulk-edit-category" class="block text-sm font-medium text-gray-700">Nova Categoria</label>
                     <select id="bulk-edit-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="">NÃ£o Alterar</option>
+                        <option value="">Não Alterar</option>
                         ${categoryOptions}
                     </select>
                 </div>
                 <div>
-                    <label for="bulk-edit-account" class="block text-sm font-medium text-gray-700">Nova Conta / CartÃ£o</label>
+                    <label for="bulk-edit-account" class="block text-sm font-medium text-gray-700">Nova Conta / Cartão</label>
                     <select id="bulk-edit-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="">NÃ£o Alterar</option>
+                        <option value="">Não Alterar</option>
                         <option value="null">Nenhum (Desvincular)</option>
                         ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
-                        ${AppState.creditCards.length > 0 ? `<optgroup label="CartÃµes">${cardOptions}</optgroup>` : ''}
+                        ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
                     </select>
                 </div>
                 <div>
                     <label for="bulk-edit-status" class="block text-sm font-medium text-gray-700">Novo Status</label>
                     <select id="bulk-edit-status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="">NÃ£o Alterar</option>
+                        <option value="">Não Alterar</option>
                         <option value="paid">Pago</option>
                         <option value="unpaid">Pendente</option>
                     </select>
                 </div>
             </form>
         `;
-        this.showModal('Editar MÃºltiplas TransaÃ§Ãµes', content, 'Salvar AlteraÃ§Ãµes', 'bulk-edit-modal-form');
+        this.showModal('Editar Múltiplas Transações', content, 'Salvar Alterações', 'bulk-edit-modal-form');
     },
     
     renderPayBillModal(cardId, billAmount) {
@@ -1830,7 +1809,7 @@ const UI = {
                 </div>
             </form>
         `;
-        this.showModal('Pagar Fatura do CartÃ£o', content, 'Confirmar Pagamento', 'pay-bill-form');
+        this.showModal('Pagar Fatura do Cartão', content, 'Confirmar Pagamento', 'pay-bill-form');
     },
 
     showModal(title, content, submitText, formId) {
@@ -1919,7 +1898,7 @@ const UI = {
                      <div class="modal-footer flex flex-col sm:flex-row justify-end gap-3">
                          <button id="bulk-apply-selected-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Apenas nas Selecionadas</button>
                          <button id="bulk-apply-future-btn" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Nas Selecionadas e Futuras</button>
-                         <button id="bulk-apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Em Toda a SÃ©rie</button>
+                         <button id="bulk-apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Em Toda a Série</button>
                      </div>
                  </div>
              </div>`;
@@ -1970,7 +1949,7 @@ const UI = {
 
         const txListBuilder = (txs) => {
             if (txs.length === 0) {
-                return `<p class="text-gray-500 text-center py-4">Nenhuma transaÃ§Ã£o encontrada.</p>`;
+                return `<p class="text-gray-500 text-center py-4">Nenhuma transação encontrada.</p>`;
             }
             let listHtml = '<ul class="space-y-3">';
             txs.forEach(tx => {
@@ -2034,25 +2013,25 @@ const UI = {
                 this.showInfoModal(title, content);
                 break;
             case 'monthly-income':
-                title = 'Receitas do MÃªs';
+                title = 'Receitas do Mês';
                 const incomeTxs = monthTxs.filter(t => t.fundamentalType === 'receita').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(incomeTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
             case 'monthly-expenses':
-                title = 'Despesas do MÃªs';
+                title = 'Despesas do Mês';
                 const expenseTxs = monthTxs.filter(t => t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(expenseTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
              case 'monthly-paid':
-                 title = 'Total Pago no MÃªs';
+                 title = 'Total Pago no Mês';
                 const paidTxs = monthTxs.filter(t => t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(paidTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
              case 'monthly-unpaid':
-                 title = 'Contas a Pagar no MÃªs';
+                 title = 'Contas a Pagar no Mês';
                 const unpaidTxs = monthTxs.filter(t => !t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(a.date) - new Date(b.date));
                 content = txListBuilder(unpaidTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
@@ -2067,18 +2046,18 @@ const UI = {
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
             case 'monthly-balance':
-                 title = 'BalanÃ§o do MÃªs';
-                const incomeBalanÃ§o = monthTxs.filter(t => t.fundamentalType === 'receita').sort((a,b) => new Date(b.date) - new Date(a.date));
-                const expenseBalanÃ§o = monthTxs.filter(t => t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
+                 title = 'Balanço do Mês';
+                const incomeBalanço = monthTxs.filter(t => t.fundamentalType === 'receita').sort((a,b) => new Date(b.date) - new Date(a.date));
+                const expenseBalanço = monthTxs.filter(t => t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = `
                     <div class="space-y-4">
                         <div>
                             <h4 class="font-bold text-lg mb-2 text-green-600">Receitas</h4>
-                            ${txListBuilder(incomeBalanÃ§o)}
+                            ${txListBuilder(incomeBalanço)}
                         </div>
                         <div>
                             <h4 class="font-bold text-lg mb-2 text-red-600">Despesas</h4>
-                            ${txListBuilder(expenseBalanÃ§o)}
+                            ${txListBuilder(expenseBalanço)}
                         </div>
                     </div>
                 `;
@@ -2097,7 +2076,7 @@ const UI = {
 
         const txListBuilder = (txs) => {
             if (txs.length === 0) {
-                return `<p class="text-gray-500 text-center py-4">Nenhuma transaÃ§Ã£o vinculada a esta conta.</p>`;
+                return `<p class="text-gray-500 text-center py-4">Nenhuma transação vinculada a esta conta.</p>`;
             }
             let listHtml = '<ul class="space-y-3">';
             txs.forEach(tx => {
@@ -2118,7 +2097,7 @@ const UI = {
                                  </div>
                                  <div class="flex items-center">
                                       <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
-                                      <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover VÃ­nculo">
+                                      <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover Vínculo">
                                            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536l1.101-1.102a4 4 0 000-5.656l-4-4a4 4 0 00-5.656 5.656l1.101 1.102" /></svg>
                                       </button>
                                       <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
@@ -2133,7 +2112,7 @@ const UI = {
 
         const content = `
             <div data-account-id="${accountId}">
-                <h4 class="font-bold text-lg mb-2 text-gray-800">TransaÃ§Ãµes na Conta</h4>
+                <h4 class="font-bold text-lg mb-2 text-gray-800">Transações na Conta</h4>
                 <div class="max-h-96 overflow-y-auto">
                     ${txListBuilder(linkedTxs)}
                 </div>
@@ -2157,7 +2136,7 @@ const UI = {
         let totalBill = 0;
         const txListBuilder = (txs) => {
             if (txs.length === 0) {
-                return `<p class="text-gray-500 text-center py-4">Nenhuma transaÃ§Ã£o nesta fatura.</p>`;
+                return `<p class="text-gray-500 text-center py-4">Nenhuma transação nesta fatura.</p>`;
             }
             let listHtml = '<ul class="space-y-3">';
             txs.forEach(tx => {
@@ -2201,11 +2180,11 @@ const UI = {
                     <div class="font-semibold text-right">${this.formatCurrency(card.limit)}</div>
                     <div class="text-gray-500">Fatura Atual:</div>
                     <div class="font-semibold text-red-600 text-right">${this.formatCurrency(totalBill)}</div>
-                    <div class="text-gray-500">Limite DisponÃ­vel:</div>
+                    <div class="text-gray-500">Limite Disponível:</div>
                     <div class="font-semibold text-green-600 text-right">${this.formatCurrency(card.availableLimit)}</div>
                 </div>
                 <hr class="my-4"/>
-                <h4 class="font-bold text-lg mb-2 text-gray-800">TransaÃ§Ãµes na Fatura</h4>
+                <h4 class="font-bold text-lg mb-2 text-gray-800">Transações na Fatura</h4>
                 <div class="max-h-64 overflow-y-auto pr-2">
                     ${txList}
                 </div>
@@ -2237,7 +2216,7 @@ const UI = {
                     <div class="text-gray-500">Valor Faltante:</div>
                     <div class="font-semibold text-red-600 text-right">${this.formatCurrency(amountRemaining)}</div>
 
-                    <div class="text-gray-500">Data de TÃ©rmino:</div>
+                    <div class="text-gray-500">Data de Término:</div>
                     <div class="font-semibold text-right">${endDate}</div>
                 </div>
                 <hr/>
@@ -2276,7 +2255,7 @@ const UI = {
         this.showInfoModal(`Detalhes: ${description}`, content);
     },
     
-    // Converte um texto simples com Markdown bÃ¡sico para HTML.
+    // Converte um texto simples com Markdown básico para HTML.
     parseSimpleMarkdown(text) {
         let html = text
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
@@ -2302,13 +2281,13 @@ const UI = {
             let colorClass, arrow;
             if (diff > 0) {
                 colorClass = higherIsBetter ? 'text-green-500' : 'text-red-500';
-                arrow = 'â–²';
+                arrow = '▲';
             } else if (diff < 0) {
                 colorClass = higherIsBetter ? 'text-red-500' : 'text-green-500';
-                arrow = 'â–¼';
+                arrow = '▼';
             } else {
                 colorClass = 'text-gray-500';
-                arrow = 'â€“';
+                arrow = '–';
             }
             
             return `
@@ -2325,7 +2304,7 @@ const UI = {
 
         return `
             <div class="ai-analysis-content">
-                <h3>AnÃ¡lise Comparativa</h3>
+                <h3>Análise Comparativa</h3>
                 <p class="text-sm text-gray-500 mb-4">Comparando ${lastMonthData.periodLabel} com ${prevMonthData.periodLabel}</p>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2343,7 +2322,7 @@ const UI = {
     },
 
     showVisualAnalysisModal(analysisData) {
-        const title = 'AnÃ¡lise Financeira Inteligente';
+        const title = 'Análise Financeira Inteligente';
         const contentHtml = this.renderVisualAnalysisPanel(analysisData);
         
         const modalContainer = document.getElementById('modal-container');
@@ -2373,16 +2352,16 @@ const UI = {
         ];
 
         const optionsHtml = allAccountsAndCards.map(item => {
-            return `<option value="${item.id}" data-is-credit-card="${item.isCreditCard}">${item.name} (${item.isCreditCard ? 'CartÃ£o' : 'Conta'})</option>`;
+            return `<option value="${item.id}" data-is-credit-card="${item.isCreditCard}">${item.name} (${item.isCreditCard ? 'Cartão' : 'Conta'})</option>`;
         }).join('');
 
         const content = `
             <form id="payment-source-form" class="space-y-4">
                 <input type="hidden" id="payment-source-tx-id" value="${txId}">
                 <input type="hidden" id="payment-source-modal-type" value="${sourceModalType || ''}">
-                <p class="text-gray-700">Selecione a conta ou cartÃ£o de onde a despesa foi paga:</p>
+                <p class="text-gray-700">Selecione a conta ou cartão de onde a despesa foi paga:</p>
                 <div>
-                    <label for="payment-source-account" class="block text-sm font-medium text-gray-700">Conta / CartÃ£o</label>
+                    <label for="payment-source-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
                     <select id="payment-source-account" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="">Selecione...</option>
                         ${optionsHtml}
@@ -2426,7 +2405,7 @@ const UI = {
             warning: 'background:linear-gradient(135deg,#f59e0b,#fbbf24);color:white;'
         };
         const icons = {
-            success: 'âœ“', error: 'âœ•', info: 'â„¹', warning: 'âš '
+            success: '✓', error: '✕', info: 'ℹ', warning: '⚠'
         };
         el.innerHTML = `<div style="${styles[type]||styles.info}padding:.7rem 1.25rem;border-radius:99px;box-shadow:0 8px 24px rgba(0,0,0,.18);font-size:.875rem;font-weight:600;display:flex;align-items:center;gap:.5rem;animation:slideInUp .25s ease-out;">
             <span style="opacity:.85">${icons[type]||icons.info}</span> ${message}
@@ -2457,9 +2436,9 @@ const UI = {
 
         container.innerHTML = `
             ${this.createSummaryCard('Saldo Total', totalBalance, 'blue', totalBalance < 0)}
-            ${this.createSummaryCard('Receitas no MÃªs', income, 'green')}
-            ${this.createSummaryCard('Despesas no MÃªs', expenses, 'red')}
-            ${this.createSummaryCard('Total Pago no MÃªs', paidExpenses, 'yellow')}
+            ${this.createSummaryCard('Receitas no Mês', income, 'green')}
+            ${this.createSummaryCard('Despesas no Mês', expenses, 'red')}
+            ${this.createSummaryCard('Total Pago no Mês', paidExpenses, 'yellow')}
             ${this.createSummaryCard('Despesas em Atraso', overdueCount, 'orange', false, true)}
         `;
     },
@@ -2471,7 +2450,7 @@ const UI = {
             yellow: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
             orange: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
         };
-        // Gradientes inline â€” nÃ£o dependem do CSS externo
+        // Gradientes inline — não dependem do CSS externo
         const gradients = {
             blue:   'linear-gradient(135deg,#6366f1 0%,#818cf8 100%)',
             green:  'linear-gradient(135deg,#10b981 0%,#34d399 100%)',
@@ -2488,16 +2467,16 @@ const UI = {
         };
         const typeMap = {
             'Saldo Total':        'total-balance',
-            'Receitas no MÃªs':    'monthly-income',
-            'Despesas no MÃªs':    'monthly-expenses',
-            'Total Pago no MÃªs':  'monthly-paid',
+            'Receitas no Mês':    'monthly-income',
+            'Despesas no Mês':    'monthly-expenses',
+            'Total Pago no Mês':  'monthly-paid',
             'Despesas em Atraso': 'monthly-overdue'
         };
         const subLabels = {
             'Saldo Total':        'em todas as contas',
-            'Receitas no MÃªs':    'entradas no perÃ­odo',
-            'Despesas no MÃªs':    'saÃ­das no perÃ­odo',
-            'Total Pago no MÃªs':  'despesas quitadas',
+            'Receitas no Mês':    'entradas no período',
+            'Despesas no Mês':    'saídas no período',
+            'Total Pago no Mês':  'despesas quitadas',
             'Despesas em Atraso': value === 1 ? 'conta em atraso' : 'contas em atraso'
         };
         const activeColor = isNegative ? 'red' : color;
@@ -2588,7 +2567,7 @@ const UI = {
         const cards = AppState.creditCards;
 
         if (cards.length === 0) {
-            container.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-sm text-center text-gray-500 md:col-span-2">Nenhum cartÃ£o de crÃ©dito adicionado.</div>`;
+            container.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-sm text-center text-gray-500 md:col-span-2">Nenhum cartão de crédito adicionado.</div>`;
             return;
         }
 
@@ -2617,7 +2596,7 @@ const UI = {
                             <span class="font-semibold">${this.formatCurrency(currentBill)}</span>
                         </div>
                         <div class="flex justify-between text-sm">
-                            <span>Limite DisponÃ­vel</span>
+                            <span>Limite Disponível</span>
                             <span class="font-semibold">${this.formatCurrency(card.availableLimit)}</span>
                         </div>
                     </div>
@@ -2642,7 +2621,7 @@ const UI = {
             .slice(0, 5);
         
         if (upcoming.length === 0) {
-            container.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhuma conta pendente para este mÃªs.</p>`;
+            container.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhuma conta pendente para este mês.</p>`;
             return;
         }
 
@@ -2699,7 +2678,7 @@ const UI = {
 
         container.innerHTML = `
             <div class="bg-blue-50 p-3 rounded-lg flex justify-between items-center transition-all duration-300">
-                <span class="font-medium text-blue-800">${selectedCount} transaÃ§${selectedCount > 1 ? 'Ãµes' : 'Ã£o'} selecionada${selectedCount > 1 ? 's' : ''}</span>
+                <span class="font-medium text-blue-800">${selectedCount} transaç${selectedCount > 1 ? 'ões' : 'ão'} selecionada${selectedCount > 1 ? 's' : ''}</span>
                 <div class="space-x-2">
                     <button id="bulk-edit" class="px-3 py-1 text-sm text-white bg-blue-500 rounded-md hover:bg-blue-600">Editar</button>
                     <button id="bulk-mark-paid" class="px-3 py-1 text-sm text-white bg-green-500 rounded-md hover:bg-green-600">Marcar como Pago</button>
@@ -2719,7 +2698,7 @@ const UI = {
                     </div>
                     <button id="add-new-budget-btn" class="btn btn-primary text-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                        Novo OrÃ§amento
+                        Novo Orçamento
                     </button>
                 </div>
                 <div id="budget-list-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
@@ -2735,8 +2714,8 @@ const UI = {
             container.innerHTML = `
                 <div class="col-span-full text-center py-16 section-card">
                     <svg class="w-16 h-16 mx-auto mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                    <p class="font-semibold mb-1" style="color:var(--text-2)">Nenhum orÃ§amento definido</p>
-                    <p class="text-sm" style="color:var(--text-3)">Clique em "Novo OrÃ§amento" para comeÃ§ar a controlar seus gastos.</p>
+                    <p class="font-semibold mb-1" style="color:var(--text-2)">Nenhum orçamento definido</p>
+                    <p class="text-sm" style="color:var(--text-3)">Clique em "Novo Orçamento" para começar a controlar seus gastos.</p>
                 </div>`;
             return;
         }
@@ -2755,7 +2734,7 @@ const UI = {
                 statusBadge = `<span class="badge badge-danger">Estourado</span>`;
             } else if (percentage > 75) {
                 barColor = 'var(--warning)'; barBg = 'var(--warning-bg)';
-                statusBadge = `<span class="badge badge-warning">AtenÃ§Ã£o</span>`;
+                statusBadge = `<span class="badge badge-warning">Atenção</span>`;
             } else {
                 barColor = 'var(--brand-500)'; barBg = 'var(--brand-50)';
                 statusBadge = `<span class="badge badge-success">Dentro do limite</span>`;
@@ -2789,7 +2768,7 @@ const UI = {
                         <div class="budget-progress-fill" style="width:${pct}%;background:${barColor};"></div>
                     </div>
                     <p class="text-xs mt-2" style="color:var(--text-3)">
-                        ${remaining >= 0 ? `DisponÃ­vel: <span style="color:var(--success);font-weight:600;">${this.formatCurrency(remaining)}</span>` : `Excesso: <span style="color:var(--danger);font-weight:600;">${this.formatCurrency(Math.abs(remaining))}</span>`}
+                        ${remaining >= 0 ? `Disponível: <span style="color:var(--success);font-weight:600;">${this.formatCurrency(remaining)}</span>` : `Excesso: <span style="color:var(--danger);font-weight:600;">${this.formatCurrency(Math.abs(remaining))}</span>`}
                     </p>
                 </div>`;
         }).join('');
@@ -2797,14 +2776,14 @@ const UI = {
 
     renderBudgetModal(budgetToEdit = null) {
         const isEditing = !!budgetToEdit;
-        const title = isEditing ? 'Editar OrÃ§amento' : 'Novo OrÃ§amento';
+        const title = isEditing ? 'Editar Orçamento' : 'Novo Orçamento';
         
         const budgetedCategories = AppState.budgets.map(b => b.category);
         const availableCategories = AppState.categories
-            .filter(c => c !== 'Pagamento de Fatura' && c !== 'SalÃ¡rio' && (!budgetedCategories.includes(c) || (isEditing && c === budgetToEdit.category)));
+            .filter(c => c !== 'Pagamento de Fatura' && c !== 'Salário' && (!budgetedCategories.includes(c) || (isEditing && c === budgetToEdit.category)));
 
         if (availableCategories.length === 0 && !isEditing) {
-            UI.showFeedback('Todas as categorias jÃ¡ possuem um orÃ§amento.', 'info');
+            UI.showFeedback('Todas as categorias já possuem um orçamento.', 'info');
             return;
         }
 
@@ -2820,7 +2799,7 @@ const UI = {
                     </select>
                 </div>
                 <div>
-                    <label for="budget-amount" class="block text-sm font-medium text-gray-700">Valor do OrÃ§amento (R$)</label>
+                    <label for="budget-amount" class="block text-sm font-medium text-gray-700">Valor do Orçamento (R$)</label>
                     <input type="number" id="budget-amount" value="${isEditing ? budgetToEdit.amount : ''}" required min="0" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
             </form>
@@ -2847,7 +2826,7 @@ const UI = {
         }).sort((a,b) => b.percentage - a.percentage);
 
         if (budgetsWithSpent.length === 0) {
-            container.innerHTML = `<p class="text-center text-sm text-gray-500 py-4">Nenhum orÃ§amento definido para este mÃªs.</p>`;
+            container.innerHTML = `<p class="text-center text-sm text-gray-500 py-4">Nenhum orçamento definido para este mês.</p>`;
             return;
         }
 
@@ -2872,7 +2851,7 @@ const UI = {
     }
 };
 
-// MÃ³dulo de Handlers
+// Módulo de Handlers
 const Handlers = {
     init() {
         document.getElementById('logo-container').addEventListener('click', () => {
@@ -2885,7 +2864,7 @@ const Handlers = {
         }));
         
         document.getElementById('clear-data-btn').addEventListener('click', () => {
-            UI.showConfirmationModal('Limpar Todos os Dados', 'Tem certeza que deseja apagar TUDO? Esta aÃ§Ã£o nÃ£o pode ser desfeita.', () => {
+            UI.showConfirmationModal('Limpar Todos os Dados', 'Tem certeza que deseja apagar TUDO? Esta ação não pode ser desfeita.', () => {
                 AppState.clearAllData(); UI.render(); UI.showFeedback('Todos os dados foram limpos!', 'success');
             });
         });
@@ -2937,7 +2916,7 @@ const Handlers = {
                 this.handleAccountClick(accountItem.dataset.id);
             }
             
-             // Handlers para AÃ§Ãµes em Massa
+             // Handlers para Ações em Massa
             if (e.target.id === 'bulk-edit') UI.renderBulkEditModal();
             if (e.target.id === 'bulk-mark-paid') this.handleBulkMarkPaid();
             if (e.target.id === 'bulk-delete') this.handleBulkDelete();
@@ -2969,7 +2948,7 @@ const Handlers = {
                 UI.render();
             }
 
-            // Handler para checkboxes de transaÃ§Ã£o
+            // Handler para checkboxes de transação
             if (e.target.classList.contains('tx-select-checkbox') || e.target.id === 'select-all-txs') {
                 this.handleTransactionSelection(e.target);
             }
@@ -3096,9 +3075,9 @@ const Handlers = {
             AppState.saveAll();
             this.handleBulkDeselect();
             UI.render();
-            UI.showFeedback(`${changedCount} transaÃ§${changedCount > 1 ? 'Ãµes' : 'Ã£o'} marcada${changedCount > 1 ? 's' : ''} como paga.`, 'success');
+            UI.showFeedback(`${changedCount} transaç${changedCount > 1 ? 'ões' : 'ão'} marcada${changedCount > 1 ? 's' : ''} como paga.`, 'success');
         } else {
-             UI.showFeedback('Nenhuma transaÃ§Ã£o pendente foi selecionada.', 'info');
+             UI.showFeedback('Nenhuma transação pendente foi selecionada.', 'info');
         }
     },
 
@@ -3107,8 +3086,8 @@ const Handlers = {
         if (selectedCount === 0) return;
 
         UI.showConfirmationModal(
-            `Excluir ${selectedCount} TransaÃ§Ãµes`,
-            `Tem certeza que deseja excluir as ${selectedCount} transaÃ§Ãµes selecionadas?`,
+            `Excluir ${selectedCount} Transações`,
+            `Tem certeza que deseja excluir as ${selectedCount} transações selecionadas?`,
             () => {
                 AppState.transactions = AppState.transactions.filter(
                     tx => !AppState.selectedTransactionIds.includes(tx.id)
@@ -3117,17 +3096,17 @@ const Handlers = {
                 AppState.saveAll();
                 this.handleBulkDeselect();
                 UI.render();
-                UI.showFeedback(`${selectedCount} transaÃ§Ãµes foram excluÃ­das.`, 'success');
+                UI.showFeedback(`${selectedCount} transações foram excluídas.`, 'success');
             }
         );
     },
 
     async processBulkSeriesChanges(seriesQueue, changes) {
         for (const seriesInfo of seriesQueue) {
-             const message = `Aplicar alteraÃ§Ãµes para a sÃ©rie "${seriesInfo.sampleTx.description}"?`;
+             const message = `Aplicar alterações para a série "${seriesInfo.sampleTx.description}"?`;
              const scope = await new Promise(resolve => {
                  UI.showBulkApplyToSeriesModal(
-                    `Editar SÃ©rie: ${seriesInfo.sampleTx.description}`,
+                    `Editar Série: ${seriesInfo.sampleTx.description}`,
                     message,
                     () => { UI.closeModal(); resolve('selected'); },
                     () => { UI.closeModal(); resolve('future'); },
@@ -3223,7 +3202,7 @@ const Handlers = {
             if (!success) {
                  this.handleBulkDeselect();
                  UI.render();
-                 UI.showFeedback('EdiÃ§Ã£o em massa cancelada.', 'info');
+                 UI.showFeedback('Edição em massa cancelada.', 'info');
                  return;
             }
         }
@@ -3236,7 +3215,7 @@ const Handlers = {
         AppState.saveAll();
         this.handleBulkDeselect();
         UI.render();
-        UI.showFeedback('TransaÃ§Ãµes atualizadas com sucesso!', 'success');
+        UI.showFeedback('Transações atualizadas com sucesso!', 'success');
     },
 
     handlePayBillClick(cardId, billAmount) {
@@ -3248,7 +3227,7 @@ const Handlers = {
     },
 
     handleUnlinkTransactionClick(txId, accountId) {
-        UI.showConfirmationModal('Remover VÃ­nculo', 'Tem certeza que deseja desvincular esta transaÃ§Ã£o da conta?', () => {
+        UI.showConfirmationModal('Remover Vínculo', 'Tem certeza que deseja desvincular esta transação da conta?', () => {
             const tx = AppState.transactions.find(t => t.id === txId);
             if (tx) {
                 tx.accountId = null;
@@ -3257,7 +3236,7 @@ const Handlers = {
                 AppState.saveAll();
                 UI.closeModal();
                 setTimeout(() => UI.renderAccountDetailsModal(accountId), 100);
-                UI.showFeedback('VÃ­nculo removido.', 'success');
+                UI.showFeedback('Vínculo removido.', 'success');
             }
         });
     },
@@ -3302,8 +3281,8 @@ const Handlers = {
 
             if (hasPreviousUnpaid) {
                 UI.showConfirmationModal(
-                    'AtenÃ§Ã£o: Parcela Anterior Aberta',
-                    'Existem parcelas anteriores para esta despesa que ainda nÃ£o foram pagas. Tem certeza de que deseja marcar esta como paga mesmo assim?',
+                    'Atenção: Parcela Anterior Aberta',
+                    'Existem parcelas anteriores para esta despesa que ainda não foram pagas. Tem certeza de que deseja marcar esta como paga mesmo assim?',
                     setAsPaid
                 );
             } else {
@@ -3333,7 +3312,7 @@ const Handlers = {
         const sourceModalType = form.querySelector('#payment-source-modal-type').value;
 
         if (!selectedAccountId) {
-            UI.showFeedback('Por favor, selecione uma conta ou cartÃ£o.', 'error');
+            UI.showFeedback('Por favor, selecione uma conta ou cartão.', 'error');
             return;
         }
 
@@ -3359,7 +3338,7 @@ const Handlers = {
                 UI.render();
             }
         } else {
-            UI.showFeedback('TransaÃ§Ã£o nÃ£o encontrada.', 'error');
+            UI.showFeedback('Transação não encontrada.', 'error');
             UI.closeModal();
         }
     },
@@ -3426,20 +3405,20 @@ const Handlers = {
             .join('\n');
 
         const prompt = `
-            VocÃª Ã© um consultor financeiro amigÃ¡vel e prestativo.
-            Analise o seguinte resumo financeiro de um usuÃ¡rio do Brasil e forneÃ§a insights e sugestÃµes prÃ¡ticas em portuguÃªs do Brasil.
+            Você é um consultor financeiro amigável e prestativo.
+            Analise o seguinte resumo financeiro de um usuário do Brasil e forneça insights e sugestões práticas em português do Brasil.
             Seja conciso, use uma linguagem clara e formate a resposta usando Markdown (use asteriscos para listas, como em '* Item', e dois asteriscos para negrito, como em '**Negrito**').
-            NÃ£o use cabeÃ§alhos de markdown (com '#'). Comece diretamente com um parÃ¡grafo de resumo.
+            Não use cabeçalhos de markdown (com '#'). Comece diretamente com um parágrafo de resumo.
             
-            Dados para anÃ¡lise:
-            - **MÃªs Anterior (${prevMonthData.periodLabel}):** Receitas de ${formatCurrency(prevMonthData.income)}, Despesas de ${formatCurrency(prevMonthData.expenses)}, Saldo de ${formatCurrency(prevMonthData.balance)}.
-            - **MÃªs Atual (${lastMonthData.periodLabel}):** Receitas de ${formatCurrency(lastMonthData.income)}, Despesas de ${formatCurrency(lastMonthData.expenses)}, Saldo de ${formatCurrency(lastMonthData.balance)}.
-            - **Principais Despesas (MÃªs Atual):**\n${topExpenses || "Nenhuma despesa registrada."}
+            Dados para análise:
+            - **Mês Anterior (${prevMonthData.periodLabel}):** Receitas de ${formatCurrency(prevMonthData.income)}, Despesas de ${formatCurrency(prevMonthData.expenses)}, Saldo de ${formatCurrency(prevMonthData.balance)}.
+            - **Mês Atual (${lastMonthData.periodLabel}):** Receitas de ${formatCurrency(lastMonthData.income)}, Despesas de ${formatCurrency(lastMonthData.expenses)}, Saldo de ${formatCurrency(lastMonthData.balance)}.
+            - **Principais Despesas (Mês Atual):**\n${topExpenses || "Nenhuma despesa registrada."}
 
             Estruture sua resposta da seguinte forma:
-            1.  Um parÃ¡grafo de anÃ¡lise geral.
+            1.  Um parágrafo de análise geral.
             2.  Uma lista de "Pontos Positivos".
-            3.  Uma lista de "Pontos de AtenÃ§Ã£o e SugestÃµes".
+            3.  Uma lista de "Pontos de Atenção e Sugestões".
         `;
 
         try {
@@ -3460,7 +3439,7 @@ const Handlers = {
 
             const result = await response.json();
             
-            let analysisText = "NÃ£o foi possÃ­vel gerar a anÃ¡lise no momento.";
+            let analysisText = "Não foi possível gerar a análise no momento.";
             if (result.candidates && result.candidates[0] && result.candidates[0].content.parts[0]) {
                  analysisText = result.candidates[0].content.parts[0].text;
             }
@@ -3475,7 +3454,7 @@ const Handlers = {
             console.error('Erro ao chamar a API do Gemini:', error);
             const insightsContainer = document.getElementById('ai-insights-content');
             if (insightsContainer) {
-                insightsContainer.innerHTML = '<p class="text-red-500">Ocorreu um erro ao tentar gerar sua anÃ¡lise financeira. Por favor, tente novamente mais tarde.</p>';
+                insightsContainer.innerHTML = '<p class="text-red-500">Ocorreu um erro ao tentar gerar sua análise financeira. Por favor, tente novamente mais tarde.</p>';
             }
         }
     },
@@ -3496,9 +3475,9 @@ const Handlers = {
 
             if (item) {
                 if (item.groupId) {
-                    UI.showChoiceModal('OpÃ§Ã£o de EdiÃ§Ã£o', 'O que vocÃª deseja editar?', [
+                    UI.showChoiceModal('Opção de Edição', 'O que você deseja editar?', [
                         { id: 'edit-one-btn', text: 'Apenas esta Parcela', class: 'px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700', onClick: () => { UI.closeModal(); UI.renderEditTransactionModal(item, options); } },
-                        { id: 'edit-all-btn', text: 'Editar a SÃ©rie Inteira', class: 'px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700', onClick: () => { UI.closeModal(); UI.renderEditSeriesModal(item); } }
+                        { id: 'edit-all-btn', text: 'Editar a Série Inteira', class: 'px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700', onClick: () => { UI.closeModal(); UI.renderEditSeriesModal(item); } }
                     ]);
                 } else {
                     UI.renderEditTransactionModal(item, options);
@@ -3525,39 +3504,39 @@ const Handlers = {
             const hasTransactions = AppState.transactions.some(t => t.accountId === id && !t.isCreditCard);
             const hasLinkedCard = AppState.creditCards.some(c => c.linkedAccountId === id);
             if (hasTransactions || hasLinkedCard) {
-                UI.showFeedback('Exclua ou desvincule transaÃ§Ãµes e cartÃµes desta conta primeiro.', 'error');
+                UI.showFeedback('Exclua ou desvincule transações e cartões desta conta primeiro.', 'error');
                 return;
             }
             UI.showConfirmationModal('Excluir Conta', 'Tem certeza que deseja excluir esta conta?', () => {
-                AppState.removeAccount(id); AppState.saveAll(); UI.render(); UI.showFeedback('Conta excluÃ­da.', 'success');
+                AppState.removeAccount(id); AppState.saveAll(); UI.render(); UI.showFeedback('Conta excluída.', 'success');
             });
         } else if (type === 'card') {
             const hasTransactions = AppState.transactions.some(t => t.accountId === id && t.isCreditCard);
             if (hasTransactions) {
-                 UI.showFeedback('Exclua as transaÃ§Ãµes deste cartÃ£o primeiro.', 'error'); return;
+                 UI.showFeedback('Exclua as transações deste cartão primeiro.', 'error'); return;
             }
-            UI.showConfirmationModal('Excluir CartÃ£o', 'Tem certeza que deseja excluir este cartÃ£o?', () => {
-                AppState.removeCreditCard(id); AppState.saveAll(); UI.render(); UI.showFeedback('CartÃ£o excluÃ­do.', 'success');
+            UI.showConfirmationModal('Excluir Cartão', 'Tem certeza que deseja excluir este cartão?', () => {
+                AppState.removeCreditCard(id); AppState.saveAll(); UI.render(); UI.showFeedback('Cartão excluído.', 'success');
             });
         } else if (type === 'transaction') {
             const tx = AppState.transactions.find(t => t.id === id);
-            const typeName = tx ? (tx.fundamentalType === 'receita' ? 'Receita' : 'Despesa') : 'TransaÃ§Ã£o';
+            const typeName = tx ? (tx.fundamentalType === 'receita' ? 'Receita' : 'Despesa') : 'Transação';
             if (tx && tx.groupId) {
-                UI.showConfirmationModal('Excluir Parcelamento', 'Esta Ã© uma transaÃ§Ã£o parcelada. Deseja excluir todas as parcelas relacionadas?', () => {
-                     AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`Parcelamento da ${typeName.toLowerCase()} excluÃ­do.`, 'success');
+                UI.showConfirmationModal('Excluir Parcelamento', 'Esta é uma transação parcelada. Deseja excluir todas as parcelas relacionadas?', () => {
+                     AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`Parcelamento da ${typeName.toLowerCase()} excluído.`, 'success');
                 });
             } else {
                 UI.showConfirmationModal(`Excluir ${typeName}`, `Tem certeza que deseja excluir esta ${typeName.toLowerCase()}?`, () => {
-                    AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`${typeName} excluÃ­da com sucesso.`, 'success');
+                    AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`${typeName} excluída com sucesso.`, 'success');
                 });
             }
         } else if (type === 'category') {
-            UI.showConfirmationModal('Excluir Categoria', `Tem certeza que deseja excluir a categoria "${name}"? As transaÃ§Ãµes existentes serÃ£o movidas para "Outros".`, () => {
-                AppState.removeCategory(name); AppState.saveAll(); UI.render(); UI.showFeedback('Categoria excluÃ­da.', 'success');
+            UI.showConfirmationModal('Excluir Categoria', `Tem certeza que deseja excluir a categoria "${name}"? As transações existentes serão movidas para "Outros".`, () => {
+                AppState.removeCategory(name); AppState.saveAll(); UI.render(); UI.showFeedback('Categoria excluída.', 'success');
             });
         } else if (type === 'budget') {
-            UI.showConfirmationModal('Excluir OrÃ§amento', 'Tem certeza que deseja excluir este orÃ§amento?', () => {
-                AppState.removeBudget(id); AppState.saveAll(); UI.render(); UI.showFeedback('OrÃ§amento excluÃ­do.', 'success');
+            UI.showConfirmationModal('Excluir Orçamento', 'Tem certeza que deseja excluir este orçamento?', () => {
+                AppState.removeBudget(id); AppState.saveAll(); UI.render(); UI.showFeedback('Orçamento excluído.', 'success');
             });
         }
     },
@@ -3588,7 +3567,7 @@ const Handlers = {
         AppState.saveAll();
         UI.closeModal();
         UI.render();
-        UI.showFeedback('SÃ©rie de parcelas atualizada com sucesso!', 'success');
+        UI.showFeedback('Série de parcelas atualizada com sucesso!', 'success');
     },
 
     async handleEditTransactionFormSubmit(form) {
@@ -3690,7 +3669,7 @@ const Handlers = {
              const scope = await new Promise(resolve => {
                  UI.showApplyToSeriesModal(
                     'Editar Parcelas',
-                    'VocÃª alterou um campo compartilhado (descriÃ§Ã£o, valor, categoria ou conta). Como deseja aplicar esta mudanÃ§a?',
+                    'Você alterou um campo compartilhado (descrição, valor, categoria ou conta). Como deseja aplicar esta mudança?',
                     () => { UI.closeModal(); resolve('one'); },
                     () => { UI.closeModal(); resolve('future'); },
                     () => { UI.closeModal(); resolve('all'); }
@@ -3721,7 +3700,7 @@ const Handlers = {
             UI.render();
             UI.showFeedback(`Categoria ${oldName ? 'atualizada' : 'adicionada'}!`, 'success');
         } else {
-            UI.showFeedback('Nome de categoria invÃ¡lido ou jÃ¡ existente.', 'error');
+            UI.showFeedback('Nome de categoria inválido ou já existente.', 'error');
         }
     },
 
@@ -3772,7 +3751,7 @@ const Handlers = {
         AppState.saveAll();
         UI.closeModal();
         UI.render();
-        UI.showFeedback('Conta/CartÃ£o salvo com sucesso!', 'success');
+        UI.showFeedback('Conta/Cartão salvo com sucesso!', 'success');
     },
 
     handleNewTransactionFormSubmit(form) {
@@ -3846,7 +3825,7 @@ const Handlers = {
 
         const card = AppState.creditCards.find(c => c.id === cardId);
         
-        // 1. Criar a transaÃ§Ã£o de despesa na conta de origem
+        // 1. Criar a transação de despesa na conta de origem
         const paymentTx = {
             id: crypto.randomUUID(),
             description: `Pagamento Fatura ${card.name}`,
@@ -3864,7 +3843,7 @@ const Handlers = {
         };
         AppState.addTransaction(paymentTx);
 
-        // 2. Marcar as despesas do cartÃ£o no mÃªs atual como pagas
+        // 2. Marcar as despesas do cartão no mês atual como pagas
         const month = AppState.displayMonth;
         const year = AppState.displayYear;
         AppState.transactions.forEach(tx => {
@@ -3909,7 +3888,7 @@ const Handlers = {
 
         if (mode === 'simple') {
             const { data, year, month } = getPeriodData(1);
-            const title = `RelatÃ³rio de ${type === 'despesa' ? 'Despesas' : 'Receitas'} - ${new Date(year, month).toLocaleString('pt-BR', {month: 'long', year: 'numeric'})}`;
+            const title = `Relatório de ${type === 'despesa' ? 'Despesas' : 'Receitas'} - ${new Date(year, month).toLocaleString('pt-BR', {month: 'long', year: 'numeric'})}`;
             UI.renderReportResults({data1: data, title});
         } else {
             const p1 = getPeriodData(1);
@@ -3927,7 +3906,7 @@ const Handlers = {
         const amount = parseFloat(form.querySelector('#budget-amount').value);
 
         if (!category || !amount || amount <= 0) {
-            UI.showFeedback('Por favor, selecione uma categoria e insira um valor vÃ¡lido.', 'error');
+            UI.showFeedback('Por favor, selecione uma categoria e insira um valor válido.', 'error');
             return;
         }
 
@@ -3942,7 +3921,7 @@ const Handlers = {
         AppState.saveAll();
         UI.closeModal();
         UI.render();
-        UI.showFeedback(`OrÃ§amento ${isEditing ? 'atualizado' : 'adicionado'} com sucesso!`, 'success');
+        UI.showFeedback(`Orçamento ${isEditing ? 'atualizado' : 'adicionado'} com sucesso!`, 'success');
     }
 };
 
@@ -3952,88 +3931,84 @@ document.addEventListener('DOMContentLoaded', async () => {
     Handlers.init();
 });
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// BANK IMPORT UI â€” Central de ImportaÃ§Ã£o Multi-Banco
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// BANK IMPORT UI — Central de Importação Multi-Banco
+// ─────────────────────────────────────────────────────────────────────────────
 const BankImportUI = {
 
-    // Dados dos bancos disponÃ­veis
     allBanks: [
         { id:'nubank',    name:'Nubank',           color:'#820AD1', initials:'NU',
-          stepsOFX: ['App Nubank â†’ Perfil â†’ Extrato', 'Selecione o perÃ­odo', 'Baixar extrato â†’ <b>OFX</b>'],
-          stepsCSV: ['App Nubank â†’ Perfil â†’ Extrato', 'Selecione o perÃ­odo', 'Baixar extrato â†’ <b>CSV</b>'] },
-        { id:'itau',      name:'ItaÃº',              color:'#EC7000', initials:'IT',
-          stepsOFX: ['itau.com.br â†’ Conta â†’ Extrato', 'Selecione o perÃ­odo', 'Exportar â†’ <b>OFX</b>'],
+          stepsOFX: ['App Nubank → Perfil → Extrato', 'Selecione o período', 'Baixar extrato → <b>OFX</b>'],
+          stepsCSV: ['App Nubank → Perfil → Extrato', 'Selecione o período', 'Baixar extrato → <b>CSV</b>'] },
+        { id:'itau',      name:'Itaú',              color:'#EC7000', initials:'IT',
+          stepsOFX: ['itau.com.br → Conta → Extrato', 'Selecione o período', 'Exportar → <b>OFX</b>'],
           stepsCSV: [] },
         { id:'bradesco',  name:'Bradesco',          color:'#CC092F', initials:'BR',
-          stepsOFX: ['bradesco.com.br â†’ Conta Corrente â†’ Extrato', 'Selecione perÃ­odo', 'Exportar â†’ <b>OFX</b>'],
+          stepsOFX: ['bradesco.com.br → Conta Corrente → Extrato', 'Selecione período', 'Exportar → <b>OFX</b>'],
           stepsCSV: [] },
         { id:'santander', name:'Santander',         color:'#EC0000', initials:'SN',
-          stepsOFX: ['santander.com.br â†’ Conta â†’ Extrato', 'Selecione perÃ­odo', 'Exportar â†’ <b>OFX</b>'],
+          stepsOFX: ['santander.com.br → Conta → Extrato', 'Selecione período', 'Exportar → <b>OFX</b>'],
           stepsCSV: [] },
         { id:'bb',        name:'Banco do Brasil',   color:'#DDAA00', initials:'BB',
-          stepsOFX: ['bb.com.br â†’ Extrato', 'Selecione conta e perÃ­odo', 'Exportar â†’ <b>OFX</b>'],
-          stepsCSV: ['bb.com.br â†’ Extrato', 'Selecione perÃ­odo', 'Baixar â†’ <b>CSV</b>'] },
-        { id:'caixa',     name:'Caixa EconÃ´mica',   color:'#005B9C', initials:'CX',
-          stepsOFX: ['caixa.gov.br â†’ Extrato', 'Selecione perÃ­odo', 'Exportar â†’ <b>OFX</b>'],
+          stepsOFX: ['bb.com.br → Extrato', 'Selecione conta e período', 'Exportar → <b>OFX</b>'],
+          stepsCSV: ['bb.com.br → Extrato', 'Selecione período', 'Baixar → <b>CSV</b>'] },
+        { id:'caixa',     name:'Caixa Econômica',   color:'#005B9C', initials:'CX',
+          stepsOFX: ['caixa.gov.br → Extrato', 'Selecione período', 'Exportar → <b>OFX</b>'],
           stepsCSV: [] },
         { id:'inter',     name:'Banco Inter',       color:'#FF7A00', initials:'IN',
-          stepsOFX: ['App Inter â†’ Extrato', 'Selecione perÃ­odo â†’ Compartilhar â†’ <b>OFX</b>'],
-          stepsCSV: ['App Inter â†’ Extrato', 'Selecione perÃ­odo â†’ Compartilhar â†’ <b>CSV</b>'] },
+          stepsOFX: ['App Inter → Extrato', 'Selecione período → Compartilhar → <b>OFX</b>'],
+          stepsCSV: ['App Inter → Extrato', 'Selecione período → Compartilhar → <b>CSV</b>'] },
         { id:'c6',        name:'C6 Bank',           color:'#444444', initials:'C6',
-          stepsOFX: ['App C6 â†’ Extrato â†’ â‹®', 'Exportar extrato â†’ <b>OFX</b>'],
-          stepsCSV: ['App C6 â†’ Extrato â†’ â‹®', 'Exportar extrato â†’ <b>CSV</b>'] },
+          stepsOFX: ['App C6 → Extrato → ⋮', 'Exportar extrato → <b>OFX</b>'],
+          stepsCSV: ['App C6 → Extrato → ⋮', 'Exportar extrato → <b>CSV</b>'] },
         { id:'btg',       name:'BTG Pactual',       color:'#001E62', initials:'BT',
-          stepsOFX: ['btgpactual.com â†’ Extrato', 'Exportar â†’ <b>OFX</b>'],
+          stepsOFX: ['btgpactual.com → Extrato', 'Exportar → <b>OFX</b>'],
           stepsCSV: [] },
         { id:'xp',        name:'XP Investimentos',  color:'#111111', initials:'XP',
-          stepsOFX: ['xpi.com.br â†’ Extrato/MovimentaÃ§Ãµes', 'Exportar â†’ <b>OFX</b>'],
+          stepsOFX: ['xpi.com.br → Extrato/Movimentações', 'Exportar → <b>OFX</b>'],
           stepsCSV: [] },
         { id:'picpay',    name:'PicPay',            color:'#11C76F', initials:'PP',
           stepsOFX: [],
-          stepsCSV: ['App PicPay â†’ Extrato â†’ â‹® â†’ Exportar â†’ <b>CSV</b>'] },
+          stepsCSV: ['App PicPay → Extrato → ⋮ → Exportar → <b>CSV</b>'] },
         { id:'neon',      name:'Neon',              color:'#00AACC', initials:'NE',
-          stepsOFX: ['App Neon â†’ Extrato â†’ Exportar â†’ <b>OFX</b>'],
+          stepsOFX: ['App Neon → Extrato → Exportar → <b>OFX</b>'],
           stepsCSV: [] },
         { id:'sicoob',    name:'Sicoob',            color:'#008B3B', initials:'SC',
-          stepsOFX: ['sicoob.com.br â†’ Extrato', 'Exportar â†’ <b>OFX</b>'],
+          stepsOFX: ['sicoob.com.br → Extrato', 'Exportar → <b>OFX</b>'],
           stepsCSV: [] },
         { id:'sicredi',   name:'Sicredi',           color:'#007E3A', initials:'SI',
-          stepsOFX: ['sicredi.com.br â†’ Extrato', 'Exportar â†’ <b>OFX</b>'],
+          stepsOFX: ['sicredi.com.br → Extrato', 'Exportar → <b>OFX</b>'],
           stepsCSV: [] },
         { id:'original',  name:'Original',          color:'#00A859', initials:'OR',
-          stepsOFX: ['original.com.br â†’ Extrato', 'Exportar â†’ <b>OFX</b>'],
+          stepsOFX: ['original.com.br → Extrato', 'Exportar → <b>OFX</b>'],
           stepsCSV: [] },
         { id:'safra',     name:'Safra',             color:'#003DA5', initials:'SF',
-          stepsOFX: ['safra.com.br â†’ Extrato', 'Exportar â†’ <b>OFX</b>'],
+          stepsOFX: ['safra.com.br → Extrato', 'Exportar → <b>OFX</b>'],
           stepsCSV: [] },
         { id:'outro',     name:'Outro banco',       color:'#6b7280', initials:'+',
-          stepsOFX: ['Acesse o Internet Banking do seu banco', 'VÃ¡ em Extrato / MovimentaÃ§Ãµes', 'Exporte como <b>OFX</b> ou <b>QFX</b>'],
-          stepsCSV: ['Acesse o Internet Banking do seu banco', 'VÃ¡ em Extrato / MovimentaÃ§Ãµes', 'Exporte como <b>CSV</b>'] },
+          stepsOFX: ['Acesse o Internet Banking do seu banco', 'Vá em Extrato / Movimentações', 'Exporte como <b>OFX</b> ou <b>QFX</b>'],
+          stepsCSV: ['Acesse o Internet Banking do seu banco', 'Vá em Extrato / Movimentações', 'Exporte como <b>CSV</b>'] },
     ],
 
     pendingTxs: [],
     currentBankId: null,
 
-    // â”€â”€ Adicionar banco a "Meus Bancos" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Adicionar banco a "Meus Bancos" ──────────────────────────────────────
     addBankModal() {
         const myBanks = JSON.parse(localStorage.getItem('my_banks') || '[]');
         const available = this.allBanks.filter(b => !myBanks.includes(b.id));
-
         const content = `
-            <p style="font-size:.875rem;color:var(--text-2);margin-bottom:1rem;">Selecione os bancos que vocÃª usa para acompanhar as importaÃ§Ãµes:</p>
+            <p style="font-size:.875rem;color:var(--text-2);margin-bottom:1rem;">Selecione os bancos que você usa:</p>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.625rem;">
                 ${available.map(b => `
                     <label style="display:flex;align-items:center;gap:.625rem;padding:.625rem .75rem;border:2px solid var(--border);border-radius:.75rem;cursor:pointer;transition:all .15s;" id="bank-opt-${b.id}"
-                        onmouseover="this.style.borderColor='${b.color}';this.style.background='${b.color}18'" onmouseout="if(!document.getElementById('chk-${b.id}').checked){this.style.borderColor='var(--border)';this.style.background=''}">
+                        onmouseover="this.style.borderColor='${b.color}';this.style.background='${b.color}18'" onmouseout="if(!document.getElementById('chk-${b.id}').checked){this.style.borderColor='var(--border)';this.style.background='';}">
                         <input type="checkbox" id="chk-${b.id}" value="${b.id}" style="display:none;" onchange="if(this.checked){document.getElementById('bank-opt-${b.id}').style.borderColor='${b.color}';document.getElementById('bank-opt-${b.id}').style.background='${b.color}18';}else{document.getElementById('bank-opt-${b.id}').style.borderColor='var(--border)';document.getElementById('bank-opt-${b.id}').style.background='';}">
                         <div style="width:1.75rem;height:1.75rem;border-radius:.5rem;background:${b.color};color:white;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;flex-shrink:0;">${b.initials}</div>
                         <span style="font-size:.8rem;font-weight:600;color:var(--text);">${b.name}</span>
                     </label>`).join('')}
             </div>`;
-
-        UI.showModal('ðŸ¦ Adicionar Bancos',
-            content,
+        UI.showModal('🏦 Adicionar Bancos', content,
             `<button onclick="BankImportUI.confirmAddBanks()" style="background:var(--brand-500);color:white;font-weight:600;font-size:.875rem;padding:.625rem 1.25rem;border-radius:.625rem;border:none;cursor:pointer;">Adicionar Selecionados</button>`,
             'add-bank-form');
     },
@@ -4042,8 +4017,7 @@ const BankImportUI = {
         const checked = [...document.querySelectorAll('#add-bank-form input[type=checkbox]:checked')].map(c => c.value);
         if (!checked.length) { UI.showFeedback('Selecione ao menos um banco.', 'warning'); return; }
         const myBanks = JSON.parse(localStorage.getItem('my_banks') || '[]');
-        const updated = [...new Set([...myBanks, ...checked])];
-        localStorage.setItem('my_banks', JSON.stringify(updated));
+        localStorage.setItem('my_banks', JSON.stringify([...new Set([...myBanks, ...checked])]));
         UI.closeModal();
         UI.showFeedback(`${checked.length} banco${checked.length > 1 ? 's adicionados' : ' adicionado'}!`, 'success');
         UI.renderAccountsPage();
@@ -4055,19 +4029,14 @@ const BankImportUI = {
         UI.renderAccountsPage();
     },
 
-    // â”€â”€ Abrir modal de importaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Abrir modal de importação ─────────────────────────────────────────────
     openImport(bankId = null) {
         this.currentBankId = bankId;
         this.pendingTxs = [];
         const bank = bankId ? this.allBanks.find(b => b.id === bankId) : null;
-        const bankName = bank?.name || null;
-        const DUMMY = 'PLACEHOLDER';
-
         const steps = bank
             ? (bank.stepsOFX.length ? bank.stepsOFX : bank.stepsCSV)
             : ['Acesse o Internet Banking do seu banco', 'Exporte o extrato como <b>OFX</b> ou <b>CSV</b>'];
-
-        const stepsHTML = steps.map(s => `<li style="padding:.2rem 0;">${s}</li>`).join('');
 
         const content = `
             <div style="display:flex;flex-direction:column;gap:1.125rem;">
@@ -4076,23 +4045,15 @@ const BankImportUI = {
                     <div style="width:2.75rem;height:2.75rem;border-radius:.75rem;background:${bank.color};color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.95rem;flex-shrink:0;">${bank.initials}</div>
                     <div>
                         <p style="font-weight:700;color:var(--text);font-size:.95rem;">${bank.name}</p>
-                        <p style="font-size:.75rem;color:var(--text-2);">ImportaÃ§Ã£o de extrato</p>
+                        <p style="font-size:.75rem;color:var(--text-2);">Importação de extrato</p>
                     </div>
                 </div>` : ''}
-
                 <div style="background:var(--surface-2);border-radius:.875rem;padding:1rem;border:1px solid var(--border);">
-                    <p style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.625rem;">
-                        ${bank ? `Como exportar do ${bank.name}:` : 'Como exportar seu extrato:'}
-                    </p>
+                    <p style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.625rem;">${bank ? 'Como exportar do ' + bank.name + ':' : 'Como exportar seu extrato:'}</p>
                     <ol style="font-size:.8rem;color:var(--text-2);padding-left:1.25rem;line-height:2;margin:0;">
-                        ${stepsHTML}
+                        ${steps.map(s => `<li>${s}</li>`).join('')}
                     </ol>
-                    ${bank && bank.stepsOFX.length && bank.stepsCSV.length ? `
-                    <p style="font-size:.75rem;color:var(--text-3);margin-top:.5rem;">
-                        ðŸ’¡ <b>OFX</b> e <b>CSV</b> sÃ£o aceitos automaticamente.
-                    </p>` : ''}
                 </div>
-
                 <div>
                     <p style="font-size:.875rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">Selecione o arquivo exportado</p>
                     <label id="import-dropzone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--border);border-radius:.875rem;padding:1.75rem 1rem;cursor:pointer;transition:border-color .15s,background .15s;gap:.5rem;"
@@ -4104,14 +4065,13 @@ const BankImportUI = {
                     </label>
                     <div id="import-parse-result" style="display:none;margin-top:.5rem;"></div>
                 </div>
-
                 <div id="import-preview" style="display:none;"></div>
             </div>`;
 
         UI.showModal(
-            `ðŸ“¥ Importar Extrato${bankName ? ' â€” ' + bankName : ''}`,
+            `📥 Importar Extrato${bank ? ' — ' + bank.name : ''}`,
             content,
-            `<button id="import-confirm-btn" onclick="BankImportUI.confirmImport()" style="display:none;background:#10b981;color:white;font-size:.875rem;font-weight:600;padding:.625rem 1.25rem;border-radius:.625rem;border:none;cursor:pointer;">âœ… Importar TransaÃ§Ãµes</button>`,
+            `<button id="import-confirm-btn" onclick="BankImportUI.confirmImport()" style="display:none;background:#10b981;color:white;font-size:.875rem;font-weight:600;padding:.625rem 1.25rem;border-radius:.625rem;border:none;cursor:pointer;">✅ Importar Transações</button>`,
             'bank-import-form'
         );
         setTimeout(() => {
@@ -4120,91 +4080,77 @@ const BankImportUI = {
         }, 50);
     },
 
-    // â”€â”€ Ler arquivo (OFX ou CSV) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Ler arquivo OFX ou CSV ────────────────────────────────────────────────
     async handleFile(file) {
         if (!file) return;
         const resultEl = document.getElementById('import-parse-result');
-        if (resultEl) { resultEl.style.display = 'block'; resultEl.innerHTML = `<p style="font-size:.8rem;color:#10b981;">â³ Lendo arquivo...</p>`; }
-
+        if (resultEl) { resultEl.style.display = 'block'; resultEl.innerHTML = `<p style="font-size:.8rem;color:#10b981;">⏳ Lendo arquivo...</p>`; }
         try {
             const ext = file.name.split('.').pop().toLowerCase();
             let parsed;
             if (ext === 'csv') {
                 parsed = await CSVImporter.readFile(file);
             } else {
-                parsed = await OFXImporter.readFile(file);
-                // Normalize OFX result format to match CSV
-                parsed.bankKey  = this.currentBankId || 'unknown';
-                parsed.bankName = (this.currentBankId && this.allBanks.find(b => b.id === this.currentBankId)?.name) || 'ImportaÃ§Ã£o OFX';
+                const raw = await OFXImporter.readFile(file);
+                parsed = { ...raw, bankKey: this.currentBankId || 'unknown', bankName: (this.currentBankId && this.allBanks.find(b => b.id === this.currentBankId)?.name) || 'OFX' };
             }
             this.pendingTxs = parsed.transactions;
-            if (resultEl) resultEl.innerHTML = `<p style="font-size:.8rem;color:#10b981;font-weight:600;">âœ… ${parsed.count} transaÃ§Ãµes encontradas ${parsed.bankName ? 'Â· ' + parsed.bankName : ''}</p>`;
+            if (resultEl) resultEl.innerHTML = `<p style="font-size:.8rem;color:#10b981;font-weight:600;">✅ ${parsed.count} transações encontradas${parsed.bankName ? ' · ' + parsed.bankName : ''}</p>`;
             this.showPreview(parsed);
         } catch (e) {
-            if (resultEl) resultEl.innerHTML = `<p style="font-size:.8rem;color:#ef4444;">âŒ ${e.message}</p>`;
+            if (resultEl) resultEl.innerHTML = `<p style="font-size:.8rem;color:#ef4444;">❌ ${e.message}</p>`;
         }
     },
 
-    // â”€â”€ Preview das transaÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Preview ───────────────────────────────────────────────────────────────
     showPreview(parsed) {
         const previewEl  = document.getElementById('import-preview');
         const confirmBtn = document.getElementById('import-confirm-btn');
-
-        const receipts  = parsed.transactions.filter(t => (t.fundamentalType || t.type) === 'receita');
-        const expenses  = parsed.transactions.filter(t => (t.fundamentalType || t.type) !== 'receita');
-        const totalIn   = receipts.reduce((s, t) => s + t.value, 0);
-        const totalOut  = expenses.reduce((s, t) => s + t.value, 0);
-
+        const receipts   = parsed.transactions.filter(t => (t.fundamentalType || t.type) === 'receita');
+        const expenses   = parsed.transactions.filter(t => (t.fundamentalType || t.type) !== 'receita');
+        const totalIn    = receipts.reduce((s, t) => s + t.value, 0);
+        const totalOut   = expenses.reduce((s, t) => s + t.value, 0);
         const rows = parsed.transactions.slice(0, 12).map(t => {
-            const isReceita = (t.fundamentalType || t.type) === 'receita';
+            const isR = (t.fundamentalType || t.type) === 'receita';
             return `<tr style="border-bottom:1px solid var(--border);">
-                <td style="padding:.3rem .5rem;font-size:.72rem;color:var(--text-2);white-space:nowrap;">${t.date || ''}</td>
+                <td style="padding:.3rem .5rem;font-size:.72rem;color:var(--text-2);white-space:nowrap;">${t.date||''}</td>
                 <td style="padding:.3rem .5rem;font-size:.72rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.description}">${t.description}</td>
-                <td style="padding:.3rem .5rem;font-size:.72rem;color:var(--text-3);">${t.category || ''}</td>
-                <td style="padding:.3rem .5rem;font-size:.72rem;font-weight:700;text-align:right;color:${isReceita ? '#10b981' : '#ef4444'};">${isReceita ? '+' : '-'}R$ ${(t.value||0).toFixed(2)}</td>
+                <td style="padding:.3rem .5rem;font-size:.72rem;color:var(--text-3);">${t.category||''}</td>
+                <td style="padding:.3rem .5rem;font-size:.72rem;font-weight:700;text-align:right;color:${isR?'#10b981':'#ef4444'};">${isR?'+':'-'}R$ ${(t.value||0).toFixed(2)}</td>
             </tr>`;
         }).join('');
-
         if (previewEl) {
             previewEl.style.display = 'block';
             previewEl.innerHTML = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem;">
-                    <div style="background:#f0fdf4;border-radius:.625rem;padding:.625rem .75rem;border:1px solid #bbf7d0;">
-                        <div style="font-size:.7rem;color:#065f46;">Entradas</div>
-                        <div style="font-size:.95rem;font-weight:700;color:#10b981;">+R$ ${totalIn.toFixed(2)}</div>
-                    </div>
-                    <div style="background:#fef2f2;border-radius:.625rem;padding:.625rem .75rem;border:1px solid #fecaca;">
-                        <div style="font-size:.7rem;color:#7f1d1d;">SaÃ­das</div>
-                        <div style="font-size:.95rem;font-weight:700;color:#ef4444;">-R$ ${totalOut.toFixed(2)}</div>
-                    </div>
+                    <div style="background:#f0fdf4;border-radius:.625rem;padding:.625rem .75rem;border:1px solid #bbf7d0;"><div style="font-size:.7rem;color:#065f46;">Entradas</div><div style="font-size:.95rem;font-weight:700;color:#10b981;">+R$ ${totalIn.toFixed(2)}</div></div>
+                    <div style="background:#fef2f2;border-radius:.625rem;padding:.625rem .75rem;border:1px solid #fecaca;"><div style="font-size:.7rem;color:#7f1d1d;">Saídas</div><div style="font-size:.95rem;font-weight:700;color:#ef4444;">-R$ ${totalOut.toFixed(2)}</div></div>
                 </div>
-                <p style="font-size:.72rem;color:var(--text-3);margin-bottom:.375rem;">PrÃ©via (${Math.min(12, parsed.count)} de ${parsed.count} transaÃ§Ãµes):</p>
+                <p style="font-size:.72rem;color:var(--text-3);margin-bottom:.375rem;">Prévia (${Math.min(12,parsed.count)} de ${parsed.count}):</p>
                 <div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:.625rem;">
                     <table style="width:100%;border-collapse:collapse;">
                         <thead style="background:var(--surface-2);position:sticky;top:0;">
                             <tr>
-                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:left;color:var(--text-2);font-weight:600;">Data</th>
-                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:left;color:var(--text-2);font-weight:600;">DescriÃ§Ã£o</th>
-                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:left;color:var(--text-2);font-weight:600;">Categoria</th>
-                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:right;color:var(--text-2);font-weight:600;">Valor</th>
+                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:left;color:var(--text-2);">Data</th>
+                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:left;color:var(--text-2);">Descrição</th>
+                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:left;color:var(--text-2);">Categoria</th>
+                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:right;color:var(--text-2);">Valor</th>
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
                     </table>
                 </div>
-                ${parsed.count > 12 ? `<p style="font-size:.7rem;color:var(--text-3);margin-top:.25rem;">...e mais ${parsed.count - 12} transaÃ§Ãµes</p>` : ''}`;
+                ${parsed.count > 12 ? `<p style="font-size:.7rem;color:var(--text-3);margin-top:.25rem;">...e mais ${parsed.count - 12} transações</p>` : ''}`;
         }
         if (confirmBtn) confirmBtn.style.display = 'inline-flex';
     },
 
-    // â”€â”€ Confirmar importaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Confirmar importação ──────────────────────────────────────────────────
     confirmImport() {
         if (!this.pendingTxs.length) return;
-
         let imported = 0, skipped = 0;
         const existingOfx = new Set((AppState.transactions || []).map(t => t.ofxId).filter(Boolean));
         const existingCsv = new Set((AppState.transactions || []).map(t => t.csvId).filter(Boolean));
-
         for (const tx of this.pendingTxs) {
             if (tx.ofxId && existingOfx.has(tx.ofxId)) { skipped++; continue; }
             if (tx.csvId && existingCsv.has(tx.csvId)) { skipped++; continue; }
@@ -4222,24 +4168,20 @@ const BankImportUI = {
             });
             imported++;
         }
-
-        // Salvar histÃ³rico de importaÃ§Ã£o por banco
         if (this.currentBankId && imported > 0) {
             const hist = JSON.parse(localStorage.getItem('import_history') || '{}');
             const prev = hist[this.currentBankId]?.count || 0;
             hist[this.currentBankId] = { date: new Date().toISOString().slice(0,10), count: prev + imported };
             localStorage.setItem('import_history', JSON.stringify(hist));
         }
-
         Storage.save();
         UI.closeModal();
-        UI.showFeedback(`âœ… ${imported} transaÃ§Ãµes importadas${skipped ? ` (${skipped} duplicatas ignoradas)` : ''}!`, 'success');
+        UI.showFeedback(`✅ ${imported} transações importadas${skipped ? ` (${skipped} duplicatas ignoradas)` : ''}!`, 'success');
         UI.render();
         this.pendingTxs = [];
         this.currentBankId = null;
     },
 };
-
 </script>
 </body>
 </html>
