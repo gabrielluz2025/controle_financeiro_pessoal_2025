@@ -124,9 +124,72 @@
             white-space: nowrap;
         }
         
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn   { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes spin      { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fabPop    { 0% { transform: scale(0) translateY(10px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+        @keyframes fabPulse  { 0%,100% { box-shadow: 0 8px 28px rgba(99,102,241,.5); } 50% { box-shadow: 0 8px 36px rgba(99,102,241,.8); } }
+        @keyframes recording { 0%,100% { box-shadow: 0 8px 28px rgba(239,68,68,.5); } 50% { box-shadow: 0 8px 36px rgba(239,68,68,.9), 0 0 0 8px rgba(239,68,68,.15); } }
+
+        /* ── FAB — Botão Flutuante de Ação Rápida ─────────────────────────── */
+        #quick-fab-container {
+            position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 8000;
+            display: flex; flex-direction: column; align-items: flex-end; gap: .75rem;
+        }
+        .fab-main {
+            width: 3.5rem; height: 3.5rem; border-radius: 50%; border: none;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 28px rgba(99,102,241,.5);
+            transition: transform .2s, background .2s;
+            animation: fabPulse 3s infinite;
+            position: relative; z-index: 2;
+        }
+        .fab-main:hover  { transform: scale(1.08); }
+        .fab-main.open   { transform: rotate(45deg); background: linear-gradient(135deg,#475569,#334155); animation: none; box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+        .fab-main.rec    { background: linear-gradient(135deg,#ef4444,#dc2626); animation: recording 1s infinite; }
+        .fab-actions {
+            display: flex; flex-direction: column; gap: .6rem; align-items: flex-end;
+            pointer-events: none; opacity: 0;
+            transition: opacity .2s;
+        }
+        .fab-actions.visible { pointer-events: auto; opacity: 1; }
+        .fab-action {
+            display: flex; align-items: center; gap: .65rem;
+            animation: fabPop .25s ease both;
+        }
+        .fab-action-label {
+            background: var(--surface, #fff); color: var(--text, #1e293b);
+            font-size: .8rem; font-weight: 700;
+            padding: .35rem .75rem; border-radius: .5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,.12);
+            white-space: nowrap; border: 1px solid var(--border, #e2e8f0);
+        }
+        .fab-action-btn {
+            width: 2.75rem; height: 2.75rem; border-radius: 50%; border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: transform .18s, box-shadow .18s;
+            flex-shrink: 0;
+        }
+        .fab-action-btn:hover { transform: scale(1.1); }
+        .fab-action-btn.fab-voice  { background: linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; box-shadow:0 4px 16px rgba(99,102,241,.45); }
+        .fab-action-btn.fab-camera { background: linear-gradient(135deg,#10b981,#34d399); color:#fff; box-shadow:0 4px 16px rgba(16,185,129,.45); }
+        .fab-action-btn.fab-manual { background: linear-gradient(135deg,#f59e0b,#fbbf24); color:#fff; box-shadow:0 4px 16px rgba(245,158,11,.45); }
+        .fab-action:nth-child(1) { animation-delay: .05s; }
+        .fab-action:nth-child(2) { animation-delay: .1s; }
+        .fab-action:nth-child(3) { animation-delay: .15s; }
+        /* Toast FAB */
+        #fab-toast {
+            position: fixed; bottom: 6.5rem; right: 1.5rem; z-index: 8001;
+            background: var(--surface,#fff); color: var(--text,#1e293b);
+            border: 1px solid var(--border,#e2e8f0);
+            padding: .65rem 1rem; border-radius: .75rem;
+            font-size: .82rem; font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0,0,0,.12);
+            display: none; max-width: 260px; text-align: right;
+        }
+        #fab-toast.show { display: block; animation: fabPop .2s ease; }
 
         /* ── Tela de Login / Registro ──────────────────────────────────────── */
         #login-overlay {
@@ -500,6 +563,42 @@
 
     <div id="modal-container"></div>
     <div id="feedback-message" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50"></div>
+
+    <!-- ─── FAB — Atalho Rápido (Câmera / Voz / Nova Transação) ──────────── -->
+    <div id="quick-fab-container">
+        <div id="fab-toast"></div>
+
+        <div class="fab-actions" id="fab-actions">
+            <!-- Câmera -->
+            <div class="fab-action">
+                <span class="fab-action-label">Foto do comprovante</span>
+                <button class="fab-action-btn fab-camera" id="fab-camera-btn" title="Digitalizar comprovante">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </button>
+            </div>
+            <!-- Voz -->
+            <div class="fab-action">
+                <span class="fab-action-label">Entrada por voz</span>
+                <button class="fab-action-btn fab-voice" id="fab-voice-btn" title="Falar transação">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
+                </button>
+            </div>
+            <!-- Manual -->
+            <div class="fab-action">
+                <span class="fab-action-label">Nova transação manual</span>
+                <button class="fab-action-btn fab-manual" id="fab-manual-btn" title="Nova transação">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <input type="file" id="fab-camera-input" accept="image/*" capture="environment" class="hidden">
+
+        <!-- Botão principal -->
+        <button class="fab-main" id="fab-main-btn" title="Adicionar transação">
+            <svg id="fab-icon-plus" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        </button>
+    </div>
     
 <script>
 // Módulo de Estado da Aplicação
@@ -4965,6 +5064,120 @@ const BankImportUI = {
         this.currentBankId = null;
     },
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FAB — Botão Flutuante de Ação Rápida (Câmera / Voz / Manual)
+// ─────────────────────────────────────────────────────────────────────────────
+const QuickFAB = {
+
+    _open: false,
+    _toastTimer: null,
+
+    init() {
+        const mainBtn   = document.getElementById('fab-main-btn');
+        const actions   = document.getElementById('fab-actions');
+        const voiceBtn  = document.getElementById('fab-voice-btn');
+        const cameraBtn = document.getElementById('fab-camera-btn');
+        const manualBtn = document.getElementById('fab-manual-btn');
+        const camInput  = document.getElementById('fab-camera-input');
+        if (!mainBtn) return;
+
+        mainBtn.addEventListener('click', () => this.toggle());
+
+        // Fechar ao clicar fora do FAB
+        document.addEventListener('click', (e) => {
+            const fab = document.getElementById('quick-fab-container');
+            if (fab && !fab.contains(e.target) && this._open) this.close();
+        });
+
+        // ── Voz ──────────────────────────────────────────────────────────────
+        voiceBtn && voiceBtn.addEventListener('click', () => {
+            this.close();
+            if (!VoiceInput.isSupported()) {
+                this.toast('❌ Voz não suportada. Use Chrome ou Edge.', 4000);
+                return;
+            }
+            if (VoiceInput.isListening) { VoiceInput.stop(); return; }
+
+            mainBtn.classList.add('rec');
+            this.toast('🎤 Ouvindo… diga a transação', 0);
+
+            VoiceInput.start(
+                (transcript, parsed) => {
+                    mainBtn.classList.remove('rec');
+                    this.toast(`✓ "${transcript}"`, 3500);
+                    UI.renderNewTransactionModal(parsed);
+                },
+                (err) => {
+                    mainBtn.classList.remove('rec');
+                    if (err) this.toast('❌ ' + err, 4000);
+                },
+                () => mainBtn.classList.remove('rec')
+            );
+        });
+
+        // ── Câmera ────────────────────────────────────────────────────────────
+        cameraBtn && cameraBtn.addEventListener('click', () => {
+            this.close();
+            camInput && camInput.click();
+        });
+
+        camInput && camInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            this.toast('📷 Lendo comprovante…', 0);
+            try {
+                const result = await ReceiptScanner.scanFile(file, (pct) => {
+                    this.toast(`📷 Processando… ${pct}%`, 0);
+                });
+                if (result.value || result.description) {
+                    this.toast(`✓ ${result.description || 'Lido'} — R$ ${result.value ? result.value.toFixed(2) : '?'}`, 3000);
+                    UI.renderNewTransactionModal({ ...result, fundamentalType: 'despesa', category: 'Compras' });
+                } else {
+                    this.toast('⚠ Dados não extraídos. Preencha manualmente.', 3500);
+                    UI.renderNewTransactionModal({});
+                }
+            } catch (err) {
+                this.toast('❌ ' + err.message, 4000);
+            } finally {
+                camInput.value = '';
+            }
+        });
+
+        // ── Manual ────────────────────────────────────────────────────────────
+        manualBtn && manualBtn.addEventListener('click', () => {
+            this.close();
+            UI.renderNewTransactionModal({});
+        });
+    },
+
+    toggle() { this._open ? this.close() : this.open(); },
+
+    open() {
+        this._open = true;
+        document.getElementById('fab-main-btn')?.classList.add('open');
+        document.getElementById('fab-actions')?.classList.add('visible');
+    },
+
+    close() {
+        this._open = false;
+        document.getElementById('fab-main-btn')?.classList.remove('open');
+        document.getElementById('fab-actions')?.classList.remove('visible');
+    },
+
+    toast(msg, duration = 3000) {
+        const el = document.getElementById('fab-toast');
+        if (!el) return;
+        clearTimeout(this._toastTimer);
+        el.textContent = msg;
+        el.classList.add('show');
+        if (duration > 0) {
+            this._toastTimer = setTimeout(() => el.classList.remove('show'), duration);
+        }
+    },
+};
+
+document.addEventListener('DOMContentLoaded', () => setTimeout(() => QuickFAB.init(), 400));
 </script>
 </body>
 </html>
