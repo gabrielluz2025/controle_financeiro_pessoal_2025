@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Enhanced Styles -->
-    <link rel="stylesheet" href="css/enhanced-styles.css?v=3">
+    <link rel="stylesheet" href="css/enhanced-styles.css?v=4">
     <!-- Importadores de Extrato -->
     <script src="js/ofx-importer.js"></script>
     <script src="js/csv-importer.js"></script>
@@ -21,6 +21,7 @@
     <script src="js/voice-input.js"></script>
     <script src="js/quick-input-form.js"></script>
     <script src="js/receipt-scanner.js"></script>
+    <script src="js/live-cashflow.js"></script>
     <!-- Theme Manager & New Features -->
     <script src="js/theme-manager.js"></script>
     <style>
@@ -724,6 +725,9 @@
 
                 <!-- Summary Cards -->
                 <div id="summary-cards-container" class="summary-cards-grid grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 mb-4"></div>
+
+                <!-- Fluxo de Caixa Vivo (projeção diária) -->
+                <div id="live-cashflow-widget" class="lcf-widget mb-5"></div>
 
                 <!-- Score de Saúde + Alertas de Anomalia -->
                 <div id="health-anomaly-row" class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
@@ -1528,6 +1532,7 @@ const UI = {
         this.renderOverdueBills();
         this.renderBalanceChart();
         this.renderExpensesChart();
+        this.renderLiveCashFlow();
         this.renderCashFlowChart();
     },
 
@@ -2845,7 +2850,7 @@ const UI = {
         if (voiceBtn) {
             if (!VoiceInput.isSupported()) {
                 voiceBtn.disabled = true;
-                voiceBtn.title = 'Reconhecimento de voz não suportado neste navegador. Use Chrome ou Edge.';
+                voiceBtn.title = VoiceInput.unsupportedMessage();
                 voiceBtn.style.opacity = '.4';
             } else {
                 voiceBtn.addEventListener('click', () => {
@@ -3923,6 +3928,165 @@ const UI = {
                 </div>
             </div>`).join('')}
         </div>`;
+    },
+
+    // ── Fluxo de Caixa Vivo (projeção diária + alerta de estouro) ────────────
+    _lcfHorizon: 30,
+
+    setCashflowHorizon(days) {
+        this._lcfHorizon = days;
+        this.renderLiveCashFlow();
+    },
+
+    renderLiveCashFlow() {
+        const el = document.getElementById('live-cashflow-widget');
+        if (!el || typeof LiveCashFlow === 'undefined') return;
+
+        const fmt = v => this.formatCurrency(v);
+        const p = LiveCashFlow.project(this._lcfHorizon || 30);
+
+        if (!p.hasData) {
+            el.innerHTML = `
+                <div class="lcf-empty">
+                    <div class="lcf-empty-icon">📊</div>
+                    <p class="lcf-empty-title">Fluxo de Caixa Vivo</p>
+                    <p class="lcf-empty-text">Cadastre uma conta e lance suas receitas e contas a pagar para ver a projeção do seu saldo dia a dia.</p>
+                </div>`;
+            return;
+        }
+
+        const ins = LiveCashFlow.insight(p);
+        const levelClass = `lcf-${ins.level}`;
+        const dias = p.horizonDays;
+
+        const breachBadge = p.breach
+            ? `<span class="lcf-pill lcf-pill-danger">⚠ estoura ${p.breach.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>`
+            : `<span class="lcf-pill lcf-pill-good">✓ sem estouro</span>`;
+
+        el.innerHTML = `
+            <div class="lcf-head">
+                <div class="lcf-head-title">
+                    <span class="lcf-eyebrow">Fluxo de Caixa Vivo</span>
+                    <h3 class="lcf-title">Próximos ${dias} dias ${breachBadge}</h3>
+                </div>
+                <div class="lcf-range" role="group" aria-label="Horizonte da projeção">
+                    <button type="button" class="lcf-range-btn ${dias === 30 ? 'active' : ''}" onclick="UI.setCashflowHorizon(30)">30d</button>
+                    <button type="button" class="lcf-range-btn ${dias === 60 ? 'active' : ''}" onclick="UI.setCashflowHorizon(60)">60d</button>
+                    <button type="button" class="lcf-range-btn ${dias === 90 ? 'active' : ''}" onclick="UI.setCashflowHorizon(90)">90d</button>
+                </div>
+            </div>
+
+            <div class="lcf-insight ${levelClass}">
+                <div class="lcf-insight-dot"></div>
+                <div>
+                    <p class="lcf-insight-title">${ins.title}</p>
+                    <p class="lcf-insight-msg">${ins.message}</p>
+                </div>
+            </div>
+
+            <div class="lcf-metrics">
+                <div class="lcf-metric">
+                    <span class="lcf-metric-label">Saldo hoje</span>
+                    <span class="lcf-metric-value">${fmt(p.startBalance)}</span>
+                </div>
+                <div class="lcf-metric">
+                    <span class="lcf-metric-label">Ponto mais baixo</span>
+                    <span class="lcf-metric-value ${p.lowest.balance < 0 ? 'lcf-neg' : ''}">${fmt(p.lowest.balance)}</span>
+                    <span class="lcf-metric-sub">${p.lowest.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+                </div>
+                <div class="lcf-metric">
+                    <span class="lcf-metric-label">Saldo projetado</span>
+                    <span class="lcf-metric-value ${p.endBalance < 0 ? 'lcf-neg' : 'lcf-pos'}">${fmt(p.endBalance)}</span>
+                </div>
+            </div>
+
+            <div class="lcf-chart-wrap">
+                <canvas id="live-cashflow-chart"></canvas>
+            </div>
+
+            <div class="lcf-foot">
+                <span class="lcf-foot-item"><span class="lcf-dot lcf-dot-in"></span> Entradas: ${fmt(p.totalIn)}</span>
+                <span class="lcf-foot-item"><span class="lcf-dot lcf-dot-out"></span> Saídas: ${fmt(Math.abs(p.totalOut))}</span>
+            </div>`;
+
+        this._drawLiveCashFlowChart(p);
+    },
+
+    _drawLiveCashFlowChart(p) {
+        const canvas = document.getElementById('live-cashflow-chart');
+        if (!canvas || !window.Chart) return;
+        if (window._liveCashflowChart) { window._liveCashflowChart.destroy(); window._liveCashflowChart = null; }
+
+        const labels = p.points.map(pt => pt.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+        const data = p.points.map(pt => pt.balance);
+        const breachIdx = p.breach ? p.points.findIndex(pt => pt.iso === LiveCashFlow._iso(p.breach.date)) : -1;
+        const lowestIdx = p.points.findIndex(pt => pt.iso === LiveCashFlow._iso(p.lowest.date));
+
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 220);
+        grad.addColorStop(0, 'rgba(99,102,241,.22)');
+        grad.addColorStop(1, 'rgba(99,102,241,.01)');
+
+        window._liveCashflowChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Saldo projetado',
+                    data,
+                    borderColor: '#6366f1',
+                    backgroundColor: grad,
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: p.points.map((_, i) => i === breachIdx ? 6 : (i === lowestIdx && lowestIdx !== 0 ? 5 : 0)),
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: p.points.map((pt, i) =>
+                        i === breachIdx ? '#ef4444' : (i === lowestIdx ? '#f59e0b' : '#6366f1')),
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    segment: {
+                        borderColor: c => (c.p0.parsed.y < 0 || c.p1.parsed.y < 0) ? '#ef4444' : '#6366f1',
+                    },
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: items => {
+                                const i = items[0].dataIndex;
+                                return p.points[i].date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+                            },
+                            label: item => `Saldo: ${this.formatCurrency(item.parsed.y)}`,
+                            afterBody: items => {
+                                const i = items[0].dataIndex;
+                                const evs = p.points[i].events || [];
+                                if (!evs.length) return '';
+                                return evs.map(e => `${e.amount > 0 ? '＋' : '－'} ${e.label}: ${this.formatCurrency(Math.abs(e.amount))}`);
+                            },
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxTicksLimit: 8, maxRotation: 0, autoSkip: true, color: 'var(--text-3)' },
+                    },
+                    y: {
+                        grid: { color: 'rgba(148,163,184,.15)' },
+                        ticks: {
+                            color: 'var(--text-3)',
+                            callback: v => 'R$ ' + (Math.abs(v) >= 1000 ? (v / 1000).toFixed(1).replace('.0', '') + 'k' : v),
+                        },
+                    }
+                }
+            }
+        });
     },
 
     // ── Fluxo de Caixa Projetado ─────────────────────────────────────────────
@@ -5973,7 +6137,12 @@ const QuickFAB = {
         manualBtn && manualBtn.addEventListener('click', () => { this.close(); this.openManual(); });
 
         // Atalhos visíveis no dashboard (celular)
-        document.getElementById('dash-voice-btn')?.addEventListener('click', () => this.startVoice());
+        const dashVoice = document.getElementById('dash-voice-btn');
+        if (dashVoice && !VoiceInput.isSupported()) {
+            dashVoice.style.opacity = '0.45';
+            dashVoice.title = VoiceInput.unsupportedMessage();
+        }
+        dashVoice?.addEventListener('click', () => this.startVoice());
         document.getElementById('dash-photo-btn')?.addEventListener('click', () => {
             document.getElementById('dash-photo-input')?.click();
         });

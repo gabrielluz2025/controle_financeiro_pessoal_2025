@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v3
-const CACHE = 'financas-plus-v3';
+// Finanças+ Service Worker — v4
+const CACHE = 'financas-plus-v4';
 const STATIC = [
     '/',
     '/index.html',
@@ -9,6 +9,7 @@ const STATIC = [
     '/js/voice-input.js',
     '/js/quick-input-form.js',
     '/js/receipt-scanner.js',
+    '/js/live-cashflow.js',
     '/js/theme-manager.js',
     '/manifest.json',
 ];

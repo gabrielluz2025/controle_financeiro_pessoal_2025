@@ -1343,6 +1343,105 @@ body.mobile-sidebar-open { overflow: hidden; }
     .modal-content { max-width: 100%; border-radius: var(--radius-lg); }
 }
 
+/* ============================================================
+   FLUXO DE CAIXA VIVO — "Calm Money"
+   ============================================================ */
+.lcf-widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+}
+.lcf-widget::before {
+    content: '';
+    position: absolute; inset: 0 0 auto 0; height: 3px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #10b981);
+    opacity: .9;
+}
+.lcf-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: .75rem; margin-bottom: 1rem;
+}
+.lcf-eyebrow {
+    font-size: .68rem; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--brand-500);
+}
+.lcf-title {
+    font-size: 1.05rem; font-weight: 800; color: var(--text);
+    letter-spacing: -.02em; margin-top: .15rem;
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+}
+.lcf-pill {
+    font-size: .68rem; font-weight: 700; padding: .18rem .5rem;
+    border-radius: 999px; white-space: nowrap;
+}
+.lcf-pill-good { background: var(--success-bg); color: #059669; }
+.lcf-pill-danger { background: var(--danger-bg); color: #e11d48; }
+.lcf-range { display: flex; gap: .25rem; background: var(--surface-2); padding: .2rem; border-radius: .6rem; flex-shrink: 0; }
+.lcf-range-btn {
+    border: none; background: transparent; cursor: pointer;
+    font-size: .72rem; font-weight: 700; color: var(--text-3);
+    padding: .3rem .55rem; border-radius: .45rem; transition: all var(--t);
+}
+.lcf-range-btn.active { background: var(--surface); color: var(--brand-600); box-shadow: var(--shadow-sm); }
+.lcf-range-btn:hover:not(.active) { color: var(--text-2); }
+
+.lcf-insight {
+    display: flex; align-items: flex-start; gap: .65rem;
+    padding: .8rem .9rem; border-radius: var(--radius);
+    margin-bottom: 1rem; border: 1px solid transparent;
+}
+.lcf-insight-dot { width: .6rem; height: .6rem; border-radius: 50%; margin-top: .35rem; flex-shrink: 0; }
+.lcf-insight-title { font-size: .82rem; font-weight: 700; color: var(--text); }
+.lcf-insight-msg { font-size: .8rem; color: var(--text-2); line-height: 1.45; margin-top: .1rem; }
+.lcf-good    { background: var(--success-bg); border-color: rgba(16,185,129,.25); }
+.lcf-good    .lcf-insight-dot { background: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,.15); }
+.lcf-warning { background: var(--warning-bg); border-color: rgba(245,158,11,.28); }
+.lcf-warning .lcf-insight-dot { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,.15); }
+.lcf-danger  { background: var(--danger-bg); border-color: rgba(244,63,94,.30); }
+.lcf-danger  .lcf-insight-dot { background: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,.15); animation: recording 1.4s infinite; }
+
+.lcf-metrics {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: .75rem; margin-bottom: 1rem;
+}
+.lcf-metric {
+    display: flex; flex-direction: column; gap: .1rem;
+    padding: .7rem .8rem; background: var(--surface-2);
+    border-radius: var(--radius); border: 1px solid var(--border);
+}
+.lcf-metric-label { font-size: .68rem; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .04em; }
+.lcf-metric-value { font-size: 1.05rem; font-weight: 800; color: var(--text); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.lcf-metric-sub { font-size: .68rem; color: var(--text-3); }
+.lcf-metric-value.lcf-neg { color: #ef4444; }
+.lcf-metric-value.lcf-pos { color: #059669; }
+
+.lcf-chart-wrap { position: relative; height: 220px; margin: 0 -.35rem; }
+
+.lcf-foot { display: flex; gap: 1.25rem; margin-top: .85rem; flex-wrap: wrap; }
+.lcf-foot-item { font-size: .74rem; color: var(--text-2); font-weight: 600; display: flex; align-items: center; gap: .35rem; }
+.lcf-dot { width: .6rem; height: .6rem; border-radius: 50%; }
+.lcf-dot-in { background: #10b981; }
+.lcf-dot-out { background: #ef4444; }
+
+.lcf-empty { text-align: center; padding: 2rem 1rem; }
+.lcf-empty-icon { font-size: 2rem; margin-bottom: .5rem; }
+.lcf-empty-title { font-size: 1rem; font-weight: 800; color: var(--text); }
+.lcf-empty-text { font-size: .82rem; color: var(--text-2); max-width: 32rem; margin: .35rem auto 0; line-height: 1.5; }
+
+@media (max-width: 767px) {
+    .lcf-widget { padding: 1rem; }
+    .lcf-head { flex-direction: column; }
+    .lcf-metrics { gap: .5rem; }
+    .lcf-metric { padding: .55rem .6rem; }
+    .lcf-metric-value { font-size: .9rem; }
+    .lcf-metric-label { font-size: .62rem; }
+    .lcf-chart-wrap { height: 190px; }
+}
+
 /* ── DARK MODE — OVERRIDES TAILWIND ──────────────────────── */
 body.dark-mode .text-gray-800,
 body.dark-mode .text-gray-700 { color: var(--text) !important; }
