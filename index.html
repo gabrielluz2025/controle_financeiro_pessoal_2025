@@ -510,7 +510,7 @@ const AuthManager = {
             );
             if (res.error) { errEl.textContent = res.error; }
         } catch (err) {
-            errEl.textContent = 'Erro de conexão. Verifique sua internet.';
+            errEl.textContent = err.message || 'Erro de conexão. Verifique sua internet.';
         } finally {
             btn.disabled = false;
             btn.textContent = 'Entrar';
@@ -533,7 +533,7 @@ const AuthManager = {
             );
             if (res.error) { errEl.textContent = res.error; }
         } catch (err) {
-            errEl.textContent = 'Erro de conexão. Verifique sua internet.';
+            errEl.textContent = err.message || 'Erro de conexão. Verifique sua internet.';
         } finally {
             btn.disabled = false;
             btn.textContent = 'Criar minha conta';
@@ -541,25 +541,36 @@ const AuthManager = {
     },
 
     // ── Login ─────────────────────────────────────────────────────────────────
-    async login(email, password) {
+    async _callAuth(payload) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
         const res = await fetch(`${this.apiBase}/auth.php`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'login', email, password }),
+            headers,
+            body: JSON.stringify(payload),
         });
-        const data = await res.json();
+        // Se a resposta não for JSON (ex: 404 HTML), lança erro descritivo
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            const text = await res.text();
+            console.error('Resposta não-JSON da API:', res.status, text.slice(0, 200));
+            if (res.status === 404) {
+                throw new Error('API não encontrada (404). O deploy pode não ter concluído ainda.');
+            }
+            throw new Error(`Erro do servidor (${res.status})`);
+        }
+        return res.json();
+    },
+
+    async login(email, password) {
+        const data = await this._callAuth({ action: 'login', email, password });
         if (data.ok) { this._onAuthenticated(data.token, data.user); }
         return data;
     },
 
     // ── Registro ──────────────────────────────────────────────────────────────
     async register(name, email, password) {
-        const res = await fetch(`${this.apiBase}/auth.php`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'register', name, email, password }),
-        });
-        const data = await res.json();
+        const data = await this._callAuth({ action: 'register', name, email, password });
         if (data.ok) { this._onAuthenticated(data.token, data.user); }
         return data;
     },
@@ -567,16 +578,8 @@ const AuthManager = {
     // ── Logout ────────────────────────────────────────────────────────────────
     async logout() {
         if (this.token) {
-            try {
-                await fetch(`${this.apiBase}/auth.php`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.token}`,
-                    },
-                    body: JSON.stringify({ action: 'logout' }),
-                });
-            } catch (_) { /* ignora erros de rede no logout */ }
+            try { await this._callAuth({ action: 'logout' }); }
+            catch (_) { /* ignora erros de rede no logout */ }
         }
         this._clearSession();
         this.showLoginScreen();
@@ -592,22 +595,14 @@ const AuthManager = {
         }
         // Verificar se o token ainda é válido
         try {
-            const res = await fetch(`${this.apiBase}/auth.php`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.token}`,
-                },
-                body: JSON.stringify({ action: 'me' }),
-            });
-            const data = await res.json();
+            const data = await this._callAuth({ action: 'me' });
             if (data.ok) {
                 this.user = data.user;
                 localStorage.setItem('auth_user', JSON.stringify(data.user));
                 this._updateUserUI();
                 return true;
             }
-        } catch (_) { /* offline ou erro */ }
+        } catch (_) { /* offline, 404 (API não implantada) ou erro — mostra login */ }
 
         // Token inválido/expirado
         this._clearSession();
