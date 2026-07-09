@@ -29,6 +29,31 @@ function getDb() {
 }
 
 function ensureSchema(PDO $pdo) {
+    // Tabela de usuários
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(150) NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            token VARCHAR(64) DEFAULT NULL,
+            token_expires_at DATETIME DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_email (email)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+
+    // Dados financeiros por usuário
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS user_data (
+            user_id INT PRIMARY KEY,
+            data_json LONGTEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+
+    // Tabela legada (mantida para compatibilidade, não usada com auth)
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS financeiro_data (
             id INT PRIMARY KEY,
@@ -36,19 +61,50 @@ function ensureSchema(PDO $pdo) {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+}
 
-    $stmt = $pdo->query('SELECT COUNT(*) AS total FROM financeiro_data WHERE id = 1');
-    $row = $stmt->fetch();
-    if ((int) $row['total'] === 0) {
-        $empty = json_encode([
-            'accounts' => [],
-            'creditCards' => [],
-            'transactions' => [],
-            'categories' => [],
-            'budgets' => [],
-        ], JSON_UNESCAPED_UNICODE);
-
-        $insert = $pdo->prepare('INSERT INTO financeiro_data (id, data_json) VALUES (1, ?)');
-        $insert->execute([$empty]);
+/**
+ * Valida o token Bearer do header Authorization.
+ * Retorna o user_id ou null se inválido/expirado.
+ */
+function validateToken(PDO $pdo): ?int {
+    $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (!preg_match('/^Bearer\s+(.+)$/i', $header, $m)) {
+        return null;
     }
+    $token = trim($m[1]);
+    if (strlen($token) < 32) return null;
+
+    $stmt = $pdo->prepare('
+        SELECT id FROM users
+        WHERE token = ? AND token_expires_at > NOW()
+    ');
+    $stmt->execute([$token]);
+    $row = $stmt->fetch();
+    return $row ? (int) $row['id'] : null;
+}
+
+/**
+ * Gera um token seguro de 64 caracteres e salva no usuário.
+ * Expira em 30 dias.
+ */
+function generateToken(PDO $pdo, int $userId): string {
+    $token = bin2hex(random_bytes(32)); // 64 chars hex
+    $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
+    $stmt = $pdo->prepare('UPDATE users SET token = ?, token_expires_at = ? WHERE id = ?');
+    $stmt->execute([$token, $expires, $userId]);
+    return $token;
+}
+
+/**
+ * Retorna o JSON de dados vazio padrão.
+ */
+function emptyData(): array {
+    return [
+        'accounts'     => [],
+        'creditCards'  => [],
+        'transactions' => [],
+        'categories'   => [],
+        'budgets'      => [],
+    ];
 }

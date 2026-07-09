@@ -124,9 +124,137 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ── Tela de Login / Registro ──────────────────────────────────────── */
+        #login-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            animation: fadeIn .4s ease;
+        }
+        #login-overlay.hidden { display: none; }
+        .login-card {
+            background: rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 1.25rem;
+            padding: 2.5rem 2rem;
+            width: 100%; max-width: 420px;
+            backdrop-filter: blur(24px);
+            box-shadow: 0 32px 80px rgba(0,0,0,.5);
+            animation: slideIn .4s ease;
+        }
+        .login-tabs { display: flex; gap: .5rem; margin-bottom: 1.75rem; background: rgba(0,0,0,.25); border-radius: .75rem; padding: .25rem; }
+        .login-tab {
+            flex: 1; padding: .5rem; border: none; border-radius: .5rem; cursor: pointer;
+            font-size: .875rem; font-weight: 600; transition: all .2s;
+            background: transparent; color: rgba(255,255,255,.5);
+        }
+        .login-tab.active { background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff; box-shadow: 0 4px 14px rgba(99,102,241,.4); }
+        .login-input-group { margin-bottom: 1rem; }
+        .login-input-group label { display: block; font-size: .8rem; font-weight: 600; color: rgba(255,255,255,.6); margin-bottom: .35rem; }
+        .login-input {
+            width: 100%; padding: .7rem 1rem; border-radius: .625rem;
+            background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+            color: #fff; font-size: .9rem; outline: none; transition: border-color .2s;
+            box-sizing: border-box;
+        }
+        .login-input::placeholder { color: rgba(255,255,255,.3); }
+        .login-input:focus { border-color: #6366f1; background: rgba(99,102,241,.12); }
+        .login-btn {
+            width: 100%; padding: .8rem; margin-top: .5rem; border: none; border-radius: .75rem;
+            background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff;
+            font-size: .95rem; font-weight: 700; cursor: pointer;
+            box-shadow: 0 8px 24px rgba(99,102,241,.4); transition: opacity .2s;
+        }
+        .login-btn:hover { opacity: .9; }
+        .login-btn:disabled { opacity: .5; cursor: not-allowed; }
+        .login-error { color: #f87171; font-size: .82rem; margin-top: .5rem; min-height: 1.2rem; text-align: center; }
+        .login-logo {
+            display: flex; align-items: center; justify-content: center; gap: .75rem;
+            margin-bottom: 1.75rem;
+        }
+        .login-logo-icon {
+            width: 3rem; height: 3rem; border-radius: .875rem;
+            background: linear-gradient(135deg,#6366f1,#8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 24px rgba(99,102,241,.4);
+        }
+        .login-logo-text {
+            font-size: 1.6rem; font-weight: 800;
+            background: linear-gradient(90deg,#fff 0%,#a5b4fc 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; letter-spacing: -.02em;
+        }
+
+        /* ── User avatar / header ───────────────────────────────────────────── */
+        .user-avatar {
+            width: 2rem; height: 2rem; border-radius: 50%;
+            background: linear-gradient(135deg,#6366f1,#8b5cf6);
+            color: #fff; font-size: .72rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; cursor: pointer; user-select: none;
+            box-shadow: 0 2px 8px rgba(99,102,241,.4);
+        }
+        .sync-indicator {
+            font-size: .72rem; font-weight: 500; padding: .2rem .6rem;
+            border-radius: 1rem; transition: all .3s;
+            color: rgba(0,0,0,.5);
+        }
+        .sync-indicator.syncing { color: #6366f1; background: rgba(99,102,241,.1); }
+        .sync-indicator.saved { color: #10b981; background: rgba(16,185,129,.1); }
+        .sync-indicator.error { color: #ef4444; background: rgba(239,68,68,.1); }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
+
+    <!-- ─── Tela de Login / Registro ─────────────────────────────────────── -->
+    <div id="login-overlay">
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="login-logo-icon">
+                    <svg width="22" height="22" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01"/></svg>
+                </div>
+                <span class="login-logo-text">Finanças+</span>
+            </div>
+
+            <div class="login-tabs">
+                <button class="login-tab active" id="tab-login" onclick="AuthManager.showTab('login')">Entrar</button>
+                <button class="login-tab" id="tab-register" onclick="AuthManager.showTab('register')">Criar conta</button>
+            </div>
+
+            <!-- Formulário de Login -->
+            <form id="login-form" onsubmit="AuthManager.submitLogin(event)">
+                <div class="login-input-group">
+                    <label>E-mail</label>
+                    <input class="login-input" id="login-email" type="email" placeholder="seu@email.com" autocomplete="email" required>
+                </div>
+                <div class="login-input-group">
+                    <label>Senha</label>
+                    <input class="login-input" id="login-password" type="password" placeholder="••••••" autocomplete="current-password" required>
+                </div>
+                <div class="login-error" id="login-error"></div>
+                <button class="login-btn" id="login-submit-btn" type="submit">Entrar</button>
+            </form>
+
+            <!-- Formulário de Registro -->
+            <form id="register-form" style="display:none" onsubmit="AuthManager.submitRegister(event)">
+                <div class="login-input-group">
+                    <label>Nome</label>
+                    <input class="login-input" id="register-name" type="text" placeholder="Seu nome" autocomplete="name" required>
+                </div>
+                <div class="login-input-group">
+                    <label>E-mail</label>
+                    <input class="login-input" id="register-email" type="email" placeholder="seu@email.com" autocomplete="email" required>
+                </div>
+                <div class="login-input-group">
+                    <label>Senha <span style="color:rgba(255,255,255,.35);font-weight:400;">(mín. 6 caracteres)</span></label>
+                    <input class="login-input" id="register-password" type="password" placeholder="••••••" autocomplete="new-password" required minlength="6">
+                </div>
+                <div class="login-error" id="register-error"></div>
+                <button class="login-btn" id="register-submit-btn" type="submit">Criar minha conta</button>
+            </form>
+        </div>
+    </div>
 
     <!-- Sidebar de Navegação -->
     <aside id="sidebar" class="w-64 flex flex-col flex-shrink-0" style="width:16rem;background:linear-gradient(145deg,#0f0c29 0%,#302b63 50%,#24243e 100%);box-shadow:4px 0 24px rgba(0,0,0,.3);position:relative;z-index:30;">
@@ -224,6 +352,22 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     Limpar
                 </button>
+
+                <!-- Sync indicator -->
+                <span id="sync-indicator" class="sync-indicator" style="display:none;"></span>
+
+                <!-- Separador -->
+                <div style="width:1px;height:1.5rem;background:var(--border);margin:0 .25rem;"></div>
+
+                <!-- User area -->
+                <div id="user-area" class="flex items-center gap-2" style="display:none!important;">
+                    <div class="user-avatar" id="user-avatar" title="Meu perfil">--</div>
+                    <span id="user-name-display" class="text-sm font-semibold" style="color:var(--text);max-width:7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                    <button id="logout-btn" class="header-btn" title="Sair" onclick="AuthManager.logout()">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        Sair
+                    </button>
+                </div>
             </div>
         </header>
         <div id="page-container" class="flex-1 p-4 md:p-6">
@@ -296,6 +440,248 @@
     
 <script>
 // Módulo de Estado da Aplicação
+// ─────────────────────────────────────────────────────────────────────────────
+// SYNC INDICATOR — Exibe status de sincronização na nuvem
+// ─────────────────────────────────────────────────────────────────────────────
+const SyncIndicator = {
+    _timer: null,
+    show(state, msg) {
+        const el = document.getElementById('sync-indicator');
+        if (!el) return;
+        el.className = 'sync-indicator ' + state;
+        if (state === 'syncing') {
+            el.textContent = '↑ sincronizando...';
+            el.style.display = '';
+        } else if (state === 'saved') {
+            el.textContent = '✓ salvo na nuvem';
+            el.style.display = '';
+            clearTimeout(this._timer);
+            this._timer = setTimeout(() => { el.style.display = 'none'; }, 3000);
+        } else if (state === 'error') {
+            el.textContent = '✗ ' + (msg || 'erro ao salvar');
+            el.style.display = '';
+            clearTimeout(this._timer);
+            this._timer = setTimeout(() => { el.style.display = 'none'; }, 4000);
+        }
+    },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH MANAGER — Login, registro, sessão, logout
+// ─────────────────────────────────────────────────────────────────────────────
+const AuthManager = {
+    token: localStorage.getItem('auth_token'),
+    user:  JSON.parse(localStorage.getItem('auth_user') || 'null'),
+
+    // URL base da API
+    apiBase: '/api',
+
+    // Detecta se está no ambiente de produção
+    isProduction() {
+        return window.location.hostname.includes('financasmais.com');
+    },
+
+    // Retorna o token atual (necessário para chamadas de API)
+    getToken() { return this.token; },
+
+    // ── Tabs ──────────────────────────────────────────────────────────────────
+    showTab(tab) {
+        const isLogin = tab === 'login';
+        document.getElementById('login-form').style.display = isLogin ? '' : 'none';
+        document.getElementById('register-form').style.display = isLogin ? 'none' : '';
+        document.getElementById('tab-login').classList.toggle('active', isLogin);
+        document.getElementById('tab-register').classList.toggle('active', !isLogin);
+        document.getElementById('login-error').textContent = '';
+        document.getElementById('register-error').textContent = '';
+    },
+
+    // ── Submissão Login ───────────────────────────────────────────────────────
+    async submitLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById('login-submit-btn');
+        const errEl = document.getElementById('login-error');
+        errEl.textContent = '';
+        btn.disabled = true;
+        btn.textContent = 'Entrando...';
+        try {
+            const res = await this.login(
+                document.getElementById('login-email').value,
+                document.getElementById('login-password').value
+            );
+            if (res.error) { errEl.textContent = res.error; }
+        } catch (err) {
+            errEl.textContent = 'Erro de conexão. Verifique sua internet.';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Entrar';
+        }
+    },
+
+    // ── Submissão Registro ────────────────────────────────────────────────────
+    async submitRegister(e) {
+        e.preventDefault();
+        const btn = document.getElementById('register-submit-btn');
+        const errEl = document.getElementById('register-error');
+        errEl.textContent = '';
+        btn.disabled = true;
+        btn.textContent = 'Criando conta...';
+        try {
+            const res = await this.register(
+                document.getElementById('register-name').value,
+                document.getElementById('register-email').value,
+                document.getElementById('register-password').value
+            );
+            if (res.error) { errEl.textContent = res.error; }
+        } catch (err) {
+            errEl.textContent = 'Erro de conexão. Verifique sua internet.';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Criar minha conta';
+        }
+    },
+
+    // ── Login ─────────────────────────────────────────────────────────────────
+    async login(email, password) {
+        const res = await fetch(`${this.apiBase}/auth.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'login', email, password }),
+        });
+        const data = await res.json();
+        if (data.ok) { this._onAuthenticated(data.token, data.user); }
+        return data;
+    },
+
+    // ── Registro ──────────────────────────────────────────────────────────────
+    async register(name, email, password) {
+        const res = await fetch(`${this.apiBase}/auth.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'register', name, email, password }),
+        });
+        const data = await res.json();
+        if (data.ok) { this._onAuthenticated(data.token, data.user); }
+        return data;
+    },
+
+    // ── Logout ────────────────────────────────────────────────────────────────
+    async logout() {
+        if (this.token) {
+            try {
+                await fetch(`${this.apiBase}/auth.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.token}`,
+                    },
+                    body: JSON.stringify({ action: 'logout' }),
+                });
+            } catch (_) { /* ignora erros de rede no logout */ }
+        }
+        this._clearSession();
+        this.showLoginScreen();
+    },
+
+    // ── Restaurar sessão ao carregar a página ─────────────────────────────────
+    async restoreSession() {
+        if (!this.isProduction()) return true; // local: skip auth
+
+        if (!this.token) {
+            this.showLoginScreen();
+            return false;
+        }
+        // Verificar se o token ainda é válido
+        try {
+            const res = await fetch(`${this.apiBase}/auth.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`,
+                },
+                body: JSON.stringify({ action: 'me' }),
+            });
+            const data = await res.json();
+            if (data.ok) {
+                this.user = data.user;
+                localStorage.setItem('auth_user', JSON.stringify(data.user));
+                this._updateUserUI();
+                return true;
+            }
+        } catch (_) { /* offline ou erro */ }
+
+        // Token inválido/expirado
+        this._clearSession();
+        this.showLoginScreen();
+        return false;
+    },
+
+    // ── Controle de UI ────────────────────────────────────────────────────────
+    showLoginScreen() {
+        const overlay = document.getElementById('login-overlay');
+        if (overlay) overlay.classList.remove('hidden');
+    },
+
+    hideLoginScreen() {
+        const overlay = document.getElementById('login-overlay');
+        if (overlay) overlay.classList.add('hidden');
+    },
+
+    _appInitialized: false,
+
+    _onAuthenticated(token, user) {
+        this.token = token;
+        this.user = user;
+        localStorage.setItem('auth_token', token);
+        localStorage.setItem('auth_user', JSON.stringify(user));
+        this._updateUserUI();
+        this.hideLoginScreen();
+        AppState.init().then(() => {
+            if (!this._appInitialized) {
+                UI.init();
+                Handlers.init();
+                this._appInitialized = true;
+            } else {
+                // Re-login: apenas re-renderiza com novos dados
+                UI.render();
+            }
+        });
+    },
+
+    _clearSession() {
+        this.token = null;
+        this.user = null;
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        // Limpar dados locais do usuário
+        ['app_accounts_v3','app_creditCards_v3','app_transactions_v3',
+         'app_categories_v3','app_budgets_v3'].forEach(k => localStorage.removeItem(k));
+        this._updateUserUI();
+    },
+
+    _updateUserUI() {
+        const userArea = document.getElementById('user-area');
+        const avatar = document.getElementById('user-avatar');
+        const nameEl = document.getElementById('user-name-display');
+        if (!userArea) return;
+
+        if (this.user) {
+            userArea.style.removeProperty('display');
+            userArea.style.display = 'flex';
+            const initials = this.user.name
+                .split(' ')
+                .slice(0, 2)
+                .map(w => w[0])
+                .join('')
+                .toUpperCase();
+            if (avatar) avatar.textContent = initials;
+            if (nameEl) nameEl.textContent = this.user.name.split(' ')[0];
+        } else {
+            userArea.style.display = 'none';
+        }
+    },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 const AppState = {
     accounts: [], creditCards: [], transactions: [], budgets: [],
     categories: ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"],
@@ -309,6 +695,13 @@ const AppState = {
         return window.location.hostname.includes('financasmais.com');
     },
 
+    _authHeaders() {
+        const token = AuthManager.getToken();
+        const h = { 'Content-Type': 'application/json' };
+        if (token) h['Authorization'] = `Bearer ${token}`;
+        return h;
+    },
+
     saveAllLocal() {
         localStorage.setItem('app_accounts_v3', JSON.stringify(this.accounts));
         localStorage.setItem('app_creditCards_v3', JSON.stringify(this.creditCards));
@@ -319,7 +712,15 @@ const AppState = {
 
     async loadFromServer() {
         try {
-            const response = await fetch('/api/sync.php', { cache: 'no-store' });
+            const response = await fetch('/api/sync.php', {
+                cache: 'no-store',
+                headers: this._authHeaders(),
+            });
+            if (response.status === 401) {
+                AuthManager._clearSession();
+                AuthManager.showLoginScreen();
+                return false;
+            }
             if (!response.ok) return false;
 
             const data = await response.json();
@@ -436,15 +837,25 @@ const AppState = {
         });
     },
 
+    _syncTimer: null,
+
     async saveAll() {
         this.saveAllLocal();
 
         if (!this.useRemoteDb()) return;
+        if (!AuthManager.getToken()) return;
 
+        // Debounce: espera 1.5s sem novas chamadas antes de enviar
+        clearTimeout(this._syncTimer);
+        this._syncTimer = setTimeout(() => this._pushToServer(), 1500);
+    },
+
+    async _pushToServer() {
+        SyncIndicator.show('syncing');
         try {
-            await fetch('/api/sync.php', {
+            const res = await fetch('/api/sync.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: this._authHeaders(),
                 body: JSON.stringify({
                     accounts: this.accounts,
                     creditCards: this.creditCards,
@@ -453,8 +864,20 @@ const AppState = {
                     budgets: this.budgets,
                 }),
             });
+            if (res.status === 401) {
+                SyncIndicator.show('error', 'sessão expirada');
+                AuthManager._clearSession();
+                AuthManager.showLoginScreen();
+                return;
+            }
+            if (res.ok) {
+                SyncIndicator.show('saved');
+            } else {
+                SyncIndicator.show('error');
+            }
         } catch (error) {
-            console.warn('Não foi possível salvar dados no MySQL:', error);
+            console.warn('Não foi possível salvar dados na nuvem:', error);
+            SyncIndicator.show('error', 'sem conexão');
         }
     },
     
@@ -3926,9 +4349,23 @@ const Handlers = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const authed = await AuthManager.restoreSession();
+    if (!authed) return; // mostra tela de login; app será iniciado em _onAuthenticated
+
     await AppState.init();
     UI.init();
     Handlers.init();
+    AuthManager._appInitialized = true;
+
+    // Sincronizar ao retomar foco da aba (cross-device)
+    window.addEventListener('focus', async () => {
+        if (!AppState.useRemoteDb() || !AuthManager.getToken()) return;
+        const loaded = await AppState.loadFromServer();
+        if (loaded) {
+            AppState.recalculateAllBalances();
+            UI.render();
+        }
+    });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4174,7 +4611,7 @@ const BankImportUI = {
             hist[this.currentBankId] = { date: new Date().toISOString().slice(0,10), count: prev + imported };
             localStorage.setItem('import_history', JSON.stringify(hist));
         }
-        Storage.save();
+        AppState.saveAll();
         UI.closeModal();
         UI.showFeedback(`✅ ${imported} transações importadas${skipped ? ` (${skipped} duplicatas ignoradas)` : ''}!`, 'success');
         UI.render();
