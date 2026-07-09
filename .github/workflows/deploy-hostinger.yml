@@ -9,6 +9,7 @@ on:
       - 'js/**'
       - 'services/**'
       - '.github/workflows/deploy-hostinger.yml'
+  workflow_dispatch:
 
 jobs:
   deploy-frontend:
