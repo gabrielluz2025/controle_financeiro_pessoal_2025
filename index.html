@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -16,6 +16,7 @@
     <script src="services/oauth-callback.js"></script>
     <!-- OFX Importer -->
     <script src="js/ofx-importer.js"></script>
+    <script src="js/csv-importer.js"></script>
     <!-- Theme Manager & New Features -->
     <script src="js/theme-manager.js"></script>
     <style>
@@ -89,12 +90,12 @@
         .modal-body { padding: 1.5rem; overflow-y: auto; }
         .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; background-color: #f7fafc; }
         
-        /* Estilos da Análise AI Visual */
+        /* Estilos da AnÃ¡lise AI Visual */
         .ai-analysis-content h3 { font-size: 1.25rem; font-weight: 700; color: #1d4ed8; margin-bottom: 0.5rem; }
         .ai-analysis-content h4 { font-weight: 600; font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #1e40af; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.25rem;}
         .ai-analysis-content ul { list-style-type: none; padding-left: 0.5rem; }
         .ai-analysis-content li { margin-bottom: 0.75rem; display: flex; align-items: flex-start; }
-        .ai-analysis-content li::before { content: '🔹'; color: #3b82f6; margin-right: 0.75rem; font-size: 0.8rem; line-height: 1.75; }
+        .ai-analysis-content li::before { content: 'ðŸ”¹'; color: #3b82f6; margin-right: 0.75rem; font-size: 0.8rem; line-height: 1.75; }
         .ai-analysis-content strong { font-weight: 700; color: #1e3a8a; }
         .ai-analysis-content .loading-spinner {
             border: 4px solid #f3f3f3;
@@ -106,7 +107,7 @@
             margin: 2rem auto;
         }
         
-        /* Estilos de Orçamento */
+        /* Estilos de OrÃ§amento */
         .budget-progress-bar {
             background-color: #e5e7eb;
             border-radius: 0.5rem;
@@ -132,13 +133,13 @@
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <!-- Sidebar de Navegação -->
+    <!-- Sidebar de NavegaÃ§Ã£o -->
     <aside id="sidebar" class="w-64 flex flex-col flex-shrink-0" style="width:16rem;background:linear-gradient(145deg,#0f0c29 0%,#302b63 50%,#24243e 100%);box-shadow:4px 0 24px rgba(0,0,0,.3);position:relative;z-index:30;">
         <div id="logo-container" class="flex items-center h-20 px-4 gap-3 cursor-pointer" style="border-bottom:1px solid rgba(255,255,255,.08);">
             <div style="width:2.25rem;height:2.25rem;border-radius:.625rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(99,102,241,.4);">
                 <svg width="18" height="18" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01"/></svg>
             </div>
-            <span class="sidebar-logo-text" style="font-size:1.2rem;font-weight:800;background:linear-gradient(90deg,#fff 0%,#a5b4fc 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.02em;">Finanças+</span>
+            <span class="sidebar-logo-text" style="font-size:1.2rem;font-weight:800;background:linear-gradient(90deg,#fff 0%,#a5b4fc 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.02em;">FinanÃ§as+</span>
         </div>
         <nav class="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
             <p class="px-3 mb-2 text-xs font-semibold uppercase tracking-widest nav-text" style="color:rgba(255,255,255,.35);letter-spacing:.1em;">Principal</p>
@@ -152,7 +153,7 @@
                 <span class="nav-icon-pill" style="background:rgba(16,185,129,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </span>
-                <span class="nav-text">Transações</span>
+                <span class="nav-text">TransaÃ§Ãµes</span>
             </a>
             <a href="#" id="nav-faturas" class="nav-link" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(244,63,94,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -164,14 +165,14 @@
                 <span class="nav-icon-pill" style="background:rgba(14,165,233,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                 </span>
-                <span class="nav-text">Contas e Cartões</span>
+                <span class="nav-text">Contas e CartÃµes</span>
             </a>
             <p class="px-3 mt-4 mb-2 text-xs font-semibold uppercase tracking-widest nav-text" style="color:rgba(255,255,255,.35);letter-spacing:.1em;">Planejamento</p>
             <a href="#" id="nav-budgets" class="nav-link" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(245,158,11,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 </span>
-                <span class="nav-text">Orçamentos</span>
+                <span class="nav-text">OrÃ§amentos</span>
             </a>
             <a href="#" id="nav-categories" class="nav-link" style="color:#c4c9e4;">
                 <span class="nav-icon-pill" style="background:rgba(139,92,246,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -183,13 +184,13 @@
                 <span class="nav-icon-pill" style="background:rgba(251,146,60,.3);width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 </span>
-                <span class="nav-text">Relatórios</span>
+                <span class="nav-text">RelatÃ³rios</span>
             </a>
         </nav>
         <div class="px-3 py-4" style="border-top:1px solid rgba(255,255,255,.08);">
             <button id="add-new-transaction-btn" class="w-full flex items-center justify-center px-4 py-3 mb-3 text-white font-semibold rounded-xl text-sm" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 8px 24px rgba(99,102,241,.4);border:none;cursor:pointer;transition:opacity .2s;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:.5rem;flex-shrink:0;"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                <span class="add-transaction-text">Nova Transação</span>
+                <span class="add-transaction-text">Nova TransaÃ§Ã£o</span>
             </button>
             <button id="sidebar-toggle-btn" class="w-full flex items-center px-3 py-2 text-sm rounded-lg" style="color:rgba(255,255,255,.5);background:transparent;border:none;cursor:pointer;transition:background .2s;" onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='transparent'">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:.5rem;transition:transform .2s;flex-shrink:0;"><path d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
@@ -198,7 +199,7 @@
         </div>
     </aside>
 
-    <!-- Conteúdo Principal -->
+    <!-- ConteÃºdo Principal -->
     <main class="flex-1 flex flex-col bg-gray-50 overflow-y-auto">
         <!-- Container de Alertas -->
         <div id="alerts-container" class="fixed top-4 right-4 z-50 space-y-2 max-w-sm"></div>
@@ -207,7 +208,7 @@
             <div class="flex items-center gap-3">
                 <div>
                     <h2 id="page-title" class="font-extrabold" style="font-size:1.25rem;color:var(--text);letter-spacing:-0.03em;">Dashboard</h2>
-                    <p id="header-subtitle" class="text-xs" style="color:var(--text-3);">Visão geral das suas finanças</p>
+                    <p id="header-subtitle" class="text-xs" style="color:var(--text-3);">VisÃ£o geral das suas finanÃ§as</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -242,7 +243,7 @@
                     </div>
                     <button id="get-analysis-btn" class="btn btn-primary text-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                        Análise IA
+                        AnÃ¡lise IA
                     </button>
                 </div>
 
@@ -253,21 +254,21 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
                     <div class="lg:col-span-2 space-y-4">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-sm font-bold uppercase tracking-wider" style="color:var(--text-2)">Faturas de Cartão</h3>
+                            <h3 class="text-sm font-bold uppercase tracking-wider" style="color:var(--text-2)">Faturas de CartÃ£o</h3>
                         </div>
                         <div id="card-summary-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                     </div>
                     <div class="space-y-4">
                         <div>
-                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--text-2)">Resumo dos Orçamentos</h3>
+                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--text-2)">Resumo dos OrÃ§amentos</h3>
                             <div id="budget-progress-container" class="section-card p-4 space-y-4"></div>
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--text-2)">Próximas Contas</h3>
+                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--text-2)">PrÃ³ximas Contas</h3>
                             <div id="upcoming-bills-container" class="section-card p-4 space-y-3"></div>
                         </div>
                         <div id="overdue-bills-section" class="hidden">
-                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--danger)">⚠ Contas em Atraso</h3>
+                            <h3 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--danger)">âš  Contas em Atraso</h3>
                             <div id="overdue-bills-container" class="p-4 rounded-xl space-y-3 cursor-pointer" style="background:var(--danger-bg);border-left:3px solid var(--danger);" title="Clique para ver todas"></div>
                         </div>
                     </div>
@@ -276,13 +277,13 @@
                 <!-- Charts row -->
                 <div class="grid grid-cols-1 gap-5 lg:grid-cols-5">
                     <div class="chart-container lg:col-span-3">
-                        <h3>Evolução do Saldo — Últimos 6 Meses</h3>
+                        <h3>EvoluÃ§Ã£o do Saldo â€” Ãšltimos 6 Meses</h3>
                         <canvas id="balance-chart"></canvas>
                     </div>
                     <div class="chart-container lg:col-span-2">
                         <h3>Despesas por Categoria</h3>
                         <canvas id="expenses-chart"></canvas>
-                        <p id="no-expenses-msg" class="hidden text-center text-sm pt-8" style="color:var(--text-3)">Sem despesas neste período.</p>
+                        <p id="no-expenses-msg" class="hidden text-center text-sm pt-8" style="color:var(--text-3)">Sem despesas neste perÃ­odo.</p>
                     </div>
                 </div>
             </section>
@@ -299,10 +300,10 @@
     <div id="feedback-message" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50"></div>
     
 <script>
-// Módulo de Estado da Aplicação
+// MÃ³dulo de Estado da AplicaÃ§Ã£o
 const AppState = {
     accounts: [], creditCards: [], transactions: [], budgets: [],
-    categories: ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"],
+    categories: ["AlimentaÃ§Ã£o", "Transporte", "Moradia", "Lazer", "SaÃºde", "EducaÃ§Ã£o", "SalÃ¡rio", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"],
     currentView: 'dashboard', isSidebarCollapsed: false,
     displayMonth: new Date().getMonth(),
     displayYear: new Date().getFullYear(),
@@ -339,7 +340,7 @@ const AppState = {
             this.saveAllLocal();
             return true;
         } catch (error) {
-            console.warn('Não foi possível carregar dados do MySQL:', error);
+            console.warn('NÃ£o foi possÃ­vel carregar dados do MySQL:', error);
             return false;
         }
     },
@@ -363,7 +364,7 @@ const AppState = {
             this.recalculateAllBalances();
             console.info('Dados iniciais carregados no MySQL.');
         } catch (error) {
-            console.warn('Não foi possível carregar dados iniciais:', error);
+            console.warn('NÃ£o foi possÃ­vel carregar dados iniciais:', error);
         }
     },
     
@@ -458,13 +459,13 @@ const AppState = {
                 }),
             });
         } catch (error) {
-            console.warn('Não foi possível salvar dados no MySQL:', error);
+            console.warn('NÃ£o foi possÃ­vel salvar dados no MySQL:', error);
         }
     },
     
     clearAllData() {
         this.accounts = []; this.creditCards = []; this.transactions = []; this.budgets = [];
-        this.categories = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Salário", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"];
+        this.categories = ["AlimentaÃ§Ã£o", "Transporte", "Moradia", "Lazer", "SaÃºde", "EducaÃ§Ã£o", "SalÃ¡rio", "Investimentos", "Contas Fixas", "Compras", "Pagamento de Fatura", "Outros"];
         this.saveAll();
     },
 
@@ -491,7 +492,7 @@ const AppState = {
             try {
                 const importedData = JSON.parse(event.target.result);
                 if (importedData.accounts && importedData.creditCards && importedData.transactions) {
-                    UI.showConfirmationModal('Importar Dados', 'Isto irá substituir todos os seus dados atuais. Deseja continuar?', async () => {
+                    UI.showConfirmationModal('Importar Dados', 'Isto irÃ¡ substituir todos os seus dados atuais. Deseja continuar?', async () => {
                         this.accounts = importedData.accounts || [];
                         this.creditCards = importedData.creditCards || [];
                         this.transactions = importedData.transactions || [];
@@ -503,10 +504,10 @@ const AppState = {
                         UI.showFeedback('Dados importados com sucesso!', 'success');
                     });
                 } else {
-                    UI.showFeedback('Ficheiro JSON inválido ou mal formatado.', 'error');
+                    UI.showFeedback('Ficheiro JSON invÃ¡lido ou mal formatado.', 'error');
                 }
             } catch (error) {
-                UI.showFeedback('Erro ao ler o ficheiro. Verifique se é um ficheiro JSON válido.', 'error');
+                UI.showFeedback('Erro ao ler o ficheiro. Verifique se Ã© um ficheiro JSON vÃ¡lido.', 'error');
             }
         };
         reader.readAsText(file);
@@ -543,7 +544,7 @@ const AppState = {
         const prevMonthData = calculateMetricsForPeriod(prevMonthStart, prevMonthEnd);
         
         if (lastMonthData.income === 0 && lastMonthData.expenses === 0 && prevMonthData.income === 0 && prevMonthData.expenses === 0) {
-            return { error: "Não há dados suficientes dos últimos dois meses para gerar uma análise. Adicione algumas transações e tente novamente." };
+            return { error: "NÃ£o hÃ¡ dados suficientes dos Ãºltimos dois meses para gerar uma anÃ¡lise. Adicione algumas transaÃ§Ãµes e tente novamente." };
         }
 
         return { lastMonthData, prevMonthData };
@@ -626,7 +627,7 @@ const AppState = {
     }
 };
 
-// Módulo de UI
+// MÃ³dulo de UI
 const UI = {
     banks: [
         { name: 'Nenhum', logo: '' },
@@ -643,8 +644,8 @@ const UI = {
         const activePage = document.getElementById(`${AppState.currentView}-page`);
         if (activePage) {
             activePage.classList.remove('hidden');
-            const titles = { dashboard: 'Dashboard', transactions: 'Transações', budgets: 'Orçamentos', faturas: 'Faturas', accounts: 'Contas & Cartões', reports: 'Relatórios', categories: 'Categorias' };
-            const subtitles = { dashboard: 'Visão geral das suas finanças', transactions: 'Histórico de receitas e despesas', budgets: 'Controle de gastos por categoria', faturas: 'Faturas dos seus cartões', accounts: 'Suas contas e cartões de crédito', reports: 'Análises e relatórios detalhados', categories: 'Gerenciar categorias de gastos' };
+            const titles = { dashboard: 'Dashboard', transactions: 'TransaÃ§Ãµes', budgets: 'OrÃ§amentos', faturas: 'Faturas', accounts: 'Contas & CartÃµes', reports: 'RelatÃ³rios', categories: 'Categorias' };
+            const subtitles = { dashboard: 'VisÃ£o geral das suas finanÃ§as', transactions: 'HistÃ³rico de receitas e despesas', budgets: 'Controle de gastos por categoria', faturas: 'Faturas dos seus cartÃµes', accounts: 'Suas contas e cartÃµes de crÃ©dito', reports: 'AnÃ¡lises e relatÃ³rios detalhados', categories: 'Gerenciar categorias de gastos' };
             document.getElementById('page-title').textContent = titles[AppState.currentView] || 'Dashboard';
             const subtitleEl = document.getElementById('header-subtitle');
             if (subtitleEl) subtitleEl.textContent = subtitles[AppState.currentView] || '';
@@ -655,7 +656,7 @@ const UI = {
     },
     
     capitalize: s => s.charAt(0).toUpperCase() + s.slice(1),
-    getPageTitle: v => ({ dashboard: 'Dashboard', transactions: 'Transações', budgets: 'Orçamentos', faturas: 'Faturas', accounts: 'Contas & Cartões', reports: 'Relatórios', categories: 'Categorias' }[v] || 'Dashboard'),
+    getPageTitle: v => ({ dashboard: 'Dashboard', transactions: 'TransaÃ§Ãµes', budgets: 'OrÃ§amentos', faturas: 'Faturas', accounts: 'Contas & CartÃµes', reports: 'RelatÃ³rios', categories: 'Categorias' }[v] || 'Dashboard'),
     
     updateNavLinks() {
         document.querySelectorAll('aside nav a.nav-link').forEach(l => {
@@ -718,7 +719,7 @@ const UI = {
                     </div>
                     <div class="relative w-full md:w-64">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-3)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <input type="text" id="transactions-search" placeholder="Buscar transação..." style="padding-left:2.25rem;background:var(--surface-2);border:1.5px solid var(--border);color:var(--text);border-radius:.625rem;padding-top:.5rem;padding-bottom:.5rem;width:100%;font-size:.875rem;" />
+                        <input type="text" id="transactions-search" placeholder="Buscar transaÃ§Ã£o..." style="padding-left:2.25rem;background:var(--surface-2);border:1.5px solid var(--border);color:var(--text);border-radius:.625rem;padding-top:.5rem;padding-bottom:.5rem;width:100%;font-size:.875rem;" />
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -727,19 +728,19 @@ const UI = {
                             <tr>
                                 <th class="w-10 pl-4"><input type="checkbox" id="select-all-txs" style="accent-color:var(--brand-500);width:1rem;height:1rem;cursor:pointer;"></th>
                                 <th>Data</th>
-                                <th>Descrição</th>
+                                <th>DescriÃ§Ã£o</th>
                                 <th>Valor</th>
                                 <th>Categoria</th>
-                                <th>Conta/Cartão</th>
+                                <th>Conta/CartÃ£o</th>
                                 <th>Status</th>
-                                <th class="text-right pr-4">Ações</th>
+                                <th class="text-right pr-4">AÃ§Ãµes</th>
                             </tr>
                         </thead>
                         <tbody id="transactions-table-body"></tbody>
                     </table>
                     <p id="no-transactions-found" class="text-center py-12 hidden" style="color:var(--text-3)">
                         <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        Nenhuma transação encontrada.
+                        Nenhuma transaÃ§Ã£o encontrada.
                     </p>
                 </div>
             </div>`;
@@ -895,7 +896,7 @@ const UI = {
 
             let accountNameHTML = `<span class="text-gray-400">N/A</span>`;
             if (tx.accountId) {
-                let name = 'Conta/Cartão Excluído';
+                let name = 'Conta/CartÃ£o ExcluÃ­do';
                 let iconHTML = `<svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
                 if (tx.isCreditCard) {
@@ -916,7 +917,7 @@ const UI = {
                 if (tx.fundamentalType === 'receita') {
                     accountNameHTML = `<div class="flex items-center text-yellow-600">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span class="font-medium">Não Alocada</span>
+                        <span class="font-medium">NÃ£o Alocada</span>
                     </div>`;
                 }
             }
@@ -932,7 +933,7 @@ const UI = {
                 <td class="pl-4"><input type="checkbox" class="tx-select-checkbox" data-id="${tx.id}" ${isSelected ? 'checked' : ''} style="accent-color:var(--brand-500);width:1rem;height:1rem;cursor:pointer;"></td>
                 <td class="text-xs" style="color:var(--text-3);white-space:nowrap;">${new Date(tx.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                 <td class="font-medium description" style="color:var(--text);max-width:220px;">${descriptionWithInstallment}</td>
-                <td class="font-bold whitespace-nowrap" style="color:${tx.fundamentalType==='receita'?'var(--success)':'var(--danger)'};">${tx.fundamentalType==='receita'?'+':'−'}${this.formatCurrency(tx.value)}</td>
+                <td class="font-bold whitespace-nowrap" style="color:${tx.fundamentalType==='receita'?'var(--success)':'var(--danger)'};">${tx.fundamentalType==='receita'?'+':'âˆ’'}${this.formatCurrency(tx.value)}</td>
                 <td><span style="display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .55rem;border-radius:99px;font-size:.7rem;font-weight:600;background:${catColor}1a;color:${catColor};">${tx.category}</span></td>
                 <td>${accountNameHTML}</td>
                 ${statusHTML}
@@ -955,7 +956,7 @@ const UI = {
         page.innerHTML = `
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
                 <div class="lg:col-span-1 section-card p-4 overflow-y-auto">
-                    <p class="text-xs font-bold uppercase tracking-wider mb-3" style="color:var(--text-3)">Meus Cartões</p>
+                    <p class="text-xs font-bold uppercase tracking-wider mb-3" style="color:var(--text-3)">Meus CartÃµes</p>
                     <div id="fatura-card-list" class="space-y-2"></div>
                 </div>
                 <div id="fatura-details-container" class="lg:col-span-3 section-card p-5 overflow-y-auto"></div>
@@ -964,7 +965,7 @@ const UI = {
         if (AppState.selectedFaturaCardId) {
             this.renderInvoiceListForCard(AppState.selectedFaturaCardId);
         } else {
-            document.getElementById('fatura-details-container').innerHTML = `<div class="flex items-center justify-center h-full text-gray-500"><svg class="w-10 h-10 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg> Selecione um cartão para ver as faturas.</div>`;
+            document.getElementById('fatura-details-container').innerHTML = `<div class="flex items-center justify-center h-full text-gray-500"><svg class="w-10 h-10 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg> Selecione um cartÃ£o para ver as faturas.</div>`;
         }
     },
 
@@ -973,7 +974,7 @@ const UI = {
         if (!container) return;
 
         if (AppState.creditCards.length === 0) {
-            container.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cartão cadastrado.</p>`;
+            container.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cartÃ£o cadastrado.</p>`;
             return;
         }
 
@@ -1019,7 +1020,7 @@ const UI = {
         
         container.innerHTML = `
             <h3 class="text-2xl font-bold text-gray-800 mb-6">Faturas de ${card.name}</h3>
-            ${sortedMonths.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhuma fatura encontrada para este cartão.</p>` : `
+            ${sortedMonths.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhuma fatura encontrada para este cartÃ£o.</p>` : `
             <div class="space-y-4">
                 ${sortedMonths.map(monthYear => {
                     const invoice = transactionsByMonth[monthYear];
@@ -1069,7 +1070,7 @@ const UI = {
                 </div>
             </div>
             <div class="space-y-2">
-                ${transactions.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhum lançamento nesta fatura.</p>` :
+                ${transactions.length === 0 ? `<p class="text-center text-gray-500 py-8">Nenhum lanÃ§amento nesta fatura.</p>` :
                 transactions.map(tx => {
                     const valueColor = tx.fundamentalType === 'receita' ? 'text-green-600' : 'text-red-600';
                     const valuePrefix = tx.fundamentalType === 'receita' ? '+' : '-';
@@ -1103,13 +1104,13 @@ const UI = {
         
         page.innerHTML = `
             <div class="space-y-5">
-                <!-- Análise IA CTA -->
+                <!-- AnÃ¡lise IA CTA -->
                 <div style="background:var(--grad-brand);border-radius:var(--radius-xl);padding:1.5rem;color:white;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;position:relative;overflow:hidden;">
                     <div style="position:absolute;bottom:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,.07);border-radius:50%;pointer-events:none;"></div>
                     <div>
                         <p class="text-xs font-bold uppercase opacity-70 mb-1">Powered by Gemini AI</p>
-                        <h3 class="text-xl font-extrabold">Análise Financeira Inteligente</h3>
-                        <p class="text-sm opacity-80 mt-1">Dicas personalizadas baseadas nos seus gastos do último mês.</p>
+                        <h3 class="text-xl font-extrabold">AnÃ¡lise Financeira Inteligente</h3>
+                        <p class="text-sm opacity-80 mt-1">Dicas personalizadas baseadas nos seus gastos do Ãºltimo mÃªs.</p>
                     </div>
                     <button id="get-analysis-btn" style="background:white;color:#4f46e5;font-weight:700;font-size:.875rem;padding:.625rem 1.25rem;border-radius:.75rem;border:none;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:.5rem;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
@@ -1119,10 +1120,10 @@ const UI = {
 
                 <!-- Filtros -->
                 <div class="section-card p-5">
-                    <p class="text-xs font-bold uppercase tracking-wider mb-4" style="color:var(--text-3)">Gerar Relatório</p>
+                    <p class="text-xs font-bold uppercase tracking-wider mb-4" style="color:var(--text-3)">Gerar RelatÃ³rio</p>
                     <div id="report-filters" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                         <div>
-                            <label class="form-label">Tipo de Relatório</label>
+                            <label class="form-label">Tipo de RelatÃ³rio</label>
                             <select id="report-mode">
                                 <option value="simple" selected>Simples</option>
                                 <option value="comparative">Comparativo</option>
@@ -1130,21 +1131,21 @@ const UI = {
                         </div>
                         <div id="period-1-filters" class="contents">
                             <div>
-                                <label class="form-label">Ano (Período 1)</label>
+                                <label class="form-label">Ano (PerÃ­odo 1)</label>
                                 <select id="report-year-1">${yearOptions}</select>
                             </div>
                             <div>
-                                <label class="form-label">Mês (Período 1)</label>
+                                <label class="form-label">MÃªs (PerÃ­odo 1)</label>
                                 <select id="report-month-1">${monthOptions}</select>
                             </div>
                         </div>
                         <div id="period-2-filters" class="hidden contents">
                             <div>
-                                <label class="form-label">Ano (Período 2)</label>
+                                <label class="form-label">Ano (PerÃ­odo 2)</label>
                                 <select id="report-year-2">${yearOptions}</select>
                             </div>
                             <div>
-                                <label class="form-label">Mês (Período 2)</label>
+                                <label class="form-label">MÃªs (PerÃ­odo 2)</label>
                                 <select id="report-month-2">${monthOptions}</select>
                             </div>
                         </div>
@@ -1158,7 +1159,7 @@ const UI = {
                         <div class="lg:col-span-full flex justify-end">
                             <button id="generate-report-btn" class="btn btn-primary">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                Gerar Relatório
+                                Gerar RelatÃ³rio
                             </button>
                         </div>
                     </div>
@@ -1220,7 +1221,7 @@ const UI = {
                 <thead class="text-xs text-gray-700 uppercase"><tr>
                     <th class="py-3 px-6">Categoria</th>
                     <th class="py-3 px-6 text-right">${p1Label || 'Valor'}</th>
-                    ${isComparative ? `<th class="py-3 px-6 text-right">${p2Label}</th><th class="py-3 px-6 text-right">Diferença (R$)</th><th class="py-3 px-6 text-right">Diferença (%)</th>` : '<th class="py-3 px-6 text-right">% do Total</th>'}
+                    ${isComparative ? `<th class="py-3 px-6 text-right">${p2Label}</th><th class="py-3 px-6 text-right">DiferenÃ§a (R$)</th><th class="py-3 px-6 text-right">DiferenÃ§a (%)</th>` : '<th class="py-3 px-6 text-right">% do Total</th>'}
                 </tr></thead><tbody>`;
         
         const total1 = Object.values(data1).reduce((s, v) => s + v, 0);
@@ -1255,40 +1256,74 @@ const UI = {
 
     renderAccountsPage() {
         const page = document.getElementById('accounts-page');
-        const connectedItems = JSON.parse(localStorage.getItem('pluggy_connected_items') || '[]');
-        const hasPluggyKey = !!localStorage.getItem('pluggy_client_id');
+        const myBanks = JSON.parse(localStorage.getItem('my_banks') || '[]');
+        const importHistory = JSON.parse(localStorage.getItem('import_history') || '{}');
+        const today = new Date();
 
-        const banks = [
-            { id:'nubank',     name:'Nubank',          color:'#820AD1', emoji:'💜' },
-            { id:'itau',       name:'Itaú',             color:'#EC7000', emoji:'🟠' },
-            { id:'bradesco',   name:'Bradesco',         color:'#CC092F', emoji:'🔴' },
-            { id:'santander',  name:'Santander',        color:'#EC0000', emoji:'🏦' },
-            { id:'bb',         name:'Banco do Brasil',  color:'#F9DD00', emoji:'🟡' },
-            { id:'caixa',      name:'Caixa',            color:'#005B9C', emoji:'🔵' },
-            { id:'inter',      name:'Inter',            color:'#FF7A00', emoji:'🟧' },
-            { id:'c6',         name:'C6 Bank',          color:'#333333', emoji:'⬛' },
-            { id:'btg',        name:'BTG Pactual',      color:'#001E62', emoji:'💙' },
-            { id:'xp',         name:'XP Investimentos', color:'#000000', emoji:'⚫' },
-            { id:'picpay',     name:'PicPay',           color:'#11C76F', emoji:'💚' },
-            { id:'neon',       name:'Neon',             color:'#00D4FF', emoji:'🩵' },
-            { id:'original',   name:'Original',         color:'#00A859', emoji:'💚' },
-            { id:'sicoob',     name:'Sicoob',           color:'#008B3B', emoji:'🌿' },
-            { id:'sicredi',    name:'Sicredi',          color:'#007E3A', emoji:'🍃' },
-            { id:'safra',      name:'Safra',            color:'#003DA5', emoji:'💎' },
+        const allBanks = [
+            { id:'nubank',    name:'Nubank',           color:'#820AD1', initials:'NU' },
+            { id:'itau',      name:'ItaÃº',              color:'#EC7000', initials:'IT' },
+            { id:'bradesco',  name:'Bradesco',          color:'#CC092F', initials:'BR' },
+            { id:'santander', name:'Santander',         color:'#EC0000', initials:'SN' },
+            { id:'bb',        name:'Banco do Brasil',   color:'#DDAA00', initials:'BB' },
+            { id:'caixa',     name:'Caixa EconÃ´mica',   color:'#005B9C', initials:'CX' },
+            { id:'inter',     name:'Banco Inter',       color:'#FF7A00', initials:'IN' },
+            { id:'c6',        name:'C6 Bank',           color:'#444444', initials:'C6' },
+            { id:'btg',       name:'BTG Pactual',       color:'#001E62', initials:'BT' },
+            { id:'xp',        name:'XP Investimentos',  color:'#111111', initials:'XP' },
+            { id:'picpay',    name:'PicPay',            color:'#11C76F', initials:'PP' },
+            { id:'neon',      name:'Neon',              color:'#00AACC', initials:'NE' },
+            { id:'sicoob',    name:'Sicoob',            color:'#008B3B', initials:'SC' },
+            { id:'sicredi',   name:'Sicredi',           color:'#007E3A', initials:'SI' },
+            { id:'original',  name:'Original',          color:'#00A859', initials:'OR' },
+            { id:'safra',     name:'Safra',             color:'#003DA5', initials:'SF' },
+            { id:'outro',     name:'Outro banco',       color:'#6b7280', initials:'+' },
         ];
+
+        const totalImported = Object.values(importHistory).reduce((s, h) => s + (h.count || 0), 0);
+
+        // Montar cartÃµes "Meus Bancos"
+        const myBankCards = myBanks.map(bankId => {
+            const bank = allBanks.find(b => b.id === bankId) || { id: bankId, name: bankId, color: '#6b7280', initials: '?' };
+            const hist = importHistory[bankId];
+            let daysAgo = null, alertBadge = '', lastImportLabel = 'Nunca importado';
+            if (hist?.date) {
+                const diff = Math.floor((today - new Date(hist.date)) / 86400000);
+                daysAgo = diff;
+                lastImportLabel = diff === 0 ? 'Hoje' : diff === 1 ? 'Ontem' : `HÃ¡ ${diff} dias`;
+                alertBadge = diff >= 7 ? `<span style="background:#fef3c7;color:#92400e;font-size:.65rem;font-weight:700;padding:.15rem .4rem;border-radius:99px;margin-left:.25rem;">âš  Atualizar</span>` : '';
+            }
+            return `
+            <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:1rem;padding:1rem;display:flex;flex-direction:column;gap:.75rem;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 18px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
+                <div style="display:flex;align-items:center;gap:.625rem;">
+                    <div style="width:2.5rem;height:2.5rem;border-radius:.75rem;background:${bank.color};color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0;">${bank.initials}</div>
+                    <div style="flex:1;min-width:0;">
+                        <p style="font-size:.875rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${bank.name}${alertBadge}</p>
+                        <p style="font-size:.72rem;color:var(--text-3);">${hist?.count ? hist.count + ' transaÃ§Ãµes Â· ' : ''}${lastImportLabel}</p>
+                    </div>
+                    <button onclick="BankImportUI.removeBank('${bankId}')" style="background:none;border:none;cursor:pointer;color:var(--text-3);padding:.25rem;border-radius:.375rem;" title="Remover banco" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--text-3)'">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <button onclick="BankImportUI.openImport('${bankId}')" style="background:${bank.color};color:white;border:none;border-radius:.625rem;padding:.5rem;font-size:.8rem;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:.375rem;transition:opacity .15s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+                    Importar Extrato
+                </button>
+            </div>`;
+        }).join('');
 
         page.innerHTML = `
             <div class="space-y-5">
                 <!-- Header -->
                 <div class="flex flex-wrap justify-between items-center gap-3">
                     <div>
-                        <p class="text-xs font-bold uppercase tracking-wider mb-0.5" style="color:var(--text-3)">Open Finance · Banco Central do Brasil</p>
-                        <p class="text-sm" style="color:var(--text-2)">Conecte seus bancos com segurança e veja tudo em um só lugar</p>
+                        <h2 style="font-size:1.25rem;font-weight:800;color:var(--text);letter-spacing:-.02em;">Contas & CartÃµes</h2>
+                        <p class="text-sm" style="color:var(--text-2)">Importe extratos de qualquer banco â€” grÃ¡tis, sem APIs</p>
                     </div>
                     <div class="flex gap-2">
-                        <button id="pluggy-setup-btn" class="btn btn-ghost text-sm">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            Configurar API
+                        <button onclick="BankImportUI.openImport()" style="background:linear-gradient(135deg,#10b981,#059669);color:white;font-size:.85rem;font-weight:700;padding:.625rem 1.125rem;border-radius:.75rem;border:none;cursor:pointer;display:flex;align-items:center;gap:.375rem;box-shadow:0 2px 8px rgba(16,185,129,.3);">
+                            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+                            Importar Extrato
                         </button>
                         <button id="add-new-account-btn" class="btn btn-primary text-sm">
                             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
@@ -1297,87 +1332,76 @@ const UI = {
                     </div>
                 </div>
 
-                <!-- Open Finance Hero -->
-                <div style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e3a8a 100%);border-radius:1.25rem;padding:1.75rem;color:white;position:relative;overflow:hidden;">
-                    <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:rgba(99,102,241,.2);border-radius:50%;pointer-events:none;"></div>
-                    <div style="position:absolute;bottom:-40px;left:-40px;width:160px;height:160px;background:rgba(139,92,246,.15);border-radius:50%;pointer-events:none;"></div>
-                    <div class="flex flex-wrap items-start justify-between gap-4">
+                <!-- Central de ImportaÃ§Ã£o hero -->
+                <div style="background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%);border-radius:1.25rem;padding:1.5rem 1.75rem;color:white;position:relative;overflow:hidden;">
+                    <div style="position:absolute;top:-50px;right:-50px;width:180px;height:180px;background:rgba(16,185,129,.2);border-radius:50%;pointer-events:none;"></div>
+                    <div style="position:absolute;bottom:-30px;left:-30px;width:120px;height:120px;background:rgba(5,150,105,.2);border-radius:50%;pointer-events:none;"></div>
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;position:relative;">
                         <div>
-                            <div class="flex items-center gap-2 mb-2">
-                                <span style="background:rgba(255,255,255,.15);padding:.25rem .75rem;border-radius:99px;font-size:.7rem;font-weight:700;letter-spacing:.05em;">🔒 REGULADO PELO BACEN</span>
+                            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.625rem;">
+                                <svg width="28" height="28" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                <h3 style="font-size:1.25rem;font-weight:800;letter-spacing:-.02em;">Central de ImportaÃ§Ã£o</h3>
                             </div>
-                            <h3 style="font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.5rem;">Hub Open Finance</h3>
-                            <p style="font-size:.875rem;opacity:.85;max-width:480px;line-height:1.6;">Conecte <strong>qualquer banco brasileiro</strong> de forma segura e automática. Seus dados são importados via Open Finance regulado pelo Banco Central — sem compartilhar senha.</p>
-                            <div class="flex items-center gap-4 mt-4">
-                                <span style="font-size:.8rem;opacity:.7;">✓ 200+ instituições</span>
-                                <span style="font-size:.8rem;opacity:.7;">✓ Dados em tempo real</span>
-                                <span style="font-size:.8rem;opacity:.7;">✓ Criptografia bancária</span>
+                            <p style="font-size:.875rem;opacity:.85;max-width:440px;line-height:1.6;">Importe extratos <strong>OFX ou CSV</strong> de qualquer banco brasileiro. Funciona com <strong>100% dos bancos</strong> â€” sem mensalidade, sem API.</p>
+                            <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:.875rem;">
+                                <span style="font-size:.8rem;opacity:.8;">âœ“ Nubank, ItaÃº, Bradesco...</span>
+                                <span style="font-size:.8rem;opacity:.8;">âœ“ OFX + CSV</span>
+                                <span style="font-size:.8rem;opacity:.8;">âœ“ ${totalImported} transaÃ§Ãµes importadas</span>
                             </div>
                         </div>
-                        <div class="flex flex-col items-end gap-2">
-                            <button id="pluggy-connect-btn" style="background:white;color:#312e81;font-weight:700;font-size:.9rem;padding:.75rem 1.5rem;border-radius:.875rem;border:none;cursor:pointer;display:flex;align-items:center;gap:.5rem;box-shadow:0 8px 24px rgba(0,0,0,.2);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 32px rgba(0,0,0,.3)'" onmouseout="this.style.transform='';this.style.boxShadow='0 8px 24px rgba(0,0,0,.2)'">
-                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                                Conectar Banco
+                        <div style="display:flex;flex-direction:column;gap:.5rem;align-items:flex-end;">
+                            <button onclick="BankImportUI.openImport()" style="background:white;color:#065f46;font-weight:700;font-size:.9rem;padding:.75rem 1.5rem;border-radius:.875rem;border:none;cursor:pointer;display:flex;align-items:center;gap:.5rem;box-shadow:0 8px 24px rgba(0,0,0,.15);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 32px rgba(0,0,0,.25)'" onmouseout="this.style.transform='';this.style.boxShadow='0 8px 24px rgba(0,0,0,.15)'">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+                                Importar Agora
                             </button>
-                            <button id="pluggy-sync-btn" style="background:rgba(255,255,255,.15);color:white;font-size:.8rem;font-weight:600;padding:.5rem 1rem;border-radius:.625rem;border:1px solid rgba(255,255,255,.25);cursor:pointer;display:flex;align-items:center;gap:.375rem;" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">
-                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                Sincronizar Todos
-                            </button>
-                            <button id="ofx-import-btn" style="background:rgba(16,185,129,.25);color:white;font-size:.8rem;font-weight:600;padding:.5rem 1rem;border-radius:.625rem;border:1px solid rgba(16,185,129,.4);cursor:pointer;display:flex;align-items:center;gap:.375rem;" onmouseover="this.style.background='rgba(16,185,129,.4)'" onmouseout="this.style.background='rgba(16,185,129,.25)'">
-                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
-                                Importar OFX
+                            <button onclick="BankImportUI.addBankModal()" style="background:rgba(255,255,255,.15);color:white;font-size:.8rem;font-weight:600;padding:.5rem 1rem;border-radius:.625rem;border:1px solid rgba(255,255,255,.3);cursor:pointer;display:flex;align-items:center;gap:.375rem;" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                Adicionar Banco
                             </button>
                         </div>
-                    </div>
-                    <!-- Status bar -->
-                    <div id="openfinance-status" style="margin-top:1.25rem;padding:.75rem 1rem;background:rgba(255,255,255,.1);border-radius:.625rem;display:flex;align-items:center;justify-content:space-between;font-size:.8rem;">
-                        <span class="flex items-center gap-2">
-                            <span id="status-dot" style="width:.5rem;height:.5rem;border-radius:50%;background:#fbbf24;display:inline-block;"></span>
-                            <span id="status-text">${connectedItems.length > 0 ? connectedItems.length + ' banco(s) conectado(s)' : 'Nenhum banco conectado ainda'}</span>
-                        </span>
-                        <span id="last-sync-text" style="opacity:.6;">${localStorage.getItem('pluggy_last_sync') ? 'Última sync: ' + localStorage.getItem('pluggy_last_sync') : ''}</span>
                     </div>
                 </div>
 
-                <!-- Bancos disponíveis -->
+                <!-- Meus Bancos -->
+                ${myBanks.length > 0 ? `
                 <div class="section-card overflow-hidden">
                     <div class="flex items-center justify-between px-5 py-4 border-b" style="border-color:var(--border)">
-                        <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Instituições Disponíveis</p>
-                        <span class="badge badge-info">200+ bancos</span>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4" id="bank-grid">
-                        ${banks.map(b => {
-                            const connected = connectedItems.some(i => i.bankId === b.id);
-                            return `<div class="bank-card flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all" style="border-color:${connected?b.color:'var(--border)'};background:${connected?b.color+'15':'var(--surface-2)'};" onclick="PluggyManager.openConnect('${b.id}')" title="Conectar ${b.name}">
-                                <span style="font-size:1.5rem;line-height:1;">${b.emoji}</span>
-                                <div class="flex-1 min-w-0">
-                                    <p style="font-size:.8rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.name}</p>
-                                    <p style="font-size:.68rem;color:${connected?b.color:'var(--text-3)'};">${connected?'✓ Conectado':'Toque para conectar'}</p>
-                                </div>
-                            </div>`;
-                        }).join('')}
-                        <div class="bank-card flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer" style="border-color:var(--border);background:var(--surface-2);border-style:dashed;" onclick="PluggyManager.openConnect()">
-                            <span style="font-size:1.5rem;line-height:1;">🔍</span>
-                            <div>
-                                <p style="font-size:.8rem;font-weight:700;color:var(--text);">Outro banco</p>
-                                <p style="font-size:.68rem;color:var(--text-3);">Buscar instituição</p>
-                            </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Meus Bancos</p>
+                            <p style="font-size:.75rem;color:var(--text-3);margin-top:.1rem;">${myBanks.length} banco${myBanks.length > 1 ? 's' : ''} cadastrado${myBanks.length > 1 ? 's' : ''}</p>
                         </div>
+                        <button onclick="BankImportUI.addBankModal()" class="btn btn-ghost" style="font-size:.8rem;">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                            Adicionar
+                        </button>
                     </div>
-                </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.875rem;padding:1rem;">
+                        ${myBankCards}
+                    </div>
+                </div>` : `
+                <div class="section-card p-6 text-center" style="border:2px dashed var(--border);">
+                    <div style="width:3.5rem;height:3.5rem;background:var(--surface-2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .875rem;">
+                        <svg width="24" height="24" fill="none" stroke="var(--text-3)" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    </div>
+                    <p style="font-weight:700;color:var(--text);margin-bottom:.25rem;">Nenhum banco cadastrado</p>
+                    <p style="font-size:.8rem;color:var(--text-3);margin-bottom:1rem;">Cadastre seus bancos para manter o controle das importaÃ§Ãµes</p>
+                    <button onclick="BankImportUI.addBankModal()" style="background:var(--brand-500);color:white;font-size:.85rem;font-weight:600;padding:.625rem 1.25rem;border-radius:.75rem;border:none;cursor:pointer;">
+                        + Adicionar Meu Primeiro Banco
+                    </button>
+                </div>`}
 
-                <!-- Contas e Cartões manuais/sincronizados -->
+                <!-- Contas e CartÃµes manuais -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     <div class="section-card overflow-hidden">
                         <div class="px-5 py-4 border-b flex items-center justify-between" style="border-color:var(--border)">
-                            <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Contas Bancárias</p>
+                            <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Contas BancÃ¡rias</p>
                             <span class="badge badge-neutral">${AppState.accounts.length}</span>
                         </div>
                         <div id="accounts-list" class="divide-y" style="border-color:var(--border)"></div>
                     </div>
                     <div class="section-card overflow-hidden">
                         <div class="px-5 py-4 border-b flex items-center justify-between" style="border-color:var(--border)">
-                            <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Cartões de Crédito</p>
+                            <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">CartÃµes de CrÃ©dito</p>
                             <span class="badge badge-neutral">${AppState.creditCards.length}</span>
                         </div>
                         <div id="cards-list" class="divide-y" style="border-color:var(--border)"></div>
@@ -1387,8 +1411,6 @@ const UI = {
 
         this.renderAccountsList();
         this.renderCardsList();
-        this.setupOpenFinanceButtons();
-        PluggyManager.init();
     },
 
     renderAccountsList() {
@@ -1407,7 +1429,7 @@ const UI = {
                     <div style="width:2.5rem;height:2.5rem;border-radius:.625rem;background:${bg}22;color:${bg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0;">${initials}</div>
                     <div>
                         <p class="font-semibold text-sm" style="color:var(--text)">${acc.name}</p>
-                        <p class="text-xs" style="color:var(--text-3)">${this.capitalize((acc.type||'').replace('corrente','Conta Corrente').replace('poupanca','Poupança'))}</p>
+                        <p class="text-xs" style="color:var(--text-3)">${this.capitalize((acc.type||'').replace('corrente','Conta Corrente').replace('poupanca','PoupanÃ§a'))}</p>
                     </div>
                 </div>
                 <div class="text-right pointer-events-none mr-3">
@@ -1430,7 +1452,7 @@ const UI = {
         const container = document.getElementById('cards-list');
         if (!container) return;
         if (AppState.creditCards.length === 0) {
-            container.innerHTML = `<div class="text-center py-10 text-sm" style="color:var(--text-3)">Nenhum cartão adicionado.</div>`; return;
+            container.innerHTML = `<div class="text-center py-10 text-sm" style="color:var(--text-3)">Nenhum cartÃ£o adicionado.</div>`; return;
         }
         container.innerHTML = AppState.creditCards.map(card => {
             const linkedAcc = AppState.accounts.find(a => a.id === card.linkedAccountId);
@@ -1445,7 +1467,7 @@ const UI = {
                         </div>
                         <div>
                             <p class="font-semibold text-sm" style="color:var(--text)">${card.name} <span class="badge badge-neutral ml-1">${card.brand||'N/A'}</span></p>
-                            <p class="text-xs" style="color:var(--text-3)">Venc. dia ${card.dueDay}${linkedAcc?` · vinc. ${linkedAcc.name}`:''}</p>
+                            <p class="text-xs" style="color:var(--text-3)">Venc. dia ${card.dueDay}${linkedAcc?` Â· vinc. ${linkedAcc.name}`:''}</p>
                         </div>
                     </div>
                     <div class="text-right mr-3">
@@ -1468,139 +1490,6 @@ const UI = {
         }).join('');
     },
 
-    setupOpenFinanceButtons() {
-        // Preencher campos se já existirem credenciais
-        const tagInput = document.getElementById('inf-tag');
-        const keyInput = document.getElementById('inf-api-key');
-        if (tagInput) tagInput.value = localStorage.getItem('inf_tag') || '';
-        if (keyInput) keyInput.value = localStorage.getItem('inf_api_key') || '';
-        
-        const isConnected = localStorage.getItem('inf_connected') === 'true';
-        const statusDot = document.getElementById('status-dot');
-        const statusText = document.getElementById('status-text');
-        const lastSyncText = document.getElementById('last-sync-text');
-        
-        if (isConnected && statusDot) {
-            statusDot.className = 'w-2 h-2 bg-green-400 rounded-full mr-2';
-            statusText.innerText = 'Conectado em Tempo Real';
-            lastSyncText.innerText = 'Última sincronização: ' + (localStorage.getItem('inf_last_sync') || 'Agora');
-        }
-    },
-
-    connectOpenFinanceBank(bank) {
-        // Conexão real com Open Finance
-        const statusElement = document.getElementById('openfinance-status');
-        const bankBtn = document.querySelector(`[data-bank="${bank}"]`);
-        
-        // Mostrar status de conectando
-        statusElement.innerHTML = `
-            <span class="inline-flex items-center">
-                <span class="w-2 h-2 bg-blue-400 rounded-full mr-2 animate-pulse"></span>
-                Iniciando conexão com InfinitePay...
-            </span>
-        `;
-        
-        // Desabilitar botão durante conexão
-        bankBtn.disabled = true;
-        bankBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        
-        // Iniciar conexão real
-        window.OpenFinanceService.connectBank(bank)
-            .then(result => {
-                // Atualizar status para conectado
-                const isMock = result.isMock || false;
-                statusElement.innerHTML = `
-                    <span class="inline-flex items-center">
-                        <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-                        Conectado com InfinitePay ${isMock ? '(dados demo)' : '(dados reais)'}
-                    </span>
-                `;
-                
-                // Mudar aparência do botão para conectado
-                bankBtn.classList.remove('bg-white/20', 'hover:bg-white/30');
-                bankBtn.classList.add('bg-green-500/20', 'border-green-400');
-                
-                // Adicionar checkmark
-                const icon = bankBtn.querySelector('img');
-                if (icon) icon.classList.add('ring-2', 'ring-green-400');
-                
-                // Sincronizar dados reais
-                this.syncRealOpenFinanceData(result.data);
-                
-                // Mostrar feedback
-                const feedbackType = isMock ? 'warning' : 'success';
-                const feedbackMessage = isMock ? 
-                    `Conectado ao InfinitePay com dados de demonstração!` :
-                    `Conectado com sucesso ao InfinitePay!`;
-                
-                this.showFeedback(feedbackMessage, feedbackType);
-                
-            })
-            .catch(error => {
-                console.error('❌ Erro na conexão:', error);
-                
-                // Restaurar botão
-                bankBtn.disabled = false;
-                bankBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                
-                // Verificar se é erro de backend não disponível
-                const isBackendError = error.message.includes('Failed to fetch') || 
-                                       error.message.includes('NetworkError') ||
-                                       error.message.includes('CORS');
-                
-                // Mostrar status de erro
-                statusElement.innerHTML = `
-                    <span class="inline-flex items-center">
-                        <span class="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
-                        ${isBackendError ? 'Backend offline - Inicie o servidor' : 'Erro na conexão'}
-                    </span>
-                `;
-                
-                // Mostrar feedback de erro detalhado
-                const errorMessage = isBackendError ? 
-                    `Backend não disponível. Execute: npm start` :
-                    `Erro ao conectar com ${bank}: ${error.message}`;
-                    
-                this.showFeedback(errorMessage, 'error');
-            });
-    },
-
-    syncRealOpenFinanceData(bankData) {
-        try {
-            // Adicionar contas reais
-            bankData.accounts.forEach(account => {
-                if (!AppState.accounts.find(a => a.id === account.id)) {
-                    AppState.accounts.push(account);
-                }
-            });
-            
-            // Adicionar cartões reais
-            bankData.creditCards.forEach(card => {
-                if (!AppState.creditCards.find(c => c.id === card.id)) {
-                    AppState.creditCards.push(card);
-                }
-            });
-            
-            // Adicionar transações reais
-            bankData.transactions.forEach(transaction => {
-                if (!AppState.transactions.find(t => t.id === transaction.id)) {
-                    AppState.transactions.push(transaction);
-                }
-            });
-            
-            // Salvar e atualizar interface
-            AppState.saveAll();
-            AppState.recalculateAllBalances();
-            this.renderAccountsList();
-            this.renderCardsList();
-            
-            console.log('🔄 Dados reais sincronizados com sucesso!');
-            
-        } catch (error) {
-            console.error('❌ Erro na sincronização:', error);
-            this.showFeedback('Erro ao sincronizar dados', 'error');
-        }
-    },
 
     showFeedback(message, type = 'info') {
         const feedbackContainer = document.getElementById('feedback-message');
@@ -1665,7 +1554,7 @@ const UI = {
                             <label for="acc-type" class="block text-sm font-medium text-gray-700">Tipo de Conta</label>
                             <select id="acc-type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" ${isEditing && type === 'card' ? 'disabled' : ''}>
                                 <option value="corrente" ${accountData.type === 'corrente' ? 'selected' : ''}>Conta Corrente</option>
-                                <option value="poupanca" ${accountData.type === 'poupanca' ? 'selected' : ''}>Poupança</option>
+                                <option value="poupanca" ${accountData.type === 'poupanca' ? 'selected' : ''}>PoupanÃ§a</option>
                                 <option value="cash" ${accountData.type === 'cash' ? 'selected' : ''}>Dinheiro</option>
                             </select>
                         </div>
@@ -1683,15 +1572,15 @@ const UI = {
                 <div class="p-3 bg-gray-50 rounded-lg">
                     <div class="flex items-center">
                         <input id="has-card-checkbox" type="checkbox" ${hasCard ? 'checked' : ''} ${isEditing && type === 'card' ? 'disabled' : ''} class="h-4 w-4 text-purple-600 border-gray-300 rounded">
-                        <label for="has-card-checkbox" class="ml-2 block text-sm font-medium text-gray-700">Possui Cartão de Crédito vinculado?</label>
+                        <label for="has-card-checkbox" class="ml-2 block text-sm font-medium text-gray-700">Possui CartÃ£o de CrÃ©dito vinculado?</label>
                     </div>
                     <div id="card-fields-container" class="space-y-4 mt-4 ${!hasCard ? 'hidden' : ''}">
                         <div>
-                            <label for="card-name" class="block text-sm font-medium text-gray-700">Nome do Cartão</label>
+                            <label for="card-name" class="block text-sm font-medium text-gray-700">Nome do CartÃ£o</label>
                             <input type="text" id="card-name" value="${cardData.name || ''}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                         <div>
-                            <label for="card-brand" class="block text-sm font-medium text-gray-700">Bandeira do Cartão</label>
+                            <label for="card-brand" class="block text-sm font-medium text-gray-700">Bandeira do CartÃ£o</label>
                             <select id="card-brand" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                                 <option value="Visa" ${cardData.brand === 'Visa' ? 'selected' : ''}>Visa</option>
                                 <option value="Mastercard" ${cardData.brand === 'Mastercard' ? 'selected' : ''}>Mastercard</option>
@@ -1702,7 +1591,7 @@ const UI = {
                             </select>
                         </div>
                         <div>
-                            <label for="card-limit" class="block text-sm font-medium text-gray-700">Limite do Cartão (R$)</label>
+                            <label for="card-limit" class="block text-sm font-medium text-gray-700">Limite do CartÃ£o (R$)</label>
                             <input type="number" id="card-limit" value="${cardData.limit || 0}" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                         <div>
@@ -1713,7 +1602,7 @@ const UI = {
                 </div>
             </form>
         `;
-        this.showModal(isEditing ? 'Editar Item' : 'Adicionar Conta/Cartão', content, 'Salvar', 'account-modal-form');
+        this.showModal(isEditing ? 'Editar Item' : 'Adicionar Conta/CartÃ£o', content, 'Salvar', 'account-modal-form');
     },
 
     renderNewTransactionModal(data = {}) {
@@ -1729,14 +1618,14 @@ const UI = {
         };
         
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (Cartão)</option>`).join('');
+        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (CartÃ£o)</option>`).join('');
         const categoryOptions = AppState.categories.map(c => `<option value="${c}" ${tx.category === c ? 'selected' : ''}>${c}</option>`).join('');
 
         const content = `
             <form id="transaction-modal-form" class="space-y-4">
                 <input type="hidden" name="isImported" value="${data.isImported ? 'true' : ''}" data-import-index="${data.importIndex || ''}">
                 <div>
-                    <label for="trans-description" class="block text-sm font-medium text-gray-700">Descrição</label>
+                    <label for="trans-description" class="block text-sm font-medium text-gray-700">DescriÃ§Ã£o</label>
                     <input type="text" id="trans-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -1745,7 +1634,7 @@ const UI = {
                         <input type="number" id="trans-value" value="${tx.value}" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     </div>
                     <div>
-                        <label for="trans-date" class="block text-sm font-medium text-gray-700">Data da 1ª Parcela</label>
+                        <label for="trans-date" class="block text-sm font-medium text-gray-700">Data da 1Âª Parcela</label>
                         <input type="date" id="trans-date" value="${tx.date}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     </div>
                 </div>
@@ -1753,11 +1642,11 @@ const UI = {
                     <h4 class="font-semibold text-gray-600 mb-2">Parcelamento</h4>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="trans-installments-total" class="block text-sm font-medium text-gray-700">Nº de Parcelas</label>
+                            <label for="trans-installments-total" class="block text-sm font-medium text-gray-700">NÂº de Parcelas</label>
                             <input type="number" id="trans-installments-total" value="${tx.installmentsTotal}" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                         <div>
-                            <label for="trans-installments-paid" class="block text-sm font-medium text-gray-700">Parcelas já Pagas</label>
+                            <label for="trans-installments-paid" class="block text-sm font-medium text-gray-700">Parcelas jÃ¡ Pagas</label>
                             <input type="number" id="trans-installments-paid" value="${tx.installmentsPaid}" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                     </div>
@@ -1774,19 +1663,19 @@ const UI = {
                     <select id="trans-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
                  <div>
-                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
+                    <label for="trans-account" class="block text-sm font-medium text-gray-700">Conta / CartÃ£o</label>
                     <select id="trans-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="">Nenhuma</option>
                         ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
-                        ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
+                        ${AppState.creditCards.length > 0 ? `<optgroup label="CartÃµes">${cardOptions}</optgroup>` : ''}
                     </select>
                     <p id="income-account-helper" class="text-xs text-gray-500 mt-1 hidden">
-                        Selecione onde o dinheiro entrou. Para dinheiro em espécie, crie uma conta "Dinheiro". Deixar em branco marcará a receita como "Não Alocada".
+                        Selecione onde o dinheiro entrou. Para dinheiro em espÃ©cie, crie uma conta "Dinheiro". Deixar em branco marcarÃ¡ a receita como "NÃ£o Alocada".
                     </p>
                 </div>
             </form>
         `;
-        this.showModal('Nova Transação', content, 'Salvar', 'transaction-modal-form');
+        this.showModal('Nova TransaÃ§Ã£o', content, 'Salvar', 'transaction-modal-form');
         
         const transTypeSelect = document.getElementById('trans-type');
         const helperText = document.getElementById('income-account-helper');
@@ -1801,7 +1690,7 @@ const UI = {
     
     renderEditTransactionModal(tx, options = {}) {
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}" ${tx.accountId === a.id && !tx.isCreditCard ? 'selected' : ''}>${a.name}</option>`).join('');
-        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}" ${tx.accountId === c.id && tx.isCreditCard ? 'selected' : ''}>${c.name} (Cartão)</option>`).join('');
+        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}" ${tx.accountId === c.id && tx.isCreditCard ? 'selected' : ''}>${c.name} (CartÃ£o)</option>`).join('');
         const categoryOptions = AppState.categories.map(c => `<option value="${c}" ${tx.category === c ? 'selected' : ''}>${c}</option>`).join('');
 
         const content = `
@@ -1812,7 +1701,7 @@ const UI = {
                 <input type="hidden" id="edit-context-year" value="${options.year || ''}">
                 <input type="hidden" id="edit-context-month" value="${options.month || ''}">
                 <div>
-                    <label for="edit-trans-description" class="block text-sm font-medium text-gray-700">Descrição ${tx.installments || ''}</label>
+                    <label for="edit-trans-description" class="block text-sm font-medium text-gray-700">DescriÃ§Ã£o ${tx.installments || ''}</label>
                     <input type="text" id="edit-trans-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
                  <div class="grid grid-cols-2 gap-4">
@@ -1830,11 +1719,11 @@ const UI = {
                     <select id="edit-trans-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
                  <div>
-                    <label for="edit-trans-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
+                    <label for="edit-trans-account" class="block text-sm font-medium text-gray-700">Conta / CartÃ£o</label>
                     <select id="edit-trans-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="">Nenhum</option>
                         ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
-                        ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
+                        ${AppState.creditCards.length > 0 ? `<optgroup label="CartÃµes">${cardOptions}</optgroup>` : ''}
                     </select>
                 </div>
                 <div class="flex items-center">
@@ -1843,7 +1732,7 @@ const UI = {
                 </div>
             </form>
         `;
-        this.showModal(`Editar ${tx.installments ? `Parcela` : 'Transação'}`, content, 'Salvar', 'edit-transaction-form');
+        this.showModal(`Editar ${tx.installments ? `Parcela` : 'TransaÃ§Ã£o'}`, content, 'Salvar', 'edit-transaction-form');
     },
     
     renderEditSeriesModal(tx) {
@@ -1852,7 +1741,7 @@ const UI = {
             <form id="edit-series-form" class="space-y-4">
                  <input type="hidden" id="editing-group-id" value="${tx.groupId}">
                 <div>
-                    <label for="edit-series-description" class="block text-sm font-medium text-gray-700">Descrição</label>
+                    <label for="edit-series-description" class="block text-sm font-medium text-gray-700">DescriÃ§Ã£o</label>
                     <input type="text" id="edit-series-description" value="${tx.description}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div>
@@ -1864,49 +1753,49 @@ const UI = {
                     <select id="edit-series-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">${categoryOptions}</select>
                 </div>
                  <div>
-                    <label for="edit-series-start-date" class="block text-sm font-medium text-gray-700">Alterar data de início dos pagamentos</label>
+                    <label for="edit-series-start-date" class="block text-sm font-medium text-gray-700">Alterar data de inÃ­cio dos pagamentos</label>
                     <input type="date" id="edit-series-start-date" value="${tx.date}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
             </form>
         `;
-        this.showModal('Editar Série de Parcelas', content, 'Salvar Alterações', 'edit-series-form');
+        this.showModal('Editar SÃ©rie de Parcelas', content, 'Salvar AlteraÃ§Ãµes', 'edit-series-form');
     },
 
     renderBulkEditModal() {
         const categoryOptions = AppState.categories.map(c => `<option value="${c}">${c}</option>`).join('');
         const accountOptions = AppState.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (Cartão)</option>`).join('');
+        const cardOptions = AppState.creditCards.map(c => `<option value="${c.id}">${c.name} (CartÃ£o)</option>`).join('');
 
         const content = `
             <form id="bulk-edit-modal-form" class="space-y-4">
-                <p class="text-sm text-gray-600">Altere apenas os campos que deseja aplicar a todas as transações selecionadas. Os campos deixados em "Não Alterar" não serão modificados.</p>
+                <p class="text-sm text-gray-600">Altere apenas os campos que deseja aplicar a todas as transaÃ§Ãµes selecionadas. Os campos deixados em "NÃ£o Alterar" nÃ£o serÃ£o modificados.</p>
                 <div>
                     <label for="bulk-edit-category" class="block text-sm font-medium text-gray-700">Nova Categoria</label>
                     <select id="bulk-edit-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="">Não Alterar</option>
+                        <option value="">NÃ£o Alterar</option>
                         ${categoryOptions}
                     </select>
                 </div>
                 <div>
-                    <label for="bulk-edit-account" class="block text-sm font-medium text-gray-700">Nova Conta / Cartão</label>
+                    <label for="bulk-edit-account" class="block text-sm font-medium text-gray-700">Nova Conta / CartÃ£o</label>
                     <select id="bulk-edit-account" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="">Não Alterar</option>
+                        <option value="">NÃ£o Alterar</option>
                         <option value="null">Nenhum (Desvincular)</option>
                         ${AppState.accounts.length > 0 ? `<optgroup label="Contas">${accountOptions}</optgroup>` : ''}
-                        ${AppState.creditCards.length > 0 ? `<optgroup label="Cartões">${cardOptions}</optgroup>` : ''}
+                        ${AppState.creditCards.length > 0 ? `<optgroup label="CartÃµes">${cardOptions}</optgroup>` : ''}
                     </select>
                 </div>
                 <div>
                     <label for="bulk-edit-status" class="block text-sm font-medium text-gray-700">Novo Status</label>
                     <select id="bulk-edit-status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="">Não Alterar</option>
+                        <option value="">NÃ£o Alterar</option>
                         <option value="paid">Pago</option>
                         <option value="unpaid">Pendente</option>
                     </select>
                 </div>
             </form>
         `;
-        this.showModal('Editar Múltiplas Transações', content, 'Salvar Alterações', 'bulk-edit-modal-form');
+        this.showModal('Editar MÃºltiplas TransaÃ§Ãµes', content, 'Salvar AlteraÃ§Ãµes', 'bulk-edit-modal-form');
     },
     
     renderPayBillModal(cardId, billAmount) {
@@ -1942,7 +1831,7 @@ const UI = {
                 </div>
             </form>
         `;
-        this.showModal('Pagar Fatura do Cartão', content, 'Confirmar Pagamento', 'pay-bill-form');
+        this.showModal('Pagar Fatura do CartÃ£o', content, 'Confirmar Pagamento', 'pay-bill-form');
     },
 
     showModal(title, content, submitText, formId) {
@@ -2031,7 +1920,7 @@ const UI = {
                      <div class="modal-footer flex flex-col sm:flex-row justify-end gap-3">
                          <button id="bulk-apply-selected-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Apenas nas Selecionadas</button>
                          <button id="bulk-apply-future-btn" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Nas Selecionadas e Futuras</button>
-                         <button id="bulk-apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Em Toda a Série</button>
+                         <button id="bulk-apply-all-btn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Em Toda a SÃ©rie</button>
                      </div>
                  </div>
              </div>`;
@@ -2082,7 +1971,7 @@ const UI = {
 
         const txListBuilder = (txs) => {
             if (txs.length === 0) {
-                return `<p class="text-gray-500 text-center py-4">Nenhuma transação encontrada.</p>`;
+                return `<p class="text-gray-500 text-center py-4">Nenhuma transaÃ§Ã£o encontrada.</p>`;
             }
             let listHtml = '<ul class="space-y-3">';
             txs.forEach(tx => {
@@ -2146,25 +2035,25 @@ const UI = {
                 this.showInfoModal(title, content);
                 break;
             case 'monthly-income':
-                title = 'Receitas do Mês';
+                title = 'Receitas do MÃªs';
                 const incomeTxs = monthTxs.filter(t => t.fundamentalType === 'receita').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(incomeTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
             case 'monthly-expenses':
-                title = 'Despesas do Mês';
+                title = 'Despesas do MÃªs';
                 const expenseTxs = monthTxs.filter(t => t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(expenseTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
              case 'monthly-paid':
-                 title = 'Total Pago no Mês';
+                 title = 'Total Pago no MÃªs';
                 const paidTxs = monthTxs.filter(t => t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = txListBuilder(paidTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
              case 'monthly-unpaid':
-                 title = 'Contas a Pagar no Mês';
+                 title = 'Contas a Pagar no MÃªs';
                 const unpaidTxs = monthTxs.filter(t => !t.isPaid && t.fundamentalType === 'despesa').sort((a,b) => new Date(a.date) - new Date(b.date));
                 content = txListBuilder(unpaidTxs);
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
@@ -2179,18 +2068,18 @@ const UI = {
                 this.showInfoModal(title, content, (e) => Handlers.handleModalClick(e, type));
                 break;
             case 'monthly-balance':
-                 title = 'Balanço do Mês';
-                const incomeBalanço = monthTxs.filter(t => t.fundamentalType === 'receita').sort((a,b) => new Date(b.date) - new Date(a.date));
-                const expenseBalanço = monthTxs.filter(t => t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
+                 title = 'BalanÃ§o do MÃªs';
+                const incomeBalanÃ§o = monthTxs.filter(t => t.fundamentalType === 'receita').sort((a,b) => new Date(b.date) - new Date(a.date));
+                const expenseBalanÃ§o = monthTxs.filter(t => t.fundamentalType === 'despesa').sort((a,b) => new Date(b.date) - new Date(a.date));
                 content = `
                     <div class="space-y-4">
                         <div>
                             <h4 class="font-bold text-lg mb-2 text-green-600">Receitas</h4>
-                            ${txListBuilder(incomeBalanço)}
+                            ${txListBuilder(incomeBalanÃ§o)}
                         </div>
                         <div>
                             <h4 class="font-bold text-lg mb-2 text-red-600">Despesas</h4>
-                            ${txListBuilder(expenseBalanço)}
+                            ${txListBuilder(expenseBalanÃ§o)}
                         </div>
                     </div>
                 `;
@@ -2209,7 +2098,7 @@ const UI = {
 
         const txListBuilder = (txs) => {
             if (txs.length === 0) {
-                return `<p class="text-gray-500 text-center py-4">Nenhuma transação vinculada a esta conta.</p>`;
+                return `<p class="text-gray-500 text-center py-4">Nenhuma transaÃ§Ã£o vinculada a esta conta.</p>`;
             }
             let listHtml = '<ul class="space-y-3">';
             txs.forEach(tx => {
@@ -2230,7 +2119,7 @@ const UI = {
                                  </div>
                                  <div class="flex items-center">
                                       <span class="font-semibold ${color} mr-4">${this.formatCurrency(tx.value)}</span>
-                                      <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover Vínculo">
+                                      <button class="unlink-btn p-2 text-gray-400 hover:text-yellow-600" data-id="${tx.id}" title="Remover VÃ­nculo">
                                            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536l1.101-1.102a4 4 0 000-5.656l-4-4a4 4 0 00-5.656 5.656l1.101 1.102" /></svg>
                                       </button>
                                       <button class="edit-btn p-2 text-gray-400 hover:text-blue-600" data-id="${tx.id}" data-type="transaction" title="Editar">
@@ -2245,7 +2134,7 @@ const UI = {
 
         const content = `
             <div data-account-id="${accountId}">
-                <h4 class="font-bold text-lg mb-2 text-gray-800">Transações na Conta</h4>
+                <h4 class="font-bold text-lg mb-2 text-gray-800">TransaÃ§Ãµes na Conta</h4>
                 <div class="max-h-96 overflow-y-auto">
                     ${txListBuilder(linkedTxs)}
                 </div>
@@ -2269,7 +2158,7 @@ const UI = {
         let totalBill = 0;
         const txListBuilder = (txs) => {
             if (txs.length === 0) {
-                return `<p class="text-gray-500 text-center py-4">Nenhuma transação nesta fatura.</p>`;
+                return `<p class="text-gray-500 text-center py-4">Nenhuma transaÃ§Ã£o nesta fatura.</p>`;
             }
             let listHtml = '<ul class="space-y-3">';
             txs.forEach(tx => {
@@ -2313,11 +2202,11 @@ const UI = {
                     <div class="font-semibold text-right">${this.formatCurrency(card.limit)}</div>
                     <div class="text-gray-500">Fatura Atual:</div>
                     <div class="font-semibold text-red-600 text-right">${this.formatCurrency(totalBill)}</div>
-                    <div class="text-gray-500">Limite Disponível:</div>
+                    <div class="text-gray-500">Limite DisponÃ­vel:</div>
                     <div class="font-semibold text-green-600 text-right">${this.formatCurrency(card.availableLimit)}</div>
                 </div>
                 <hr class="my-4"/>
-                <h4 class="font-bold text-lg mb-2 text-gray-800">Transações na Fatura</h4>
+                <h4 class="font-bold text-lg mb-2 text-gray-800">TransaÃ§Ãµes na Fatura</h4>
                 <div class="max-h-64 overflow-y-auto pr-2">
                     ${txList}
                 </div>
@@ -2349,7 +2238,7 @@ const UI = {
                     <div class="text-gray-500">Valor Faltante:</div>
                     <div class="font-semibold text-red-600 text-right">${this.formatCurrency(amountRemaining)}</div>
 
-                    <div class="text-gray-500">Data de Término:</div>
+                    <div class="text-gray-500">Data de TÃ©rmino:</div>
                     <div class="font-semibold text-right">${endDate}</div>
                 </div>
                 <hr/>
@@ -2388,7 +2277,7 @@ const UI = {
         this.showInfoModal(`Detalhes: ${description}`, content);
     },
     
-    // Converte um texto simples com Markdown básico para HTML.
+    // Converte um texto simples com Markdown bÃ¡sico para HTML.
     parseSimpleMarkdown(text) {
         let html = text
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
@@ -2414,13 +2303,13 @@ const UI = {
             let colorClass, arrow;
             if (diff > 0) {
                 colorClass = higherIsBetter ? 'text-green-500' : 'text-red-500';
-                arrow = '▲';
+                arrow = 'â–²';
             } else if (diff < 0) {
                 colorClass = higherIsBetter ? 'text-red-500' : 'text-green-500';
-                arrow = '▼';
+                arrow = 'â–¼';
             } else {
                 colorClass = 'text-gray-500';
-                arrow = '–';
+                arrow = 'â€“';
             }
             
             return `
@@ -2437,7 +2326,7 @@ const UI = {
 
         return `
             <div class="ai-analysis-content">
-                <h3>Análise Comparativa</h3>
+                <h3>AnÃ¡lise Comparativa</h3>
                 <p class="text-sm text-gray-500 mb-4">Comparando ${lastMonthData.periodLabel} com ${prevMonthData.periodLabel}</p>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2455,7 +2344,7 @@ const UI = {
     },
 
     showVisualAnalysisModal(analysisData) {
-        const title = 'Análise Financeira Inteligente';
+        const title = 'AnÃ¡lise Financeira Inteligente';
         const contentHtml = this.renderVisualAnalysisPanel(analysisData);
         
         const modalContainer = document.getElementById('modal-container');
@@ -2485,16 +2374,16 @@ const UI = {
         ];
 
         const optionsHtml = allAccountsAndCards.map(item => {
-            return `<option value="${item.id}" data-is-credit-card="${item.isCreditCard}">${item.name} (${item.isCreditCard ? 'Cartão' : 'Conta'})</option>`;
+            return `<option value="${item.id}" data-is-credit-card="${item.isCreditCard}">${item.name} (${item.isCreditCard ? 'CartÃ£o' : 'Conta'})</option>`;
         }).join('');
 
         const content = `
             <form id="payment-source-form" class="space-y-4">
                 <input type="hidden" id="payment-source-tx-id" value="${txId}">
                 <input type="hidden" id="payment-source-modal-type" value="${sourceModalType || ''}">
-                <p class="text-gray-700">Selecione a conta ou cartão de onde a despesa foi paga:</p>
+                <p class="text-gray-700">Selecione a conta ou cartÃ£o de onde a despesa foi paga:</p>
                 <div>
-                    <label for="payment-source-account" class="block text-sm font-medium text-gray-700">Conta / Cartão</label>
+                    <label for="payment-source-account" class="block text-sm font-medium text-gray-700">Conta / CartÃ£o</label>
                     <select id="payment-source-account" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         <option value="">Selecione...</option>
                         ${optionsHtml}
@@ -2538,7 +2427,7 @@ const UI = {
             warning: 'background:linear-gradient(135deg,#f59e0b,#fbbf24);color:white;'
         };
         const icons = {
-            success: '✓', error: '✕', info: 'ℹ', warning: '⚠'
+            success: 'âœ“', error: 'âœ•', info: 'â„¹', warning: 'âš '
         };
         el.innerHTML = `<div style="${styles[type]||styles.info}padding:.7rem 1.25rem;border-radius:99px;box-shadow:0 8px 24px rgba(0,0,0,.18);font-size:.875rem;font-weight:600;display:flex;align-items:center;gap:.5rem;animation:slideInUp .25s ease-out;">
             <span style="opacity:.85">${icons[type]||icons.info}</span> ${message}
@@ -2569,9 +2458,9 @@ const UI = {
 
         container.innerHTML = `
             ${this.createSummaryCard('Saldo Total', totalBalance, 'blue', totalBalance < 0)}
-            ${this.createSummaryCard('Receitas no Mês', income, 'green')}
-            ${this.createSummaryCard('Despesas no Mês', expenses, 'red')}
-            ${this.createSummaryCard('Total Pago no Mês', paidExpenses, 'yellow')}
+            ${this.createSummaryCard('Receitas no MÃªs', income, 'green')}
+            ${this.createSummaryCard('Despesas no MÃªs', expenses, 'red')}
+            ${this.createSummaryCard('Total Pago no MÃªs', paidExpenses, 'yellow')}
             ${this.createSummaryCard('Despesas em Atraso', overdueCount, 'orange', false, true)}
         `;
     },
@@ -2583,7 +2472,7 @@ const UI = {
             yellow: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
             orange: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
         };
-        // Gradientes inline — não dependem do CSS externo
+        // Gradientes inline â€” nÃ£o dependem do CSS externo
         const gradients = {
             blue:   'linear-gradient(135deg,#6366f1 0%,#818cf8 100%)',
             green:  'linear-gradient(135deg,#10b981 0%,#34d399 100%)',
@@ -2600,16 +2489,16 @@ const UI = {
         };
         const typeMap = {
             'Saldo Total':        'total-balance',
-            'Receitas no Mês':    'monthly-income',
-            'Despesas no Mês':    'monthly-expenses',
-            'Total Pago no Mês':  'monthly-paid',
+            'Receitas no MÃªs':    'monthly-income',
+            'Despesas no MÃªs':    'monthly-expenses',
+            'Total Pago no MÃªs':  'monthly-paid',
             'Despesas em Atraso': 'monthly-overdue'
         };
         const subLabels = {
             'Saldo Total':        'em todas as contas',
-            'Receitas no Mês':    'entradas no período',
-            'Despesas no Mês':    'saídas no período',
-            'Total Pago no Mês':  'despesas quitadas',
+            'Receitas no MÃªs':    'entradas no perÃ­odo',
+            'Despesas no MÃªs':    'saÃ­das no perÃ­odo',
+            'Total Pago no MÃªs':  'despesas quitadas',
             'Despesas em Atraso': value === 1 ? 'conta em atraso' : 'contas em atraso'
         };
         const activeColor = isNegative ? 'red' : color;
@@ -2700,7 +2589,7 @@ const UI = {
         const cards = AppState.creditCards;
 
         if (cards.length === 0) {
-            container.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-sm text-center text-gray-500 md:col-span-2">Nenhum cartão de crédito adicionado.</div>`;
+            container.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-sm text-center text-gray-500 md:col-span-2">Nenhum cartÃ£o de crÃ©dito adicionado.</div>`;
             return;
         }
 
@@ -2729,7 +2618,7 @@ const UI = {
                             <span class="font-semibold">${this.formatCurrency(currentBill)}</span>
                         </div>
                         <div class="flex justify-between text-sm">
-                            <span>Limite Disponível</span>
+                            <span>Limite DisponÃ­vel</span>
                             <span class="font-semibold">${this.formatCurrency(card.availableLimit)}</span>
                         </div>
                     </div>
@@ -2754,7 +2643,7 @@ const UI = {
             .slice(0, 5);
         
         if (upcoming.length === 0) {
-            container.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhuma conta pendente para este mês.</p>`;
+            container.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhuma conta pendente para este mÃªs.</p>`;
             return;
         }
 
@@ -2811,7 +2700,7 @@ const UI = {
 
         container.innerHTML = `
             <div class="bg-blue-50 p-3 rounded-lg flex justify-between items-center transition-all duration-300">
-                <span class="font-medium text-blue-800">${selectedCount} transaç${selectedCount > 1 ? 'ões' : 'ão'} selecionada${selectedCount > 1 ? 's' : ''}</span>
+                <span class="font-medium text-blue-800">${selectedCount} transaÃ§${selectedCount > 1 ? 'Ãµes' : 'Ã£o'} selecionada${selectedCount > 1 ? 's' : ''}</span>
                 <div class="space-x-2">
                     <button id="bulk-edit" class="px-3 py-1 text-sm text-white bg-blue-500 rounded-md hover:bg-blue-600">Editar</button>
                     <button id="bulk-mark-paid" class="px-3 py-1 text-sm text-white bg-green-500 rounded-md hover:bg-green-600">Marcar como Pago</button>
@@ -2831,7 +2720,7 @@ const UI = {
                     </div>
                     <button id="add-new-budget-btn" class="btn btn-primary text-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                        Novo Orçamento
+                        Novo OrÃ§amento
                     </button>
                 </div>
                 <div id="budget-list-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
@@ -2847,8 +2736,8 @@ const UI = {
             container.innerHTML = `
                 <div class="col-span-full text-center py-16 section-card">
                     <svg class="w-16 h-16 mx-auto mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                    <p class="font-semibold mb-1" style="color:var(--text-2)">Nenhum orçamento definido</p>
-                    <p class="text-sm" style="color:var(--text-3)">Clique em "Novo Orçamento" para começar a controlar seus gastos.</p>
+                    <p class="font-semibold mb-1" style="color:var(--text-2)">Nenhum orÃ§amento definido</p>
+                    <p class="text-sm" style="color:var(--text-3)">Clique em "Novo OrÃ§amento" para comeÃ§ar a controlar seus gastos.</p>
                 </div>`;
             return;
         }
@@ -2867,7 +2756,7 @@ const UI = {
                 statusBadge = `<span class="badge badge-danger">Estourado</span>`;
             } else if (percentage > 75) {
                 barColor = 'var(--warning)'; barBg = 'var(--warning-bg)';
-                statusBadge = `<span class="badge badge-warning">Atenção</span>`;
+                statusBadge = `<span class="badge badge-warning">AtenÃ§Ã£o</span>`;
             } else {
                 barColor = 'var(--brand-500)'; barBg = 'var(--brand-50)';
                 statusBadge = `<span class="badge badge-success">Dentro do limite</span>`;
@@ -2901,7 +2790,7 @@ const UI = {
                         <div class="budget-progress-fill" style="width:${pct}%;background:${barColor};"></div>
                     </div>
                     <p class="text-xs mt-2" style="color:var(--text-3)">
-                        ${remaining >= 0 ? `Disponível: <span style="color:var(--success);font-weight:600;">${this.formatCurrency(remaining)}</span>` : `Excesso: <span style="color:var(--danger);font-weight:600;">${this.formatCurrency(Math.abs(remaining))}</span>`}
+                        ${remaining >= 0 ? `DisponÃ­vel: <span style="color:var(--success);font-weight:600;">${this.formatCurrency(remaining)}</span>` : `Excesso: <span style="color:var(--danger);font-weight:600;">${this.formatCurrency(Math.abs(remaining))}</span>`}
                     </p>
                 </div>`;
         }).join('');
@@ -2909,14 +2798,14 @@ const UI = {
 
     renderBudgetModal(budgetToEdit = null) {
         const isEditing = !!budgetToEdit;
-        const title = isEditing ? 'Editar Orçamento' : 'Novo Orçamento';
+        const title = isEditing ? 'Editar OrÃ§amento' : 'Novo OrÃ§amento';
         
         const budgetedCategories = AppState.budgets.map(b => b.category);
         const availableCategories = AppState.categories
-            .filter(c => c !== 'Pagamento de Fatura' && c !== 'Salário' && (!budgetedCategories.includes(c) || (isEditing && c === budgetToEdit.category)));
+            .filter(c => c !== 'Pagamento de Fatura' && c !== 'SalÃ¡rio' && (!budgetedCategories.includes(c) || (isEditing && c === budgetToEdit.category)));
 
         if (availableCategories.length === 0 && !isEditing) {
-            UI.showFeedback('Todas as categorias já possuem um orçamento.', 'info');
+            UI.showFeedback('Todas as categorias jÃ¡ possuem um orÃ§amento.', 'info');
             return;
         }
 
@@ -2932,7 +2821,7 @@ const UI = {
                     </select>
                 </div>
                 <div>
-                    <label for="budget-amount" class="block text-sm font-medium text-gray-700">Valor do Orçamento (R$)</label>
+                    <label for="budget-amount" class="block text-sm font-medium text-gray-700">Valor do OrÃ§amento (R$)</label>
                     <input type="number" id="budget-amount" value="${isEditing ? budgetToEdit.amount : ''}" required min="0" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                 </div>
             </form>
@@ -2959,7 +2848,7 @@ const UI = {
         }).sort((a,b) => b.percentage - a.percentage);
 
         if (budgetsWithSpent.length === 0) {
-            container.innerHTML = `<p class="text-center text-sm text-gray-500 py-4">Nenhum orçamento definido para este mês.</p>`;
+            container.innerHTML = `<p class="text-center text-sm text-gray-500 py-4">Nenhum orÃ§amento definido para este mÃªs.</p>`;
             return;
         }
 
@@ -2984,7 +2873,7 @@ const UI = {
     }
 };
 
-// Módulo de Handlers
+// MÃ³dulo de Handlers
 const Handlers = {
     init() {
         document.getElementById('logo-container').addEventListener('click', () => {
@@ -2997,7 +2886,7 @@ const Handlers = {
         }));
         
         document.getElementById('clear-data-btn').addEventListener('click', () => {
-            UI.showConfirmationModal('Limpar Todos os Dados', 'Tem certeza que deseja apagar TUDO? Esta ação não pode ser desfeita.', () => {
+            UI.showConfirmationModal('Limpar Todos os Dados', 'Tem certeza que deseja apagar TUDO? Esta aÃ§Ã£o nÃ£o pode ser desfeita.', () => {
                 AppState.clearAllData(); UI.render(); UI.showFeedback('Todos os dados foram limpos!', 'success');
             });
         });
@@ -3049,7 +2938,7 @@ const Handlers = {
                 this.handleAccountClick(accountItem.dataset.id);
             }
             
-             // Handlers para Ações em Massa
+             // Handlers para AÃ§Ãµes em Massa
             if (e.target.id === 'bulk-edit') UI.renderBulkEditModal();
             if (e.target.id === 'bulk-mark-paid') this.handleBulkMarkPaid();
             if (e.target.id === 'bulk-delete') this.handleBulkDelete();
@@ -3081,7 +2970,7 @@ const Handlers = {
                 UI.render();
             }
 
-            // Handler para checkboxes de transação
+            // Handler para checkboxes de transaÃ§Ã£o
             if (e.target.classList.contains('tx-select-checkbox') || e.target.id === 'select-all-txs') {
                 this.handleTransactionSelection(e.target);
             }
@@ -3208,9 +3097,9 @@ const Handlers = {
             AppState.saveAll();
             this.handleBulkDeselect();
             UI.render();
-            UI.showFeedback(`${changedCount} transaç${changedCount > 1 ? 'ões' : 'ão'} marcada${changedCount > 1 ? 's' : ''} como paga.`, 'success');
+            UI.showFeedback(`${changedCount} transaÃ§${changedCount > 1 ? 'Ãµes' : 'Ã£o'} marcada${changedCount > 1 ? 's' : ''} como paga.`, 'success');
         } else {
-             UI.showFeedback('Nenhuma transação pendente foi selecionada.', 'info');
+             UI.showFeedback('Nenhuma transaÃ§Ã£o pendente foi selecionada.', 'info');
         }
     },
 
@@ -3219,8 +3108,8 @@ const Handlers = {
         if (selectedCount === 0) return;
 
         UI.showConfirmationModal(
-            `Excluir ${selectedCount} Transações`,
-            `Tem certeza que deseja excluir as ${selectedCount} transações selecionadas?`,
+            `Excluir ${selectedCount} TransaÃ§Ãµes`,
+            `Tem certeza que deseja excluir as ${selectedCount} transaÃ§Ãµes selecionadas?`,
             () => {
                 AppState.transactions = AppState.transactions.filter(
                     tx => !AppState.selectedTransactionIds.includes(tx.id)
@@ -3229,17 +3118,17 @@ const Handlers = {
                 AppState.saveAll();
                 this.handleBulkDeselect();
                 UI.render();
-                UI.showFeedback(`${selectedCount} transações foram excluídas.`, 'success');
+                UI.showFeedback(`${selectedCount} transaÃ§Ãµes foram excluÃ­das.`, 'success');
             }
         );
     },
 
     async processBulkSeriesChanges(seriesQueue, changes) {
         for (const seriesInfo of seriesQueue) {
-             const message = `Aplicar alterações para a série "${seriesInfo.sampleTx.description}"?`;
+             const message = `Aplicar alteraÃ§Ãµes para a sÃ©rie "${seriesInfo.sampleTx.description}"?`;
              const scope = await new Promise(resolve => {
                  UI.showBulkApplyToSeriesModal(
-                    `Editar Série: ${seriesInfo.sampleTx.description}`,
+                    `Editar SÃ©rie: ${seriesInfo.sampleTx.description}`,
                     message,
                     () => { UI.closeModal(); resolve('selected'); },
                     () => { UI.closeModal(); resolve('future'); },
@@ -3335,7 +3224,7 @@ const Handlers = {
             if (!success) {
                  this.handleBulkDeselect();
                  UI.render();
-                 UI.showFeedback('Edição em massa cancelada.', 'info');
+                 UI.showFeedback('EdiÃ§Ã£o em massa cancelada.', 'info');
                  return;
             }
         }
@@ -3348,7 +3237,7 @@ const Handlers = {
         AppState.saveAll();
         this.handleBulkDeselect();
         UI.render();
-        UI.showFeedback('Transações atualizadas com sucesso!', 'success');
+        UI.showFeedback('TransaÃ§Ãµes atualizadas com sucesso!', 'success');
     },
 
     handlePayBillClick(cardId, billAmount) {
@@ -3360,7 +3249,7 @@ const Handlers = {
     },
 
     handleUnlinkTransactionClick(txId, accountId) {
-        UI.showConfirmationModal('Remover Vínculo', 'Tem certeza que deseja desvincular esta transação da conta?', () => {
+        UI.showConfirmationModal('Remover VÃ­nculo', 'Tem certeza que deseja desvincular esta transaÃ§Ã£o da conta?', () => {
             const tx = AppState.transactions.find(t => t.id === txId);
             if (tx) {
                 tx.accountId = null;
@@ -3369,7 +3258,7 @@ const Handlers = {
                 AppState.saveAll();
                 UI.closeModal();
                 setTimeout(() => UI.renderAccountDetailsModal(accountId), 100);
-                UI.showFeedback('Vínculo removido.', 'success');
+                UI.showFeedback('VÃ­nculo removido.', 'success');
             }
         });
     },
@@ -3414,8 +3303,8 @@ const Handlers = {
 
             if (hasPreviousUnpaid) {
                 UI.showConfirmationModal(
-                    'Atenção: Parcela Anterior Aberta',
-                    'Existem parcelas anteriores para esta despesa que ainda não foram pagas. Tem certeza de que deseja marcar esta como paga mesmo assim?',
+                    'AtenÃ§Ã£o: Parcela Anterior Aberta',
+                    'Existem parcelas anteriores para esta despesa que ainda nÃ£o foram pagas. Tem certeza de que deseja marcar esta como paga mesmo assim?',
                     setAsPaid
                 );
             } else {
@@ -3445,7 +3334,7 @@ const Handlers = {
         const sourceModalType = form.querySelector('#payment-source-modal-type').value;
 
         if (!selectedAccountId) {
-            UI.showFeedback('Por favor, selecione uma conta ou cartão.', 'error');
+            UI.showFeedback('Por favor, selecione uma conta ou cartÃ£o.', 'error');
             return;
         }
 
@@ -3471,7 +3360,7 @@ const Handlers = {
                 UI.render();
             }
         } else {
-            UI.showFeedback('Transação não encontrada.', 'error');
+            UI.showFeedback('TransaÃ§Ã£o nÃ£o encontrada.', 'error');
             UI.closeModal();
         }
     },
@@ -3538,20 +3427,20 @@ const Handlers = {
             .join('\n');
 
         const prompt = `
-            Você é um consultor financeiro amigável e prestativo.
-            Analise o seguinte resumo financeiro de um usuário do Brasil e forneça insights e sugestões práticas em português do Brasil.
+            VocÃª Ã© um consultor financeiro amigÃ¡vel e prestativo.
+            Analise o seguinte resumo financeiro de um usuÃ¡rio do Brasil e forneÃ§a insights e sugestÃµes prÃ¡ticas em portuguÃªs do Brasil.
             Seja conciso, use uma linguagem clara e formate a resposta usando Markdown (use asteriscos para listas, como em '* Item', e dois asteriscos para negrito, como em '**Negrito**').
-            Não use cabeçalhos de markdown (com '#'). Comece diretamente com um parágrafo de resumo.
+            NÃ£o use cabeÃ§alhos de markdown (com '#'). Comece diretamente com um parÃ¡grafo de resumo.
             
-            Dados para análise:
-            - **Mês Anterior (${prevMonthData.periodLabel}):** Receitas de ${formatCurrency(prevMonthData.income)}, Despesas de ${formatCurrency(prevMonthData.expenses)}, Saldo de ${formatCurrency(prevMonthData.balance)}.
-            - **Mês Atual (${lastMonthData.periodLabel}):** Receitas de ${formatCurrency(lastMonthData.income)}, Despesas de ${formatCurrency(lastMonthData.expenses)}, Saldo de ${formatCurrency(lastMonthData.balance)}.
-            - **Principais Despesas (Mês Atual):**\n${topExpenses || "Nenhuma despesa registrada."}
+            Dados para anÃ¡lise:
+            - **MÃªs Anterior (${prevMonthData.periodLabel}):** Receitas de ${formatCurrency(prevMonthData.income)}, Despesas de ${formatCurrency(prevMonthData.expenses)}, Saldo de ${formatCurrency(prevMonthData.balance)}.
+            - **MÃªs Atual (${lastMonthData.periodLabel}):** Receitas de ${formatCurrency(lastMonthData.income)}, Despesas de ${formatCurrency(lastMonthData.expenses)}, Saldo de ${formatCurrency(lastMonthData.balance)}.
+            - **Principais Despesas (MÃªs Atual):**\n${topExpenses || "Nenhuma despesa registrada."}
 
             Estruture sua resposta da seguinte forma:
-            1.  Um parágrafo de análise geral.
+            1.  Um parÃ¡grafo de anÃ¡lise geral.
             2.  Uma lista de "Pontos Positivos".
-            3.  Uma lista de "Pontos de Atenção e Sugestões".
+            3.  Uma lista de "Pontos de AtenÃ§Ã£o e SugestÃµes".
         `;
 
         try {
@@ -3572,7 +3461,7 @@ const Handlers = {
 
             const result = await response.json();
             
-            let analysisText = "Não foi possível gerar a análise no momento.";
+            let analysisText = "NÃ£o foi possÃ­vel gerar a anÃ¡lise no momento.";
             if (result.candidates && result.candidates[0] && result.candidates[0].content.parts[0]) {
                  analysisText = result.candidates[0].content.parts[0].text;
             }
@@ -3587,7 +3476,7 @@ const Handlers = {
             console.error('Erro ao chamar a API do Gemini:', error);
             const insightsContainer = document.getElementById('ai-insights-content');
             if (insightsContainer) {
-                insightsContainer.innerHTML = '<p class="text-red-500">Ocorreu um erro ao tentar gerar sua análise financeira. Por favor, tente novamente mais tarde.</p>';
+                insightsContainer.innerHTML = '<p class="text-red-500">Ocorreu um erro ao tentar gerar sua anÃ¡lise financeira. Por favor, tente novamente mais tarde.</p>';
             }
         }
     },
@@ -3608,9 +3497,9 @@ const Handlers = {
 
             if (item) {
                 if (item.groupId) {
-                    UI.showChoiceModal('Opção de Edição', 'O que você deseja editar?', [
+                    UI.showChoiceModal('OpÃ§Ã£o de EdiÃ§Ã£o', 'O que vocÃª deseja editar?', [
                         { id: 'edit-one-btn', text: 'Apenas esta Parcela', class: 'px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700', onClick: () => { UI.closeModal(); UI.renderEditTransactionModal(item, options); } },
-                        { id: 'edit-all-btn', text: 'Editar a Série Inteira', class: 'px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700', onClick: () => { UI.closeModal(); UI.renderEditSeriesModal(item); } }
+                        { id: 'edit-all-btn', text: 'Editar a SÃ©rie Inteira', class: 'px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700', onClick: () => { UI.closeModal(); UI.renderEditSeriesModal(item); } }
                     ]);
                 } else {
                     UI.renderEditTransactionModal(item, options);
@@ -3637,39 +3526,39 @@ const Handlers = {
             const hasTransactions = AppState.transactions.some(t => t.accountId === id && !t.isCreditCard);
             const hasLinkedCard = AppState.creditCards.some(c => c.linkedAccountId === id);
             if (hasTransactions || hasLinkedCard) {
-                UI.showFeedback('Exclua ou desvincule transações e cartões desta conta primeiro.', 'error');
+                UI.showFeedback('Exclua ou desvincule transaÃ§Ãµes e cartÃµes desta conta primeiro.', 'error');
                 return;
             }
             UI.showConfirmationModal('Excluir Conta', 'Tem certeza que deseja excluir esta conta?', () => {
-                AppState.removeAccount(id); AppState.saveAll(); UI.render(); UI.showFeedback('Conta excluída.', 'success');
+                AppState.removeAccount(id); AppState.saveAll(); UI.render(); UI.showFeedback('Conta excluÃ­da.', 'success');
             });
         } else if (type === 'card') {
             const hasTransactions = AppState.transactions.some(t => t.accountId === id && t.isCreditCard);
             if (hasTransactions) {
-                 UI.showFeedback('Exclua as transações deste cartão primeiro.', 'error'); return;
+                 UI.showFeedback('Exclua as transaÃ§Ãµes deste cartÃ£o primeiro.', 'error'); return;
             }
-            UI.showConfirmationModal('Excluir Cartão', 'Tem certeza que deseja excluir este cartão?', () => {
-                AppState.removeCreditCard(id); AppState.saveAll(); UI.render(); UI.showFeedback('Cartão excluído.', 'success');
+            UI.showConfirmationModal('Excluir CartÃ£o', 'Tem certeza que deseja excluir este cartÃ£o?', () => {
+                AppState.removeCreditCard(id); AppState.saveAll(); UI.render(); UI.showFeedback('CartÃ£o excluÃ­do.', 'success');
             });
         } else if (type === 'transaction') {
             const tx = AppState.transactions.find(t => t.id === id);
-            const typeName = tx ? (tx.fundamentalType === 'receita' ? 'Receita' : 'Despesa') : 'Transação';
+            const typeName = tx ? (tx.fundamentalType === 'receita' ? 'Receita' : 'Despesa') : 'TransaÃ§Ã£o';
             if (tx && tx.groupId) {
-                UI.showConfirmationModal('Excluir Parcelamento', 'Esta é uma transação parcelada. Deseja excluir todas as parcelas relacionadas?', () => {
-                     AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`Parcelamento da ${typeName.toLowerCase()} excluído.`, 'success');
+                UI.showConfirmationModal('Excluir Parcelamento', 'Esta Ã© uma transaÃ§Ã£o parcelada. Deseja excluir todas as parcelas relacionadas?', () => {
+                     AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`Parcelamento da ${typeName.toLowerCase()} excluÃ­do.`, 'success');
                 });
             } else {
                 UI.showConfirmationModal(`Excluir ${typeName}`, `Tem certeza que deseja excluir esta ${typeName.toLowerCase()}?`, () => {
-                    AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`${typeName} excluída com sucesso.`, 'success');
+                    AppState.removeTransaction(id); AppState.recalculateAllBalances(); AppState.saveAll(); UI.render(); UI.showFeedback(`${typeName} excluÃ­da com sucesso.`, 'success');
                 });
             }
         } else if (type === 'category') {
-            UI.showConfirmationModal('Excluir Categoria', `Tem certeza que deseja excluir a categoria "${name}"? As transações existentes serão movidas para "Outros".`, () => {
-                AppState.removeCategory(name); AppState.saveAll(); UI.render(); UI.showFeedback('Categoria excluída.', 'success');
+            UI.showConfirmationModal('Excluir Categoria', `Tem certeza que deseja excluir a categoria "${name}"? As transaÃ§Ãµes existentes serÃ£o movidas para "Outros".`, () => {
+                AppState.removeCategory(name); AppState.saveAll(); UI.render(); UI.showFeedback('Categoria excluÃ­da.', 'success');
             });
         } else if (type === 'budget') {
-            UI.showConfirmationModal('Excluir Orçamento', 'Tem certeza que deseja excluir este orçamento?', () => {
-                AppState.removeBudget(id); AppState.saveAll(); UI.render(); UI.showFeedback('Orçamento excluído.', 'success');
+            UI.showConfirmationModal('Excluir OrÃ§amento', 'Tem certeza que deseja excluir este orÃ§amento?', () => {
+                AppState.removeBudget(id); AppState.saveAll(); UI.render(); UI.showFeedback('OrÃ§amento excluÃ­do.', 'success');
             });
         }
     },
@@ -3700,7 +3589,7 @@ const Handlers = {
         AppState.saveAll();
         UI.closeModal();
         UI.render();
-        UI.showFeedback('Série de parcelas atualizada com sucesso!', 'success');
+        UI.showFeedback('SÃ©rie de parcelas atualizada com sucesso!', 'success');
     },
 
     async handleEditTransactionFormSubmit(form) {
@@ -3802,7 +3691,7 @@ const Handlers = {
              const scope = await new Promise(resolve => {
                  UI.showApplyToSeriesModal(
                     'Editar Parcelas',
-                    'Você alterou um campo compartilhado (descrição, valor, categoria ou conta). Como deseja aplicar esta mudança?',
+                    'VocÃª alterou um campo compartilhado (descriÃ§Ã£o, valor, categoria ou conta). Como deseja aplicar esta mudanÃ§a?',
                     () => { UI.closeModal(); resolve('one'); },
                     () => { UI.closeModal(); resolve('future'); },
                     () => { UI.closeModal(); resolve('all'); }
@@ -3833,7 +3722,7 @@ const Handlers = {
             UI.render();
             UI.showFeedback(`Categoria ${oldName ? 'atualizada' : 'adicionada'}!`, 'success');
         } else {
-            UI.showFeedback('Nome de categoria inválido ou já existente.', 'error');
+            UI.showFeedback('Nome de categoria invÃ¡lido ou jÃ¡ existente.', 'error');
         }
     },
 
@@ -3884,7 +3773,7 @@ const Handlers = {
         AppState.saveAll();
         UI.closeModal();
         UI.render();
-        UI.showFeedback('Conta/Cartão salvo com sucesso!', 'success');
+        UI.showFeedback('Conta/CartÃ£o salvo com sucesso!', 'success');
     },
 
     handleNewTransactionFormSubmit(form) {
@@ -3958,7 +3847,7 @@ const Handlers = {
 
         const card = AppState.creditCards.find(c => c.id === cardId);
         
-        // 1. Criar a transação de despesa na conta de origem
+        // 1. Criar a transaÃ§Ã£o de despesa na conta de origem
         const paymentTx = {
             id: crypto.randomUUID(),
             description: `Pagamento Fatura ${card.name}`,
@@ -3976,7 +3865,7 @@ const Handlers = {
         };
         AppState.addTransaction(paymentTx);
 
-        // 2. Marcar as despesas do cartão no mês atual como pagas
+        // 2. Marcar as despesas do cartÃ£o no mÃªs atual como pagas
         const month = AppState.displayMonth;
         const year = AppState.displayYear;
         AppState.transactions.forEach(tx => {
@@ -4021,7 +3910,7 @@ const Handlers = {
 
         if (mode === 'simple') {
             const { data, year, month } = getPeriodData(1);
-            const title = `Relatório de ${type === 'despesa' ? 'Despesas' : 'Receitas'} - ${new Date(year, month).toLocaleString('pt-BR', {month: 'long', year: 'numeric'})}`;
+            const title = `RelatÃ³rio de ${type === 'despesa' ? 'Despesas' : 'Receitas'} - ${new Date(year, month).toLocaleString('pt-BR', {month: 'long', year: 'numeric'})}`;
             UI.renderReportResults({data1: data, title});
         } else {
             const p1 = getPeriodData(1);
@@ -4039,7 +3928,7 @@ const Handlers = {
         const amount = parseFloat(form.querySelector('#budget-amount').value);
 
         if (!category || !amount || amount <= 0) {
-            UI.showFeedback('Por favor, selecione uma categoria e insira um valor válido.', 'error');
+            UI.showFeedback('Por favor, selecione uma categoria e insira um valor vÃ¡lido.', 'error');
             return;
         }
 
@@ -4054,7 +3943,7 @@ const Handlers = {
         AppState.saveAll();
         UI.closeModal();
         UI.render();
-        UI.showFeedback(`Orçamento ${isEditing ? 'atualizado' : 'adicionado'} com sucesso!`, 'success');
+        UI.showFeedback(`OrÃ§amento ${isEditing ? 'atualizado' : 'adicionado'} com sucesso!`, 'success');
     }
 };
 
@@ -4064,608 +3953,294 @@ document.addEventListener('DOMContentLoaded', async () => {
     Handlers.init();
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PLUGGY MANAGER — Open Finance multi-banco
-// ─────────────────────────────────────────────────────────────────────────────
-const PluggyManager = {
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// BANK IMPORT UI â€” Central de ImportaÃ§Ã£o Multi-Banco
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const BankImportUI = {
 
-    scriptLoaded: false,
-
-    // Inicializar botões da página de contas
-    init() {
-        const connectBtn = document.getElementById('pluggy-connect-btn');
-        const syncBtn    = document.getElementById('pluggy-sync-btn');
-        const setupBtn   = document.getElementById('pluggy-setup-btn');
-
-        if (connectBtn) connectBtn.addEventListener('click', () => this.openConnect());
-        if (syncBtn)    syncBtn.addEventListener('click',    () => this.syncAll());
-        if (setupBtn)   setupBtn.addEventListener('click',   () => this.showSetupModal());
-
-        const ofxBtn = document.getElementById('ofx-import-btn');
-        if (ofxBtn) ofxBtn.addEventListener('click', () => OFXImportUI.showModal());
-    },
-
-    // ── Abrir Pluggy Connect Widget ──────────────────────────────────────────
-    async openConnect(bankId = null) {
-        const clientId = localStorage.getItem('pluggy_client_id');
-        if (!clientId) {
-            this.showSetupModal();
-            return;
-        }
-
-        UI.showFeedback('Obtendo token de conexão...', 'info');
-        try {
-            const resp = await fetch('/api/pluggy.php?action=connect_token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                // Envia as credenciais salvas no browser para o PHP usar caso
-                // o pluggy-credentials.php não exista no servidor
-                body: JSON.stringify({
-                    clientId:     localStorage.getItem('pluggy_client_id')     || '',
-                    clientSecret: localStorage.getItem('pluggy_client_secret') || ''
-                })
-            });
-            const data = await resp.json();
-            if (!data.connectToken) {
-                if (data.error && data.error.includes('credentials')) {
-                    this.showServerCredentialsModal();
-                } else {
-                    UI.showFeedback(data.error || 'Erro ao obter token.', 'error');
-                }
-                return;
-            }
-            this.loadWidget(data.connectToken, bankId);
-        } catch (e) {
-            UI.showFeedback('Backend offline. Configure suas credenciais Pluggy.', 'warning');
-            this.showSetupModal();
-        }
-    },
-
-    // ── Carregar Pluggy Connect Widget ───────────────────────────────────────
-    loadWidget(connectToken, bankId = null) {
-        if (!connectToken) {
-            UI.showFeedback('Token de conexão inválido. Tente novamente.', 'error');
-            return;
-        }
-        console.log('[Pluggy] token OK, length:', connectToken.length);
-
-        // URL oficial do SDK (pluggy-connect-sdk v2.13.0)
-        const SDK_URL = 'https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js';
-
-        const initWidget = () => {
-            try {
-                new window.PluggyConnect({
-                    connectToken,
-                    includeSandbox: true,
-                    onSuccess: (item) => this.onItemConnected(item),
-                    onError:   (err)  => UI.showFeedback('Erro: ' + (err.message || JSON.stringify(err)), 'error'),
-                    onClose:   ()     => UI.showFeedback('Conexão encerrada.', 'info'),
-                }).init();
-            } catch (e) {
-                console.error('[Pluggy] SDK falhou:', e);
-                this.openConnectPopup(connectToken, bankId);
-            }
-        };
-
-        if (window.PluggyConnect) { initWidget(); return; }
-
-        // Remover scripts antigos com erro
-        document.querySelectorAll('script[src*="pluggy-connect"]').forEach(s => s.remove());
-
-        const s = document.createElement('script');
-        s.src = SDK_URL;
-        s.onload  = () => { console.log('[Pluggy] SDK carregado OK'); initWidget(); };
-        s.onerror = (e) => {
-            console.error('[Pluggy] SDK CDN falhou:', e);
-            this.openConnectPopup(connectToken, bankId);
-        };
-        document.head.appendChild(s);
-    },
-
-    openConnectPopup(connectToken, bankId = null) {
-        document.getElementById('pluggy-popup-overlay')?.remove();
-
-        // Abrir connect.pluggy.ai sem token na URL — enviamos via postMessage após carregamento
-        const baseUrl = 'https://connect.pluggy.ai/';
-        const url = baseUrl;
-
-        const overlay = document.createElement('div');
-        overlay.id = 'pluggy-popup-overlay';
-        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
-
-        overlay.innerHTML = `
-            <div style="background:#fff;border-radius:1rem;width:min(480px,96vw);height:min(680px,92vh);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4);">
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;border-bottom:1px solid #e5e7eb;background:#f9fafb;">
-                    <div style="display:flex;align-items:center;gap:.625rem;">
-                        <div style="width:2rem;height:2rem;border-radius:.5rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;">
-                            <svg width="14" height="14" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                        </div>
-                        <span style="font-weight:700;font-size:.9rem;color:#111;">Conectar Banco — Open Finance</span>
-                    </div>
-                    <button id="pluggy-popup-close" style="width:2rem;height:2rem;border-radius:.5rem;border:1px solid #e5e7eb;background:white;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;color:#6b7280;" title="Fechar">&times;</button>
-                </div>
-                <iframe id="pluggy-iframe" src="${url}" style="flex:1;border:none;width:100%;" allow="camera; microphone"></iframe>
-                <div style="padding:.625rem 1.25rem;background:#f9fafb;border-top:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
-                    <span style="font-size:.72rem;color:#9ca3af;">🔒 Conexão segura · Regulado pelo Banco Central</span>
-                    <a id="pluggy-newtab-link" href="${baseUrl}?connectToken=${encodeURIComponent(connectToken)}${bankId?'&connectorId='+bankId:''}" target="_blank" rel="noopener" style="font-size:.72rem;color:#6366f1;font-weight:600;text-decoration:none;">↗ Abrir em nova aba</a>
-                </div>
-            </div>`;
-
-        document.body.appendChild(overlay);
-
-        // Fechar ao clicar no X ou fora
-        document.getElementById('pluggy-popup-close').addEventListener('click', () => {
-            overlay.remove();
-            UI.showFeedback('Conexão cancelada.', 'info');
-        });
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                overlay.remove();
-            }
-        });
-
-        // Enviar token via postMessage quando o iframe carregar
-        const iframe = document.getElementById('pluggy-iframe');
-        const sendToken = () => {
-            try {
-                // Formato postMessage do Pluggy Connect
-                iframe.contentWindow.postMessage({
-                    type: 'pluggy:connect:init',
-                    connectToken,
-                    connectorId: bankId || undefined,
-                }, 'https://connect.pluggy.ai');
-                console.log('[Pluggy] postMessage enviado com token');
-            } catch(e) {
-                console.warn('[Pluggy] postMessage falhou:', e.message);
-            }
-        };
-        iframe.addEventListener('load', () => setTimeout(sendToken, 500));
-
-        // Escutar mensagens do iframe (Pluggy postMessage)
-        const msgHandler = (event) => {
-            if (!event.origin.includes('pluggy.ai')) return;
-            console.log('[Pluggy] mensagem recebida:', event.data);
-            const data = event.data;
-            if (data?.type === 'pluggy:connect:success' || data?.event === 'CONNECTED' || data?.type === 'SUCCESS') {
-                window.removeEventListener('message', msgHandler);
-                overlay.remove();
-                this.onItemConnected(data.item || data.data || { id: data.itemId, connector: { name: 'Banco' } });
-            }
-            if (data?.type === 'pluggy:connect:close' || data?.event === 'CLOSE') {
-                window.removeEventListener('message', msgHandler);
-                overlay.remove();
-            }
-        };
-        window.addEventListener('message', msgHandler);
-
-        UI.showFeedback('Conectando ao banco... Complete o processo na janela.', 'info');
-    },
-
-    // ── Callback: banco conectado ────────────────────────────────────────────
-    onItemConnected(item) {
-        UI.showFeedback('Banco conectado! Sincronizando dados...', 'success');
-        const items = JSON.parse(localStorage.getItem('pluggy_connected_items') || '[]');
-        if (!items.find(i => i.id === item.id)) {
-            items.push({ id: item.id, name: item.connector?.name || 'Banco', connectedAt: new Date().toISOString() });
-            localStorage.setItem('pluggy_connected_items', JSON.stringify(items));
-        }
-        setTimeout(() => this.syncAll(), 1500);
-    },
-
-    // ── Sincronizar todos os dados ────────────────────────────────────────────
-    async syncAll() {
-        const statusText = document.getElementById('status-text');
-        if (statusText) statusText.textContent = '🔄 Sincronizando...';
-        try {
-            const resp = await fetch('/api/pluggy.php?action=sync_all', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    clientId:     localStorage.getItem('pluggy_client_id')     || '',
-                    clientSecret: localStorage.getItem('pluggy_client_secret') || ''
-                })
-            });
-            const data = await resp.json();
-
-            if (data.error === 'credentials_missing') {
-                if (statusText) statusText.textContent = 'Credenciais não configuradas';
-                this.showSetupModal();
-                return;
-            }
-
-            let imported = 0;
-            // Mesclar contas (não duplicar)
-            (data.accounts || []).forEach(acc => {
-                if (!AppState.accounts.find(a => a.id === acc.id)) {
-                    AppState.accounts.push(acc);
-                    imported++;
-                }
-            });
-            // Mesclar cartões
-            (data.creditCards || []).forEach(card => {
-                if (!AppState.creditCards.find(c => c.id === card.id)) {
-                    AppState.creditCards.push(card);
-                    imported++;
-                }
-            });
-            // Mesclar transações (não duplicar)
-            (data.transactions || []).forEach(tx => {
-                if (!AppState.transactions.find(t => t.id === tx.id)) {
-                    AppState.transactions.push(tx);
-                    imported++;
-                }
-            });
-
-            AppState.recalculateAllBalances();
-            await AppState.saveAll();
-            UI.render();
-
-            const now = new Date().toLocaleString('pt-BR');
-            localStorage.setItem('pluggy_last_sync', now);
-
-            const dot = document.getElementById('status-dot');
-            if (dot) dot.style.background = '#10b981';
-            if (statusText) {
-                const items = JSON.parse(localStorage.getItem('pluggy_connected_items') || '[]');
-                statusText.textContent = items.length + ' banco(s) conectado(s)';
-            }
-            UI.showFeedback(`✓ ${imported} itens importados do Open Finance!`, 'success');
-        } catch (e) {
-            if (statusText) statusText.textContent = 'Erro na sincronização';
-            UI.showFeedback('Erro ao sincronizar com Pluggy: ' + e.message, 'error');
-        }
-    },
-
-    // ── Modal de configuração das credenciais Pluggy ─────────────────────────
-    showSetupModal() {
-        const savedId     = localStorage.getItem('pluggy_client_id') || '';
-        const savedSecret = localStorage.getItem('pluggy_client_secret') || '';
-        const content = `
-            <form id="pluggy-setup-form" class="space-y-4" onsubmit="return false;">
-                <div style="background:#f0f9ff;border-radius:.75rem;padding:1rem;border:1px solid #bae6fd;">
-                    <p style="font-size:.875rem;font-weight:700;color:#0369a1;margin-bottom:.5rem;">📋 Como obter suas credenciais:</p>
-                    <ol style="font-size:.8rem;color:#0c4a6e;padding-left:1.25rem;line-height:1.8;">
-                        <li>Acesse <a href="https://dashboard.pluggy.ai" target="_blank" style="color:#0ea5e9;font-weight:600;">dashboard.pluggy.ai</a> e crie uma conta gratuita</li>
-                        <li>Vá em <strong>Settings → API Keys</strong></li>
-                        <li>Copie o <strong>Client ID</strong> e o <strong>Client Secret</strong></li>
-                    </ol>
-                </div>
-                <div>
-                    <label class="form-label">Client ID</label>
-                    <input type="text" id="pluggy-client-id" value="${savedId}" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
-                </div>
-                <div>
-                    <label class="form-label">Client Secret</label>
-                    <input type="password" id="pluggy-client-secret" value="${savedSecret}" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
-                </div>
-                <div style="background:#fefce8;border-radius:.5rem;padding:.75rem;border:1px solid #fde68a;">
-                    <p style="font-size:.75rem;color:#92400e;">⚠️ <strong>Produção:</strong> Para bancos reais, use o plano Produção. Sandbox funciona com bancos de teste.</p>
-                </div>
-                <div style="background:#f0fdf4;border-radius:.5rem;padding:.75rem;border:1px solid #bbf7d0;">
-                    <p style="font-size:.75rem;color:#166534;">💡 Adicione também ao <code>api/config.php</code>:<br>
-                    <code style="background:#dcfce7;padding:.1rem .3rem;border-radius:.25rem;display:block;margin-top:.25rem;">define('PLUGGY_CLIENT_ID', 'seu-id');<br>define('PLUGGY_CLIENT_SECRET', 'seu-secret');</code></p>
-                </div>
-                <button type="button" id="pluggy-save-btn" class="btn btn-primary w-full">🔒 Salvar Permanentemente no Servidor</button>
-            </form>`;
-        UI.showModal('Configurar Open Finance', content, '', 'pluggy-setup-form');
-        // Esconder botão padrão de submit e usar o próprio botão do form
-        setTimeout(() => {
-            const footer = document.querySelector('.modal-footer');
-            if (footer) footer.style.display = 'none';
-            const saveBtn = document.getElementById('pluggy-save-btn');
-            if (saveBtn) saveBtn.addEventListener('click', async () => {
-                const id  = document.getElementById('pluggy-client-id')?.value.trim();
-                const sec = document.getElementById('pluggy-client-secret')?.value.trim();
-                if (!id || !sec) { UI.showFeedback('Preencha ambos os campos.', 'error'); return; }
-
-                // Feedback imediato
-                saveBtn.disabled = true;
-                saveBtn.textContent = '⏳ Validando e salvando...';
-
-                // Salvar no browser (fallback imediato)
-                localStorage.setItem('pluggy_client_id',     id);
-                localStorage.setItem('pluggy_client_secret', sec);
-
-                try {
-                    // Tentar salvar no servidor permanentemente
-                    const resp = await fetch('/api/pluggy.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'save_credentials', clientId: id, clientSecret: sec })
-                    });
-                    const data = await resp.json();
-
-                    UI.closeModal();
-
-                    if (data.error) {
-                        // Credenciais inválidas
-                        localStorage.removeItem('pluggy_client_id');
-                        localStorage.removeItem('pluggy_client_secret');
-                        UI.showFeedback('❌ ' + data.error, 'error');
-                        return;
-                    }
-
-                    if (data.saved) {
-                        UI.showFeedback('✅ Credenciais salvas no servidor! Não precisa configurar novamente.', 'success');
-                    } else if (data.warning) {
-                        UI.showFeedback('✅ Credenciais validadas e salvas no browser. ' + (data.warning.includes('permissão') ? '' : ''), 'success');
-                    }
-                } catch (e) {
-                    // Servidor offline — salvo só no browser
-                    UI.closeModal();
-                    UI.showFeedback('✅ Credenciais salvas no browser. Conecte-se para ativar.', 'success');
-                }
-
-                UI.render();
-            });
-        }, 50);
-    },
-
-    // ── Fallback manual (quando widget não carrega) ──────────────────────────
-    showManualFallback() {
-        UI.showFeedback('Use o botão "Manual" para adicionar contas manualmente.', 'info');
-    },
-
-    // ── Instruções para configurar credenciais no servidor ───────────────────
-    showServerCredentialsModal() {
-        const cid = localStorage.getItem('pluggy_client_id') || '(não salvo)';
-        const content = `
-            <div class="space-y-4">
-                <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:.75rem;padding:1rem;border:1px solid #bae6fd;">
-                    <p style="font-weight:700;color:#0369a1;font-size:.875rem;margin-bottom:.5rem;">✅ Credenciais salvas no browser</p>
-                    <p style="font-size:.8rem;color:#0c4a6e;">O sistema reconhece seu Client ID mas o <strong>servidor PHP</strong> precisa das credenciais para gerar o token de conexão com segurança.</p>
-                </div>
-
-                <p style="font-size:.875rem;font-weight:600;color:var(--text);">Escolha como configurar o servidor:</p>
-
-                <div style="border:2px solid #10b981;border-radius:.75rem;padding:1rem;background:#f0fdf4;">
-                    <p style="font-weight:700;color:#065f46;margin-bottom:.5rem;">⚡ Opção 1 — Hostinger File Manager (mais rápida)</p>
-                    <ol style="font-size:.8rem;color:#064e3b;padding-left:1.25rem;line-height:2;">
-                        <li>Abra o <a href="https://hpanel.hostinger.com" target="_blank" style="color:#10b981;font-weight:700;">Painel Hostinger</a> → <strong>File Manager</strong></li>
-                        <li>Navegue até <code>public_html/api/</code></li>
-                        <li>Crie o arquivo <strong>pluggy-credentials.php</strong> com o conteúdo abaixo</li>
-                    </ol>
-                    <pre style="background:#dcfce7;padding:.75rem;border-radius:.5rem;font-size:.75rem;margin-top:.5rem;overflow-x:auto;">&lt;?php
-define('PLUGGY_CLIENT_ID',     '${cid}');
-define('PLUGGY_CLIENT_SECRET', 'SEU_CLIENT_SECRET');</pre>
-                </div>
-
-                <div style="border:1px solid var(--border);border-radius:.75rem;padding:1rem;background:var(--surface-2);">
-                    <p style="font-weight:700;color:var(--text);margin-bottom:.5rem;">🔄 Opção 2 — GitHub Secrets (automático)</p>
-                    <ol style="font-size:.8rem;color:var(--text-2);padding-left:1.25rem;line-height:2;">
-                        <li>Vá em <strong>GitHub → Settings → Secrets → Actions</strong></li>
-                        <li>Adicione <code>PLUGGY_CLIENT_ID</code> e <code>PLUGGY_CLIENT_SECRET</code></li>
-                        <li>O próximo deploy cria o arquivo automaticamente</li>
-                    </ol>
-                </div>
-            </div>`;
-        UI.showModal('⚙️ Configurar Servidor para Open Finance', content, '', 'pluggy-server-form');
-        setTimeout(() => {
-            const footer = document.querySelector('.modal-footer');
-            if (footer) footer.style.display = 'none';
-        }, 50);
-    }
-};
-
-// ════════════════════════════════════════════════════════════════
-//  OFX Import UI
-// ════════════════════════════════════════════════════════════════
-const OFXImportUI = {
-
-    bankGuides: [
-        { id: 'nubank',    name: 'Nubank',     color: '#8b5cf6', logo: 'https://logospng.org/download/nubank/logo-nubank-icon-256.png',
-          steps: ['Abra o app Nubank', 'Vá em <b>Meu Perfil → Extrato</b>', 'Toque no período desejado', '<b>Baixar extrato → Formato OFX</b>'] },
-        { id: 'itau',      name: 'Itaú',       color: '#ff8c00', logo: 'https://logospng.org/download/itau/logo-itau-256.png',
-          steps: ['Acesse <b>itau.com.br</b> ou o app', 'Menu <b>Extrato e lançamentos</b>', 'Selecione o período', '<b>Exportar → OFX</b>'] },
-        { id: 'bradesco',  name: 'Bradesco',   color: '#cc0000', logo: '',
-          steps: ['Acesse <b>bradesco.com.br</b>', 'Internet Banking → <b>Extrato</b>', 'Selecione período', '<b>Exportar → Arquivo OFX</b>'] },
-        { id: 'bb',        name: 'Banco do Brasil', color: '#f5c518', logo: '',
-          steps: ['Acesse <b>bb.com.br</b> ou app BB', '<b>Extrato</b> → Selecione conta e período', 'Clique em <b>Exportar</b>', 'Escolha formato <b>OFX</b>'] },
-        { id: 'caixa',     name: 'Caixa',      color: '#005ca9', logo: '',
-          steps: ['Acesse <b>caixa.gov.br</b>', 'Menu <b>Extrato</b>', 'Selecione o período desejado', '<b>Exportar em OFX</b>'] },
-        { id: 'santander', name: 'Santander',  color: '#ec0000', logo: '',
-          steps: ['Acesse o Internet Banking do Santander', 'Menu <b>Conta Corrente → Extrato</b>', 'Selecione o período', '<b>Exportar → OFX</b>'] },
-        { id: 'inter',     name: 'Inter',      color: '#ff7a00', logo: '',
-          steps: ['No app Inter, acesse <b>Extrato</b>', 'Selecione o período e filtre', 'Toque em <b>Compartilhar → OFX</b>'] },
-        { id: 'c6',        name: 'C6 Bank',    color: '#212121', logo: '',
-          steps: ['Abra o app C6 Bank', 'Vá em <b>Extrato</b>', 'Toque nos 3 pontinhos (⋮)', '<b>Exportar extrato → OFX</b>'] },
-        { id: 'outro',     name: 'Outro banco',color: '#6b7280', logo: '',
-          steps: ['Acesse o Internet Banking do seu banco', 'Procure a opção <b>Extrato</b>', 'Selecione o período desejado', 'Exporte como <b>OFX</b> ou <b>QFX</b>'] },
+    // Dados dos bancos disponÃ­veis
+    allBanks: [
+        { id:'nubank',    name:'Nubank',           color:'#820AD1', initials:'NU',
+          stepsOFX: ['App Nubank â†’ Perfil â†’ Extrato', 'Selecione o perÃ­odo', 'Baixar extrato â†’ <b>OFX</b>'],
+          stepsCSV: ['App Nubank â†’ Perfil â†’ Extrato', 'Selecione o perÃ­odo', 'Baixar extrato â†’ <b>CSV</b>'] },
+        { id:'itau',      name:'ItaÃº',              color:'#EC7000', initials:'IT',
+          stepsOFX: ['itau.com.br â†’ Conta â†’ Extrato', 'Selecione o perÃ­odo', 'Exportar â†’ <b>OFX</b>'],
+          stepsCSV: [] },
+        { id:'bradesco',  name:'Bradesco',          color:'#CC092F', initials:'BR',
+          stepsOFX: ['bradesco.com.br â†’ Conta Corrente â†’ Extrato', 'Selecione perÃ­odo', 'Exportar â†’ <b>OFX</b>'],
+          stepsCSV: [] },
+        { id:'santander', name:'Santander',         color:'#EC0000', initials:'SN',
+          stepsOFX: ['santander.com.br â†’ Conta â†’ Extrato', 'Selecione perÃ­odo', 'Exportar â†’ <b>OFX</b>'],
+          stepsCSV: [] },
+        { id:'bb',        name:'Banco do Brasil',   color:'#DDAA00', initials:'BB',
+          stepsOFX: ['bb.com.br â†’ Extrato', 'Selecione conta e perÃ­odo', 'Exportar â†’ <b>OFX</b>'],
+          stepsCSV: ['bb.com.br â†’ Extrato', 'Selecione perÃ­odo', 'Baixar â†’ <b>CSV</b>'] },
+        { id:'caixa',     name:'Caixa EconÃ´mica',   color:'#005B9C', initials:'CX',
+          stepsOFX: ['caixa.gov.br â†’ Extrato', 'Selecione perÃ­odo', 'Exportar â†’ <b>OFX</b>'],
+          stepsCSV: [] },
+        { id:'inter',     name:'Banco Inter',       color:'#FF7A00', initials:'IN',
+          stepsOFX: ['App Inter â†’ Extrato', 'Selecione perÃ­odo â†’ Compartilhar â†’ <b>OFX</b>'],
+          stepsCSV: ['App Inter â†’ Extrato', 'Selecione perÃ­odo â†’ Compartilhar â†’ <b>CSV</b>'] },
+        { id:'c6',        name:'C6 Bank',           color:'#444444', initials:'C6',
+          stepsOFX: ['App C6 â†’ Extrato â†’ â‹®', 'Exportar extrato â†’ <b>OFX</b>'],
+          stepsCSV: ['App C6 â†’ Extrato â†’ â‹®', 'Exportar extrato â†’ <b>CSV</b>'] },
+        { id:'btg',       name:'BTG Pactual',       color:'#001E62', initials:'BT',
+          stepsOFX: ['btgpactual.com â†’ Extrato', 'Exportar â†’ <b>OFX</b>'],
+          stepsCSV: [] },
+        { id:'xp',        name:'XP Investimentos',  color:'#111111', initials:'XP',
+          stepsOFX: ['xpi.com.br â†’ Extrato/MovimentaÃ§Ãµes', 'Exportar â†’ <b>OFX</b>'],
+          stepsCSV: [] },
+        { id:'picpay',    name:'PicPay',            color:'#11C76F', initials:'PP',
+          stepsOFX: [],
+          stepsCSV: ['App PicPay â†’ Extrato â†’ â‹® â†’ Exportar â†’ <b>CSV</b>'] },
+        { id:'neon',      name:'Neon',              color:'#00AACC', initials:'NE',
+          stepsOFX: ['App Neon â†’ Extrato â†’ Exportar â†’ <b>OFX</b>'],
+          stepsCSV: [] },
+        { id:'sicoob',    name:'Sicoob',            color:'#008B3B', initials:'SC',
+          stepsOFX: ['sicoob.com.br â†’ Extrato', 'Exportar â†’ <b>OFX</b>'],
+          stepsCSV: [] },
+        { id:'sicredi',   name:'Sicredi',           color:'#007E3A', initials:'SI',
+          stepsOFX: ['sicredi.com.br â†’ Extrato', 'Exportar â†’ <b>OFX</b>'],
+          stepsCSV: [] },
+        { id:'original',  name:'Original',          color:'#00A859', initials:'OR',
+          stepsOFX: ['original.com.br â†’ Extrato', 'Exportar â†’ <b>OFX</b>'],
+          stepsCSV: [] },
+        { id:'safra',     name:'Safra',             color:'#003DA5', initials:'SF',
+          stepsOFX: ['safra.com.br â†’ Extrato', 'Exportar â†’ <b>OFX</b>'],
+          stepsCSV: [] },
+        { id:'outro',     name:'Outro banco',       color:'#6b7280', initials:'+',
+          stepsOFX: ['Acesse o Internet Banking do seu banco', 'VÃ¡ em Extrato / MovimentaÃ§Ãµes', 'Exporte como <b>OFX</b> ou <b>QFX</b>'],
+          stepsCSV: ['Acesse o Internet Banking do seu banco', 'VÃ¡ em Extrato / MovimentaÃ§Ãµes', 'Exporte como <b>CSV</b>'] },
     ],
 
-    selectedBank: null,
     pendingTxs: [],
+    currentBankId: null,
 
-    showModal() {
+    // â”€â”€ Adicionar banco a "Meus Bancos" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    addBankModal() {
+        const myBanks = JSON.parse(localStorage.getItem('my_banks') || '[]');
+        const available = this.allBanks.filter(b => !myBanks.includes(b.id));
+
         const content = `
-            <div style="display:flex;flex-direction:column;gap:1.25rem;">
-
-                <!-- Step 1: Escolher banco -->
-                <div id="ofx-step1">
-                    <p style="font-size:.875rem;font-weight:700;color:var(--text);margin-bottom:.75rem;">
-                        1. Qual banco você quer importar?
-                    </p>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;">
-                        ${this.bankGuides.map(b => `
-                            <button onclick="OFXImportUI.selectBank('${b.id}')" id="ofx-bank-${b.id}"
-                                style="padding:.625rem .5rem;border-radius:.625rem;border:2px solid var(--border);background:var(--surface-2);cursor:pointer;font-size:.8rem;font-weight:600;color:var(--text);transition:all .15s;text-align:center;">
-                                <div style="width:28px;height:28px;border-radius:50%;background:${b.color};margin:0 auto .375rem;display:flex;align-items:center;justify-content:center;color:white;font-size:.7rem;font-weight:800;">
-                                    ${b.name.substring(0,2).toUpperCase()}
-                                </div>
-                                ${b.name}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <!-- Step 2: Instruções (oculto inicialmente) -->
-                <div id="ofx-step2" style="display:none;">
-                    <div id="ofx-bank-instructions" style="background:var(--surface-2);border-radius:.75rem;padding:1rem;border:1px solid var(--border);">
-                    </div>
-                </div>
-
-                <!-- Step 3: Upload -->
-                <div id="ofx-step3" style="display:none;">
-                    <p style="font-size:.875rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">
-                        2. Selecione o arquivo OFX exportado
-                    </p>
-                    <label id="ofx-dropzone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--border);border-radius:.75rem;padding:2rem;cursor:pointer;transition:border-color .15s;gap:.5rem;"
-                        onmouseover="this.style.borderColor='#6366f1'" onmouseout="this.style.borderColor='var(--border)'">
-                        <svg width="40" height="40" fill="none" stroke="#6366f1" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
-                        <span style="font-size:.875rem;font-weight:600;color:#6366f1;">Clique para selecionar</span>
-                        <span style="font-size:.75rem;color:var(--text-2);">Formatos aceitos: .ofx, .qfx</span>
-                        <input type="file" id="ofx-file-input" accept=".ofx,.qfx,.OFX,.QFX" style="display:none;" onchange="OFXImportUI.handleFile(this.files[0])">
-                    </label>
-                    <div id="ofx-parse-result" style="display:none;margin-top:.75rem;"></div>
-                </div>
-
-                <!-- Step 4: Preview transações -->
-                <div id="ofx-step4" style="display:none;">
-                    <div id="ofx-tx-preview"></div>
-                </div>
+            <p style="font-size:.875rem;color:var(--text-2);margin-bottom:1rem;">Selecione os bancos que vocÃª usa para acompanhar as importaÃ§Ãµes:</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.625rem;">
+                ${available.map(b => `
+                    <label style="display:flex;align-items:center;gap:.625rem;padding:.625rem .75rem;border:2px solid var(--border);border-radius:.75rem;cursor:pointer;transition:all .15s;" id="bank-opt-${b.id}"
+                        onmouseover="this.style.borderColor='${b.color}';this.style.background='${b.color}18'" onmouseout="if(!document.getElementById('chk-${b.id}').checked){this.style.borderColor='var(--border)';this.style.background=''}">
+                        <input type="checkbox" id="chk-${b.id}" value="${b.id}" style="display:none;" onchange="if(this.checked){document.getElementById('bank-opt-${b.id}').style.borderColor='${b.color}';document.getElementById('bank-opt-${b.id}').style.background='${b.color}18';}else{document.getElementById('bank-opt-${b.id}').style.borderColor='var(--border)';document.getElementById('bank-opt-${b.id}').style.background='';}">
+                        <div style="width:1.75rem;height:1.75rem;border-radius:.5rem;background:${b.color};color:white;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;flex-shrink:0;">${b.initials}</div>
+                        <span style="font-size:.8rem;font-weight:600;color:var(--text);">${b.name}</span>
+                    </label>`).join('')}
             </div>`;
 
-        UI.showModal('📥 Importar Extrato Bancário (OFX)', content, '<button id="ofx-confirm-btn" style="display:none;background:#6366f1;color:white;font-size:.875rem;font-weight:600;padding:.625rem 1.25rem;border-radius:.625rem;border:none;cursor:pointer;" onclick="OFXImportUI.confirmImport()">✅ Importar Transações</button>', 'ofx-import-form');
-        // Click no dropzone abre o input
+        UI.showModal('ðŸ¦ Adicionar Bancos',
+            content,
+            `<button onclick="BankImportUI.confirmAddBanks()" style="background:var(--brand-500);color:white;font-weight:600;font-size:.875rem;padding:.625rem 1.25rem;border-radius:.625rem;border:none;cursor:pointer;">Adicionar Selecionados</button>`,
+            'add-bank-form');
+    },
+
+    confirmAddBanks() {
+        const checked = [...document.querySelectorAll('#add-bank-form input[type=checkbox]:checked')].map(c => c.value);
+        if (!checked.length) { UI.showFeedback('Selecione ao menos um banco.', 'warning'); return; }
+        const myBanks = JSON.parse(localStorage.getItem('my_banks') || '[]');
+        const updated = [...new Set([...myBanks, ...checked])];
+        localStorage.setItem('my_banks', JSON.stringify(updated));
+        UI.closeModal();
+        UI.showFeedback(`${checked.length} banco${checked.length > 1 ? 's adicionados' : ' adicionado'}!`, 'success');
+        UI.renderAccountsPage();
+    },
+
+    removeBank(bankId) {
+        const myBanks = JSON.parse(localStorage.getItem('my_banks') || '[]');
+        localStorage.setItem('my_banks', JSON.stringify(myBanks.filter(b => b !== bankId)));
+        UI.renderAccountsPage();
+    },
+
+    // â”€â”€ Abrir modal de importaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    openImport(bankId = null) {
+        this.currentBankId = bankId;
+        this.pendingTxs = [];
+        const bank = bankId ? this.allBanks.find(b => b.id === bankId) : null;
+        const bankName = bank?.name || null;
+        const DUMMY = 'PLACEHOLDER';
+
+        const steps = bank
+            ? (bank.stepsOFX.length ? bank.stepsOFX : bank.stepsCSV)
+            : ['Acesse o Internet Banking do seu banco', 'Exporte o extrato como <b>OFX</b> ou <b>CSV</b>'];
+
+        const stepsHTML = steps.map(s => `<li style="padding:.2rem 0;">${s}</li>`).join('');
+
+        const content = `
+            <div style="display:flex;flex-direction:column;gap:1.125rem;">
+                ${bank ? `
+                <div style="display:flex;align-items:center;gap:.75rem;padding:.875rem;background:${bank.color}15;border-radius:.875rem;border:1.5px solid ${bank.color}40;">
+                    <div style="width:2.75rem;height:2.75rem;border-radius:.75rem;background:${bank.color};color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.95rem;flex-shrink:0;">${bank.initials}</div>
+                    <div>
+                        <p style="font-weight:700;color:var(--text);font-size:.95rem;">${bank.name}</p>
+                        <p style="font-size:.75rem;color:var(--text-2);">ImportaÃ§Ã£o de extrato</p>
+                    </div>
+                </div>` : ''}
+
+                <div style="background:var(--surface-2);border-radius:.875rem;padding:1rem;border:1px solid var(--border);">
+                    <p style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.625rem;">
+                        ${bank ? `Como exportar do ${bank.name}:` : 'Como exportar seu extrato:'}
+                    </p>
+                    <ol style="font-size:.8rem;color:var(--text-2);padding-left:1.25rem;line-height:2;margin:0;">
+                        ${stepsHTML}
+                    </ol>
+                    ${bank && bank.stepsOFX.length && bank.stepsCSV.length ? `
+                    <p style="font-size:.75rem;color:var(--text-3);margin-top:.5rem;">
+                        ðŸ’¡ <b>OFX</b> e <b>CSV</b> sÃ£o aceitos automaticamente.
+                    </p>` : ''}
+                </div>
+
+                <div>
+                    <p style="font-size:.875rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">Selecione o arquivo exportado</p>
+                    <label id="import-dropzone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--border);border-radius:.875rem;padding:1.75rem 1rem;cursor:pointer;transition:border-color .15s,background .15s;gap:.5rem;"
+                        onmouseover="this.style.borderColor='#10b981';this.style.background='#f0fdf4'" onmouseout="this.style.borderColor='var(--border)';this.style.background=''">
+                        <svg width="36" height="36" fill="none" stroke="#10b981" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+                        <span style="font-size:.875rem;font-weight:600;color:#10b981;">Clique para selecionar arquivo</span>
+                        <span style="font-size:.75rem;color:var(--text-3);">Formatos: <b>.ofx</b>, <b>.qfx</b>, <b>.csv</b></span>
+                        <input type="file" id="import-file-input" accept=".ofx,.qfx,.OFX,.QFX,.csv,.CSV" style="display:none;" onchange="BankImportUI.handleFile(this.files[0])">
+                    </label>
+                    <div id="import-parse-result" style="display:none;margin-top:.5rem;"></div>
+                </div>
+
+                <div id="import-preview" style="display:none;"></div>
+            </div>`;
+
+        UI.showModal(
+            `ðŸ“¥ Importar Extrato${bankName ? ' â€” ' + bankName : ''}`,
+            content,
+            `<button id="import-confirm-btn" onclick="BankImportUI.confirmImport()" style="display:none;background:#10b981;color:white;font-size:.875rem;font-weight:600;padding:.625rem 1.25rem;border-radius:.625rem;border:none;cursor:pointer;">âœ… Importar TransaÃ§Ãµes</button>`,
+            'bank-import-form'
+        );
         setTimeout(() => {
-            const dz = document.getElementById('ofx-dropzone');
-            if (dz) dz.addEventListener('click', () => document.getElementById('ofx-file-input')?.click());
+            const dz = document.getElementById('import-dropzone');
+            if (dz) dz.addEventListener('click', () => document.getElementById('import-file-input')?.click());
         }, 50);
     },
 
-    selectBank(bankId) {
-        this.selectedBank = bankId;
-        const bank = this.bankGuides.find(b => b.id === bankId);
-        if (!bank) return;
-
-        // Highlight do banco selecionado
-        this.bankGuides.forEach(b => {
-            const el = document.getElementById('ofx-bank-' + b.id);
-            if (el) {
-                el.style.borderColor = b.id === bankId ? bank.color : 'var(--border)';
-                el.style.background  = b.id === bankId ? bank.color + '18' : 'var(--surface-2)';
-            }
-        });
-
-        // Mostrar instruções
-        const step2 = document.getElementById('ofx-step2');
-        const step3 = document.getElementById('ofx-step3');
-        const instr = document.getElementById('ofx-bank-instructions');
-        if (instr) {
-            instr.innerHTML = `
-                <p style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.625rem;">
-                    Como exportar OFX do <span style="color:${bank.color}">${bank.name}</span>:
-                </p>
-                <ol style="font-size:.8rem;color:var(--text-2);padding-left:1.25rem;line-height:2;">
-                    ${bank.steps.map(s => `<li>${s}</li>`).join('')}
-                </ol>`;
-        }
-        if (step2) step2.style.display = 'block';
-        if (step3) step3.style.display = 'block';
-    },
-
+    // â”€â”€ Ler arquivo (OFX ou CSV) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     async handleFile(file) {
         if (!file) return;
-        const result = document.getElementById('ofx-parse-result');
-        if (result) {
-            result.style.display = 'block';
-            result.innerHTML = `<p style="font-size:.8rem;color:#6366f1;">⏳ Lendo arquivo...</p>`;
-        }
+        const resultEl = document.getElementById('import-parse-result');
+        if (resultEl) { resultEl.style.display = 'block'; resultEl.innerHTML = `<p style="font-size:.8rem;color:#10b981;">â³ Lendo arquivo...</p>`; }
 
         try {
-            const parsed = await OFXImporter.readFile(file);
+            const ext = file.name.split('.').pop().toLowerCase();
+            let parsed;
+            if (ext === 'csv') {
+                parsed = await CSVImporter.readFile(file);
+            } else {
+                parsed = await OFXImporter.readFile(file);
+                // Normalize OFX result format to match CSV
+                parsed.bankKey  = this.currentBankId || 'unknown';
+                parsed.bankName = (this.currentBankId && this.allBanks.find(b => b.id === this.currentBankId)?.name) || 'ImportaÃ§Ã£o OFX';
+            }
             this.pendingTxs = parsed.transactions;
+            if (resultEl) resultEl.innerHTML = `<p style="font-size:.8rem;color:#10b981;font-weight:600;">âœ… ${parsed.count} transaÃ§Ãµes encontradas ${parsed.bankName ? 'Â· ' + parsed.bankName : ''}</p>`;
             this.showPreview(parsed);
         } catch (e) {
-            if (result) result.innerHTML = `<p style="font-size:.8rem;color:#ef4444;">❌ ${e.message}</p>`;
+            if (resultEl) resultEl.innerHTML = `<p style="font-size:.8rem;color:#ef4444;">âŒ ${e.message}</p>`;
         }
     },
 
+    // â”€â”€ Preview das transaÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     showPreview(parsed) {
-        const step4 = document.getElementById('ofx-step4');
-        const preview = document.getElementById('ofx-tx-preview');
-        const confirmBtn = document.getElementById('ofx-confirm-btn');
-        const result = document.getElementById('ofx-parse-result');
+        const previewEl  = document.getElementById('import-preview');
+        const confirmBtn = document.getElementById('import-confirm-btn');
 
-        const receipts = parsed.transactions.filter(t => t.fundamentalType === 'receita');
-        const expenses = parsed.transactions.filter(t => t.fundamentalType === 'despesa');
-        const totalIn  = receipts.reduce((s, t) => s + t.value, 0);
-        const totalOut = expenses.reduce((s, t) => s + t.value, 0);
+        const receipts  = parsed.transactions.filter(t => (t.fundamentalType || t.type) === 'receita');
+        const expenses  = parsed.transactions.filter(t => (t.fundamentalType || t.type) !== 'receita');
+        const totalIn   = receipts.reduce((s, t) => s + t.value, 0);
+        const totalOut  = expenses.reduce((s, t) => s + t.value, 0);
 
-        if (result) result.innerHTML = `<p style="font-size:.8rem;color:#10b981;font-weight:600;">✅ ${parsed.count} transações encontradas</p>`;
+        const rows = parsed.transactions.slice(0, 12).map(t => {
+            const isReceita = (t.fundamentalType || t.type) === 'receita';
+            return `<tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:.3rem .5rem;font-size:.72rem;color:var(--text-2);white-space:nowrap;">${t.date || ''}</td>
+                <td style="padding:.3rem .5rem;font-size:.72rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.description}">${t.description}</td>
+                <td style="padding:.3rem .5rem;font-size:.72rem;color:var(--text-3);">${t.category || ''}</td>
+                <td style="padding:.3rem .5rem;font-size:.72rem;font-weight:700;text-align:right;color:${isReceita ? '#10b981' : '#ef4444'};">${isReceita ? '+' : '-'}R$ ${(t.value||0).toFixed(2)}</td>
+            </tr>`;
+        }).join('');
 
-        if (preview) {
-            const rows = parsed.transactions.slice(0, 15).map(t => `
-                <tr style="border-bottom:1px solid var(--border);">
-                    <td style="padding:.375rem .5rem;font-size:.75rem;color:var(--text-2);">${t.date}</td>
-                    <td style="padding:.375rem .5rem;font-size:.75rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.description}">${t.description}</td>
-                    <td style="padding:.375rem .5rem;font-size:.75rem;color:var(--text-2);">${t.category}</td>
-                    <td style="padding:.375rem .5rem;font-size:.75rem;font-weight:700;text-align:right;color:${t.fundamentalType === 'receita' ? '#10b981' : '#ef4444'};">
-                        ${t.fundamentalType === 'receita' ? '+' : '-'}R$ ${t.value.toFixed(2)}
-                    </td>
-                </tr>`).join('');
-
-            preview.innerHTML = `
+        if (previewEl) {
+            previewEl.style.display = 'block';
+            previewEl.innerHTML = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem;">
                     <div style="background:#f0fdf4;border-radius:.625rem;padding:.625rem .75rem;border:1px solid #bbf7d0;">
                         <div style="font-size:.7rem;color:#065f46;">Entradas</div>
-                        <div style="font-size:1rem;font-weight:700;color:#10b981;">+R$ ${totalIn.toFixed(2)}</div>
+                        <div style="font-size:.95rem;font-weight:700;color:#10b981;">+R$ ${totalIn.toFixed(2)}</div>
                     </div>
                     <div style="background:#fef2f2;border-radius:.625rem;padding:.625rem .75rem;border:1px solid #fecaca;">
-                        <div style="font-size:.7rem;color:#7f1d1d;">Saídas</div>
-                        <div style="font-size:1rem;font-weight:700;color:#ef4444;">-R$ ${totalOut.toFixed(2)}</div>
+                        <div style="font-size:.7rem;color:#7f1d1d;">SaÃ­das</div>
+                        <div style="font-size:.95rem;font-weight:700;color:#ef4444;">-R$ ${totalOut.toFixed(2)}</div>
                     </div>
                 </div>
-                <p style="font-size:.75rem;color:var(--text-2);margin-bottom:.375rem;">Prévia (${Math.min(15, parsed.count)} de ${parsed.count} transações):</p>
-                <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:.625rem;">
+                <p style="font-size:.72rem;color:var(--text-3);margin-bottom:.375rem;">PrÃ©via (${Math.min(12, parsed.count)} de ${parsed.count} transaÃ§Ãµes):</p>
+                <div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:.625rem;">
                     <table style="width:100%;border-collapse:collapse;">
                         <thead style="background:var(--surface-2);position:sticky;top:0;">
                             <tr>
-                                <th style="padding:.375rem .5rem;font-size:.7rem;text-align:left;color:var(--text-2);font-weight:600;">Data</th>
-                                <th style="padding:.375rem .5rem;font-size:.7rem;text-align:left;color:var(--text-2);font-weight:600;">Descrição</th>
-                                <th style="padding:.375rem .5rem;font-size:.7rem;text-align:left;color:var(--text-2);font-weight:600;">Categoria</th>
-                                <th style="padding:.375rem .5rem;font-size:.7rem;text-align:right;color:var(--text-2);font-weight:600;">Valor</th>
+                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:left;color:var(--text-2);font-weight:600;">Data</th>
+                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:left;color:var(--text-2);font-weight:600;">DescriÃ§Ã£o</th>
+                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:left;color:var(--text-2);font-weight:600;">Categoria</th>
+                                <th style="padding:.3rem .5rem;font-size:.68rem;text-align:right;color:var(--text-2);font-weight:600;">Valor</th>
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
                     </table>
                 </div>
-                ${parsed.count > 15 ? `<p style="font-size:.7rem;color:var(--text-2);margin-top:.25rem;">...e mais ${parsed.count - 15} transações</p>` : ''}
-            `;
+                ${parsed.count > 12 ? `<p style="font-size:.7rem;color:var(--text-3);margin-top:.25rem;">...e mais ${parsed.count - 12} transaÃ§Ãµes</p>` : ''}`;
         }
-
-        if (step4) step4.style.display = 'block';
         if (confirmBtn) confirmBtn.style.display = 'inline-flex';
     },
 
+    // â”€â”€ Confirmar importaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     confirmImport() {
         if (!this.pendingTxs.length) return;
 
         let imported = 0, skipped = 0;
-        const existing = new Set((AppState.transactions || []).map(t => t.ofxId).filter(Boolean));
+        const existingOfx = new Set((AppState.transactions || []).map(t => t.ofxId).filter(Boolean));
+        const existingCsv = new Set((AppState.transactions || []).map(t => t.csvId).filter(Boolean));
 
         for (const tx of this.pendingTxs) {
-            if (tx.ofxId && existing.has(tx.ofxId)) { skipped++; continue; }
+            if (tx.ofxId && existingOfx.has(tx.ofxId)) { skipped++; continue; }
+            if (tx.csvId && existingCsv.has(tx.csvId)) { skipped++; continue; }
             AppState.transactions.push({
-                id:          tx.id || ('ofx-' + Date.now() + '-' + Math.random()),
+                id:          'imp-' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
                 description: tx.description,
                 value:       tx.value,
-                type:        tx.fundamentalType,
-                category:    tx.category,
+                type:        tx.fundamentalType || tx.type || 'despesa',
+                category:    tx.category || 'Outros',
                 date:        tx.date,
                 isPaid:      true,
-                ofxId:       tx.ofxId,
+                ofxId:       tx.ofxId || null,
+                csvId:       tx.csvId || null,
+                bankSource:  this.currentBankId || tx.bankSource || null,
             });
             imported++;
         }
 
+        // Salvar histÃ³rico de importaÃ§Ã£o por banco
+        if (this.currentBankId && imported > 0) {
+            const hist = JSON.parse(localStorage.getItem('import_history') || '{}');
+            const prev = hist[this.currentBankId]?.count || 0;
+            hist[this.currentBankId] = { date: new Date().toISOString().slice(0,10), count: prev + imported };
+            localStorage.setItem('import_history', JSON.stringify(hist));
+        }
+
         Storage.save();
         UI.closeModal();
-        UI.showFeedback(`✅ ${imported} transações importadas${skipped ? ` (${skipped} duplicatas ignoradas)` : ''}!`, 'success');
+        UI.showFeedback(`âœ… ${imported} transaÃ§Ãµes importadas${skipped ? ` (${skipped} duplicatas ignoradas)` : ''}!`, 'success');
         UI.render();
         this.pendingTxs = [];
+        this.currentBankId = null;
     },
 };
+
 </script>
 </body>
 </html>
