@@ -1,0 +1,16 @@
+# Permitir acesso direto a arquivos PHP da API
+Options -Indexes
+Order allow,deny
+Allow from all
+
+# PHP via CORS para chamadas do frontend
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Garantir execução de PHP
+<FilesMatch "\.php$">
+    SetHandler application/x-httpd-php
+</FilesMatch>

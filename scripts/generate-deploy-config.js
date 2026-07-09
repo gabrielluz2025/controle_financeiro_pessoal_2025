@@ -41,8 +41,7 @@ if (pluggy.client_id && pluggy.client_secret) {
 }
 
 if (!config.db_name || !config.db_user || !config.db_pass) {
-  console.error('DB_NAME, DB_USER e DB_PASSWORD são obrigatórios nos secrets do GitHub.');
-  process.exit(1);
+  console.warn('⚠️  DB secrets não configurados — config.php gerado com valores vazios. Configure DB_NAME, DB_USER, DB_PASSWORD nos Secrets do GitHub para ativar sincronização com MySQL.');
 }
 
-console.log('config.php gerado com sucesso.');
+console.log('✅ config.php gerado com sucesso.');
