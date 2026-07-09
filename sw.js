@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v4
-const CACHE = 'financas-plus-v4';
+// Finanças+ Service Worker — v5
+const CACHE = 'financas-plus-v5';
 const STATIC = [
     '/',
     '/index.html',
@@ -12,9 +12,10 @@ const STATIC = [
     '/js/live-cashflow.js',
     '/js/theme-manager.js',
     '/manifest.json',
+    '/nova.html',
 ];
 
-const NETWORK_FIRST = ['/index.html', '/js/', '/css/', '/sw.js'];
+const NETWORK_FIRST = ['/index.html', '/nova.html', '.html', '/js/', '/css/', '/sw.js'];
 
 function isNetworkFirst(url) {
     return NETWORK_FIRST.some(p => url.includes(p));

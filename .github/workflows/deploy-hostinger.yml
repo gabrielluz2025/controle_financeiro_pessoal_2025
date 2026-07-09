@@ -5,6 +5,7 @@ on:
     branches: [ main, master ]
     paths:
       - 'index.html'
+      - 'nova.html'
       - 'css/**'
       - 'js/**'
       - 'api/**'
@@ -42,6 +43,7 @@ jobs:
           cp index.html deploy/
           cp -r css js database deploy/
           cp -r api/. deploy/api/
+          [ -f "nova.html" ] && cp nova.html deploy/
           [ -f "manifest.json" ] && cp manifest.json deploy/
           [ -f "sw.js" ] && cp sw.js deploy/
           [ -f ".htaccess" ] && cp .htaccess deploy/

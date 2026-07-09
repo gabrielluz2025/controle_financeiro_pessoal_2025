@@ -1163,6 +1163,7 @@ body.mobile-sidebar-open { overflow: hidden; }
 
     .header-btn-hide-mobile { display: none !important; }
     .header-btn-hide-sm { display: none !important; }
+    .nova-btn-text { display: none !important; }
 
     .header-subtitle { display: none; }
 
