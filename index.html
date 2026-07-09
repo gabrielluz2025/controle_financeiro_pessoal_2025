@@ -4114,28 +4114,69 @@ const PluggyManager = {
 
     // ── Carregar Pluggy Connect Widget ───────────────────────────────────────
     loadWidget(connectToken, bankId = null) {
-        const PLUGGY_WIDGET = 'https://cdn.pluggy.ai/pluggy-connect/v2/pluggy-connect.min.js';
-        const doOpen = () => {
-            const opts = {
-                connectToken,
-                onSuccess: (item) => { this.onItemConnected(item); },
-                onError:   (err)  => { UI.showFeedback('Erro na conexão: ' + (err.message || err), 'error'); },
-                onClose:   ()     => {}
-            };
-            if (bankId) opts.connectorId = bankId;
-            // eslint-disable-next-line no-undef
-            new PluggyConnect(opts).init();
-        };
+        // Abre o Pluggy Connect como popup inline (iframe modal) — não depende de CDN externo
+        this.openConnectPopup(connectToken, bankId);
+    },
 
-        if (window.PluggyConnect) { doOpen(); return; }
-        const s = document.createElement('script');
-        s.src = PLUGGY_WIDGET;
-        s.onload = doOpen;
-        s.onerror = () => {
-            UI.showFeedback('Não foi possível carregar o widget Pluggy.', 'error');
-            this.showManualFallback();
+    openConnectPopup(connectToken, bankId = null) {
+        // Remove popup existente
+        document.getElementById('pluggy-popup-overlay')?.remove();
+
+        // URL do Pluggy Connect hospedado
+        let url = `https://connect.pluggy.ai/?connectToken=${encodeURIComponent(connectToken)}`;
+        if (bankId) url += `&connectorSearch=${encodeURIComponent(bankId)}`;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'pluggy-popup-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
+
+        overlay.innerHTML = `
+            <div style="background:#fff;border-radius:1rem;width:min(480px,96vw);height:min(680px,92vh);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4);">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;border-bottom:1px solid #e5e7eb;background:#f9fafb;">
+                    <div style="display:flex;align-items:center;gap:.625rem;">
+                        <div style="width:2rem;height:2rem;border-radius:.5rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;">
+                            <svg width="14" height="14" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                        </div>
+                        <span style="font-weight:700;font-size:.9rem;color:#111;">Conectar Banco — Open Finance</span>
+                    </div>
+                    <button id="pluggy-popup-close" style="width:2rem;height:2rem;border-radius:.5rem;border:1px solid #e5e7eb;background:white;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;color:#6b7280;" title="Fechar">&times;</button>
+                </div>
+                <iframe id="pluggy-iframe" src="${url}" style="flex:1;border:none;width:100%;" allow="camera; microphone" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation"></iframe>
+                <div style="padding:.625rem 1.25rem;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:.72rem;color:#9ca3af;text-align:center;">
+                    🔒 Conexão segura · Regulado pelo Banco Central · Powered by Pluggy
+                </div>
+            </div>`;
+
+        document.body.appendChild(overlay);
+
+        // Fechar ao clicar no X ou fora
+        document.getElementById('pluggy-popup-close').addEventListener('click', () => {
+            overlay.remove();
+            UI.showFeedback('Conexão cancelada.', 'info');
+        });
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.remove();
+            }
+        });
+
+        // Escutar mensagens do iframe (Pluggy postMessage)
+        const msgHandler = (event) => {
+            if (!event.origin.includes('pluggy.ai')) return;
+            const data = event.data;
+            if (data?.type === 'pluggy:connect:success' || data?.event === 'CONNECTED') {
+                window.removeEventListener('message', msgHandler);
+                overlay.remove();
+                this.onItemConnected(data.item || data.data || { id: data.itemId, connector: { name: 'Banco' } });
+            }
+            if (data?.type === 'pluggy:connect:close' || data?.event === 'CLOSE') {
+                window.removeEventListener('message', msgHandler);
+                overlay.remove();
+            }
         };
-        document.head.appendChild(s);
+        window.addEventListener('message', msgHandler);
+
+        UI.showFeedback('Conectando ao banco... Complete o processo na janela.', 'info');
     },
 
     // ── Callback: banco conectado ────────────────────────────────────────────
