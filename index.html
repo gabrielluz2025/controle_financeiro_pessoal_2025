@@ -4119,7 +4119,38 @@ const PluggyManager = {
             return;
         }
         console.log('[Pluggy] token OK, length:', connectToken.length);
-        this.openConnectPopup(connectToken, bankId);
+
+        // URL oficial do SDK (pluggy-connect-sdk v2.13.0)
+        const SDK_URL = 'https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js';
+
+        const initWidget = () => {
+            try {
+                new window.PluggyConnect({
+                    connectToken,
+                    includeSandbox: true,
+                    onSuccess: (item) => this.onItemConnected(item),
+                    onError:   (err)  => UI.showFeedback('Erro: ' + (err.message || JSON.stringify(err)), 'error'),
+                    onClose:   ()     => UI.showFeedback('Conexão encerrada.', 'info'),
+                }).init();
+            } catch (e) {
+                console.error('[Pluggy] SDK falhou:', e);
+                this.openConnectPopup(connectToken, bankId);
+            }
+        };
+
+        if (window.PluggyConnect) { initWidget(); return; }
+
+        // Remover scripts antigos com erro
+        document.querySelectorAll('script[src*="pluggy-connect"]').forEach(s => s.remove());
+
+        const s = document.createElement('script');
+        s.src = SDK_URL;
+        s.onload  = () => { console.log('[Pluggy] SDK carregado OK'); initWidget(); };
+        s.onerror = (e) => {
+            console.error('[Pluggy] SDK CDN falhou:', e);
+            this.openConnectPopup(connectToken, bankId);
+        };
+        document.head.appendChild(s);
     },
 
     openConnectPopup(connectToken, bankId = null) {
