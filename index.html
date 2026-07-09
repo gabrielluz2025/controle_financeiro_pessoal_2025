@@ -1253,71 +1253,136 @@ const UI = {
 
     renderAccountsPage() {
         const page = document.getElementById('accounts-page');
+        const connectedItems = JSON.parse(localStorage.getItem('pluggy_connected_items') || '[]');
+        const hasPluggyKey = !!localStorage.getItem('pluggy_client_id');
+
+        const banks = [
+            { id:'nubank',     name:'Nubank',          color:'#820AD1', emoji:'💜' },
+            { id:'itau',       name:'Itaú',             color:'#EC7000', emoji:'🟠' },
+            { id:'bradesco',   name:'Bradesco',         color:'#CC092F', emoji:'🔴' },
+            { id:'santander',  name:'Santander',        color:'#EC0000', emoji:'🏦' },
+            { id:'bb',         name:'Banco do Brasil',  color:'#F9DD00', emoji:'🟡' },
+            { id:'caixa',      name:'Caixa',            color:'#005B9C', emoji:'🔵' },
+            { id:'inter',      name:'Inter',            color:'#FF7A00', emoji:'🟧' },
+            { id:'c6',         name:'C6 Bank',          color:'#333333', emoji:'⬛' },
+            { id:'btg',        name:'BTG Pactual',      color:'#001E62', emoji:'💙' },
+            { id:'xp',         name:'XP Investimentos', color:'#000000', emoji:'⚫' },
+            { id:'picpay',     name:'PicPay',           color:'#11C76F', emoji:'💚' },
+            { id:'neon',       name:'Neon',             color:'#00D4FF', emoji:'🩵' },
+            { id:'original',   name:'Original',         color:'#00A859', emoji:'💚' },
+            { id:'sicoob',     name:'Sicoob',           color:'#008B3B', emoji:'🌿' },
+            { id:'sicredi',    name:'Sicredi',          color:'#007E3A', emoji:'🍃' },
+            { id:'safra',      name:'Safra',            color:'#003DA5', emoji:'💎' },
+        ];
+
         page.innerHTML = `
             <div class="space-y-5">
-                <div class="flex justify-between items-center">
-                    <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Gestão Financeira</p>
-                    <button id="add-new-account-btn" class="btn btn-primary text-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                        Nova Conta/Cartão
-                    </button>
-                </div>
-
-                <!-- InfinitePay Banner -->
-                <div style="background:var(--grad-brand);border-radius:var(--radius-xl);padding:1.5rem;color:white;position:relative;overflow:hidden;">
-                    <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,.08);border-radius:50%;pointer-events:none;"></div>
-                    <div class="flex items-start justify-between mb-4">
-                        <div>
-                            <p class="text-xs font-bold uppercase opacity-70 mb-1">Conexão em Tempo Real</p>
-                            <h3 class="text-xl font-extrabold">InfinitePay Open Finance</h3>
-                            <p class="text-sm opacity-80 mt-1">Sincronize seus dados bancários automaticamente</p>
-                        </div>
-                        <div style="width:3rem;height:3rem;background:rgba(255,255,255,.2);border-radius:.75rem;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
-                            <img src="https://assets.infinitepay.io/brand/infinitepay-logo-symbol.svg" alt="InfinitePay" class="w-7 h-7" onerror="this.style.display='none'">
-                        </div>
+                <!-- Header -->
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider mb-0.5" style="color:var(--text-3)">Open Finance · Banco Central do Brasil</p>
+                        <p class="text-sm" style="color:var(--text-2)">Conecte seus bancos com segurança e veja tudo em um só lugar</p>
                     </div>
-                    <div id="infinitepay-config-form" style="background:rgba(255,255,255,.12);padding:1rem;border-radius:.75rem;backdrop-filter:blur(8px);">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase opacity-70 mb-1">Sua InfiniteTag</label>
-                                <input type="text" id="inf-tag" style="width:100%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:.5rem;padding:.5rem .75rem;color:white;font-size:.875rem;" placeholder="ex: joaosilva" />
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase opacity-70 mb-1">Chave de API</label>
-                                <input type="password" id="inf-api-key" style="width:100%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:.5rem;padding:.5rem .75rem;color:white;font-size:.875rem;" placeholder="Cole sua chave aqui" />
-                            </div>
-                        </div>
-                        <button onclick="saveAndConnectInfinitePay()" style="width:100%;background:white;color:#4f46e5;font-weight:700;font-size:.875rem;padding:.625rem;border-radius:.5rem;border:none;cursor:pointer;transition:opacity .2s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-                            CONECTAR E SINCRONIZAR AGORA
+                    <div class="flex gap-2">
+                        <button id="pluggy-setup-btn" class="btn btn-ghost text-sm">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            Configurar API
+                        </button>
+                        <button id="add-new-account-btn" class="btn btn-primary text-sm">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                            Manual
                         </button>
                     </div>
-                    <div id="openfinance-status" class="mt-3 text-sm flex items-center justify-between opacity-80">
-                        <span class="inline-flex items-center gap-2">
-                            <span id="status-dot" class="w-2 h-2 rounded-full" style="background:#fbbf24"></span>
-                            <span id="status-text">Não conectado</span>
+                </div>
+
+                <!-- Open Finance Hero -->
+                <div style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e3a8a 100%);border-radius:1.25rem;padding:1.75rem;color:white;position:relative;overflow:hidden;">
+                    <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:rgba(99,102,241,.2);border-radius:50%;pointer-events:none;"></div>
+                    <div style="position:absolute;bottom:-40px;left:-40px;width:160px;height:160px;background:rgba(139,92,246,.15);border-radius:50%;pointer-events:none;"></div>
+                    <div class="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span style="background:rgba(255,255,255,.15);padding:.25rem .75rem;border-radius:99px;font-size:.7rem;font-weight:700;letter-spacing:.05em;">🔒 REGULADO PELO BACEN</span>
+                            </div>
+                            <h3 style="font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.5rem;">Hub Open Finance</h3>
+                            <p style="font-size:.875rem;opacity:.85;max-width:480px;line-height:1.6;">Conecte <strong>qualquer banco brasileiro</strong> de forma segura e automática. Seus dados são importados via Open Finance regulado pelo Banco Central — sem compartilhar senha.</p>
+                            <div class="flex items-center gap-4 mt-4">
+                                <span style="font-size:.8rem;opacity:.7;">✓ 200+ instituições</span>
+                                <span style="font-size:.8rem;opacity:.7;">✓ Dados em tempo real</span>
+                                <span style="font-size:.8rem;opacity:.7;">✓ Criptografia bancária</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-2">
+                            <button id="pluggy-connect-btn" style="background:white;color:#312e81;font-weight:700;font-size:.9rem;padding:.75rem 1.5rem;border-radius:.875rem;border:none;cursor:pointer;display:flex;align-items:center;gap:.5rem;box-shadow:0 8px 24px rgba(0,0,0,.2);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 32px rgba(0,0,0,.3)'" onmouseout="this.style.transform='';this.style.boxShadow='0 8px 24px rgba(0,0,0,.2)'">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                Conectar Banco
+                            </button>
+                            <button id="pluggy-sync-btn" style="background:rgba(255,255,255,.15);color:white;font-size:.8rem;font-weight:600;padding:.5rem 1rem;border-radius:.625rem;border:1px solid rgba(255,255,255,.25);cursor:pointer;display:flex;align-items:center;gap:.375rem;" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                Sincronizar Todos
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Status bar -->
+                    <div id="openfinance-status" style="margin-top:1.25rem;padding:.75rem 1rem;background:rgba(255,255,255,.1);border-radius:.625rem;display:flex;align-items:center;justify-content:space-between;font-size:.8rem;">
+                        <span class="flex items-center gap-2">
+                            <span id="status-dot" style="width:.5rem;height:.5rem;border-radius:50%;background:#fbbf24;display:inline-block;"></span>
+                            <span id="status-text">${connectedItems.length > 0 ? connectedItems.length + ' banco(s) conectado(s)' : 'Nenhum banco conectado ainda'}</span>
                         </span>
-                        <span id="last-sync-text" class="text-xs opacity-70"></span>
+                        <span id="last-sync-text" style="opacity:.6;">${localStorage.getItem('pluggy_last_sync') ? 'Última sync: ' + localStorage.getItem('pluggy_last_sync') : ''}</span>
                     </div>
                 </div>
 
+                <!-- Bancos disponíveis -->
+                <div class="section-card overflow-hidden">
+                    <div class="flex items-center justify-between px-5 py-4 border-b" style="border-color:var(--border)">
+                        <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Instituições Disponíveis</p>
+                        <span class="badge badge-info">200+ bancos</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4" id="bank-grid">
+                        ${banks.map(b => {
+                            const connected = connectedItems.some(i => i.bankId === b.id);
+                            return `<div class="bank-card flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all" style="border-color:${connected?b.color:'var(--border)'};background:${connected?b.color+'15':'var(--surface-2)'};" onclick="PluggyManager.openConnect('${b.id}')" title="Conectar ${b.name}">
+                                <span style="font-size:1.5rem;line-height:1;">${b.emoji}</span>
+                                <div class="flex-1 min-w-0">
+                                    <p style="font-size:.8rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.name}</p>
+                                    <p style="font-size:.68rem;color:${connected?b.color:'var(--text-3)'};">${connected?'✓ Conectado':'Toque para conectar'}</p>
+                                </div>
+                            </div>`;
+                        }).join('')}
+                        <div class="bank-card flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer" style="border-color:var(--border);background:var(--surface-2);border-style:dashed;" onclick="PluggyManager.openConnect()">
+                            <span style="font-size:1.5rem;line-height:1;">🔍</span>
+                            <div>
+                                <p style="font-size:.8rem;font-weight:700;color:var(--text);">Outro banco</p>
+                                <p style="font-size:.68rem;color:var(--text-3);">Buscar instituição</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contas e Cartões manuais/sincronizados -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     <div class="section-card overflow-hidden">
-                        <div class="px-5 py-4 border-b" style="border-color:var(--border)">
+                        <div class="px-5 py-4 border-b flex items-center justify-between" style="border-color:var(--border)">
                             <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Contas Bancárias</p>
+                            <span class="badge badge-neutral">${AppState.accounts.length}</span>
                         </div>
                         <div id="accounts-list" class="divide-y" style="border-color:var(--border)"></div>
                     </div>
                     <div class="section-card overflow-hidden">
-                        <div class="px-5 py-4 border-b" style="border-color:var(--border)">
+                        <div class="px-5 py-4 border-b flex items-center justify-between" style="border-color:var(--border)">
                             <p class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-3)">Cartões de Crédito</p>
+                            <span class="badge badge-neutral">${AppState.creditCards.length}</span>
                         </div>
                         <div id="cards-list" class="divide-y" style="border-color:var(--border)"></div>
                     </div>
                 </div>
             </div>`;
+
         this.renderAccountsList();
         this.renderCardsList();
         this.setupOpenFinanceButtons();
+        PluggyManager.init();
     },
 
     renderAccountsList() {
@@ -3978,6 +4043,202 @@ document.addEventListener('DOMContentLoaded', async () => {
     UI.init();
     Handlers.init();
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PLUGGY MANAGER — Open Finance multi-banco
+// ─────────────────────────────────────────────────────────────────────────────
+const PluggyManager = {
+
+    scriptLoaded: false,
+
+    // Inicializar botões da página de contas
+    init() {
+        const connectBtn = document.getElementById('pluggy-connect-btn');
+        const syncBtn    = document.getElementById('pluggy-sync-btn');
+        const setupBtn   = document.getElementById('pluggy-setup-btn');
+
+        if (connectBtn) connectBtn.addEventListener('click', () => this.openConnect());
+        if (syncBtn)    syncBtn.addEventListener('click',    () => this.syncAll());
+        if (setupBtn)   setupBtn.addEventListener('click',   () => this.showSetupModal());
+    },
+
+    // ── Abrir Pluggy Connect Widget ──────────────────────────────────────────
+    async openConnect(bankId = null) {
+        const clientId = localStorage.getItem('pluggy_client_id');
+        if (!clientId) {
+            this.showSetupModal();
+            return;
+        }
+
+        UI.showFeedback('Obtendo token de conexão...', 'info');
+        try {
+            const resp = await fetch('/api/pluggy.php?action=connect_token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await resp.json();
+            if (!data.connectToken) {
+                UI.showFeedback(data.error || 'Erro ao obter token.', 'error');
+                return;
+            }
+            this.loadWidget(data.connectToken, bankId);
+        } catch (e) {
+            // Fallback: mostrar modal de configuração manual
+            UI.showFeedback('Backend offline. Configure suas credenciais Pluggy.', 'warning');
+            this.showSetupModal();
+        }
+    },
+
+    // ── Carregar Pluggy Connect Widget ───────────────────────────────────────
+    loadWidget(connectToken, bankId = null) {
+        const PLUGGY_WIDGET = 'https://cdn.pluggy.ai/pluggy-connect/v2/pluggy-connect.min.js';
+        const doOpen = () => {
+            const opts = {
+                connectToken,
+                onSuccess: (item) => { this.onItemConnected(item); },
+                onError:   (err)  => { UI.showFeedback('Erro na conexão: ' + (err.message || err), 'error'); },
+                onClose:   ()     => {}
+            };
+            if (bankId) opts.connectorId = bankId;
+            // eslint-disable-next-line no-undef
+            new PluggyConnect(opts).init();
+        };
+
+        if (window.PluggyConnect) { doOpen(); return; }
+        const s = document.createElement('script');
+        s.src = PLUGGY_WIDGET;
+        s.onload = doOpen;
+        s.onerror = () => {
+            UI.showFeedback('Não foi possível carregar o widget Pluggy.', 'error');
+            this.showManualFallback();
+        };
+        document.head.appendChild(s);
+    },
+
+    // ── Callback: banco conectado ────────────────────────────────────────────
+    onItemConnected(item) {
+        UI.showFeedback('Banco conectado! Sincronizando dados...', 'success');
+        const items = JSON.parse(localStorage.getItem('pluggy_connected_items') || '[]');
+        if (!items.find(i => i.id === item.id)) {
+            items.push({ id: item.id, name: item.connector?.name || 'Banco', connectedAt: new Date().toISOString() });
+            localStorage.setItem('pluggy_connected_items', JSON.stringify(items));
+        }
+        setTimeout(() => this.syncAll(), 1500);
+    },
+
+    // ── Sincronizar todos os dados ────────────────────────────────────────────
+    async syncAll() {
+        const statusText = document.getElementById('status-text');
+        if (statusText) statusText.textContent = '🔄 Sincronizando...';
+        try {
+            const resp = await fetch('/api/pluggy.php?action=sync_all');
+            const data = await resp.json();
+
+            if (data.error === 'credentials_missing') {
+                if (statusText) statusText.textContent = 'Credenciais não configuradas';
+                this.showSetupModal();
+                return;
+            }
+
+            let imported = 0;
+            // Mesclar contas (não duplicar)
+            (data.accounts || []).forEach(acc => {
+                if (!AppState.accounts.find(a => a.id === acc.id)) {
+                    AppState.accounts.push(acc);
+                    imported++;
+                }
+            });
+            // Mesclar cartões
+            (data.creditCards || []).forEach(card => {
+                if (!AppState.creditCards.find(c => c.id === card.id)) {
+                    AppState.creditCards.push(card);
+                    imported++;
+                }
+            });
+            // Mesclar transações (não duplicar)
+            (data.transactions || []).forEach(tx => {
+                if (!AppState.transactions.find(t => t.id === tx.id)) {
+                    AppState.transactions.push(tx);
+                    imported++;
+                }
+            });
+
+            AppState.recalculateAllBalances();
+            await AppState.saveAll();
+            UI.render();
+
+            const now = new Date().toLocaleString('pt-BR');
+            localStorage.setItem('pluggy_last_sync', now);
+
+            const dot = document.getElementById('status-dot');
+            if (dot) dot.style.background = '#10b981';
+            if (statusText) {
+                const items = JSON.parse(localStorage.getItem('pluggy_connected_items') || '[]');
+                statusText.textContent = items.length + ' banco(s) conectado(s)';
+            }
+            UI.showFeedback(`✓ ${imported} itens importados do Open Finance!`, 'success');
+        } catch (e) {
+            if (statusText) statusText.textContent = 'Erro na sincronização';
+            UI.showFeedback('Erro ao sincronizar com Pluggy: ' + e.message, 'error');
+        }
+    },
+
+    // ── Modal de configuração das credenciais Pluggy ─────────────────────────
+    showSetupModal() {
+        const savedId     = localStorage.getItem('pluggy_client_id') || '';
+        const savedSecret = localStorage.getItem('pluggy_client_secret') || '';
+        const content = `
+            <form id="pluggy-setup-form" class="space-y-4" onsubmit="return false;">
+                <div style="background:#f0f9ff;border-radius:.75rem;padding:1rem;border:1px solid #bae6fd;">
+                    <p style="font-size:.875rem;font-weight:700;color:#0369a1;margin-bottom:.5rem;">📋 Como obter suas credenciais:</p>
+                    <ol style="font-size:.8rem;color:#0c4a6e;padding-left:1.25rem;line-height:1.8;">
+                        <li>Acesse <a href="https://dashboard.pluggy.ai" target="_blank" style="color:#0ea5e9;font-weight:600;">dashboard.pluggy.ai</a> e crie uma conta gratuita</li>
+                        <li>Vá em <strong>Settings → API Keys</strong></li>
+                        <li>Copie o <strong>Client ID</strong> e o <strong>Client Secret</strong></li>
+                    </ol>
+                </div>
+                <div>
+                    <label class="form-label">Client ID</label>
+                    <input type="text" id="pluggy-client-id" value="${savedId}" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                </div>
+                <div>
+                    <label class="form-label">Client Secret</label>
+                    <input type="password" id="pluggy-client-secret" value="${savedSecret}" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                </div>
+                <div style="background:#fefce8;border-radius:.5rem;padding:.75rem;border:1px solid #fde68a;">
+                    <p style="font-size:.75rem;color:#92400e;">⚠️ <strong>Produção:</strong> Para bancos reais, use o plano Produção. Sandbox funciona com bancos de teste.</p>
+                </div>
+                <div style="background:#f0fdf4;border-radius:.5rem;padding:.75rem;border:1px solid #bbf7d0;">
+                    <p style="font-size:.75rem;color:#166534;">💡 Adicione também ao <code>api/config.php</code>:<br>
+                    <code style="background:#dcfce7;padding:.1rem .3rem;border-radius:.25rem;display:block;margin-top:.25rem;">define('PLUGGY_CLIENT_ID', 'seu-id');<br>define('PLUGGY_CLIENT_SECRET', 'seu-secret');</code></p>
+                </div>
+                <button type="button" id="pluggy-save-btn" class="btn btn-primary w-full">Salvar e Ativar Open Finance</button>
+            </form>`;
+        UI.showModal('Configurar Open Finance', content, '', 'pluggy-setup-form');
+        // Esconder botão padrão de submit e usar o próprio botão do form
+        setTimeout(() => {
+            const footer = document.querySelector('.modal-footer');
+            if (footer) footer.style.display = 'none';
+            const saveBtn = document.getElementById('pluggy-save-btn');
+            if (saveBtn) saveBtn.addEventListener('click', async () => {
+                const id  = document.getElementById('pluggy-client-id')?.value.trim();
+                const sec = document.getElementById('pluggy-client-secret')?.value.trim();
+                if (!id || !sec) { UI.showFeedback('Preencha ambos os campos.', 'error'); return; }
+                localStorage.setItem('pluggy_client_id',     id);
+                localStorage.setItem('pluggy_client_secret', sec);
+                UI.closeModal();
+                UI.showFeedback('✓ Credenciais salvas! Clique em "Conectar Banco" para começar.', 'success');
+                UI.render();
+            });
+        }, 50);
+    },
+
+    // ── Fallback manual (quando widget não carrega) ──────────────────────────
+    showManualFallback() {
+        UI.showFeedback('Use o botão "Manual" para adicionar contas manualmente.', 'info');
+    }
+};
 </script>
 </body>
 </html>
