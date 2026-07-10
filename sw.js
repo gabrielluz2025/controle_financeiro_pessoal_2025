@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v13 (tema claro sólido)
-const CACHE = 'financas-plus-v13';
+// Finanças+ Service Worker — v14 (UI profissional)
+const CACHE = 'financas-plus-v14';
 const STATIC = ['/', '/index.html', '/classico.html', '/nova.html', '/manifest.json', '/css/enhanced-styles.css'];
 
 const NETWORK_FIRST = ['.html', '/js/', '/css/', '/sw.js'];
