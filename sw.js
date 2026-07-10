@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v11 (fix fillTransactionForm cache)
-const CACHE = 'financas-plus-v11';
+// Finanças+ Service Worker — v12 (UI sólida + orçamentos/metas)
+const CACHE = 'financas-plus-v12';
 const STATIC = ['/', '/index.html', '/classico.html', '/nova.html', '/manifest.json', '/css/enhanced-styles.css'];
 
 const NETWORK_FIRST = ['.html', '/js/', '/css/', '/sw.js'];
