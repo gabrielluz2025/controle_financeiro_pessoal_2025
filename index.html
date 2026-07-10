@@ -748,7 +748,7 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
 <script src="js/csv-importer.js?v=1"></script>
 <script src="js/ofx-importer.js?v=1"></script>
 <script src="js/voice-input.js?v=11"></script>
-<script src="js/receipt-scanner.js?v=13"></script>
+<script src="js/receipt-scanner.js?v=14"></script>
 <script src="js/receipt-store.js?v=1"></script>
 <script src="js/finance-suite.js?v=1"></script>
 <script>
@@ -1820,6 +1820,8 @@ const TransactionFormFill={
   _isGarbageDesc(s){
     const t=String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     if(t.length<4)return true;
+    if(/^comprovante(\s+de|\s+da)?\s*$/.test(t))return true;
+    if(/^comprovante\s+de\s+\w{1,12}$/.test(t)&&t.length<22)return true;
     if(/^(nos|nas|nfe|nfce|cpf|cnpj|pix|valor|total|data|nome|via|doc|sat|danfe|comprovante|obrigado|volte|sempre|itens|qtd|unid|cod|descricao)$/.test(t))return true;
     if(t.split(/\s+/).length>8)return true;
     return false;
@@ -1862,6 +1864,10 @@ const TransactionFormFill={
     this._setSel('receipt-payment-method',data.paymentMethod||(doc==='pix'?'Pix':''));
     this._set('receipt-address',data.address);this._set('receipt-items',data.items);
     if(data.notes)this._set('receipt-notes',String(data.notes).slice(0,500));
+    if(doc==='pix'||data.transactionId||data.beneficiary){
+      this._setSel('receipt-doc-type','pix');
+      this._setSel('receipt-payment-method','Pix');
+    }
     if(opts.fromScan||data.fromScan){
       this._set('receipt-scanned-at',new Date().toISOString());
       document.getElementById('receipt-panel')?.classList.add('open');
@@ -2240,7 +2246,7 @@ window.addToGoal=addToGoal;window.saveGoalDeposit=saveGoalDeposit;
 init();
 window.openBudgetSheet=openBudgetSheet;window.saveBudget=saveBudget;window.deleteBudget=deleteBudget;
 window.openGoalSheet=openGoalSheet;window.saveGoal=saveGoal;window.deleteGoal=deleteGoal;
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=25').then(r=>r.update()).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=26').then(r=>r.update()).catch(()=>{})}
 </script>
 </body>
 </html>

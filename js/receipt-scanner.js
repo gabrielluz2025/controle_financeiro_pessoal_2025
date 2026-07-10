@@ -117,8 +117,8 @@ const ReceiptScanner = {
                 clearTimeout(timeout);
                 try {
                     const isMobile = window.innerWidth < 768 || /Android|iPhone|iPad/i.test(navigator.userAgent);
-                    const maxW = isMobile ? 1400 : 2200;
-                    const scale = Math.min(1, maxW / Math.max(img.width, 1));
+                    const maxDim = isMobile ? 2600 : 3200;
+                    const scale = Math.min(1, maxDim / Math.max(img.width, img.height, 1));
                     const w = Math.round(img.width * scale);
                     const h = Math.round(img.height * scale);
                     const canvas = document.createElement('canvas');
@@ -160,7 +160,7 @@ const ReceiptScanner = {
         });
     },
 
-    async _recognizeImage(image, onProgress) {
+    async _recognizeImage(image, onProgress, psm = '4') {
         const img = this._asFile(image);
         const configs = [this.TESSERACT_OPTS, this.TESSERACT_OPTS_FALLBACK, {}];
         let lastErr = null;
@@ -177,7 +177,7 @@ const ReceiptScanner = {
                 });
                 try {
                     await worker.setParameters({
-                        tessedit_pageseg_mode: '6',
+                        tessedit_pageseg_mode: String(psm),
                         preserve_interword_spaces: '1',
                     });
                     const { data } = await worker.recognize(img);
@@ -207,6 +207,56 @@ const ReceiptScanner = {
         }
 
         throw lastErr || new Error('Falha ao ler a imagem.');
+    },
+
+    _parseScore(parsed) {
+        if (!parsed) return -1;
+        let s = 0;
+        if (parsed.docType === 'pix') s += 12;
+        else if (parsed.docType === 'boleto') s += 8;
+        else if (parsed.docType === 'cupom_fiscal') s += 6;
+        if (parsed.transactionId) s += 14;
+        if (parsed.beneficiary && parsed.beneficiary.length >= 6) s += 12;
+        if (parsed.value && parsed.value >= 1) s += Math.min(8, parsed.value > 50 ? 8 : 4);
+        if (parsed.payer) s += 4;
+        if (parsed.date && parsed.date !== new Date().toISOString().slice(0, 10)) s += 3;
+        const desc = String(parsed.description || parsed.merchant || '').toLowerCase();
+        if (/^comprovante\s+de\s*$|^comprovante de transfer/.test(desc) && desc.length < 28) s -= 8;
+        if (parsed.docType === 'outro' && parsed.transactionId) s += 6;
+        return s;
+    },
+
+    _inferPixFromText(text) {
+        const t = String(text || '');
+        const compact = t.replace(/\s/g, '');
+        if (/E18236120[0-9A-Za-z]{10,}/i.test(compact)) return true;
+        if (/E[0-9]{8}20[0-9]{6}[0-9A-Za-z]{4,}/i.test(compact)) return true;
+        if (/comprovante.{0,30}transfer/i.test(t)) return true;
+        if (/tipo.{0,20}transfer/i.test(t) && /pix/i.test(t)) return true;
+        if (/destino/i.test(t) && /origem/i.test(t)) return true;
+        if (/nu pagamentos|nubank/i.test(t) && /transfer/i.test(t)) return true;
+        return false;
+    },
+
+    _looksLikePersonName(s) {
+        const t = String(s || '').trim();
+        if (t.length < 6 || t.length > 90) return false;
+        if (!/^[A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç]/.test(t)) return false;
+        if (/^(comprovante|transferencia|instituicao|agencia|conta|destino|origem|valor|pix|nu pagamentos)/i.test(t)) return false;
+        if (/^\d/.test(t) || /cnpj|cpf|r\$/i.test(t)) return false;
+        const words = t.split(/\s+/).filter(Boolean);
+        return words.length >= 2 && words.every(w => w.length >= 2);
+    },
+
+    _extractRMoneyValues(text) {
+        const vals = [];
+        const pat = /R\s*\$\s*(\d{1,3}(?:\.\d{3})*,\d{2})/gi;
+        let m;
+        while ((m = pat.exec(text)) !== null) {
+            const v = this._parseMoney(m[1]);
+            if (!isNaN(v) && v > 0 && v < 500000) vals.push({ v, index: m.index });
+        }
+        return vals;
     },
 
     _safeParse(text) {
@@ -381,7 +431,7 @@ const ReceiptScanner = {
         let sectionDepth = 0;
         for (let i = 0; i < lines.length; i++) {
             const cur = this._normLine(lines[i]);
-            if (cur === section || cur.startsWith(section + ' ')) {
+            if (cur === section || cur.startsWith(section + ' ') || (section === 'destino' && /^dest\w*/.test(cur) && cur.length < 12) || (section === 'origem' && /^orig\w*/.test(cur) && cur.length < 12)) {
                 inSection = true;
                 sectionDepth = 0;
                 continue;
@@ -545,6 +595,7 @@ const ReceiptScanner = {
     },
 
     _detectDocType(text) {
+        if (this._inferPixFromText(text)) return 'pix';
         const t = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const score = { pix: 0, boleto: 0, comprovante_bancario: 0, cupom_fiscal: 0 };
         if (/pix|transferencia instantanea|transacao pix|qr code pix|chave pix|e2e|end to end|id da transacao/i.test(t)) score.pix += 3;
@@ -572,9 +623,17 @@ const ReceiptScanner = {
     _extractPixBeneficiary(text) {
         const lines = this._lines(text);
         const fromDestino = this._fieldInSection(lines, 'destino', ['nome', 'favorecido', 'recebedor']);
-        if (fromDestino) return fromDestino;
-        const afterNome = this._textAfterLabel(lines, ['nome do recebedor', 'nome recebedor', 'para']);
-        if (afterNome && !/^(instituicao|agencia|conta|nu pagamentos)/i.test(afterNome)) return afterNome;
+        if (fromDestino && this._looksLikePersonName(fromDestino)) return fromDestino;
+
+        const fuzzyDestino = text.match(/dest\w*[\s\S]{0,160}?(?:nome[\s\S]{0,40}?)?([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-Za-záéíóúâêôãõç]+(?:\s+[A-Za-záéíóúâêôãõç]+){1,6})/i);
+        if (fuzzyDestino && this._looksLikePersonName(fuzzyDestino[1])) return fuzzyDestino[1].trim().slice(0, 120);
+
+        const beforeNu = text.match(/([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-Za-záéíóúâêôãõç]+(?:\s+[A-Za-záéíóúâêôãõç]+){2,6})\s*(?:\n|\r|.){0,3}NU PAGAMENTOS/i);
+        if (beforeNu && this._looksLikePersonName(beforeNu[1])) return beforeNu[1].trim().slice(0, 120);
+
+        const afterNome = this._textAfterLabel(lines, ['nome do recebedor', 'nome recebedor', 'para', 'nome']);
+        if (afterNome && this._looksLikePersonName(afterNome) && !/^(instituicao|agencia|conta|nu pagamentos)/i.test(afterNome)) return afterNome;
+
         return this._extractByPatterns(text, [
             /(?:para|favorecido|recebedor|destinat[aá]rio|nome do recebedor|benefici[aá]rio|destino)[:\s]*\n?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç0-9 .&\-]{2,70})/i,
             /(?:para|favorecido)[:\s]+([^\n\dR$]{3,70})/i,
@@ -591,23 +650,26 @@ const ReceiptScanner = {
     },
 
     _extractPixTransactionId(text) {
+        const compact = text.replace(/\s/g, '');
+        const nubank = compact.match(/E18236120[0-9A-Za-z]{10,22}/i);
+        if (nubank) return nubank[0].toUpperCase().slice(0, 32);
+
         const labeled = this._extractByPatterns(text, [
-            /(?:id\s*(?:da\s*)?transa[cç][aã]o|identificador|e2e|end\s*to\s*end|codigo da transacao)[:\s]*\n?\s*([Ee][A-Za-z0-9]{28,35})/i,
+            /(?:id\s*(?:da\s*)?transa[cç][aã]o|identificador|e2e|end\s*to\s*end|codigo da transacao)[:\s]*\n?\s*([Ee][A-Za-z0-9\s]{28,45})/i,
         ]);
         if (labeled) {
             const id = labeled.replace(/\s/g, '').toUpperCase();
-            if (id.length >= 30 && id.length <= 35) return id.slice(0, 32);
+            if (id.length >= 28) return id.slice(0, 32);
         }
         const lines = this._lines(text);
         for (let i = 0; i < lines.length; i++) {
             if (/id\s*(?:da\s*)?transa/i.test(lines[i])) {
-                for (let j = 0; j <= 2 && i + j < lines.length; j++) {
-                    const cand = (lines[i + j].match(/(E[0-9A-Za-z]{28,35})/i) || [])[1];
-                    if (cand) return cand.replace(/\s/g, '').toUpperCase().slice(0, 32);
-                }
+                let chunk = lines.slice(i, i + 4).join('');
+                chunk = chunk.replace(/\s/g, '');
+                const cand = chunk.match(/(E[0-9A-Za-z]{28,35})/i);
+                if (cand) return cand[1].toUpperCase().slice(0, 32);
             }
         }
-        const compact = text.replace(/\s/g, '');
         const patterns = [
             /E[0-9]{8}20[0-9]{6}[0-9A-Za-z]{4,11}(?=[^0-9A-Za-z]|$)/i,
             /E[0-9A-Za-z]{31}(?=[^0-9A-Za-z]|$)/i,
@@ -620,14 +682,22 @@ const ReceiptScanner = {
     },
 
     _extractPixValue(text) {
+        const nearValor = text.match(/valor[\s\S]{0,100}?R\s*\$\s*(\d{1,3}(?:\.\d{3})*,\d{2})/i);
+        if (nearValor) {
+            const v = this._parseMoney(nearValor[1]);
+            if (!isNaN(v) && v > 0) return v;
+        }
+        const rValues = this._extractRMoneyValues(text);
+        if (rValues.length === 1) return rValues[0].v;
+        if (rValues.length > 1) return Math.max(...rValues.map(x => x.v));
+
         const lines = this._lines(text);
         const fromLabel = this._valueAfterLabel(lines, this.PIX_LABELS.value);
-        if (fromLabel != null) return fromLabel;
+        if (fromLabel != null && fromLabel >= 1) return fromLabel;
+
         const patterns = [
             /valor\s*(?:do\s*)?(?:pix|transferido|pago|da\s*transa[cç][aã]o|da\s*transfer[eê]ncia)?\s*[:\s]*\n?\s*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
             /(?:transferido|enviado|recebido)\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
-            /(?:^|\n)\s*valor\s*[:\s]*\n?\s*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/im,
-            /r\$\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
         ];
         for (const pat of patterns) {
             const m = text.match(pat);
@@ -715,7 +785,7 @@ const ReceiptScanner = {
     _parsePix(text) {
         const beneficiary = this._extractPixBeneficiary(text);
         const payer = this._extractPixPayer(text);
-        const value = this._extractPixValue(text) ?? this._extractTotal(text);
+        const value = this._extractPixValue(text);
         const transactionId = this._extractPixTransactionId(text);
         const date = this._extractDate(text);
         const time = this._extractTime(text);
@@ -844,7 +914,8 @@ const ReceiptScanner = {
     },
 
     parse(text) {
-        const docType = this._detectDocType(text);
+        let docType = this._detectDocType(text);
+        if (docType === 'outro' && this._inferPixFromText(text)) docType = 'pix';
         const baseMeta = { rawText: text, fromScan: true, fundamentalType: 'despesa' };
 
         if (docType === 'pix') {
@@ -898,37 +969,35 @@ const ReceiptScanner = {
         }
 
         onProgress && onProgress(8, 'Iniciando leitura OCR...');
-        let text = '';
-        try {
-            text = await this._recognizeImage(processed, onProgress);
-        } catch (err1) {
-            try {
-                text = await this._recognizeImage(this._asFile(file), onProgress);
-            } catch (err2) {
-                const msg = String(err2?.message || err1?.message || '');
-                if (/network|fetch|failed to load|wasm|worker/i.test(msg)) {
-                    throw new Error('Erro de conexão ao ler a imagem. Verifique a internet ou tente enviar a foto pela galeria (JPG/PNG).');
-                }
-                throw new Error('Falha ao ler a imagem. Tente outra foto, mais luz ou um print da tela do comprovante Pix.');
+        let best = null;
+        let bestScore = -1;
+        const psms = ['4', '6', '11'];
+        const sources = [processed, this._asFile(file)];
+
+        for (const src of sources) {
+            for (const psm of psms) {
+                try {
+                    onProgress && onProgress(12, `Leitura OCR (modo ${psm})...`);
+                    const text = await this._recognizeImage(src, onProgress, psm);
+                    const parsed = this._safeParse(text);
+                    parsed.rawText = text;
+                    const score = this._parseScore(parsed);
+                    if (score > bestScore) {
+                        best = parsed;
+                        bestScore = score;
+                    }
+                    if (score >= 20) break;
+                } catch { /* tenta próximo modo */ }
             }
+            if (bestScore >= 20) break;
         }
 
-        onProgress && onProgress(98, 'Extraindo dados...');
-        const parsed = this._safeParse(text);
-
-        if (!parsed.value && !parsed.cnpj && !parsed.transactionId && !parsed.barcode && !parsed.beneficiary) {
-            onProgress && onProgress(99, 'Tentando leitura alternativa...');
-            try {
-                const text2 = await this._recognizeImage(this._asFile(file), onProgress);
-                const p2 = this._safeParse(text2);
-                if ((p2.value && !parsed.value) || (p2.transactionId && !parsed.transactionId) || (p2.beneficiary && !parsed.beneficiary)) {
-                    Object.assign(parsed, p2, { rawText: `${parsed.rawText}\n---\n${p2.rawText}` });
-                }
-            } catch { /* ignore */ }
+        if (!best) {
+            throw new Error('Falha ao ler a imagem. Tente outra foto, mais luz ou um print da tela do comprovante Pix.');
         }
 
         onProgress && onProgress(100, 'Concluído!');
-        return parsed;
+        return best;
     },
 
     /** Preenche campos do formulário de transação com dados do scan */
