@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v26 (OCR Pix Nubank reforçado)
-const CACHE = 'financas-plus-v26';
+// Finanças+ Service Worker — v27 (OCR layout + confirmação)
+const CACHE = 'financas-plus-v27';
 const STATIC = ['/', '/index.html', '/classico.html', '/nova.html', '/manifest.json', '/css/enhanced-styles.css'];
 
 const NETWORK_FIRST = ['.html', '/js/', '/css/', '/sw.js'];

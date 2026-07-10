@@ -223,6 +223,8 @@ const ReceiptScanner = {
         const desc = String(parsed.description || parsed.merchant || '').toLowerCase();
         if (/^comprovante\s+de\s*$|^comprovante de transfer/.test(desc) && desc.length < 28) s -= 8;
         if (parsed.docType === 'outro' && parsed.transactionId) s += 6;
+        if (parsed.template === 'nubank_pix') s += 10;
+        if (parsed.beneficiary && parsed.value && parsed.transactionId) s += 8;
         return s;
     },
 
@@ -978,18 +980,25 @@ const ReceiptScanner = {
             for (const psm of psms) {
                 try {
                     onProgress && onProgress(12, `Leitura OCR (modo ${psm})...`);
-                    const text = await this._recognizeImage(src, onProgress, psm);
-                    const parsed = this._safeParse(text);
-                    parsed.rawText = text;
+                    let parsed;
+                    if (typeof this._recognizeDetailed === 'function' && typeof this.parseWithLayout === 'function') {
+                        const ocr = await this._recognizeDetailed(src, onProgress, psm);
+                        parsed = this.parseWithLayout(ocr);
+                        parsed.rawText = ocr.text;
+                    } else {
+                        const text = await this._recognizeImage(src, onProgress, psm);
+                        parsed = this._safeParse(text);
+                        parsed.rawText = text;
+                    }
                     const score = this._parseScore(parsed);
                     if (score > bestScore) {
                         best = parsed;
                         bestScore = score;
                     }
-                    if (score >= 20) break;
+                    if (score >= 22) break;
                 } catch { /* tenta próximo modo */ }
             }
-            if (bestScore >= 20) break;
+            if (bestScore >= 22) break;
         }
 
         if (!best) {

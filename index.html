@@ -642,6 +642,17 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
 .receipt-modal-bar{display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap;justify-content:center}
 .receipt-modal-close{position:absolute;top:1rem;right:1rem;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:1.25rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .tx-receipt-badge{font-size:.625rem;font-weight:700;color:var(--brand);background:var(--brand-soft);padding:.1rem .35rem;border-radius:4px;margin-left:.25rem;vertical-align:middle}
+.scan-confirm{background:var(--surface-2);border:1px solid var(--brand-muted);border-radius:var(--r);padding:1rem 1.125rem;margin-bottom:1rem}
+.scan-confirm-title{font-size:.75rem;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
+.scan-confirm-sub{font-size:.75rem;color:var(--txt2);margin-bottom:.875rem;line-height:1.45}
+.scan-conf-row{display:grid;grid-template-columns:7.5rem 1fr;gap:.5rem .75rem;align-items:center;margin-bottom:.625rem}
+.scan-conf-row label{font-size:.6875rem;font-weight:600;color:var(--txt2)}
+.scan-conf-row input,.scan-conf-row select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:.5rem .65rem;font-size:.875rem;font-family:inherit}
+.scan-conf-row.ok label{color:var(--pos)}
+.scan-conf-row.warn label{color:var(--warn)}
+.scan-confirm-actions{display:flex;gap:.5rem;margin-top:.875rem}
+.scan-confirm-actions .chip-link{flex:1;text-align:center;padding:.55rem .75rem}
+.scan-confirm-actions .save{flex:1;padding:.65rem}
 
 .month-nav{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1rem}
 .month-nav .sec-t{text-transform:capitalize;text-align:center;flex:1}
@@ -748,7 +759,8 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
 <script src="js/csv-importer.js?v=1"></script>
 <script src="js/ofx-importer.js?v=1"></script>
 <script src="js/voice-input.js?v=11"></script>
-<script src="js/receipt-scanner.js?v=14"></script>
+<script src="js/receipt-scanner.js?v=15"></script>
+<script src="js/receipt-layout.js?v=1"></script>
 <script src="js/receipt-store.js?v=1"></script>
 <script src="js/finance-suite.js?v=1"></script>
 <script>
@@ -1882,6 +1894,68 @@ function applyScanResult(result){
     ReceiptScanner._showScanSummary(result);
   }
 }
+function scanConfClass(confKey,val,conf){
+  const c=conf?.[confKey]??(val?0.85:0.25);
+  return c>=0.7?'ok':'warn';
+}
+function showScanConfirmation(parsed){
+  const conf=parsed.confidence||{};
+  const tpl=parsed.template==='nubank_pix'?'Nubank Pix':(ReceiptScanner.DOC_TYPES[parsed.docType]||'Comprovante');
+  const row=(id,label,val,type='text',confKey)=>{
+    const cls=scanConfClass(confKey,val,conf);
+    const v=val!=null&&val!==''?String(type==='number'?Number(val):val):'';
+    return `<div class="scan-conf-row ${cls}"><label>${cls==='ok'?'✓':'⚠'} ${label}</label><input id="scan-cf-${id}" type="${type}" ${type==='number'?'step="0.01" inputmode="decimal"':''} value="${esc(v)}"></div>`;
+  };
+  let html=`<div class="scan-confirm" id="scan-confirm-panel">
+    <div class="scan-confirm-title">Confira os dados lidos</div>
+    <div class="scan-confirm-sub">Template: <b>${esc(tpl)}</b> — ajuste o que precisar antes de aplicar ao lançamento.</div>
+    ${row('val','Valor (R$)',parsed.value,'number','value')}
+    ${row('desc','Descrição',parsed.beneficiary||parsed.description,'text','merchant')}
+    ${row('beneficiary','Favorecido',parsed.beneficiary,'text','beneficiary')}
+    ${row('pixid','ID Pix',parsed.transactionId,'text','transactionId')}
+    ${row('date','Data',parsed.date,'date','date')}
+    ${row('time','Hora',parsed.time,'time','date')}
+    ${parsed.payer?row('payer','Pagador',parsed.payer,'text','payer'):''}
+    <div class="scan-confirm-actions">
+      <button type="button" class="chip-link" onclick="document.getElementById('scan-confirm-panel')?.remove()">Cancelar</button>
+      <button type="button" class="save" onclick="confirmScanApply()">Aplicar ao lançamento</button>
+    </div></div>`;
+  const old=document.getElementById('scan-confirm-panel');
+  if(old)old.remove();
+  const anchor=document.getElementById('qi-status');
+  if(anchor)anchor.insertAdjacentHTML('afterend',html);
+  else document.querySelector('.tx-form')?.insertAdjacentHTML('beforeend',html);
+  window._pendingScanParsed=parsed;
+  document.getElementById('receipt-panel')?.classList.add('open');
+}
+function confirmScanApply(){
+  const p=window._pendingScanParsed||{};
+  const q=id=>document.getElementById('scan-cf-'+id)?.value?.trim()||'';
+  const val=parseFloat(q('val'));
+  const beneficiary=q('beneficiary')||q('desc');
+  const merged={
+    ...p,
+    value:!isNaN(val)&&val>0?val:p.value,
+    beneficiary,
+    description:beneficiary||q('desc'),
+    merchant:beneficiary||q('desc'),
+    transactionId:q('pixid')||p.transactionId,
+    date:q('date')||p.date,
+    time:q('time')||p.time,
+    payer:q('payer')||p.payer,
+    docType:p.docType||'pix',
+    paymentMethod:'Pix',
+    category:p.category||'Outros',
+    fundamentalType:'despesa',
+    fromScan:true,
+    notes:p.notes||(p.transactionId?`ID Pix: ${p.transactionId}`:''),
+  };
+  applyScanResult(merged);
+  document.getElementById('scan-confirm-panel')?.remove();
+  window._pendingScanParsed=null;
+  const typeLabel=(ReceiptScanner.DOC_TYPES&&ReceiptScanner.DOC_TYPES[merged.docType])||'Comprovante';
+  setQiStatus(`${typeLabel} aplicado${merged.value?' — '+BRL(merged.value):''}. Revise e salve o lançamento.`,'ok');
+}
 function syncTypeTog(){
   document.querySelectorAll('#type-tog button').forEach(b=>{
     b.className=b.dataset.t===addType?(addType==='despesa'?'on-exp':'on-inc'):'';
@@ -2060,11 +2134,11 @@ function bindTxSheetQuickInput(){
           const st=document.getElementById('qi-status');
           if(st){st.innerHTML=`<span class="busy">${msg} (${pct}%)</span><div class="ocr-bar"><i style="width:${pct}%"></i></div>`;st.className='qi-hint busy'}
         });
-        ReceiptScanner.fillTransactionForm=ReceiptScanner.fillTransactionForm||function(p){applyScanResult(p)};
-        applyScanResult({...result,fundamentalType:'despesa',category:result.category||'Outros'});
+        ReceiptScanner.fillTransactionForm=ReceiptScanner.fillTransactionForm||function(p){showScanConfirmation(p)};
+        showScanConfirmation({...result,fundamentalType:'despesa',category:result.category||'Outros'});
         const typeLabel=(ReceiptScanner.DOC_TYPES&&ReceiptScanner.DOC_TYPES[result.docType])||'Comprovante';
-        const ok=result.value||result.description||result.cnpj||result.accessKey||result.transactionId||result.barcode||result.beneficiary;
-        setQiStatus(ok?`${typeLabel} lido${result.value?' — '+BRL(result.value):''}. Foto guardada — confira os dados.`:'Leitura parcial. Foto anexada — complete manualmente.',ok?'ok':'err');
+        const ok=result.value||result.beneficiary||result.transactionId;
+        setQiStatus(ok?`${typeLabel} lido${result.value?' — '+BRL(result.value):''}. Confira os campos abaixo e clique em Aplicar.`:'Leitura parcial. Ajuste os campos e aplique.',ok?'ok':'err');
       }catch(err){
         console.error('[OCR]',err);
         setQiStatus(err.message||'Erro ao ler imagem. Tente JPG/PNG ou print da tela.','err');
@@ -2236,7 +2310,7 @@ window.go=go;window.clearTxFilters=clearTxFilters;window.goToCategoryTx=goToCate
 window.txMonthPrev=txMonthPrev;window.txMonthNext=txMonthNext;window.txFilterStatus=txFilterStatus;
 window.budMonthPrev=budMonthPrev;window.budMonthNext=budMonthNext;
 window.openTxSheet=openTxSheet;window.openTxSheetWithPhoto=openTxSheetWithPhoto;window.openTxSheetWithVoice=openTxSheetWithVoice;window.saveTx=saveTx;window.deleteTx=deleteTx;
-window.viewReceiptPhoto=viewReceiptPhoto;window.closeReceiptModal=closeReceiptModal;window.removeReceiptPhoto=removeReceiptPhoto;window.clearPendingReceiptImage=clearPendingReceiptImage;
+window.viewReceiptPhoto=viewReceiptPhoto;window.closeReceiptModal=closeReceiptModal;window.removeReceiptPhoto=removeReceiptPhoto;window.clearPendingReceiptImage=clearPendingReceiptImage;window.confirmScanApply=confirmScanApply;
 window.openAccSheet=openAccSheet;window.saveAcc=saveAcc;window.deleteAcc=deleteAcc;
 window.openCardSheet=openCardSheet;window.saveCard=saveCard;window.deleteCard=deleteCard;
 window.openPayBillSheet=openPayBillSheet;window.savePayBill=savePayBill;
@@ -2246,7 +2320,7 @@ window.addToGoal=addToGoal;window.saveGoalDeposit=saveGoalDeposit;
 init();
 window.openBudgetSheet=openBudgetSheet;window.saveBudget=saveBudget;window.deleteBudget=deleteBudget;
 window.openGoalSheet=openGoalSheet;window.saveGoal=saveGoal;window.deleteGoal=deleteGoal;
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=26').then(r=>r.update()).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=27').then(r=>r.update()).catch(()=>{})}
 </script>
 </body>
 </html>
