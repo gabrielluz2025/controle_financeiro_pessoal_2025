@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v22 (finance suite completo)
-const CACHE = 'financas-plus-v22';
+// Finanças+ Service Worker — v23 (comprovantes com retenção 1 ano)
+const CACHE = 'financas-plus-v23';
 const STATIC = ['/', '/index.html', '/classico.html', '/nova.html', '/manifest.json', '/css/enhanced-styles.css'];
 
 const NETWORK_FIRST = ['.html', '/js/', '/css/', '/sw.js'];

@@ -624,6 +624,20 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
 .receipt-grid{display:grid;gap:.75rem;grid-template-columns:1fr}
 @media(min-width:520px){.receipt-grid{grid-template-columns:1fr 1fr}}
 .receipt-grid .full{grid-column:1/-1}
+.receipt-image-block{border:1px solid var(--border);border-radius:var(--r-sm);padding:.75rem;margin-bottom:.875rem;background:var(--surface-2)}
+.receipt-image-block.has-img{padding:.625rem}
+.receipt-thumb-wrap{position:relative;border-radius:var(--r-sm);overflow:hidden;background:var(--surface);border:1px solid var(--border);max-height:160px;display:flex;align-items:center;justify-content:center}
+.receipt-thumb{max-width:100%;max-height:160px;object-fit:contain;display:block;cursor:pointer}
+.receipt-image-meta{font-size:.6875rem;color:var(--txt3);margin-top:.5rem;line-height:1.4}
+.receipt-image-meta.warn{color:var(--warn)}
+.receipt-image-actions{display:flex;flex-wrap:wrap;gap:.375rem;margin-top:.625rem}
+.receipt-image-actions .chip-link{font-size:.75rem;padding:.35rem .65rem}
+.receipt-modal{position:fixed;inset:0;z-index:200;background:rgba(10,10,15,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s}
+.receipt-modal.open{opacity:1;pointer-events:auto}
+.receipt-modal img{max-width:100%;max-height:calc(100vh - 8rem);object-fit:contain;border-radius:var(--r-sm);box-shadow:0 8px 40px rgba(0,0,0,.4)}
+.receipt-modal-bar{display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap;justify-content:center}
+.receipt-modal-close{position:absolute;top:1rem;right:1rem;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:1.25rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.tx-receipt-badge{font-size:.625rem;font-weight:700;color:var(--brand);background:var(--brand-soft);padding:.1rem .35rem;border-radius:4px;margin-left:.25rem;vertical-align:middle}
 
 .month-nav{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1rem}
 .month-nav .sec-t{text-transform:capitalize;text-align:center;flex:1}
@@ -732,6 +746,7 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
 <script src="js/ofx-importer.js?v=1"></script>
 <script src="js/voice-input.js?v=11"></script>
 <script src="js/receipt-scanner.js?v=11"></script>
+<script src="js/receipt-store.js?v=1"></script>
 <script src="js/finance-suite.js?v=1"></script>
 <script>
 /* ─────────── Data layer (compatível com o app clássico) ─────────── */
@@ -1223,8 +1238,9 @@ function txRow(t,opts={}){const inc=t.fundamentalType==='receita';const cat=t.ca
   if(overdue)tags+=`<span class="tx-tag overdue">Atrasado</span>`;
   else if(pending)tags+=`<span class="tx-tag pending">Pendente</span>`;
   if(opts.showCat)tags+=`<span class="tx-tag cat">${esc(cat)}</span>`;
+  const hasRec=t.receipt?.imageId;
   return `<div class="tx" onclick="openTxSheet('${t.id}')"><div class="tx-ic" style="background:${inc?'var(--pos-soft)':catBg(cat)};color:${inc?'var(--pos)':catColor(cat)}">${inc?'+':catInitial(cat)}</div>
-    <div class="tx-mid"><div class="tx-d">${esc(t.description||cat)}${tags}</div><div class="tx-s">${opts.hideDate?'':parseD(t.date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})+' · '}${esc(nameById(t.accountId))}</div></div>
+    <div class="tx-mid"><div class="tx-d">${esc(t.description||cat)}${hasRec?'<span class="tx-receipt-badge" title="Comprovante salvo">📎</span>':''}${tags}</div><div class="tx-s">${opts.hideDate?'':parseD(t.date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})+' · '}${esc(nameById(t.accountId))}</div></div>
     <div class="tx-v num" style="color:${inc?'var(--pos)':'var(--neg)'}">${inc?'+':'−'}${S.hide?'•••':BRL(t.value)}</div></div>`}
 function bindTxPage(){
   const s=document.getElementById('tx-search');
@@ -1789,7 +1805,7 @@ function openSheet(html,footHtml=''){
 function closeSheet(){SB.classList.remove('open');SH.classList.remove('open')}
 SB.onclick=closeSheet;
 
-let editTxId=null,addType='despesa',txSheetFlags={photo:false,voice:false};
+let editTxId=null,addType='despesa',txSheetFlags={photo:false,voice:false},pendingReceiptImage=null;
 
 window.AppState=window.AppState||{};
 Object.defineProperty(AppState,'categories',{get:()=>S.cats});
@@ -1843,7 +1859,30 @@ function setQiStatus(msg,cls=''){
   el.textContent=msg;
   el.className='qi-hint'+(cls?' '+cls:'');
 }
-function receiptSectionHtml(r={},open=false){
+function receiptImageBlockHtml(r={},txId=null){
+  const hasPending=!!pendingReceiptImage?.previewUrl;
+  const hasSaved=!!r.imageId;
+  if(!hasPending&&!hasSaved)return '';
+  const expiry=hasSaved&&r.imageSavedAt?ReceiptStore.expiryLabel(r.imageSavedAt):'Será guardado por até 1 ano';
+  const warnCls=hasSaved&&ReceiptStore.daysUntilExpiry(r.imageSavedAt)<=30?' warn':'';
+  const txArg=txId?`'${txId}'`:'null';
+  const imgIdArg=hasSaved?`'${r.imageId}'`:'null';
+  return `<div class="receipt-image-block has-img" id="receipt-image-block">
+    <div style="font-size:.6875rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem">Foto do comprovante</div>
+    <div class="receipt-thumb-wrap">
+      <img class="receipt-thumb" id="receipt-thumb" src="${hasPending?pendingReceiptImage.previewUrl:''}" alt="Comprovante" onclick="viewReceiptPhoto(${imgIdArg},${txArg})">
+    </div>
+    <div class="receipt-image-meta${warnCls}" id="receipt-image-meta">${esc(expiry)} · Retenção máxima de 1 ano</div>
+    <div class="receipt-image-actions">
+      <button type="button" class="chip-link" onclick="viewReceiptPhoto(${imgIdArg},${txArg})">Ver em tela cheia</button>
+      ${hasSaved?`<button type="button" class="chip-link" onclick="removeReceiptPhoto(${txArg})">Apagar foto</button>`:''}
+      ${hasPending?`<button type="button" class="chip-link" onclick="clearPendingReceiptImage()">Remover foto</button>`:''}
+    </div>
+    <input type="hidden" id="receipt-image-id" value="${esc(r.imageId||'')}">
+    <input type="hidden" id="receipt-image-saved-at" value="${esc(r.imageSavedAt||'')}">
+  </div>`;
+}
+function receiptSectionHtml(r={},open=false,txId=null){
   const pay=(typeof ReceiptScanner!=='undefined'&&ReceiptScanner.PAYMENT_METHODS)?ReceiptScanner.PAYMENT_METHODS:['Pix','Cartão de Crédito','Cartão de Débito','Dinheiro','Vale','Outro'];
   const docs=(typeof ReceiptScanner!=='undefined'&&ReceiptScanner.DOC_TYPES)?ReceiptScanner.DOC_TYPES:{outro:'Comprovante'};
   const docOpts=Object.entries(docs).map(([k,l])=>`<option value="${k}" ${r.docType===k?'selected':''}>${l}</option>`).join('');
@@ -1858,6 +1897,7 @@ function receiptSectionHtml(r={},open=false){
       <span class="receipt-toggle-chev">▾</span>
     </button>
     <div class="receipt-body" id="receipt-body"><div class="receipt-grid" style="padding-top:.875rem">
+      ${receiptImageBlockHtml(r,txId)}
       <div class="fld full"><label>Tipo de documento</label><select id="receipt-doc-type">${docOpts}</select></div>
       <div class="fld full"><label>Favorecido / beneficiário</label><input id="receipt-beneficiary" type="text" placeholder="Nome do recebedor ou cedente" value="${esc(r.beneficiary||'')}"></div>
       <div class="fld"><label>ID transação Pix</label><input id="receipt-pix-id" type="text" placeholder="E2E / identificador" value="${esc(r.transactionId||'')}"></div>
@@ -1885,8 +1925,74 @@ function collectReceiptFromSheet(){
     cnpj:q('receipt-cnpj'),cpf:q('receipt-cpf'),nfNumber:q('receipt-nf-number'),series:q('receipt-series'),
     accessKey:q('receipt-access-key'),time:q('receipt-time'),paymentMethod:q('receipt-payment-method'),
     subtotal:parseFloat(q('receipt-subtotal'))||null,discount:parseFloat(q('receipt-discount'))||null,
-    address:q('receipt-address'),items:q('receipt-items'),notes:q('receipt-notes'),scannedAt:q('receipt-scanned-at')||null};
-  return Object.entries(receipt).some(([k,v])=>k!=='scannedAt'&&v!=null&&v!=='')?receipt:null;
+    address:q('receipt-address'),items:q('receipt-items'),notes:q('receipt-notes'),scannedAt:q('receipt-scanned-at')||null,
+    imageId:q('receipt-image-id')||null,imageSavedAt:q('receipt-image-saved-at')||null};
+  if(!receipt.imageId){delete receipt.imageId;delete receipt.imageSavedAt}
+  return Object.entries(receipt).some(([k,v])=>!['scannedAt','imageId','imageSavedAt'].includes(k)&&v!=null&&v!=='')||receipt.imageId?receipt:null;
+}
+function clearPendingReceiptImage(){
+  if(pendingReceiptImage?.previewUrl)URL.revokeObjectURL(pendingReceiptImage.previewUrl);
+  pendingReceiptImage=null;
+  const block=document.getElementById('receipt-image-block');
+  if(block)block.remove();
+}
+async function setPendingReceiptImage(file){
+  if(!file)return;
+  if(pendingReceiptImage?.previewUrl)URL.revokeObjectURL(pendingReceiptImage.previewUrl);
+  pendingReceiptImage={file,previewUrl:URL.createObjectURL(file),tempId:null};
+  document.getElementById('receipt-panel')?.classList.add('open');
+  const body=document.querySelector('#receipt-body .receipt-grid');
+  if(body){
+    const old=document.getElementById('receipt-image-block');
+    if(old)old.remove();
+    body.insertAdjacentHTML('afterbegin',receiptImageBlockHtml({},editTxId));
+    const img=document.getElementById('receipt-thumb');
+    if(img)img.src=pendingReceiptImage.previewUrl;
+  }
+}
+async function loadSavedReceiptThumb(imageId){
+  if(!imageId||!window.ReceiptStore)return;
+  try{
+    const url=await ReceiptStore.getObjectUrl(imageId);
+    const img=document.getElementById('receipt-thumb');
+    if(img&&url)img.src=url;
+  }catch(e){console.warn('[receipt thumb]',e)}
+}
+async function viewReceiptPhoto(imageId,txId){
+  let url=null;
+  if(pendingReceiptImage?.previewUrl&&!imageId)url=pendingReceiptImage.previewUrl;
+  else if(imageId&&window.ReceiptStore)url=await ReceiptStore.getObjectUrl(imageId);
+  if(!url){toast('Comprovante não encontrado','warn');return}
+  let modal=document.getElementById('receipt-modal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='receipt-modal';
+    modal.className='receipt-modal';
+    modal.innerHTML=`<button type="button" class="receipt-modal-close" onclick="closeReceiptModal()">×</button><img id="receipt-modal-img" alt="Comprovante"><div class="receipt-modal-bar"><button type="button" class="chip-link" onclick="closeReceiptModal()">Fechar</button></div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click',e=>{if(e.target===modal)closeReceiptModal()});
+  }
+  document.getElementById('receipt-modal-img').src=url;
+  modal.classList.add('open');
+  modal._objectUrl=url.startsWith('blob:')?url:null;
+}
+function closeReceiptModal(){
+  const modal=document.getElementById('receipt-modal');
+  if(!modal)return;
+  modal.classList.remove('open');
+  const img=document.getElementById('receipt-modal-img');
+  if(img)img.src='';
+}
+async function removeReceiptPhoto(txId){
+  const t=txId?S.txs.find(x=>x.id===txId):null;
+  const imageId=t?.receipt?.imageId||document.getElementById('receipt-image-id')?.value;
+  if(!imageId&&!pendingReceiptImage)return;
+  if(!confirm('Remover foto do comprovante? Os dados do lançamento serão mantidos.'))return;
+  if(imageId&&window.ReceiptStore)await ReceiptStore.delete(imageId);
+  if(t?.receipt){delete t.receipt.imageId;delete t.receipt.imageSavedAt;delete t.receipt.imageExpired}
+  clearPendingReceiptImage();
+  if(txId){persist();toast('Foto removida','ok');openTxSheet(txId)}
+  else{const block=document.getElementById('receipt-image-block');if(block)block.remove()}
 }
 function bindTxSheetQuickInput(){
   const voiceBtn=document.getElementById('qi-voice-btn');
@@ -1915,6 +2021,7 @@ function bindTxSheetQuickInput(){
       photoBtn.disabled=true;setQiStatus('Preparando leitor OCR…','busy');
       try{
         if(typeof ReceiptScanner==='undefined')throw new Error('Leitor OCR não carregou. Recarregue a página.');
+        await setPendingReceiptImage(file);
         const result=await ReceiptScanner.scanFile(file,(pct,msg)=>{
           const st=document.getElementById('qi-status');
           if(st){st.innerHTML=`<span class="busy">${msg} (${pct}%)</span><div class="ocr-bar"><i style="width:${pct}%"></i></div>`;st.className='qi-hint busy'}
@@ -1923,7 +2030,7 @@ function bindTxSheetQuickInput(){
         applyScanResult({...result,fundamentalType:'despesa',category:result.category||'Outros'});
         const typeLabel=(ReceiptScanner.DOC_TYPES&&ReceiptScanner.DOC_TYPES[result.docType])||'Comprovante';
         const ok=result.value||result.description||result.cnpj||result.accessKey||result.transactionId||result.barcode||result.beneficiary;
-        setQiStatus(ok?`${typeLabel} lido${result.value?' — '+BRL(result.value):''}. Confira os dados.`:'Leitura parcial. Complete manualmente.',ok?'ok':'err');
+        setQiStatus(ok?`${typeLabel} lido${result.value?' — '+BRL(result.value):''}. Foto guardada — confira os dados.`:'Leitura parcial. Foto anexada — complete manualmente.',ok?'ok':'err');
       }catch(err){
         console.error('[OCR]',err);
         setQiStatus(err.message||'Erro ao ler imagem. Tente JPG/PNG ou print da tela.','err');
@@ -1937,10 +2044,12 @@ function bindTxSheetQuickInput(){
 }
 
 function openTxSheet(id,opts={}){
+  if(!id&&pendingReceiptImage?.previewUrl)URL.revokeObjectURL(pendingReceiptImage.previewUrl);
+  if(!id)pendingReceiptImage=null;
   txSheetFlags={photo:!!opts.photo,voice:!!opts.voice};
   if(!S.accounts.length&&!S.cards.length){toast('Crie uma conta antes de lançar','warn');go('accounts');return}
   const t=id?S.txs.find(x=>x.id===id):null;editTxId=id||null;addType=t?t.fundamentalType:'despesa';
-  const r=t?.receipt||{};const receiptOpen=!!(t?.fromScan||r.cnpj||r.accessKey||r.nfNumber||r.transactionId||r.barcode||r.docType);
+  const r=t?.receipt||{};const receiptOpen=!!(t?.fromScan||r.cnpj||r.accessKey||r.nfNumber||r.transactionId||r.barcode||r.docType||r.imageId);
   openSheet(`<div class="sheet-head"><h3>${t?'Editar lançamento':'Novo lançamento'}</h3>${t?`<div style="display:flex;gap:.375rem"><button class="chip-link" onclick="FinanceSuite.duplicateTx('${t.id}');closeSheet()">Duplicar</button><button class="del-btn" onclick="deleteTx('${t.id}')">Excluir</button></div>`:''}</div>
     <div class="tx-form">
     ${!t?`<div class="tx-templates">${FinanceSuite.txTemplates().map((tpl,i)=>`<button type="button" class="tx-tpl" onclick="FinanceSuite.applyTemplate(FinanceSuite.txTemplates()[${i}])">${tpl.label}</button>`).join('')}</div>`:''}
@@ -1965,17 +2074,18 @@ function openTxSheet(id,opts={}){
       <div class="fld row2"><div><label>Data</label><input id="in-date" type="date" value="${t?iso(parseD(t.date)):iso(new Date())}"></div>
         <div><label>Parcelas (cartão)</label><input id="in-parcelas" type="number" min="1" max="48" placeholder="1" value="${t&&t.installments?t.installments:''}"></div></div>
     </div>
-    ${receiptSectionHtml(r,receiptOpen)}
+    ${receiptSectionHtml(r,receiptOpen,t?.id||null)}
     <label class="chk"><input type="checkbox" id="in-paid" ${!t||t.isPaid?'checked':''}><span>Já foi pago / recebido</span></label>
     </div>`,
     `<button class="save" onclick="saveTx()">${t?'Salvar alterações':'Adicionar lançamento'}</button>`);
   document.querySelectorAll('#type-tog button').forEach(b=>b.onclick=()=>{addType=b.dataset.t;syncTypeTog()});
   bindTxSheetQuickInput();
+  if(r.imageId)setTimeout(()=>loadSavedReceiptThumb(r.imageId),100);
   setTimeout(()=>document.getElementById('in-val').focus(),300);
 }
 function openTxSheetWithPhoto(){openTxSheet(null,{photo:true})}
 function openTxSheetWithVoice(){openTxSheet(null,{voice:true})}
-function saveTx(){
+async function saveTx(){
   const val=parseFloat(document.getElementById('in-val').value);if(!val||val<=0){document.getElementById('in-val').focus();return}
   const accId=document.getElementById('in-acc').value;const isCard=S.cards.some(c=>c.id===accId);
   const paid=document.getElementById('in-paid').checked;
@@ -1986,6 +2096,21 @@ function saveTx(){
     isPaid:addType==='receita'?true:paid,
     paidByAccountId:(addType==='despesa'&&paid&&!isCard)?accId:null,paidByIsCreditCard:isCard};
   if(receipt){base.receipt=receipt;base.fromScan=!!receipt.scannedAt}
+  if(pendingReceiptImage?.file&&window.ReceiptStore){
+    try{
+      const oldId=base.receipt?.imageId||null;
+      const saved=await ReceiptStore.replace(oldId,pendingReceiptImage.file,{description:base.description});
+      base.receipt=base.receipt||{};
+      base.receipt.imageId=saved.id;
+      base.receipt.imageSavedAt=saved.savedAt;
+      delete base.receipt.imageExpired;
+      if(pendingReceiptImage.previewUrl)URL.revokeObjectURL(pendingReceiptImage.previewUrl);
+      pendingReceiptImage=null;
+    }catch(err){
+      console.error('[receipt save]',err);
+      toast('Lançamento salvo, mas a foto não pôde ser guardada.','warn',4000);
+    }
+  }
   const nPar=parseInt(document.getElementById('in-parcelas')?.value)||1;
   if(editTxId){const t=S.txs.find(x=>x.id===editTxId);Object.assign(t,{...base,installments:nPar>1?nPar:null})}
   else if(nPar>1&&isCard&&addType==='despesa'){
@@ -2002,7 +2127,10 @@ function catOptions(sel){return S.cats.map(c=>`<option value="${esc(c)}" ${c===s
 function accOptions(sel){const a=S.accounts.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.name)}</option>`).join('');
   const c=S.cards.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.name)} (cartão)</option>`).join('');
   return `<option value="">Sem conta</option>${a?`<optgroup label="Contas">${a}</optgroup>`:''}${c?`<optgroup label="Cartões">${c}</optgroup>`:''}`}
-function deleteTx(id){if(!confirm('Excluir este lançamento?'))return;S.txs=S.txs.filter(t=>t.id!==id);persist();closeSheet();render()}
+function deleteTx(id){if(!confirm('Excluir este lançamento?'))return;
+  const t=S.txs.find(x=>x.id===id);
+  if(t?.receipt?.imageId&&window.ReceiptStore)ReceiptStore.delete(t.receipt.imageId).catch(()=>{});
+  S.txs=S.txs.filter(t=>t.id!==id);persist();closeSheet();render()}
 
 function openAccSheet(id){const a=id?S.accounts.find(x=>x.id===id):null;
   openSheet(`<div class="sheet-head"><h3>${a?'Editar conta':'Nova conta'}</h3>${a?`<button class="del-btn" onclick="deleteAcc('${a.id}')">Excluir</button>`:''}</div>
@@ -2063,6 +2191,10 @@ async function init(){
   S.accounts=load(K.acc);S.cards=load(K.card);S.txs=load(K.tx);S.budgets=load(K.budg);S.goals=load(K.goals);
   const c=load(K.cat);S.cats=(c&&c.length)?c:DEF_CATS.slice();
   if(window.FinanceSuite)await FinanceSuite.bootstrap(S);
+  if(window.ReceiptStore){
+    const changed=await ReceiptStore.maintenance(S,toast);
+    if(changed)persist();
+  }
   render();
   window.addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(render,200)});
 }
@@ -2070,6 +2202,7 @@ window.go=go;window.clearTxFilters=clearTxFilters;window.goToCategoryTx=goToCate
 window.txMonthPrev=txMonthPrev;window.txMonthNext=txMonthNext;window.txFilterStatus=txFilterStatus;
 window.budMonthPrev=budMonthPrev;window.budMonthNext=budMonthNext;
 window.openTxSheet=openTxSheet;window.openTxSheetWithPhoto=openTxSheetWithPhoto;window.openTxSheetWithVoice=openTxSheetWithVoice;window.saveTx=saveTx;window.deleteTx=deleteTx;
+window.viewReceiptPhoto=viewReceiptPhoto;window.closeReceiptModal=closeReceiptModal;window.removeReceiptPhoto=removeReceiptPhoto;window.clearPendingReceiptImage=clearPendingReceiptImage;
 window.openAccSheet=openAccSheet;window.saveAcc=saveAcc;window.deleteAcc=deleteAcc;
 window.openCardSheet=openCardSheet;window.saveCard=saveCard;window.deleteCard=deleteCard;
 window.openPayBillSheet=openPayBillSheet;window.savePayBill=savePayBill;
@@ -2079,7 +2212,7 @@ window.addToGoal=addToGoal;window.saveGoalDeposit=saveGoalDeposit;
 init();
 window.openBudgetSheet=openBudgetSheet;window.saveBudget=saveBudget;window.deleteBudget=deleteBudget;
 window.openGoalSheet=openGoalSheet;window.saveGoal=saveGoal;window.deleteGoal=deleteGoal;
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=22').then(r=>r.update()).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=23').then(r=>r.update()).catch(()=>{})}
 </script>
 </body>
 </html>
