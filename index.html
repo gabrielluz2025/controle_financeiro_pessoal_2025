@@ -759,8 +759,8 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
 <script src="js/csv-importer.js?v=1"></script>
 <script src="js/ofx-importer.js?v=1"></script>
 <script src="js/voice-input.js?v=11"></script>
-<script src="js/receipt-scanner.js?v=15"></script>
-<script src="js/receipt-layout.js?v=1"></script>
+<script src="js/receipt-scanner.js?v=16"></script>
+<script src="js/receipt-layout.js?v=2"></script>
 <script src="js/receipt-store.js?v=1"></script>
 <script src="js/finance-suite.js?v=1"></script>
 <script>
@@ -1896,6 +1896,9 @@ function applyScanResult(result){
 }
 function scanConfClass(confKey,val,conf){
   const c=conf?.[confKey]??(val?0.85:0.25);
+  if((confKey==='merchant'||confKey==='beneficiary'||confKey==='payer')&&val&&typeof ReceiptScanner!=='undefined'){
+    if(ReceiptScanner._isLabelNoise(val)||!ReceiptScanner._looksLikePersonName(val))return'warn';
+  }
   return c>=0.7?'ok':'warn';
 }
 function showScanConfirmation(parsed){

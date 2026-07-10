@@ -96,8 +96,8 @@ const ReceiptScanner = {
         return input;
     },
 
-    /** Pré-processa imagem: escala, contraste e escala de cinza para melhorar OCR */
-    async _preprocessImage(file) {
+    /** Pré-processa imagem: escala, contraste, inversão (app escuro) e binarização */
+    async _preprocessImage(file, mode = 'standard') {
         const f = this._asFile(file);
         if (this._isHeic(f)) {
             throw new Error('Foto HEIC não suportada neste aparelho. Use “Enviar imagem” e escolha JPG/PNG, ou tire print da tela do comprovante.');
@@ -116,9 +116,10 @@ const ReceiptScanner = {
             img.onload = () => {
                 clearTimeout(timeout);
                 try {
-                    const isMobile = window.innerWidth < 768 || /Android|iPhone|iPad/i.test(navigator.userAgent);
-                    const maxDim = isMobile ? 2600 : 3200;
-                    const scale = Math.min(1, maxDim / Math.max(img.width, img.height, 1));
+                    const minW = 1800;
+                    const maxDim = 3200;
+                    let scale = Math.max(minW / Math.max(img.width, 1), 1);
+                    scale = Math.min(scale, maxDim / Math.max(img.width, img.height, 1));
                     const w = Math.round(img.width * scale);
                     const h = Math.round(img.height * scale);
                     const canvas = document.createElement('canvas');
@@ -127,25 +128,30 @@ const ReceiptScanner = {
                     const ctx = canvas.getContext('2d');
                     ctx.fillStyle = '#fff';
                     ctx.fillRect(0, 0, w, h);
-                    try {
-                        ctx.filter = 'contrast(1.35) brightness(1.08)';
-                        ctx.drawImage(img, 0, 0, w, h);
-                    } catch {
-                        ctx.filter = 'none';
-                        ctx.drawImage(img, 0, 0, w, h);
-                    }
+                    ctx.drawImage(img, 0, 0, w, h);
                     const imgData = ctx.getImageData(0, 0, w, h);
                     const d = imgData.data;
+                    let sum = 0;
                     for (let i = 0; i < d.length; i += 4) {
-                        const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-                        const v = g < 140 ? Math.max(0, g - 20) : Math.min(255, g + 15);
-                        d[i] = d[i + 1] = d[i + 2] = v;
+                        sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                    }
+                    const avg = sum / (d.length / 4);
+                    const invert = mode === 'invert' || (mode === 'standard' && avg < 115);
+                    for (let i = 0; i < d.length; i += 4) {
+                        let g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                        if (invert) g = 255 - g;
+                        if (mode === 'binary' || mode === 'invert') {
+                            g = g > 155 ? 255 : g < 95 ? 0 : g > 128 ? 255 : 0;
+                        } else {
+                            g = g < 140 ? Math.max(0, g - 25) : Math.min(255, g + 18);
+                        }
+                        d[i] = d[i + 1] = d[i + 2] = g;
                     }
                     ctx.putImageData(imgData, 0, 0);
                     canvas.toBlob((blob) => {
                         URL.revokeObjectURL(url);
-                        resolve(blob ? this._asFile(blob, 'scan.jpg') : f);
-                    }, 'image/jpeg', 0.9);
+                        resolve(blob ? this._asFile(blob, `scan-${mode}.jpg`) : f);
+                    }, 'image/jpeg', 0.92);
                 } catch (err) {
                     URL.revokeObjectURL(url);
                     resolve(f);
@@ -222,6 +228,8 @@ const ReceiptScanner = {
         if (parsed.date && parsed.date !== new Date().toISOString().slice(0, 10)) s += 3;
         const desc = String(parsed.description || parsed.merchant || '').toLowerCase();
         if (/^comprovante\s+de\s*$|^comprovante de transfer/.test(desc) && desc.length < 28) s -= 8;
+        if (parsed.beneficiary && this._isLabelNoise(parsed.beneficiary)) s -= 15;
+        if (parsed.payer && (this._isLabelNoise(parsed.payer) || !this._looksLikePersonName(parsed.payer))) s -= 10;
         if (parsed.docType === 'outro' && parsed.transactionId) s += 6;
         if (parsed.template === 'nubank_pix') s += 10;
         if (parsed.beneficiary && parsed.value && parsed.transactionId) s += 8;
@@ -240,14 +248,38 @@ const ReceiptScanner = {
         return false;
     },
 
+    _normAlpha(s) {
+        return String(s || '').toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    },
+
+    _isLabelNoise(s) {
+        const t = this._normAlpha(s);
+        if (!t || t.length < 3) return true;
+        const noise = [
+            'tipo', 'transfer', 'ransfer', 'institu', 'insuti', 'comprovante', 'pagamento',
+            'agencia', 'conta', 'destino', 'origem', 'valor', 'pix', 'nu pagamentos', 'nubank',
+            'nome', 'cpf', 'cnpj', 'id da transacao', 'id transacao', 'realizado', 'documento',
+            'favorecido', 'pagador', 'remetente', 'recebedor', 'chave', 'e2e',
+        ];
+        if (noise.some(n => t.includes(n))) return true;
+        if (/[a-z][A-ZÁÉÍÓÚÂÊÔÃÕÇ]/.test(String(s || ''))) return true;
+        if (/\d{2}[.\s]?\d{3}/.test(t)) return true;
+        return false;
+    },
+
     _looksLikePersonName(s) {
         const t = String(s || '').trim();
-        if (t.length < 6 || t.length > 90) return false;
+        if (t.length < 8 || t.length > 90) return false;
+        if (this._isLabelNoise(t)) return false;
         if (!/^[A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç]/.test(t)) return false;
-        if (/^(comprovante|transferencia|instituicao|agencia|conta|destino|origem|valor|pix|nu pagamentos)/i.test(t)) return false;
         if (/^\d/.test(t) || /cnpj|cpf|r\$/i.test(t)) return false;
+        const stop = new Set(['de', 'da', 'do', 'dos', 'das', 'e', 'o', 'a']);
         const words = t.split(/\s+/).filter(Boolean);
-        return words.length >= 2 && words.every(w => w.length >= 2);
+        const nameWords = words.filter(w => !stop.has(w.toLowerCase()));
+        if (nameWords.length < 2) return false;
+        return nameWords.every(w => w.length >= 3 && /^[A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç]/.test(w));
     },
 
     _extractRMoneyValues(text) {
@@ -255,10 +287,22 @@ const ReceiptScanner = {
         const pat = /R\s*\$\s*(\d{1,3}(?:\.\d{3})*,\d{2})/gi;
         let m;
         while ((m = pat.exec(text)) !== null) {
+            const ctx = text.slice(Math.max(0, m.index - 24), m.index + m[0].length + 24);
+            if (/cnpj|cpf|\d{2}[.\s]\d{3}[.\s]\d{3}/i.test(ctx)) continue;
             const v = this._parseMoney(m[1]);
-            if (!isNaN(v) && v > 0 && v < 500000) vals.push({ v, index: m.index });
+            if (!isNaN(v) && v >= 1 && v < 500000) vals.push({ v, index: m.index });
         }
         return vals;
+    },
+
+    _sanitizeScanField(key, val) {
+        if (val == null || val === '') return val;
+        const s = String(val).trim();
+        if (key === 'beneficiary' || key === 'payer' || key === 'description' || key === 'merchant') {
+            if (this._isLabelNoise(s) || !this._looksLikePersonName(s)) return '';
+        }
+        if (key === 'payer' && s.length < 8) return '';
+        return val;
     },
 
     _safeParse(text) {
@@ -645,10 +689,11 @@ const ReceiptScanner = {
     _extractPixPayer(text) {
         const lines = this._lines(text);
         const fromOrigem = this._fieldInSection(lines, 'origem', ['nome', 'pagador', 'remetente']);
-        if (fromOrigem) return fromOrigem;
-        return this._extractByPatterns(text, [
+        if (fromOrigem && this._looksLikePersonName(fromOrigem)) return fromOrigem;
+        const hit = this._extractByPatterns(text, [
             /(?:de|pagador|remetente|origem|nome do pagador)[:\s]*\n?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n]{2,70})/i,
         ]);
+        return hit && this._looksLikePersonName(hit) ? hit : '';
     },
 
     _extractPixTransactionId(text) {
@@ -785,13 +830,17 @@ const ReceiptScanner = {
     },
 
     _parsePix(text) {
-        const beneficiary = this._extractPixBeneficiary(text);
-        const payer = this._extractPixPayer(text);
+        let beneficiary = this._extractPixBeneficiary(text);
+        if (!this._looksLikePersonName(beneficiary)) beneficiary = '';
+        let payer = this._extractPixPayer(text);
+        if (!this._looksLikePersonName(payer)) payer = '';
         const value = this._extractPixValue(text);
         const transactionId = this._extractPixTransactionId(text);
-        const date = this._extractDate(text);
+        const dateRaw = this._extractDate(text);
+        const today = new Date().toISOString().slice(0, 10);
+        const date = dateRaw === today && !/\d{1,2}\s+(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)|\d{2}\/\d{2}\/\d{4}/i.test(text) ? '' : dateRaw;
         const time = this._extractTime(text);
-        const merchant = beneficiary || payer || 'Pix';
+        const merchant = beneficiary || 'Pix';
         const isNubank = /nu pagamentos|nubank|comprovante de transferencia/i.test(text);
         return {
             description: beneficiary || merchant,
@@ -965,16 +1014,22 @@ const ReceiptScanner = {
         onProgress && onProgress(3, 'Preparando imagem...');
         let processed;
         try {
-            processed = await this._preprocessImage(file);
+            processed = await this._preprocessImage(file, 'standard');
         } catch (err) {
             throw err;
         }
+        let inverted;
+        let binary;
+        try {
+            inverted = await this._preprocessImage(file, 'invert');
+            binary = await this._preprocessImage(file, 'binary');
+        } catch { /* optional variants */ }
 
         onProgress && onProgress(8, 'Iniciando leitura OCR...');
         let best = null;
         let bestScore = -1;
-        const psms = ['4', '6', '11'];
-        const sources = [processed, this._asFile(file)];
+        const psms = ['4', '6', '11', '3'];
+        const sources = [processed, inverted, binary, this._asFile(file)].filter(Boolean);
 
         for (const src of sources) {
             for (const psm of psms) {
