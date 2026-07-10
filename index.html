@@ -199,7 +199,69 @@ body{overflow-x:hidden}
 .compare-tip b{color:var(--txt);font-weight:700}
 .compare-tip.up b{color:var(--neg)}.compare-tip.down b{color:var(--pos)}
 
-/* ── Transactions ── */
+.compare-tip b{color:var(--txt);font-weight:700}
+.compare-tip.up b{color:var(--neg)}.compare-tip.down b{color:var(--pos)}
+
+/* ── Transações ── */
+.tx-layout{display:grid;gap:1.25rem;grid-template-columns:1fr}
+.tx-summary-hero{background:var(--sidebar);color:#fff;border-radius:var(--r-lg);padding:1.25rem 1.5rem;box-shadow:var(--shadow-lg)}
+.tx-summary-hero .month-nav{border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:1rem;margin-bottom:1rem}
+.tx-summary-hero .month-nav .sec-t{color:#fff;font-size:1.0625rem}
+.tx-summary-hero .chip-link{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);color:rgba(255,255,255,.85)}
+.tx-summary-hero .chip-link:hover{background:rgba(255,255,255,.18);color:#fff}
+.tx-summary-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+.tx-sk{text-align:center;padding:.625rem .5rem;background:rgba(255,255,255,.08);border-radius:var(--r-sm)}
+.tx-sk .k{font-size:.625rem;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.05em}
+.tx-sk .v{font-size:1rem;font-weight:700;margin-top:.25rem;color:#fff}
+.tx-sk .v.pos{color:#6ee7b7}.tx-sk .v.neg{color:#fca5a5}
+.tx-compare{font-size:.75rem;color:rgba(255,255,255,.65);margin-top:.875rem;text-align:center}
+.tx-compare b{color:#fff;font-weight:700}
+
+.tx-insights{display:grid;grid-template-columns:repeat(3,1fr);gap:.625rem;margin-bottom:1.25rem}
+.tx-insight{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:.875rem;text-align:center;box-shadow:var(--shadow-sm)}
+.tx-insight .k{font-size:.625rem;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em}
+.tx-insight .v{font-size:.875rem;font-weight:700;color:var(--txt);margin-top:.25rem;line-height:1.3}
+
+.tx-toolbar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;box-shadow:var(--shadow-sm);margin-bottom:1.25rem}
+.tx-search{width:100%;border:1px solid var(--border);border-radius:var(--r-sm);padding:.6875rem .875rem;font-size:.9375rem;font-family:inherit;margin-bottom:.75rem;outline:none;background:var(--surface-2)}
+.tx-search:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-muted)}
+.tx-chips{display:flex;flex-wrap:wrap;gap:.375rem;margin-bottom:.75rem}
+.tx-chip{border:1px solid var(--border);background:var(--surface-2);color:var(--txt2);font-size:.75rem;font-weight:600;padding:.375rem .75rem;border-radius:999px;cursor:pointer;font-family:inherit;transition:all .15s}
+.tx-chip.on{background:var(--brand-soft);border-color:var(--brand-muted);color:var(--brand)}
+.tx-chip.warn.on{background:var(--warn-soft);border-color:var(--warn-muted);color:var(--warn)}
+.tx-chip.pos.on{background:var(--pos-soft);border-color:var(--pos-muted);color:var(--pos)}
+.tx-filters{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.tx-filters select{width:100%;border:1px solid var(--border);border-radius:var(--r-sm);padding:.5rem .75rem;font-size:.8125rem;font-family:inherit;background:var(--surface);color:var(--txt2)}
+.tx-filter-clear{font-size:.75rem;color:var(--brand);font-weight:600;cursor:pointer;margin-top:.625rem;display:inline-block}
+
+.tx-pending-banner{background:var(--warn-soft);border:1px solid var(--warn-muted);border-radius:var(--r);padding:.875rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;cursor:pointer}
+.tx-pending-banner.overdue{background:var(--neg-soft);border-color:var(--neg-muted)}
+.tx-pending-banner .pt{font-size:.875rem;font-weight:700;color:var(--txt)}
+.tx-pending-banner .pm{font-size:.75rem;color:var(--txt2);margin-top:.15rem}
+
+.tx-cats-sec{margin-bottom:1.25rem}
+.tx-cat-row{display:flex;align-items:center;gap:.625rem;margin-bottom:.625rem;font-size:.8125rem}
+.tx-cat-row:last-child{margin-bottom:0}
+.tx-cat-row .cn{flex:1;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-cat-row .cv{font-weight:700;color:var(--txt2);white-space:nowrap}
+.tx-cat-row .bar{flex:0 0 80px;height:5px}
+
+.date-h{display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-size:.6875rem;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin:1.125rem 0 .375rem;padding-bottom:.375rem;border-bottom:1px solid var(--border)}
+
+.tx-tag{display:inline-block;font-size:.625rem;font-weight:700;padding:.15rem .45rem;border-radius:4px;text-transform:uppercase;letter-spacing:.03em;margin-left:.375rem;vertical-align:middle}
+.tx-tag.pending{background:var(--warn-soft);color:var(--warn)}
+.tx-tag.overdue{background:var(--neg-soft);color:var(--neg)}
+.date-total{font-size:.75rem;font-weight:700;color:var(--txt2);text-transform:none;letter-spacing:0}
+.date-total.neg{color:var(--neg)}.date-total.pos{color:var(--pos)}
+
+@media(min-width:1024px){
+  .tx-layout{grid-template-columns:1fr 1.1fr;grid-template-areas:"side list"}
+  .tx-side{grid-area:side}
+  .tx-list-col{grid-area:list}
+  .tx-insights{grid-template-columns:1fr}
+}
+
+/* ── Transactions list ── */
 .tx{display:flex;align-items:center;gap:.875rem;padding:.875rem 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
 .tx:last-child{border-bottom:0}
 .tx-ic{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.8125rem;font-weight:700;flex:0 0 auto;letter-spacing:-.02em}
@@ -208,6 +270,8 @@ body{overflow-x:hidden}
 .tx-s{font-size:.75rem;color:var(--txt3);margin-top:.15rem;font-weight:500}
 .tx-v{font-size:.9375rem;font-weight:700;white-space:nowrap}
 .date-h{font-size:.6875rem;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin:1.125rem 0 .375rem;padding-bottom:.375rem;border-bottom:1px solid var(--border)}
+
+/* duplicate removed - see tx section */
 
 /* ── Accounts ── */
 .acc-row{display:flex;align-items:center;gap:.875rem;padding:1rem 1.125rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:.625rem;cursor:pointer;transition:all .15s var(--ease);box-shadow:var(--shadow-sm)}
@@ -454,6 +518,8 @@ body{overflow-x:hidden}
   .quick-link{display:flex;align-items:center;gap:.875rem;padding:.875rem 1rem}
   .quick-link-icon{margin-bottom:0;flex-shrink:0}
   .dash-actions{grid-template-columns:repeat(2,1fr)}
+  .tx-insights{grid-template-columns:1fr;gap:.5rem}
+  .tx-filters{grid-template-columns:1fr}
   .fld.row2{grid-template-columns:1fr}
   .amount-wrap input{font-size:2.125rem!important;max-width:10rem}
 }
@@ -509,7 +575,7 @@ function catInitial(cat){return String(cat||'?').slice(0,2).toUpperCase()}
 function catColor(cat){let h=0;for(let i=0;i<(cat||'').length;i++)h=(cat.charCodeAt(i)+h*31)%360;return `hsl(${h},55%,42%)`}
 function catBg(cat){let h=0;for(let i=0;i<(cat||'').length;i++)h=(cat.charCodeAt(i)+h*31)%360;return `hsla(${h},55%,42%,.1)`}
 
-let S={accounts:[],cards:[],txs:[],cats:[],budgets:[],goals:[],hide:false,cfDays:30,view:'home'};
+let S={accounts:[],cards:[],txs:[],cats:[],budgets:[],goals:[],hide:false,cfDays:30,view:'home',txFilters:{type:'all',cat:'',acc:'',status:'all',q:''}};
 
 function persist(){save(K.tx,S.txs);save(K.acc,S.accounts);save(K.card,S.cards);save(K.budg,S.budgets);save(K.goals,S.goals)}
 function recompute(){
@@ -679,6 +745,7 @@ function postRender(){
   requestAnimationFrame(()=>document.querySelectorAll('.bar i,.progress i,.goal-mini-bar i').forEach(i=>{if(i.dataset.w)i.style.width=i.dataset.w+'%'}));
   const eye=document.getElementById('eye');if(eye)eye.onclick=()=>{S.hide=!S.hide;render()};
   document.querySelectorAll('#cf-seg button').forEach(b=>b.onclick=()=>{S.cfDays=+b.dataset.d;render()});
+  if(S.view==='tx')bindTxPage();
 }
 
 /* ─────────── HOME ─────────── */
@@ -757,32 +824,143 @@ function viewHome(){
     ${recent.length?recent.map(txRow).join(''):'<p style="color:var(--txt3);font-size:.875rem">Nenhum lançamento registrado.</p>'}</div>
   </div></div>`;
 }
-function txRow(t){const inc=t.fundamentalType==='receita';const cat=t.category||'Outros';
-  return `<div class="tx" onclick="openTxSheet('${t.id}')"><div class="tx-ic" style="background:${inc?'var(--pos-soft)':catBg(cat)};color:${inc?'var(--pos)':catColor(cat)}">${inc?'+':catInitial(cat)}</div>
-    <div class="tx-mid"><div class="tx-d">${esc(t.description||cat)}</div><div class="tx-s">${parseD(t.date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} · ${esc(nameById(t.accountId))}${t.isPaid?'':' · <span style="color:var(--warn)">pendente</span>'}</div></div>
-    <div class="tx-v num" style="color:${inc?'var(--pos)':'var(--neg)'}">${inc?'+':'−'}${S.hide?'•••':BRL(t.value)}</div></div>`}
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 /* ─────────── TRANSAÇÕES ─────────── */
 let txFilterOffset=0;
+function txsInMonth(off=txFilterOffset){
+  const now=new Date();const d=new Date(now.getFullYear(),now.getMonth()-off,1);
+  const m=d.getMonth(),y=d.getFullYear();
+  return S.txs.filter(t=>{const dd=parseD(t.date);return dd.getMonth()===m&&dd.getFullYear()===y}).sort((a,b)=>parseD(b.date)-parseD(a.date));
+}
+function applyTxFilters(list){
+  const f=S.txFilters;const q=f.q.toLowerCase();
+  return list.filter(t=>{
+    if(f.type!=='all'&&t.fundamentalType!==f.type)return false;
+    if(f.cat&&t.category!==f.cat)return false;
+    if(f.acc&&t.accountId!==f.acc)return false;
+    if(f.status==='paid'&&!t.isPaid&&t.fundamentalType==='despesa')return false;
+    if(f.status==='pending'&&(t.isPaid||t.fundamentalType==='receita'))return false;
+    if(f.status==='overdue'){if(t.isPaid||t.isCreditCard||t.fundamentalType!=='despesa')return false;if(parseD(t.date)>=startDay(new Date()))return false}
+    if(q){const hay=[t.description,t.category,nameById(t.accountId)].join(' ').toLowerCase();if(!hay.includes(q))return false}
+    return true;
+  });
+}
+function txBiggestExpense(list){
+  const exp=list.filter(t=>t.fundamentalType==='despesa');
+  if(!exp.length)return null;
+  return exp.reduce((a,b)=>a.value>=b.value?a:b);
+}
+function txCatBreakdown(list){
+  const o={};list.filter(t=>t.fundamentalType==='despesa').forEach(t=>{const c=t.category||'Outros';o[c]=(o[c]||0)+t.value});
+  const entries=Object.entries(o).sort((a,b)=>b[1]-a[1]);const max=entries.length?entries[0][1]:1;
+  return{entries:entries.slice(0,5),max};
+}
+function txGroupByDay(list){
+  const groups=[];let cur=null;
+  list.forEach(t=>{
+    const dk=iso(parseD(t.date));
+    if(!cur||cur.key!==dk){
+      cur={key:dk,label:parseD(t.date).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'}),items:[],inc:0,exp:0};
+      groups.push(cur);
+    }
+    cur.items.push(t);
+    if(t.fundamentalType==='receita')cur.inc+=t.value;else cur.exp+=t.value;
+  });
+  return groups;
+}
+function txRow(t,opts={}){const inc=t.fundamentalType==='receita';const cat=t.category||'Outros';
+  const today=startDay(new Date());const overdue=!inc&&!t.isPaid&&!t.isCreditCard&&parseD(t.date)<today;
+  const pending=!inc&&!t.isPaid&&!overdue;
+  let tags='';
+  if(overdue)tags+=`<span class="tx-tag overdue">Atrasado</span>`;
+  else if(pending)tags+=`<span class="tx-tag pending">Pendente</span>`;
+  if(opts.showCat)tags+=`<span class="tx-tag cat">${esc(cat)}</span>`;
+  return `<div class="tx" onclick="openTxSheet('${t.id}')"><div class="tx-ic" style="background:${inc?'var(--pos-soft)':catBg(cat)};color:${inc?'var(--pos)':catColor(cat)}">${inc?'+':catInitial(cat)}</div>
+    <div class="tx-mid"><div class="tx-d">${esc(t.description||cat)}${tags}</div><div class="tx-s">${opts.hideDate?'':parseD(t.date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})+' · '}${esc(nameById(t.accountId))}</div></div>
+    <div class="tx-v num" style="color:${inc?'var(--pos)':'var(--neg)'}">${inc?'+':'−'}${S.hide?'•••':BRL(t.value)}</div></div>`}
+function bindTxPage(){
+  const s=document.getElementById('tx-search');
+  if(s&&!s._bound){s._bound=1;s.addEventListener('input',()=>{clearTimeout(window._txSq);window._txSq=setTimeout(()=>{S.txFilters.q=s.value.trim();render()},280)})}
+  document.querySelectorAll('[data-txf]').forEach(el=>{el.onclick=()=>{S.txFilters[el.dataset.txf]=el.dataset.v;render()}});
+  const cat=document.getElementById('tx-f-cat');if(cat)cat.onchange=()=>{S.txFilters.cat=cat.value;render()};
+  const acc=document.getElementById('tx-f-acc');if(acc)acc.onchange=()=>{S.txFilters.acc=acc.value;render()};
+}
+function clearTxFilters(){S.txFilters={type:'all',cat:'',acc:'',status:'all',q:''};render()}
 function viewTx(){
-  const now=new Date();const d=new Date(now.getFullYear(),now.getMonth()-txFilterOffset,1);const m=d.getMonth(),y=d.getFullYear();
-  const list=S.txs.filter(t=>{const dd=parseD(t.date);return dd.getMonth()===m&&dd.getFullYear()===y}).sort((a,b)=>parseD(b.date)-parseD(a.date));
+  const now=new Date();const d=new Date(now.getFullYear(),now.getMonth()-txFilterOffset,1);
+  const monthAll=txsInMonth();const list=applyTxFilters(monthAll);
+  const cur=monthAgg(txFilterOffset);const prev=monthAgg(txFilterOffset+1);
   const inc=list.filter(t=>t.fundamentalType==='receita').reduce((s,t)=>s+t.value,0);
   const exp=list.filter(t=>t.fundamentalType==='despesa').reduce((s,t)=>s+t.value,0);
-  let html=`<div class="page-header"><div class="page-title">Transações</div><div class="page-sub">Histórico de entradas e saídas</div></div><div class="grid-2">`;
-  html+=`<div class="sec"><div class="month-nav">
+  const monthInc=monthAll.filter(t=>t.fundamentalType==='receita').reduce((s,t)=>s+t.value,0);
+  const monthExp=monthAll.filter(t=>t.fundamentalType==='despesa').reduce((s,t)=>s+t.value,0);
+  const expDelta=prev.expense?Math.round((monthExp/prev.expense-1)*100):0;
+  const daysInMonth=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  const dayOfMonth=txFilterOffset===0?now.getDate():daysInMonth;
+  const dailyAvg=dayOfMonth>0?monthExp/dayOfMonth:0;
+  const biggest=txBiggestExpense(monthAll);
+  const pendingMonth=monthAll.filter(t=>t.fundamentalType==='despesa'&&!t.isPaid&&!t.isCreditCard);
+  const overdueMonth=pendingMonth.filter(t=>parseD(t.date)<startDay(new Date()));
+  const f=S.txFilters;const hasFilters=f.type!=='all'||f.cat||f.acc||f.status!=='all'||f.q;
+  const hv=v=>S.hide?'•••••':BRL(v);
+  const {entries:catEntries,max:catMax}=txCatBreakdown(monthAll);
+  const chip=(k,v,l,cls='')=>`<button type="button" class="tx-chip ${cls} ${f[k]===v?'on':''}" data-txf="${k}" data-v="${v}">${l}</button>`;
+  let html=`<div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+    <div><div class="page-title">Transações</div><div class="page-sub">Controle, filtros e análise do mês</div></div>
+    <button class="chip-link" style="padding:.5rem 1rem;background:var(--brand);color:#fff;border-color:var(--brand)" onclick="openTxSheet()">+ Novo lançamento</button></div>`;
+  if(overdueMonth.length&&f.status!=='paid'){
+    html+=`<div class="tx-pending-banner overdue" onclick="S.txFilters.status='overdue';render()">
+      <div><div class="pt">${overdueMonth.length} pagamento(s) atrasado(s) neste mês</div><div class="pm num">${hv(overdueMonth.reduce((s,t)=>s+t.value,0))} — toque para filtrar</div></div><span class="dash-alert-go">Ver →</span></div>`;
+  }else if(pendingMonth.length&&txFilterOffset===0&&f.status==='all'){
+    html+=`<div class="tx-pending-banner" onclick="S.txFilters.status='pending';render()">
+      <div><div class="pt">${pendingMonth.length} conta(s) a pagar neste mês</div><div class="pm num">${hv(pendingMonth.reduce((s,t)=>s+t.value,0))} pendente(s)</div></div><span class="dash-alert-go">Ver →</span></div>`;
+  }
+  html+=`<div class="tx-insights">
+    <div class="tx-insight"><div class="k">Lançamentos</div><div class="v">${list.length}${hasFilters?` / ${monthAll.length}`:''}</div></div>
+    <div class="tx-insight"><div class="k">Média/dia</div><div class="v num">${hv(dailyAvg)}</div></div>
+    <div class="tx-insight"><div class="k">Maior gasto</div><div class="v">${biggest?esc((biggest.description||biggest.category||'—').slice(0,18)):'—'}${biggest&&!S.hide?`<br><span class="num" style="color:var(--neg)">${BRL(biggest.value)}</span>`:''}</div></div></div>`;
+  html+=`<div class="tx-toolbar">
+    <input type="search" class="tx-search" id="tx-search" placeholder="Buscar por descrição, categoria ou conta…" value="${esc(f.q)}">
+    <div class="tx-chips">
+      ${chip('type','all','Todos')}${chip('type','despesa','Despesas','bad')}${chip('type','receita','Receitas','pos')}
+      ${chip('status','all','Status: todos')}${chip('status','pending','Pendentes','warn')}${chip('status','paid','Pagos')}${chip('status','overdue','Atrasados','bad')}
+    </div>
+    <div class="tx-filters">
+      <select id="tx-f-cat"><option value="">Todas categorias</option>${S.cats.map(c=>`<option value="${esc(c)}" ${f.cat===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
+      <select id="tx-f-acc"><option value="">Todas contas</option>${S.accounts.map(a=>`<option value="${a.id}" ${f.acc===a.id?'selected':''}>${esc(a.name)}</option>`).join('')}${S.cards.map(c=>`<option value="${c.id}" ${f.acc===c.id?'selected':''}>${esc(c.name)} (cartão)</option>`).join('')}</select>
+    </div>
+    ${hasFilters?`<span class="tx-filter-clear" onclick="clearTxFilters()">Limpar filtros</span>`:''}
+  </div>`;
+  html+=`<div class="tx-layout"><div class="tx-side">`;
+  html+=`<div class="tx-summary-hero"><div class="month-nav">
       <button class="chip-link" onclick="txFilterOffset++;render()">‹ Anterior</button>
-      <div class="sec-t" style="text-transform:capitalize">${d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</div>
+      <div class="sec-t" style="text-transform:capitalize;text-align:center;flex:1">${d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</div>
       <button class="chip-link" onclick="if(txFilterOffset>0){txFilterOffset--;render()}" style="opacity:${txFilterOffset>0?1:.35}">Próximo ›</button></div>
-      <div class="kpi-grid" style="margin:0"><div class="kpi"><div class="kpi-body"><div class="kpi-label">Entradas</div><div class="kpi-value num" style="color:var(--pos)">${BRL(inc)}</div></div></div>
-        <div class="kpi"><div class="kpi-body"><div class="kpi-label">Saídas</div><div class="kpi-value num" style="color:var(--neg)">${BRL(exp)}</div></div></div>
-        <div class="kpi"><div class="kpi-body"><div class="kpi-label">Saldo</div><div class="kpi-value num" style="color:${inc-exp>=0?'var(--pos)':'var(--neg)'}">${BRL(inc-exp)}</div></div></div></div></div>`;
-  if(!list.length)return html+emptyState('report','Nenhuma transação','Não há lançamentos registrados neste período.')+'</div>';
-  let lastDay='';html+='<div class="sec">';
-  list.forEach(t=>{const dl=parseD(t.date).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
-    if(dl!==lastDay){html+=`<div class="date-h">${dl}</div>`;lastDay=dl}html+=txRow(t)});
-  html+='</div></div>';return html;
+    <div class="tx-summary-kpis">
+      <div class="tx-sk"><div class="k">Entradas</div><div class="v num pos">${hv(monthInc)}</div></div>
+      <div class="tx-sk"><div class="k">Saídas</div><div class="v num neg">${hv(monthExp)}</div></div>
+      <div class="tx-sk"><div class="k">Saldo</div><div class="v num ${monthInc-monthExp>=0?'pos':'neg'}">${hv(monthInc-monthExp)}</div></div></div>
+    ${prev.expense>0?`<div class="tx-compare">Saídas ${expDelta>=0?'<b>+'+expDelta+'%</b>':'<b>'+expDelta+'%</b>'} vs. mês anterior (${hv(prev.expense)})</div>`:''}</div>`;
+  if(catEntries.length){
+    html+=`<div class="sec tx-cats-sec" style="margin-top:1.25rem"><div class="sec-h"><div class="sec-t">Top categorias</div><div class="sec-sub">${catEntries.length} com gasto</div></div>`;
+    html+=catEntries.map(([c,v])=>`<div class="tx-cat-row"><span class="cn">${esc(c)}</span><div class="bar"><i data-w="${Math.max(8,v/catMax*100)}"></i></div><span class="cv num">${hv(v)}</span></div>`).join('');
+    html+=`</div>`;
+  }
+  html+=`</div><div class="tx-list-col">`;
+  if(!list.length){
+    html+=emptyState('report',hasFilters?'Nenhum resultado':'Nenhuma transação',hasFilters?'Tente outros filtros ou limpe a busca.':'Use o botão acima para registrar entradas e saídas.');
+  }else{
+    html+=`<div class="sec">`;
+    txGroupByDay(list).forEach(g=>{
+      const net=g.inc-g.exp;
+      html+=`<div class="date-h"><span>${g.label}</span><span class="date-total num ${net>=0?'pos':'neg'}">${net>=0?'+':''}${hv(net)} · ${g.items.length} item(ns)</span></div>`;
+      g.items.forEach(t=>{html+=txRow(t,{showCat:true,hideDate:true})});
+    });
+    html+=`</div>`;
+  }
+  html+=`</div></div>`;
+  return html;
 }
 
 /* ─────────── CONTAS / CARTÕES ─────────── */
@@ -1165,7 +1343,7 @@ function init(){
   render();
   window.addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(render,200)});
 }
-window.go=go;window.openTxSheet=openTxSheet;window.openTxSheetWithPhoto=openTxSheetWithPhoto;window.openTxSheetWithVoice=openTxSheetWithVoice;window.saveTx=saveTx;window.deleteTx=deleteTx;
+window.go=go;window.clearTxFilters=clearTxFilters;window.openTxSheet=openTxSheet;window.openTxSheetWithPhoto=openTxSheetWithPhoto;window.openTxSheetWithVoice=openTxSheetWithVoice;window.saveTx=saveTx;window.deleteTx=deleteTx;
 window.openAccSheet=openAccSheet;window.saveAcc=saveAcc;window.deleteAcc=deleteAcc;
 window.openCardSheet=openCardSheet;window.saveCard=saveCard;window.deleteCard=deleteCard;
 window.exportData=exportData;window.doLogout=doLogout;
