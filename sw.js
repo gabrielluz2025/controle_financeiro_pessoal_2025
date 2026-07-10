@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v23 (comprovantes com retenção 1 ano)
-const CACHE = 'financas-plus-v23';
+// Finanças+ Service Worker — v24 (OCR Pix Nubank calibrado)
+const CACHE = 'financas-plus-v24';
 const STATIC = ['/', '/index.html', '/classico.html', '/nova.html', '/manifest.json', '/css/enhanced-styles.css'];
 
 const NETWORK_FIRST = ['.html', '/js/', '/css/', '/sw.js'];

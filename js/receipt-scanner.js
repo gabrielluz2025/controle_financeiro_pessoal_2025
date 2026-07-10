@@ -33,6 +33,23 @@ const ReceiptScanner = {
 
     PAYMENT_METHODS: ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Vale', 'Outro'],
 
+    /** Meses abreviados em comprovantes bancários (Nubank, Inter, etc.) */
+    PT_MONTHS: {
+        jan: '01', fev: '02', mar: '03', abr: '04', mai: '05', jun: '06',
+        jul: '07', ago: '08', set: '09', out: '10', nov: '11', dez: '12',
+        janeiro: '01', fevereiro: '02', marco: '03', março: '03', abril: '04',
+        maio: '05', junho: '06', julho: '07', agosto: '08', setembro: '09',
+        outubro: '10', novembro: '11', dezembro: '12',
+    },
+
+    /** Rótulos comuns em comprovantes Pix por banco */
+    PIX_LABELS: {
+        value: ['valor', 'valor transferido', 'valor pago', 'valor da transferencia', 'valor da transacao'],
+        beneficiary: ['nome', 'favorecido', 'recebedor', 'destinatario', 'beneficiario', 'para'],
+        payer: ['nome', 'pagador', 'remetente', 'de'],
+        transactionId: ['id da transacao', 'id transacao', 'identificador', 'e2e', 'end to end', 'codigo da transacao'],
+    },
+
     CATEGORY_KEYWORDS: {
         'Alimentação': ['mercado', 'supermercado', 'padaria', 'açougue', 'acougue', 'restaurante', 'lanchonete', 'pizzaria', 'ifood', 'food', 'hortifruti', 'atacadao', 'carrefour', 'extra', 'pao de acucar'],
         'Transporte': ['posto', 'combustivel', 'gasolina', 'uber', '99', 'estacionamento', 'pedagio', 'shell', 'ipiranga', 'br distribuidora'],
@@ -277,6 +294,17 @@ const ReceiptScanner = {
     },
 
     _extractDate(text) {
+        const monthPat = Object.keys(this.PT_MONTHS).join('|');
+        const mBank = text.match(new RegExp(
+            `(\\d{1,2})\\s+(${monthPat})\\s+(\\d{4})(?:\\s*[-–—]\\s*(\\d{2}:\\d{2}(?::\\d{2})?))?`,
+            'i'
+        ));
+        if (mBank) {
+            const dd = String(mBank[1]).padStart(2, '0');
+            const mm = this.PT_MONTHS[mBank[2].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').slice(0, 3)]
+                || this.PT_MONTHS[mBank[2].toLowerCase()] || '01';
+            return `${mBank[3]}-${mm}-${dd}`;
+        }
         const patterns = [
             /(?:data|emiss[aã]o|realizado|pagamento|transfer[eê]ncia)[:\s]*(\d{2}\/\d{2}\/\d{4})/i,
             /(\d{2}\/\d{2}\/\d{4})/,
@@ -306,8 +334,96 @@ const ReceiptScanner = {
     },
 
     _extractTime(text) {
+        const mBank = text.match(/\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}\s*[-–—]\s*(\d{2}:\d{2}(?::\d{2})?)/i);
+        if (mBank) return mBank[1].slice(0, 5);
         const m = text.match(/(?:\b)(\d{2}:\d{2}(?::\d{2})?)(?:\b)/);
         return m ? m[1].slice(0, 5) : '';
+    },
+
+    _lines(text) {
+        return String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    },
+
+    _normLine(s) {
+        return String(s || '').toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[:\s]+$/, '').trim();
+    },
+
+    /** Valor na linha seguinte ao rótulo (layout Nubank / apps mobile) */
+    _valueAfterLabel(lines, labels) {
+        const labs = (Array.isArray(labels) ? labels : [labels]).map(l => this._normLine(l));
+        for (let i = 0; i < lines.length - 1; i++) {
+            const cur = this._normLine(lines[i]);
+            const hit = labs.some(lab => cur === lab || cur.startsWith(lab + ' '));
+            if (!hit) continue;
+            const same = lines[i].match(/[:\s]+(.+)/);
+            if (same && /r?\$?\s*\d/.test(same[1])) {
+                const v = this._parseMoney(same[1]);
+                if (!isNaN(v) && v > 0) return v;
+            }
+            for (let j = 1; j <= 2 && i + j < lines.length; j++) {
+                const next = lines[i + j];
+                if (/^r?\$?\s*\d/.test(next) || /\d+[,.]\d{2}/.test(next)) {
+                    const v = this._parseMoney(next);
+                    if (!isNaN(v) && v > 0) return v;
+                }
+            }
+        }
+        return null;
+    },
+
+    /** Campo de texto após rótulo, dentro de uma seção (Destino / Origem) */
+    _fieldInSection(lines, sectionName, fieldLabels) {
+        const section = this._normLine(sectionName);
+        const fields = (Array.isArray(fieldLabels) ? fieldLabels : [fieldLabels]).map(f => this._normLine(f));
+        let inSection = false;
+        let sectionDepth = 0;
+        for (let i = 0; i < lines.length; i++) {
+            const cur = this._normLine(lines[i]);
+            if (cur === section || cur.startsWith(section + ' ')) {
+                inSection = true;
+                sectionDepth = 0;
+                continue;
+            }
+            if (inSection) {
+                if (/^(origem|destino|valor|tipo de transferencia|id da transacao|nu pagamentos)/.test(cur) && cur !== section) {
+                    if (cur === 'origem' && section === 'destino') break;
+                    if (cur === 'destino' && section === 'origem') break;
+                }
+                if (fields.includes(cur)) {
+                    for (let j = 1; j <= 2 && i + j < lines.length; j++) {
+                        const val = lines[i + j].trim();
+                        if (!val || val.length < 3) continue;
+                        if (/^(nome|instituicao|agencia|conta|tipo|cpf|cnpj|valor|pix|destino|origem)$/i.test(this._normLine(val))) continue;
+                        if (/^r?\$/.test(val) || /^\d{4,}$/.test(val.replace(/\D/g, ''))) continue;
+                        if (/^[A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç]/.test(val)) return val.slice(0, 120);
+                    }
+                    const inline = lines[i].match(/(?:nome|favorecido)[:\s]+(.+)/i);
+                    if (inline && inline[1].trim().length > 2) return inline[1].trim().slice(0, 120);
+                }
+                sectionDepth++;
+                if (sectionDepth > 18) break;
+            }
+        }
+        return '';
+    },
+
+    _textAfterLabel(lines, labels) {
+        const labs = (Array.isArray(labels) ? labels : [labels]).map(l => this._normLine(l));
+        for (let i = 0; i < lines.length - 1; i++) {
+            const cur = this._normLine(lines[i]);
+            if (!labs.some(lab => cur === lab || cur.startsWith(lab + ' '))) continue;
+            const inline = lines[i].match(/[:\s]+(.+)/);
+            if (inline && inline[1].length > 3 && !/^(pix|ted|doc)$/i.test(inline[1].trim())) {
+                return inline[1].trim().slice(0, 120);
+            }
+            for (let j = 1; j <= 2 && i + j < lines.length; j++) {
+                const val = lines[i + j].trim();
+                if (val.length > 2 && !labs.includes(this._normLine(val))) return val.slice(0, 120);
+            }
+        }
+        return '';
     },
 
     _extractPaymentMethod(text) {
@@ -422,7 +538,9 @@ const ReceiptScanner = {
         const t = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const score = { pix: 0, boleto: 0, comprovante_bancario: 0, cupom_fiscal: 0 };
         if (/pix|transferencia instantanea|transacao pix|qr code pix|chave pix|e2e|end to end|id da transacao/i.test(t)) score.pix += 3;
-        if (/comprovante.*pix|pix enviado|pix recebido|pagamento via pix/i.test(t)) score.pix += 4;
+        if (/comprovante.*pix|pix enviado|pix recebido|pagamento via pix|tipo de transferencia.*pix/i.test(t)) score.pix += 4;
+        if (/comprovante de transferencia|nu pagamentos|nubank|\bnu\b/.test(t)) score.pix += 2;
+        if (/\bdestino\b/.test(t) && /\borigem\b/.test(t) && /pix/i.test(t)) score.pix += 5;
         if (/boleto|linha digitavel|codigo de barras|cod\. de barras|cedente|sacado|nosso numero|valor do documento|valor cobrado/i.test(t)) score.boleto += 3;
         if (/vencimento/i.test(t) && /beneficiario|cedente|sacador/i.test(t)) score.boleto += 2;
         if (/comprovante de (transferencia|pagamento|ted|doc)|internet banking|autenticacao|agencia|conta corrente|conta poupanca|comprovante bancario/i.test(t)) score.comprovante_bancario += 3;
@@ -442,31 +560,63 @@ const ReceiptScanner = {
     },
 
     _extractPixBeneficiary(text) {
+        const lines = this._lines(text);
+        const fromDestino = this._fieldInSection(lines, 'destino', ['nome', 'favorecido', 'recebedor']);
+        if (fromDestino) return fromDestino;
+        const afterNome = this._textAfterLabel(lines, ['nome do recebedor', 'nome recebedor', 'para']);
+        if (afterNome && !/^(instituicao|agencia|conta|nu pagamentos)/i.test(afterNome)) return afterNome;
         return this._extractByPatterns(text, [
-            /(?:para|favorecido|recebedor|destinat[aá]rio|nome do recebedor|benefici[aá]rio|nome)[:\s]*\n?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç0-9 .&\-]{2,70})/i,
+            /(?:para|favorecido|recebedor|destinat[aá]rio|nome do recebedor|benefici[aá]rio|destino)[:\s]*\n?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç0-9 .&\-]{2,70})/i,
             /(?:para|favorecido)[:\s]+([^\n\dR$]{3,70})/i,
         ]);
     },
 
     _extractPixPayer(text) {
+        const lines = this._lines(text);
+        const fromOrigem = this._fieldInSection(lines, 'origem', ['nome', 'pagador', 'remetente']);
+        if (fromOrigem) return fromOrigem;
         return this._extractByPatterns(text, [
             /(?:de|pagador|remetente|origem|nome do pagador)[:\s]*\n?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n]{2,70})/i,
         ]);
     },
 
     _extractPixTransactionId(text) {
-        const e2e = text.match(/\b(E[0-9]{8}[A-Z0-9]{23,32})\b/);
-        if (e2e) return e2e[1];
-        return this._extractByPatterns(text, [
-            /(?:id\s*(?:da\s*)?transa[cç][aã]o|identificador|e2e|end\s*to\s*end|codigo da transacao)[:\s]*([A-Za-z0-9\.\-]{8,40})/i,
+        const labeled = this._extractByPatterns(text, [
+            /(?:id\s*(?:da\s*)?transa[cç][aã]o|identificador|e2e|end\s*to\s*end|codigo da transacao)[:\s]*\n?\s*([Ee][A-Za-z0-9]{28,35})/i,
         ]);
+        if (labeled) {
+            const id = labeled.replace(/\s/g, '').toUpperCase();
+            if (id.length >= 30 && id.length <= 35) return id.slice(0, 32);
+        }
+        const lines = this._lines(text);
+        for (let i = 0; i < lines.length; i++) {
+            if (/id\s*(?:da\s*)?transa/i.test(lines[i])) {
+                for (let j = 0; j <= 2 && i + j < lines.length; j++) {
+                    const cand = (lines[i + j].match(/(E[0-9A-Za-z]{28,35})/i) || [])[1];
+                    if (cand) return cand.replace(/\s/g, '').toUpperCase().slice(0, 32);
+                }
+            }
+        }
+        const compact = text.replace(/\s/g, '');
+        const patterns = [
+            /E[0-9]{8}20[0-9]{6}[0-9A-Za-z]{4,11}(?=[^0-9A-Za-z]|$)/i,
+            /E[0-9A-Za-z]{31}(?=[^0-9A-Za-z]|$)/i,
+        ];
+        for (const pat of patterns) {
+            const m = compact.match(pat);
+            if (m) return m[0].toUpperCase().slice(0, 32);
+        }
+        return '';
     },
 
     _extractPixValue(text) {
+        const lines = this._lines(text);
+        const fromLabel = this._valueAfterLabel(lines, this.PIX_LABELS.value);
+        if (fromLabel != null) return fromLabel;
         const patterns = [
-            /valor\s*(?:do\s*)?(?:pix|transferido|pago|da\s*transa[cç][aã]o)\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
+            /valor\s*(?:do\s*)?(?:pix|transferido|pago|da\s*transa[cç][aã]o|da\s*transfer[eê]ncia)?\s*[:\s]*\n?\s*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
             /(?:transferido|enviado|recebido)\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
-            /(?:^|\n)\s*valor\s*[:\s]*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/im,
+            /(?:^|\n)\s*valor\s*[:\s]*\n?\s*r?\$?\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/im,
             /r\$\s*(\d{1,3}(?:[.\s]\d{3})*[,.]\d{2})/i,
         ];
         for (const pat of patterns) {
@@ -560,9 +710,10 @@ const ReceiptScanner = {
         const date = this._extractDate(text);
         const time = this._extractTime(text);
         const merchant = beneficiary || payer || 'Pix';
+        const isNubank = /nu pagamentos|nubank|comprovante de transferencia/i.test(text);
         return {
-            description: merchant,
-            merchant,
+            description: beneficiary || merchant,
+            merchant: beneficiary || merchant,
             beneficiary,
             payer,
             value,
@@ -570,8 +721,19 @@ const ReceiptScanner = {
             time,
             paymentMethod: 'Pix',
             transactionId,
-            category: this.guessCategory(merchant, text),
-            notes: transactionId ? `ID Pix: ${transactionId}` : '',
+            category: beneficiary ? 'Outros' : this.guessCategory(merchant, text),
+            notes: [
+                transactionId ? `ID Pix: ${transactionId}` : '',
+                payer ? `Pagador: ${payer}` : '',
+                isNubank ? 'Nubank' : '',
+            ].filter(Boolean).join(' · '),
+            confidence: {
+                merchant: beneficiary ? 0.92 : 0.5,
+                value: value ? 0.9 : 0,
+                date: /\d{4}-\d{2}-\d{2}|JUL|JAN|FEV|MAR|ABR|MAI|JUN|AGO|SET|OUT|NOV|DEZ/i.test(text) ? 0.88 : 0.5,
+                transactionId: transactionId ? 0.95 : 0,
+                docType: 0.92,
+            },
         };
     },
 
@@ -679,7 +841,7 @@ const ReceiptScanner = {
         if (docType === 'pix') {
             const pix = this._parsePix(text);
             result = { ...result, ...pix, docType: 'pix', paymentMethod: 'Pix', fromScan: true };
-            result.confidence = { ...result.confidence, docType: 0.9, transactionId: pix.transactionId ? 0.85 : 0 };
+            result.confidence = { ...result.confidence, ...(pix.confidence || {}), docType: 0.9, transactionId: pix.transactionId ? 0.95 : 0 };
         } else if (docType === 'boleto') {
             const boleto = this._parseBoleto(text);
             result = { ...result, ...boleto, docType: 'boleto', fromScan: true };
