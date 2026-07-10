@@ -56,6 +56,8 @@ jobs:
           find deploy -type f | sort
 
       - name: Deploy via FTP
+        id: ftp_deploy
+        continue-on-error: true
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -66,8 +68,24 @@ jobs:
           local-dir: deploy/
           server-dir: ./
           security: loose
-          timeout: 120000
-          log-level: verbose
+          timeout: 600000
+          log-level: standard
+          dry-run: false
+
+      - name: Retry deploy FTP (se timeout)
+        if: steps.ftp_deploy.outcome == 'failure'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: deploy/
+          server-dir: ./
+          security: loose
+          timeout: 600000
+          log-level: standard
           dry-run: false
 
       - name: Deploy concluído
