@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v24 (OCR Pix Nubank calibrado)
-const CACHE = 'financas-plus-v24';
+// Finanças+ Service Worker — v25 (modal centralizado + OCR campos)
+const CACHE = 'financas-plus-v25';
 const STATIC = ['/', '/index.html', '/classico.html', '/nova.html', '/manifest.json', '/css/enhanced-styles.css'];
 
 const NETWORK_FIRST = ['.html', '/js/', '/css/', '/sw.js'];

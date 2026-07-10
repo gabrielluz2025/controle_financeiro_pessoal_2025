@@ -496,16 +496,20 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
 .insight-card .im{font-size:.8125rem;color:var(--txt2);margin-top:.2rem;line-height:1.45}
 
 /* ── Sheets ── */
-.sheet-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(6px);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.sheet-bg{position:fixed;inset:0;background:rgba(10,10,15,.62);backdrop-filter:blur(8px);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s;display:flex;align-items:flex-end;justify-content:center;padding:0}
 .sheet-bg.open{opacity:1;pointer-events:auto}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--surface);border-radius:20px 20px 0 0;padding:0;max-width:32rem;margin:0 auto;transform:translateY(105%);transition:transform .3s var(--ease);border-top:1px solid var(--border);max-height:92vh;overflow:hidden;box-shadow:var(--shadow-lg);display:flex;flex-direction:column}
+.sheet{position:relative;width:100%;max-width:32rem;background:var(--surface);border-radius:20px 20px 0 0;padding:0;max-height:92vh;overflow:hidden;box-shadow:0 -8px 40px rgba(10,10,15,.18);display:flex;flex-direction:column;border:1px solid var(--border);border-bottom:0;transform:translateY(105%);transition:transform .32s var(--ease),opacity .25s}
 .sheet.open{transform:translateY(0)}
-.sheet-scroll{flex:1;overflow-y:auto;padding:0 1.375rem 1rem;-webkit-overflow-scrolling:touch}
-.grab{width:36px;height:4px;border-radius:999px;background:var(--border-strong);margin:.625rem auto .875rem;flex-shrink:0}
-.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:0 1.375rem 1rem;flex-shrink:0;border-bottom:1px solid var(--border)}
-.sheet h3{font-size:1.0625rem;font-weight:700;letter-spacing:-.02em}
+.sheet-bar{position:relative;flex-shrink:0;padding:.5rem 1.25rem 0;display:flex;align-items:center;justify-content:center;min-height:2rem}
+.sheet-scroll{flex:1;overflow-y:auto;padding:0 1.25rem 1rem;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.grab{width:40px;height:4px;border-radius:999px;background:var(--border-strong);flex-shrink:0}
+.sheet-close{position:absolute;right:1rem;top:.375rem;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--txt2);font-size:1.375rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;transition:all .15s;z-index:2}
+.sheet-close:hover{border-color:var(--brand-muted);color:var(--txt);background:var(--surface)}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:0 0 1rem;margin-bottom:.25rem;flex-shrink:0;border-bottom:1px solid var(--border)}
+.sheet h3{font-size:1.0625rem;font-weight:700;letter-spacing:-.02em;flex:1;min-width:0}
+.sheet-head-actions{display:flex;align-items:center;gap:.375rem;flex-shrink:0}
 .del-btn{background:var(--neg-soft);color:var(--neg);border:1px solid var(--neg-muted);font-weight:600;font-size:.75rem;padding:.4rem .75rem;border-radius:6px;cursor:pointer;font-family:inherit}
-.sheet-foot{padding:1rem 1.375rem calc(1rem + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;box-shadow:0 -4px 16px rgba(15,23,42,.04)}
+.sheet-foot{padding:1rem 1.25rem calc(1rem + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;box-shadow:0 -4px 20px rgba(10,10,15,.06)}
 
 /* ── Transaction form ── */
 .tx-form{display:flex;flex-direction:column;gap:0}
@@ -696,9 +700,9 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
   .tx{padding:.9375rem 0}
   .tx:hover{background:var(--surface-2);margin:0 -.75rem;padding-left:.75rem;padding-right:.75rem;border-radius:var(--r-sm)}
   .acc-row:hover{border-color:var(--brand-muted);box-shadow:var(--shadow)}
-  .sheet-bg.open{display:flex;align-items:center;justify-content:center;padding:1.5rem}
-  .sheet{position:relative;border-radius:var(--r-lg);border:1px solid var(--border);max-height:88vh;max-width:26rem;width:100%;transform:scale(.96) translateY(0);opacity:0;bottom:auto;left:auto;right:auto;padding:0}
-  .sheet.open{transform:scale(1);opacity:1}
+  .sheet-bg.open{align-items:center;padding:1.5rem}
+  .sheet{border-radius:var(--r-lg);max-height:88vh;max-width:28rem;border-bottom:1px solid var(--border);transform:translateY(12px) scale(.97);opacity:0;box-shadow:0 24px 64px rgba(10,10,15,.22)}
+  .sheet.open{transform:translateY(0) scale(1);opacity:1}
   .grab{display:none}
   .fld.row2{grid-template-columns:1fr 1fr}
 }
@@ -738,14 +742,13 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
   </div>
 </div>
 
-<div class="sheet-bg" id="sheet-bg"></div>
-<div class="sheet" id="sheet"></div>
+<div class="sheet-bg" id="sheet-bg"><div class="sheet" id="sheet"></div></div>
 <input type="file" id="import-input" accept=".json,application/json" hidden>
 
 <script src="js/csv-importer.js?v=1"></script>
 <script src="js/ofx-importer.js?v=1"></script>
 <script src="js/voice-input.js?v=11"></script>
-<script src="js/receipt-scanner.js?v=12"></script>
+<script src="js/receipt-scanner.js?v=13"></script>
 <script src="js/receipt-store.js?v=1"></script>
 <script src="js/finance-suite.js?v=1"></script>
 <script>
@@ -1799,11 +1802,12 @@ function emptyState(iconKey,t,m){const ic=ICONS[iconKey]||ICONS.wallet;return `<
 /* ─────────── SHEETS ─────────── */
 const SB=document.getElementById('sheet-bg'),SH=document.getElementById('sheet');
 function openSheet(html,footHtml=''){
-  SH.innerHTML=`<div class="grab"></div><div class="sheet-scroll">${html}</div>${footHtml?`<div class="sheet-foot">${footHtml}</div>`:''}`;
+  SH.innerHTML=`<div class="sheet-bar"><div class="grab"></div><button type="button" class="sheet-close" onclick="closeSheet()" aria-label="Fechar">×</button></div><div class="sheet-scroll">${html}</div>${footHtml?`<div class="sheet-foot">${footHtml}</div>`:''}`;
   SB.classList.add('open');SH.classList.add('open');
 }
 function closeSheet(){SB.classList.remove('open');SH.classList.remove('open')}
-SB.onclick=closeSheet;
+SB.onclick=e=>{if(e.target===SB)closeSheet()};
+SH.onclick=e=>e.stopPropagation();
 
 let editTxId=null,addType='despesa',txSheetFlags={photo:false,voice:false},pendingReceiptImage=null;
 
@@ -1813,16 +1817,41 @@ Object.defineProperty(AppState,'categories',{get:()=>S.cats});
 const TransactionFormFill={
   _set(id,v){const el=document.getElementById(id);if(el&&v!=null&&v!=='')el.value=v},
   _setSel(id,v){const el=document.getElementById(id);if(el&&v&&[...el.options].some(o=>o.value===v))el.value=v},
+  _isGarbageDesc(s){
+    const t=String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(t.length<4)return true;
+    if(/^(nos|nas|nfe|nfce|cpf|cnpj|pix|valor|total|data|nome|via|doc|sat|danfe|comprovante|obrigado|volte|sempre|itens|qtd|unid|cod|descricao)$/.test(t))return true;
+    if(t.split(/\s+/).length>8)return true;
+    return false;
+  },
+  _pickDescription(data){
+    const doc=data.docType||'outro';
+    let desc='';
+    if(doc==='pix'||doc==='boleto'||doc==='comprovante_bancario'){
+      desc=data.beneficiary||data.payer||'';
+    }else{
+      desc=data.merchant||data.description||'';
+    }
+    if(this._isGarbageDesc(desc)){
+      if(data.beneficiary&&!this._isGarbageDesc(data.beneficiary))desc=data.beneficiary;
+      else if(data.merchant&&!this._isGarbageDesc(data.merchant))desc=data.merchant;
+      else if(doc==='pix')desc='Pix';
+      else if(doc==='cupom_fiscal')desc='Compra';
+      else desc='';
+    }
+    return String(desc).slice(0,80);
+  },
   apply(data={},opts={}){
     if(!data||typeof data!=='object')return;
-    const desc=data.merchant||data.description;
-    if(desc)this._set('in-desc',desc);
+    const doc=data.docType||'outro';
     if(data.value!=null&&data.value!==''&&!isNaN(Number(data.value)))this._set('in-val',Number(data.value));
     if(data.date)this._set('in-date',data.date);
     if(data.category)this._setSel('in-cat',data.category);
     if(data.fundamentalType){addType=data.fundamentalType;syncTypeTog()}
-    this._setSel('receipt-doc-type',data.docType);
-    this._set('receipt-beneficiary',data.beneficiary||data.merchant);
+    const desc=this._pickDescription(data);
+    if(desc)this._set('in-desc',desc);
+    this._setSel('receipt-doc-type',doc);
+    this._set('receipt-beneficiary',data.beneficiary||(doc==='pix'?data.merchant:''));
     this._set('receipt-cnpj',data.cnpj);this._set('receipt-cpf',data.cpf);
     this._set('receipt-nf-number',data.nfNumber);this._set('receipt-series',data.series);
     this._set('receipt-access-key',data.accessKey);this._set('receipt-time',data.time);
@@ -1830,14 +1859,13 @@ const TransactionFormFill={
     this._set('receipt-barcode',data.barcode);this._set('receipt-bank-auth',data.bankAuth);
     if(data.subtotal!=null&&!isNaN(Number(data.subtotal)))this._set('receipt-subtotal',Number(data.subtotal));
     if(data.discount!=null&&!isNaN(Number(data.discount)))this._set('receipt-discount',Number(data.discount));
-    this._setSel('receipt-payment-method',data.paymentMethod);
+    this._setSel('receipt-payment-method',data.paymentMethod||(doc==='pix'?'Pix':''));
     this._set('receipt-address',data.address);this._set('receipt-items',data.items);
     if(data.notes)this._set('receipt-notes',String(data.notes).slice(0,500));
-    else if(data.rawText)this._set('receipt-notes',String(data.rawText).slice(0,500));
     if(opts.fromScan||data.fromScan){
       this._set('receipt-scanned-at',new Date().toISOString());
       document.getElementById('receipt-panel')?.classList.add('open');
-      ReceiptScanner._showScanSummary(data);
+      if(window.ReceiptScanner)ReceiptScanner._showScanSummary(data);
     }
   }
 };
@@ -2050,7 +2078,7 @@ function openTxSheet(id,opts={}){
   if(!S.accounts.length&&!S.cards.length){toast('Crie uma conta antes de lançar','warn');go('accounts');return}
   const t=id?S.txs.find(x=>x.id===id):null;editTxId=id||null;addType=t?t.fundamentalType:'despesa';
   const r=t?.receipt||{};const receiptOpen=!!(t?.fromScan||r.cnpj||r.accessKey||r.nfNumber||r.transactionId||r.barcode||r.docType||r.imageId);
-  openSheet(`<div class="sheet-head"><h3>${t?'Editar lançamento':'Novo lançamento'}</h3>${t?`<div style="display:flex;gap:.375rem"><button class="chip-link" onclick="FinanceSuite.duplicateTx('${t.id}');closeSheet()">Duplicar</button><button class="del-btn" onclick="deleteTx('${t.id}')">Excluir</button></div>`:''}</div>
+  openSheet(`<div class="sheet-head"><h3>${t?'Editar lançamento':'Novo lançamento'}</h3><div class="sheet-head-actions">${t?`<button class="chip-link" onclick="FinanceSuite.duplicateTx('${t.id}');closeSheet()">Duplicar</button><button class="del-btn" onclick="deleteTx('${t.id}')">Excluir</button>`:''}</div></div>
     <div class="tx-form">
     ${!t?`<div class="tx-templates">${FinanceSuite.txTemplates().map((tpl,i)=>`<button type="button" class="tx-tpl" onclick="FinanceSuite.applyTemplate(FinanceSuite.txTemplates()[${i}])">${tpl.label}</button>`).join('')}</div>`:''}
     <div class="type-tog" id="type-tog">

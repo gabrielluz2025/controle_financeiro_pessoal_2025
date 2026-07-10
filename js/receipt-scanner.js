@@ -493,16 +493,26 @@ const ReceiptScanner = {
     },
 
     _extractMerchant(text) {
-        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        const lines = this._lines(text);
+        const garbage = /^(nos|nas|nfe|nfce|via|pix|cpf|cnpj|valor|total|data|nome|r\$|comprovante|sat|danfe|ecf|obrigado|volte|qtd|un|kg|cod|desc|item|itens|subtotal|troco)$/i;
         const skip = /^(cnpj|cpf|nf|nfe|nfc|nota|cupom|documento|sat|danfe|tel|fone|www|http|https|data|emiss|serie|série|chave|consumidor|valor|total|subtotal|troco|tributos|protocolo|ie[\s:])/i;
+        for (let i = 0; i < lines.length; i++) {
+            if (/cnpj/i.test(lines[i]) && i > 0) {
+                const prev = lines[i - 1].trim();
+                if (prev.length >= 4 && !garbage.test(prev) && !skip.test(prev) && !/^\d+$/.test(prev)) {
+                    return prev.slice(0, 80);
+                }
+            }
+        }
         const candidates = lines.filter(l =>
-            l.length > 2 && l.length < 70 &&
+            l.length >= 4 && l.length < 70 &&
             !/^\d+$/.test(l) &&
             !skip.test(l) &&
+            !garbage.test(l.trim()) &&
             !/^\d{2}[\/\-]\d{2}/.test(l) &&
             !/^r?\$/i.test(l)
         );
-        for (const line of candidates.slice(0, 8)) {
+        for (const line of candidates.slice(0, 10)) {
             if (/[a-záéíóúâêôãõç]{3,}/i.test(line) && !/^\W+$/.test(line)) return line.slice(0, 80);
         }
         return candidates[0]?.slice(0, 80) || 'Compra';
@@ -835,28 +845,42 @@ const ReceiptScanner = {
 
     parse(text) {
         const docType = this._detectDocType(text);
-        let result = this._parseFiscal(text);
-        result.docType = docType;
+        const baseMeta = { rawText: text, fromScan: true, fundamentalType: 'despesa' };
 
         if (docType === 'pix') {
             const pix = this._parsePix(text);
-            result = { ...result, ...pix, docType: 'pix', paymentMethod: 'Pix', fromScan: true };
-            result.confidence = { ...result.confidence, ...(pix.confidence || {}), docType: 0.9, transactionId: pix.transactionId ? 0.95 : 0 };
-        } else if (docType === 'boleto') {
+            return {
+                ...pix,
+                ...baseMeta,
+                docType: 'pix',
+                paymentMethod: 'Pix',
+                confidence: { ...(pix.confidence || {}), docType: 0.92, transactionId: pix.transactionId ? 0.95 : 0 },
+            };
+        }
+        if (docType === 'boleto') {
             const boleto = this._parseBoleto(text);
-            result = { ...result, ...boleto, docType: 'boleto', fromScan: true };
-            result.confidence = { ...result.confidence, docType: 0.88, dueDate: boleto.dueDate ? 0.85 : 0, barcode: boleto.barcode ? 0.9 : 0 };
-        } else if (docType === 'comprovante_bancario') {
+            return {
+                ...boleto,
+                ...baseMeta,
+                docType: 'boleto',
+                confidence: { docType: 0.88, dueDate: boleto.dueDate ? 0.85 : 0, barcode: boleto.barcode ? 0.9 : 0, value: boleto.value ? 0.85 : 0 },
+            };
+        }
+        if (docType === 'comprovante_bancario') {
             const bank = this._parseBank(text);
-            result = { ...result, ...bank, docType: 'comprovante_bancario', fromScan: true };
-            result.confidence = { ...result.confidence, docType: 0.85, bankAuth: bank.bankAuth ? 0.8 : 0 };
-        } else if (docType === 'cupom_fiscal') {
-            result.docType = 'cupom_fiscal';
-            result.confidence = { ...result.confidence, docType: 0.85 };
-        } else {
-            result.docType = 'outro';
+            return {
+                ...bank,
+                ...baseMeta,
+                docType: 'comprovante_bancario',
+                confidence: { docType: 0.85, bankAuth: bank.bankAuth ? 0.8 : 0, value: bank.value ? 0.85 : 0 },
+            };
         }
 
+        let result = this._parseFiscal(text);
+        result.docType = docType === 'cupom_fiscal' ? 'cupom_fiscal' : 'outro';
+        if (result.docType === 'cupom_fiscal') {
+            result.confidence = { ...result.confidence, docType: 0.85 };
+        }
         return result;
     },
 
