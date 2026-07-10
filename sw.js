@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v17 (aba transações)
-const CACHE = 'financas-plus-v17';
+// Finanças+ Service Worker — v18 (aba orçamentos)
+const CACHE = 'financas-plus-v18';
 const STATIC = ['/', '/index.html', '/classico.html', '/nova.html', '/manifest.json', '/css/enhanced-styles.css'];
 
 const NETWORK_FIRST = ['.html', '/js/', '/css/', '/sw.js'];
