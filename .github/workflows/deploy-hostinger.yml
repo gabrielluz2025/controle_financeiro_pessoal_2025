@@ -21,6 +21,7 @@ on:
 jobs:
   deploy-frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
 
     steps:
@@ -32,7 +33,7 @@ jobs:
           if [ -z "${{ secrets.FTP_SERVER }}" ]; then echo "❌ FTP_SERVER não configurado"; exit 1; fi
           if [ -z "${{ secrets.FTP_USERNAME }}" ]; then echo "❌ FTP_USERNAME não configurado"; exit 1; fi
           if [ -z "${{ secrets.FTP_PASSWORD }}" ]; then echo "❌ FTP_PASSWORD não configurado"; exit 1; fi
-          echo "✅ Secrets FTP presentes: servidor=${{ secrets.FTP_SERVER }}"
+          echo "✅ Secrets FTP presentes"
 
       - name: Preparar arquivos do frontend
         env:
@@ -51,31 +52,23 @@ jobs:
           [ -f ".htaccess" ] && cp .htaccess deploy/
           [ -f "CNAME" ] && cp CNAME deploy/
           node scripts/generate-deploy-config.js
-          echo "✅ Arquivos prontos para deploy:"
+          echo "✅ Arquivos prontos ($(find deploy -type f | wc -l) arquivos):"
           find deploy -type f | sort
 
-      - name: Instalar lftp
-        run: sudo apt-get install -y lftp
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: deploy/
+          server-dir: ./
+          security: loose
+          timeout: 120000
+          log-level: verbose
+          dry-run: false
 
-      - name: Testar conexão FTP
-        run: |
-          lftp -u "${{ secrets.FTP_USERNAME }}","${{ secrets.FTP_PASSWORD }}" \
-               -e "set ftp:ssl-allow yes; set ssl:verify-certificate no; ls; quit" \
-               ftp://${{ secrets.FTP_SERVER }} \
-          && echo "✅ Conexão FTP OK" \
-          || (echo "❌ Falha na conexão FTP — verifique FTP_SERVER/FTP_USERNAME/FTP_PASSWORD"; exit 1)
-
-      - name: Deploy via FTP (lftp mirror)
-        run: |
-          lftp -u "${{ secrets.FTP_USERNAME }}","${{ secrets.FTP_PASSWORD }}" \
-               ftp://${{ secrets.FTP_SERVER }} <<'LFTP_SCRIPT'
-          set ftp:ssl-allow yes
-          set ssl:verify-certificate no
-          set net:timeout 30
-          set net:max-retries 3
-          mirror --reverse --delete --verbose \
-                 ./deploy/ \
-                 ./
-          quit
-          LFTP_SCRIPT
-          echo "✅ Deploy concluído!"
+      - name: Deploy concluído
+        run: echo "✅ Site publicado em financasmais.com"
