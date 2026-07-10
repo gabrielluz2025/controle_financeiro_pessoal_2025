@@ -1,5 +1,5 @@
-// Finanças+ Service Worker — v15 (formulário lançamento)
-const CACHE = 'financas-plus-v15';
+// Finanças+ Service Worker — v16 (dashboard inteligente)
+const CACHE = 'financas-plus-v16';
 const STATIC = ['/', '/index.html', '/classico.html', '/nova.html', '/manifest.json', '/css/enhanced-styles.css'];
 
 const NETWORK_FIRST = ['.html', '/js/', '/css/', '/sw.js'];
