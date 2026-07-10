@@ -301,6 +301,9 @@
         .login-btn:hover { opacity: .9; }
         .login-btn:disabled { opacity: .5; cursor: not-allowed; }
         .login-error { color: #f87171; font-size: .82rem; margin-top: .5rem; min-height: 1.2rem; text-align: center; }
+        .login-success { color: #34d399; font-size: .82rem; margin-top: .5rem; min-height: 1.2rem; text-align: center; }
+        .login-link { background: none; border: 0; color: rgba(255,255,255,.55); font-size: .82rem; cursor: pointer; margin-top: .75rem; text-decoration: underline; font-family: inherit; }
+        .login-link:hover { color: #c4b5fd; }
         .login-logo {
             display: flex; align-items: center; justify-content: center; gap: .75rem;
             margin-bottom: 1.75rem;
@@ -539,6 +542,37 @@
                 </div>
                 <div class="login-error" id="login-error"></div>
                 <button class="login-btn" id="login-submit-btn" type="submit">Entrar</button>
+                <button type="button" class="login-link" onclick="AuthManager.showTab('forgot')">Esqueci minha senha</button>
+            </form>
+
+            <!-- Esqueci minha senha -->
+            <form id="forgot-form" style="display:none" onsubmit="AuthManager.submitForgot(event)">
+                <p style="color:rgba(255,255,255,.55);font-size:.85rem;margin-bottom:1rem;line-height:1.5">Informe seu e-mail. Enviaremos um link para redefinir sua senha.</p>
+                <div class="login-input-group">
+                    <label>E-mail</label>
+                    <input class="login-input" id="forgot-email" type="email" placeholder="seu@email.com" autocomplete="email" required>
+                </div>
+                <div class="login-error" id="forgot-error"></div>
+                <div class="login-success" id="forgot-success"></div>
+                <button class="login-btn" id="forgot-submit-btn" type="submit">Enviar link</button>
+                <button type="button" class="login-link" onclick="AuthManager.showTab('login')">← Voltar ao login</button>
+            </form>
+
+            <!-- Redefinir senha (link do e-mail) -->
+            <form id="reset-form" style="display:none" onsubmit="AuthManager.submitReset(event)">
+                <input type="hidden" id="reset-token" value="">
+                <p style="color:rgba(255,255,255,.55);font-size:.85rem;margin-bottom:1rem;line-height:1.5">Digite sua nova senha.</p>
+                <div class="login-input-group">
+                    <label>Nova senha</label>
+                    <input class="login-input" id="reset-password" type="password" placeholder="••••••" autocomplete="new-password" required minlength="6">
+                </div>
+                <div class="login-input-group">
+                    <label>Confirmar senha</label>
+                    <input class="login-input" id="reset-password2" type="password" placeholder="••••••" autocomplete="new-password" required minlength="6">
+                </div>
+                <div class="login-error" id="reset-error"></div>
+                <div class="login-success" id="reset-success"></div>
+                <button class="login-btn" id="reset-submit-btn" type="submit">Redefinir senha</button>
             </form>
 
             <!-- Formulário de Registro -->
@@ -884,12 +918,80 @@ const AuthManager = {
     // ── Tabs ──────────────────────────────────────────────────────────────────
     showTab(tab) {
         const isLogin = tab === 'login';
+        const isRegister = tab === 'register';
+        const isForgot = tab === 'forgot';
+        const isReset = tab === 'reset';
         document.getElementById('login-form').style.display = isLogin ? '' : 'none';
-        document.getElementById('register-form').style.display = isLogin ? 'none' : '';
+        document.getElementById('register-form').style.display = isRegister ? '' : 'none';
+        document.getElementById('forgot-form').style.display = isForgot ? '' : 'none';
+        document.getElementById('reset-form').style.display = isReset ? '' : 'none';
+        document.querySelector('.login-tabs').style.display = (isForgot || isReset) ? 'none' : '';
         document.getElementById('tab-login').classList.toggle('active', isLogin);
-        document.getElementById('tab-register').classList.toggle('active', !isLogin);
+        document.getElementById('tab-register').classList.toggle('active', isRegister);
         document.getElementById('login-error').textContent = '';
         document.getElementById('register-error').textContent = '';
+        const fe = document.getElementById('forgot-error'); if (fe) fe.textContent = '';
+        const fs = document.getElementById('forgot-success'); if (fs) fs.textContent = '';
+        const re = document.getElementById('reset-error'); if (re) re.textContent = '';
+        const rs = document.getElementById('reset-success'); if (rs) rs.textContent = '';
+    },
+
+    async submitForgot(e) {
+        e.preventDefault();
+        const btn = document.getElementById('forgot-submit-btn');
+        const errEl = document.getElementById('forgot-error');
+        const okEl = document.getElementById('forgot-success');
+        errEl.textContent = ''; okEl.textContent = '';
+        btn.disabled = true; btn.textContent = 'Enviando...';
+        try {
+            const data = await this._callAuth({
+                action: 'forgot_password',
+                email: document.getElementById('forgot-email').value,
+            });
+            if (data.error) { errEl.textContent = data.error; }
+            else { okEl.textContent = data.message || 'Verifique seu e-mail.'; }
+        } catch (err) {
+            errEl.textContent = err.message || 'Erro de conexão.';
+        } finally {
+            btn.disabled = false; btn.textContent = 'Enviar link';
+        }
+    },
+
+    async submitReset(e) {
+        e.preventDefault();
+        const btn = document.getElementById('reset-submit-btn');
+        const errEl = document.getElementById('reset-error');
+        const okEl = document.getElementById('reset-success');
+        const p1 = document.getElementById('reset-password').value;
+        const p2 = document.getElementById('reset-password2').value;
+        errEl.textContent = ''; okEl.textContent = '';
+        if (p1 !== p2) { errEl.textContent = 'As senhas não coincidem.'; return; }
+        btn.disabled = true; btn.textContent = 'Salvando...';
+        try {
+            const data = await this._callAuth({
+                action: 'reset_password',
+                token: document.getElementById('reset-token').value,
+                new_password: p1,
+            });
+            if (data.error) { errEl.textContent = data.error; }
+            else {
+                okEl.textContent = data.message || 'Senha redefinida!';
+                setTimeout(() => { history.replaceState({}, '', 'classico.html'); this.showTab('login'); }, 2000);
+            }
+        } catch (err) {
+            errEl.textContent = err.message || 'Erro de conexão.';
+        } finally {
+            btn.disabled = false; btn.textContent = 'Redefinir senha';
+        }
+    },
+
+    checkResetFromUrl() {
+        const token = new URLSearchParams(location.search).get('reset');
+        if (token) {
+            document.getElementById('reset-token').value = token;
+            this.showLoginScreen();
+            this.showTab('reset');
+        }
     },
 
     // ── Submissão Login ───────────────────────────────────────────────────────
@@ -980,6 +1082,7 @@ const AuthManager = {
         }
         this._clearSession();
         this.showLoginScreen();
+        history.replaceState({}, '', 'classico.html');
     },
 
     // ── Restaurar sessão ao carregar a página ─────────────────────────────────
@@ -1027,7 +1130,7 @@ const AuthManager = {
         localStorage.setItem('auth_user', JSON.stringify(user));
         // Limpa dados locais de outro usuário ou de sessão anterior
         ['app_accounts_v3','app_creditCards_v3','app_transactions_v3',
-         'app_categories_v3','app_budgets_v3'].forEach(k => localStorage.removeItem(k));
+         'app_categories_v3','app_budgets_v3','financial_goals_v2'].forEach(k => localStorage.removeItem(k));
         this._updateUserUI();
         this.hideLoginScreen();
         AppState.init().then(() => {
@@ -1042,7 +1145,7 @@ const AuthManager = {
         localStorage.removeItem('auth_user');
         // Limpar dados locais do usuário
         ['app_accounts_v3','app_creditCards_v3','app_transactions_v3',
-         'app_categories_v3','app_budgets_v3'].forEach(k => localStorage.removeItem(k));
+         'app_categories_v3','app_budgets_v3','financial_goals_v2'].forEach(k => localStorage.removeItem(k));
         this._updateUserUI();
     },
 
@@ -5825,6 +5928,19 @@ const Handlers = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Logout vindo do app novo (index.html)
+    if (new URLSearchParams(location.search).get('logout') === '1') {
+        AuthManager._clearSession();
+        AuthManager.showLoginScreen();
+        history.replaceState({}, '', 'classico.html');
+    }
+
+    // Link de redefinição de senha
+    AuthManager.checkResetFromUrl();
+    if (new URLSearchParams(location.search).get('reset')) {
+        return;
+    }
+
     const authed = await AuthManager.restoreSession();
     if (!authed) return; // mostra tela de login; app será iniciado em _onAuthenticated
 
