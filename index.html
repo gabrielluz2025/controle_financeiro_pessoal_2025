@@ -419,6 +419,37 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
 @media(min-width:768px){.toast{bottom:2rem}}
 @media(max-width:767px){.acc-kpis,.goal-kpis,.rep-kpis,.rep-insights{grid-template-columns:1fr}.goal-meta{grid-template-columns:1fr}.more-stats{grid-template-columns:repeat(3,1fr);gap:.375rem}}
 
+/* ── Calendário / Onboarding / Tema escuro ── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.375rem;margin-top:1rem}
+.cal-cell{min-height:4.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:.375rem;cursor:default;transition:all .12s}
+.cal-cell.today{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-muted)}
+.cal-cell:not(.empty):hover{border-color:var(--brand-muted);cursor:pointer}
+.cal-cell.empty{background:transparent;border-color:transparent}
+.cal-day{font-size:.75rem;font-weight:700;color:var(--txt2)}
+.cal-dots{display:flex;gap:2px;margin-top:.25rem}
+.cal-dots i{width:5px;height:5px;border-radius:50%;display:inline-block}
+.cal-dots i.receita,.cal-dots i.inc{background:var(--pos)}
+.cal-dots i.despesa,.cal-dots i.exp,.cal-dots i.fatura{background:var(--neg)}
+.cal-dots i.meta{background:var(--gold)}
+.cal-mini{font-size:.625rem;font-weight:700;margin-top:.15rem}
+.cal-mini.pos{color:var(--pos)}.cal-mini.neg{color:var(--neg)}
+.tx-templates{display:flex;flex-wrap:wrap;gap:.375rem;margin-bottom:1rem}
+.tx-tpl{font-size:.6875rem;font-weight:600;padding:.35rem .65rem;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;font-family:inherit;color:var(--txt2)}
+.tx-tpl:hover{border-color:var(--brand-muted);color:var(--brand)}
+.onboard-bg{position:fixed;inset:0;background:rgba(10,10,15,.75);backdrop-filter:blur(8px);z-index:100;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.onboard-card{background:var(--surface);border-radius:var(--r-lg);padding:2rem;max-width:22rem;width:100%;box-shadow:var(--shadow-lg)}
+.onboard-card h2{font-family:var(--font-display);font-size:1.375rem;margin-bottom:.75rem}
+.onboard-card p{color:var(--txt2);font-size:.875rem;margin-bottom:1rem;line-height:1.5}
+.onboard-card ol{font-size:.875rem;color:var(--txt2);margin:0 0 1.25rem 1.25rem;line-height:1.8}
+.sync-badge{font-size:.6875rem;font-weight:600;color:var(--txt3);padding:.25rem .5rem;border-radius:4px;background:var(--surface-2)}
+.daily-budget{background:var(--gold-soft);border:1px solid var(--gold-muted);border-radius:var(--r);padding:1rem 1.125rem;margin-bottom:1.25rem}
+.daily-budget .db-val{font-family:var(--font-display);font-size:1.75rem;font-weight:800;color:var(--gold-dark);letter-spacing:-.03em}
+.daily-budget .db-sub{font-size:.8125rem;color:var(--txt2);margin-top:.25rem}
+
+[data-theme=dark]{--bg:#0A0A0F;--surface:#131316;--surface-2:#1C1C21;--border:rgba(255,255,255,.08);--border-strong:rgba(255,255,255,.14);--txt:#FAFAFA;--txt2:#A1A1AA;--txt3:#71717A;--brand-soft:rgba(124,58,237,.15);--gold-soft:rgba(201,162,39,.12)}
+[data-theme=dark] body{background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(124,58,237,.12),transparent),var(--bg)}
+[data-theme=dark] .sec,[data-theme=dark] .kpi,[data-theme=dark] .cal-cell{background:var(--surface)}
+
 .empty{text-align:center;padding:2.5rem 1.5rem}
 .empty-icon{width:48px;height:48px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;margin:0 auto;color:var(--txt3)}
 .empty-icon svg{width:24px;height:24px}
@@ -673,7 +704,7 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
   .quick-links{grid-template-columns:1fr;gap:.5rem}
   .quick-link{display:flex;align-items:center;gap:.875rem;padding:.875rem 1rem}
   .quick-link-icon{margin-bottom:0;flex-shrink:0}
-  .dash-actions{grid-template-columns:repeat(2,1fr)}
+  .dash-actions{grid-template-columns:repeat(3,1fr)}
   .tx-insights{grid-template-columns:1fr;gap:.5rem}
   .tx-filters{grid-template-columns:1fr}
   .fld.row2{grid-template-columns:1fr}
@@ -697,8 +728,11 @@ body{overflow-x:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%,rg
 <div class="sheet" id="sheet"></div>
 <input type="file" id="import-input" accept=".json,application/json" hidden>
 
+<script src="js/csv-importer.js?v=1"></script>
+<script src="js/ofx-importer.js?v=1"></script>
 <script src="js/voice-input.js?v=11"></script>
 <script src="js/receipt-scanner.js?v=11"></script>
+<script src="js/finance-suite.js?v=1"></script>
 <script>
 /* ─────────── Data layer (compatível com o app clássico) ─────────── */
 const K={acc:'app_accounts_v3',card:'app_creditCards_v3',tx:'app_transactions_v3',cat:'app_categories_v3',budg:'app_budgets_v3',goals:'financial_goals_v2'};
@@ -732,9 +766,9 @@ function catInitial(cat){return String(cat||'?').slice(0,2).toUpperCase()}
 function catColor(cat){let h=0;for(let i=0;i<(cat||'').length;i++)h=(cat.charCodeAt(i)+h*31)%360;return `hsl(${h},55%,42%)`}
 function catBg(cat){let h=0;for(let i=0;i<(cat||'').length;i++)h=(cat.charCodeAt(i)+h*31)%360;return `hsla(${h},55%,42%,.1)`}
 
-let S={accounts:[],cards:[],txs:[],cats:[],budgets:[],goals:[],hide:false,cfDays:30,view:'home',txFilters:{type:'all',cat:'',acc:'',status:'all',q:''},budgetFilter:'all',budgetSort:'status',budgetMonthOffset:0};
+let S={accounts:[],cards:[],txs:[],cats:[],budgets:[],goals:[],recurring:[],hide:false,cfDays:30,theme:'light',calendarMonth:0,view:'home',txFilters:{type:'all',cat:'',acc:'',status:'all',q:''},budgetFilter:'all',budgetSort:'status',budgetMonthOffset:0};
 
-function persist(){save(K.tx,S.txs);save(K.acc,S.accounts);save(K.card,S.cards);save(K.budg,S.budgets);save(K.goals,S.goals);save(K.cat,S.cats)}
+function persist(){save(K.tx,S.txs);save(K.acc,S.accounts);save(K.card,S.cards);save(K.budg,S.budgets);save(K.goals,S.goals);save(K.cat,S.cats);if(window.FinanceSuite)FinanceSuite.onPersist(S)}
 function toast(msg,type='info',dur=2800){
   let el=document.getElementById('toast');
   if(!el){el=document.createElement('div');el.id='toast';document.body.appendChild(el)}
@@ -1006,6 +1040,8 @@ function renderNav(){
     ['plus','','',false],
     ['accounts','Contas','M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 10v-2',true],
     ['insights','Insights','M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',true],
+    ['calendar','Calendário','M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',true],
+    ['planning','Planejar','M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',true],
     ['more','Mais','M4 6h16M4 12h16M4 18h16',false],
   ];
   let html='<div class="sidebar-brand"><div class="logo"><span class="logo-mark">F+</span> Finanças+</div><span>Controle financeiro pessoal</span></div>';
@@ -1035,6 +1071,9 @@ function render(){recompute();renderTop();renderNav();
   else if(S.view==='goals')app.innerHTML=viewGoals();
   else if(S.view==='reports')app.innerHTML=viewReports();
   else if(S.view==='insights')app.innerHTML=viewInsights();
+  else if(S.view==='calendar')app.innerHTML=FinanceSuite.viewCalendar(S);
+  else if(S.view==='planning')app.innerHTML=FinanceSuite.viewPlanning(S);
+  else if(S.view==='import')app.innerHTML=FinanceSuite.viewImport(S);
   else if(S.view==='accounts')app.innerHTML=viewAccounts();
   else if(S.view==='more')app.innerHTML=viewMore();
   postRender();
@@ -1047,6 +1086,7 @@ function postRender(){
   if(S.view==='tx')bindTxPage();
   if(S.view==='budgets')bindBudgetPage();
   if(S.view==='more')bindMorePage();
+  if(S.view==='import')FinanceSuite.bindImportPage();
 }
 
 /* ─────────── HOME ─────────── */
@@ -1075,14 +1115,19 @@ function viewHome(){
     return `<div class="goal-mini"><div class="goal-mini-info"><div class="gn">${esc(g.name)}</div><div class="gp num">${hv(g.saved)} de ${hv(g.target)} (${pct}%)</div></div><div class="goal-mini-bar"><i data-w="${Math.max(4,pct)}"></i></div></div>`}).join(''):'';
   const alertsHtml=alerts.length?`<div class="dash-alerts">${alerts.map(a=>`<div class="dash-alert ${a.lvl}" onclick="go('${a.go}')"><div class="dash-alert-dot"></div><div class="dash-alert-body"><div class="dash-alert-t">${a.t}</div><div class="dash-alert-m">${a.m}</div></div><span class="dash-alert-go">Ver →</span></div>`).join('')}</div>`:'';
   const compareHtml=compare?`<div class="compare-tip up">Você gastou <b>${Math.round(compare.pct)}% a mais</b> em <b>${esc(compare.cat)}</b> que no mês passado (${hv(compare.cur)} vs ${hv(compare.prev)}).</div>`:'';
+  const daily=FinanceSuite.dailySpendAllowance(S);
+  const dailyHtml=daily.daily!=null?`<div class="daily-budget"><div style="font-size:.6875rem;font-weight:700;color:var(--gold-dark);text-transform:uppercase;letter-spacing:.06em">Pode gastar hoje</div><div class="db-val num">${hv(daily.daily)}</div><div class="db-sub">${daily.daysLeft} dias restantes · ${hv(daily.left)} no orçamento do mês</div></div>`:'';
   return `
   <div class="page-header" style="margin-bottom:1rem"><div class="page-title">Painel</div><div class="page-sub">Visão geral e recomendações para suas finanças</div></div>
+  ${dailyHtml}
   <div class="dash-actions">
     <div class="dash-action" onclick="openTxSheet()"><div class="dash-action-icon blue">${ICONS.plus}</div><span>Novo lançamento</span></div>
     <div class="dash-action" onclick="openTxSheetWithPhoto()"><div class="dash-action-icon green">${ICONS.camera}</div><span>Escanear</span></div>
     <div class="dash-action" onclick="openTxSheetWithVoice()"><div class="dash-action-icon purple">${ICONS.mic}</div><span>Por voz</span></div>
     <div class="dash-action" onclick="go('faturas')"><div class="dash-action-icon amber">${ICONS.wallet}</div><span>Faturas</span></div>
     <div class="dash-action" onclick="go('insights')"><div class="dash-action-icon purple">${ICONS.target}</div><span>Insights</span></div>
+    <div class="dash-action" onclick="go('calendar')"><div class="dash-action-icon blue">${ICONS.clock}</div><span>Calendário</span></div>
+    <div class="dash-action" onclick="go('planning')"><div class="dash-action-icon green">${ICONS.chart}</div><span>Planejar</span></div>
   </div>
   ${alertsHtml}
   <div class="home-grid">
@@ -1586,6 +1631,13 @@ function viewReports(){
   const tw=chartW(.95),th=140;
   const trendData=ov.data.slice().reverse().map(m=>({label:m.label.split(' ')[0],income:m.income,expense:m.expense}));
   const {entries:catEntries,max:catMax}=reportCatBreakdown(0);
+  const week=FinanceSuite.weeklyReport(S);
+  const nwHist=FinanceSuite.netWorthHistory(S,12);
+  const nwMin=Math.min(...nwHist.map(x=>x.nw));
+  const nwMax=Math.max(...nwHist.map(x=>x.nw),nwMin+1);
+  const nwRange=nwMax-nwMin||1;
+  const nwW=chartW(.9),nwH=100;
+  const nwLine=nwHist.map((x,i)=>{const x0=8+i*((nwW-16)/(Math.max(nwHist.length-1,1)));const y=nwH-8-((x.nw-nwMin)/nwRange)*(nwH-16);return `${i?'L':'M'}${x0.toFixed(1)} ${y.toFixed(1)}`}).join(' ');
   let rows='';ov.data.forEach(m=>{
     rows+=`<tr><td style="text-transform:capitalize">${m.full}</td>
       <td class="num" style="color:var(--pos)">${hv(m.income)}</td><td class="num" style="color:var(--neg)">${hv(m.expense)}</td>
@@ -1611,6 +1663,12 @@ function viewReports(){
       <div class="trend-legend"><span><i class="inc"></i> Entradas</span><span><i class="exp"></i> Saídas</span></div></div>
     ${catEntries.length?`<div class="sec" style="margin-top:1.25rem"><div class="sec-h"><div class="sec-t">Gastos por categoria</div><div class="sec-sub">Mês atual</div></div>
       ${catEntries.slice(0,8).map(([c,v])=>`<div class="rep-cat-row"><span class="cn">${esc(c)}</span><div class="bar"><i data-w="${Math.max(8,v/catMax*100)}"></i></div><span class="cv num">${hv(v)}</span></div>`).join('')}</div>`:''}
+    <div class="sec" style="margin-top:1.25rem"><div class="sec-h"><div class="sec-t">Patrimônio líquido · 12 meses</div></div>
+      <div class="rep-chart-wrap"><svg viewBox="0 0 ${nwW} ${nwH}" preserveAspectRatio="none" width="100%" height="${nwH}"><path d="${nwLine}" fill="none" stroke="var(--brand)" stroke-width="2"/></svg></div></div>
+    <div class="sec" style="margin-top:1.25rem"><div class="sec-h"><div class="sec-t">Resumo da semana</div><div class="sec-sub num ${week.bal>=0?'pos':'neg'}">${hv(week.bal)}</div></div>
+      <div class="rep-insights"><div class="rep-insight"><div class="k">Entradas</div><div class="v num pos">${hv(week.inc)}</div></div>
+      <div class="rep-insight"><div class="k">Saídas</div><div class="v num neg">${hv(week.exp)}</div></div>
+      <div class="rep-insight"><div class="k">Lançamentos</div><div class="v">${week.count}</div></div></div></div>
     <div class="sec" style="margin-top:1.25rem"><div class="sec-h"><div class="sec-t">Detalhamento mensal</div></div>
       <table class="report-table"><thead><tr><th>Mês</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Poupança</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
@@ -1624,7 +1682,13 @@ function viewMore(){
     <div class="more-stat"><div class="n">${S.accounts.length+S.cards.length}</div><div class="l">Contas</div></div>
     <div class="more-stat"><div class="n">${S.budgets.length}</div><div class="l">Orçamentos</div></div></div>
   <div class="sec"><div class="more-section-t">Preferências</div>
-    <div class="more-toggle"><span>Ocultar valores na tela</span><input type="checkbox" id="more-hide" ${S.hide?'checked':''}></div></div>
+    <div class="more-toggle"><span>Ocultar valores na tela</span><input type="checkbox" id="more-hide" ${S.hide?'checked':''}></div>
+    <div class="more-toggle"><span>Tema escuro</span><input type="checkbox" id="more-theme" ${S.theme==='dark'?'checked':''}></div>
+    ${isProdHost()?`<div class="more-item" onclick="FinanceSuite.openChangePassword()"><div class="mi">${ICONS.report}</div><div style="flex:1">Alterar senha</div><span class="chev">›</span></div>`:''}</div>
+  <div class="sec" style="margin-top:1rem"><div class="more-section-t">Gestão financeira</div>
+    <div class="more-item" onclick="go('calendar')"><div class="mi">${ICONS.clock}</div><div style="flex:1">Calendário financeiro</div><span class="chev">›</span></div>
+    <div class="more-item" onclick="go('planning')"><div class="mi">${ICONS.chart}</div><div style="flex:1">Planejamento & recorrentes</div><span class="chev">›</span></div>
+    <div class="more-item" onclick="go('import')"><div class="mi">${ICONS.export}</div><div style="flex:1">Importar extrato CSV/OFX</div><span class="chev">›</span></div></div>
   <div class="sec" style="margin-top:1rem"><div class="more-section-t">Navegação</div>
     <div class="more-item" onclick="go('accounts')"><div class="mi">${ICONS.wallet}</div><div style="flex:1">Contas & Cartões<span style="display:block;font-size:.75rem;color:var(--txt3);font-weight:500;margin-top:.1rem">${S.accounts.length} conta(s)</span></div><span class="chev">›</span></div>
     <div class="more-item" onclick="go('faturas')"><div class="mi">${ICONS.wallet}</div><div style="flex:1">Faturas<span style="display:block;font-size:.75rem;color:var(--txt3);font-weight:500;margin-top:.1rem">${S.cards.length} cartão(ões)</span></div><span class="chev">›</span></div>
@@ -1642,11 +1706,13 @@ function viewMore(){
     <div class="more-item" onclick="triggerImport()"><div class="mi">${ICONS.export}</div><div style="flex:1">Importar backup</div><span class="chev">›</span></div>
     <div class="more-item" onclick="exportCsv()"><div class="mi">${ICONS.report}</div><div style="flex:1">Exportar lançamentos (CSV)</div><span class="chev">›</span></div>
     <div class="more-item" onclick="doLogout()"><div class="mi">${ICONS.logout}</div><div style="flex:1;color:var(--neg)">Sair da conta</div></div></div>
-  <p style="text-align:center;color:var(--txt3);font-size:.75rem;margin-top:1.5rem;font-weight:500">Finanças+ Premium · v2025.8</p>`;
+  <p style="text-align:center;color:var(--txt3);font-size:.75rem;margin-top:1.5rem;font-weight:500">Finanças+ Premium · v2025.9</p>`;
 }
 function bindMorePage(){
   const hide=document.getElementById('more-hide');
   if(hide&&!hide._bound){hide._bound=1;hide.onchange=()=>{S.hide=hide.checked;render()}};
+  const theme=document.getElementById('more-theme');
+  if(theme&&!theme._bound){theme._bound=1;theme.onchange=()=>{FinanceSuite.toggleTheme(S);render()}};
   const imp=document.getElementById('import-input');
   if(imp&&!imp._bound){imp._bound=1;imp.onchange=e=>{const f=e.target.files?.[0];if(f)importData(f);e.target.value=''}};
 }
@@ -1875,8 +1941,9 @@ function openTxSheet(id,opts={}){
   if(!S.accounts.length&&!S.cards.length){toast('Crie uma conta antes de lançar','warn');go('accounts');return}
   const t=id?S.txs.find(x=>x.id===id):null;editTxId=id||null;addType=t?t.fundamentalType:'despesa';
   const r=t?.receipt||{};const receiptOpen=!!(t?.fromScan||r.cnpj||r.accessKey||r.nfNumber||r.transactionId||r.barcode||r.docType);
-  openSheet(`<div class="sheet-head"><h3>${t?'Editar lançamento':'Novo lançamento'}</h3>${t?`<button class="del-btn" onclick="deleteTx('${t.id}')">Excluir</button>`:''}</div>
+  openSheet(`<div class="sheet-head"><h3>${t?'Editar lançamento':'Novo lançamento'}</h3>${t?`<div style="display:flex;gap:.375rem"><button class="chip-link" onclick="FinanceSuite.duplicateTx('${t.id}');closeSheet()">Duplicar</button><button class="del-btn" onclick="deleteTx('${t.id}')">Excluir</button></div>`:''}</div>
     <div class="tx-form">
+    ${!t?`<div class="tx-templates">${FinanceSuite.txTemplates().map((tpl,i)=>`<button type="button" class="tx-tpl" onclick="FinanceSuite.applyTemplate(FinanceSuite.txTemplates()[${i}])">${tpl.label}</button>`).join('')}</div>`:''}
     <div class="type-tog" id="type-tog">
       <button type="button" data-t="despesa" class="${addType==='despesa'?'on-exp':''}">Despesa</button>
       <button type="button" data-t="receita" class="${addType==='receita'?'on-inc':''}">Receita</button></div>
@@ -1895,7 +1962,8 @@ function openTxSheet(id,opts={}){
       <div class="fld"><label>Descrição</label><input id="in-desc" type="text" placeholder="Ex: Supermercado, Salário, Aluguel…" value="${t?esc(t.description||''):''}"></div>
       <div class="fld row2"><div><label>Conta</label><select id="in-acc">${accOptions(t?t.accountId:'')}</select></div>
         <div><label>Categoria</label><select id="in-cat">${catOptions(t?t.category:'Outros')}</select></div></div>
-      <div class="fld"><label>Data</label><input id="in-date" type="date" value="${t?iso(parseD(t.date)):iso(new Date())}"></div>
+      <div class="fld row2"><div><label>Data</label><input id="in-date" type="date" value="${t?iso(parseD(t.date)):iso(new Date())}"></div>
+        <div><label>Parcelas (cartão)</label><input id="in-parcelas" type="number" min="1" max="48" placeholder="1" value="${t&&t.installments?t.installments:''}"></div></div>
     </div>
     ${receiptSectionHtml(r,receiptOpen)}
     <label class="chk"><input type="checkbox" id="in-paid" ${!t||t.isPaid?'checked':''}><span>Já foi pago / recebido</span></label>
@@ -1918,8 +1986,16 @@ function saveTx(){
     isPaid:addType==='receita'?true:paid,
     paidByAccountId:(addType==='despesa'&&paid&&!isCard)?accId:null,paidByIsCreditCard:isCard};
   if(receipt){base.receipt=receipt;base.fromScan=!!receipt.scannedAt}
-  if(editTxId){const t=S.txs.find(x=>x.id===editTxId);Object.assign(t,base)}
-  else S.txs.push({id:uid(),installments:null,groupId:null,isRecurring:false,...base});
+  const nPar=parseInt(document.getElementById('in-parcelas')?.value)||1;
+  if(editTxId){const t=S.txs.find(x=>x.id===editTxId);Object.assign(t,{...base,installments:nPar>1?nPar:null})}
+  else if(nPar>1&&isCard&&addType==='despesa'){
+    const gid=uid();const parcelVal=Math.round(val/nPar*100)/100;
+    const startD=parseD(document.getElementById('in-date').value||iso(new Date()));
+    for(let i=0;i<nPar;i++){
+      const d=new Date(startD);d.setMonth(d.getMonth()+i);
+      S.txs.push({id:uid(),...base,value:parcelVal,date:iso(d),description:(base.description||'Despesa')+` (${i+1}/${nPar})`,installments:nPar,groupId:gid,isRecurring:false});
+    }
+  }else S.txs.push({id:uid(),installments:nPar>1?nPar:null,groupId:null,isRecurring:false,...base});
   persist();closeSheet();render();
 }
 function catOptions(sel){return S.cats.map(c=>`<option value="${esc(c)}" ${c===sel?'selected':''}>${esc(c)}</option>`).join('')}
@@ -1986,6 +2062,7 @@ async function init(){
   if(!(await checkAuth()))return;
   S.accounts=load(K.acc);S.cards=load(K.card);S.txs=load(K.tx);S.budgets=load(K.budg);S.goals=load(K.goals);
   const c=load(K.cat);S.cats=(c&&c.length)?c:DEF_CATS.slice();
+  if(window.FinanceSuite)await FinanceSuite.bootstrap(S);
   render();
   window.addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(render,200)});
 }
@@ -2002,7 +2079,7 @@ window.addToGoal=addToGoal;window.saveGoalDeposit=saveGoalDeposit;
 init();
 window.openBudgetSheet=openBudgetSheet;window.saveBudget=saveBudget;window.deleteBudget=deleteBudget;
 window.openGoalSheet=openGoalSheet;window.saveGoal=saveGoal;window.deleteGoal=deleteGoal;
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=21').then(r=>r.update()).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js?v=22').then(r=>r.update()).catch(()=>{})}
 </script>
 </body>
 </html>
